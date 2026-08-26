@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - App Launcher</title>
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{kyv:{bg:'#0f111a',card:'#151923',border:'#232838',accent:'#6366f1',text:'#94a3b8'}}}}}</script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <style>
+        body{background:#0f111a;color:#f8fafc}.launcher-card{background:rgba(21,25,35,.92);border:1px solid #232838;border-radius:1.25rem;padding:1.25rem;transition:.18s ease;display:flex;gap:1rem;align-items:flex-start}.launcher-card:hover{transform:translateY(-2px);border-color:rgba(99,102,241,.5);box-shadow:0 16px 40px rgba(0,0,0,.25)}.launcher-icon{width:3rem;height:3rem;border-radius:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}.section-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.18em;font-weight:900;color:#94a3b8}.quick-pill{border:1px solid rgba(35,40,56,.95);background:rgba(15,17,26,.72);border-radius:999px;padding:.45rem .7rem;font-size:.72rem;font-weight:900;color:#cbd5e1;display:inline-flex;align-items:center;gap:.4rem}.custom-scrollbar::-webkit-scrollbar{width:14px;height:14px}.custom-scrollbar::-webkit-scrollbar-thumb{background:#4b5563;border-radius:8px;border:4px solid #0f111a}
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+    <main class="flex-1 overflow-y-auto w-full h-full flex flex-col">
+        <header class="pt-8 px-4 sm:px-8 pb-4 border-b border-kyv-border/50 shrink-0">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center min-w-0">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div class="min-w-0">
+                        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">App <span class="text-sky-400">Launcher</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm">Qui vivono gli strumenti secondari: non spariscono dalla app, ma non appesantiscono più la barra laterale.</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-4 sm:p-8 flex-1 overflow-y-auto custom-scrollbar">
+            <section class="max-w-7xl mx-auto space-y-8">
+                <div class="rounded-3xl border border-indigo-500/20 bg-indigo-500/5 p-5 md:p-6">
+                    <p class="section-label text-indigo-300">Riordino del gestionale</p>
+                    <h3 class="text-xl md:text-2xl font-black text-white mt-2">Barra laterale semplice, funzioni avanzate raccolte qui.</h3>
+                    <p class="text-sm text-kyv-text mt-2 leading-relaxed">La logica del progetto resta la stessa: contatti, sessioni, lavorazione, ascolto, contratti, SIAE/IMAIE, fatture e spese. La differenza è che la sidebar contiene solo i moduli principali, mentre gli strumenti di supporto si aprono da questo launcher.</p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a class="quick-pill" href="assistente.html"><i data-lucide="route" class="w-4 h-4 text-amber-300"></i>Assistente produzione</a>
+                        <a class="quick-pill" href="sessioni.html"><i data-lucide="calendar-clock" class="w-4 h-4 text-cyan-300"></i>Sessioni studio</a>
+                        <a class="quick-pill" href="scheda_progetto.html"><i data-lucide="panel-top-open" class="w-4 h-4 text-indigo-300"></i>Scheda progetto</a>
+                        <a class="quick-pill" href="protezione.html"><i data-lucide="shield-check" class="w-4 h-4 text-amber-300"></i>Protezione brano</a>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="section-label mb-3">Produzione musicale</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <a href="assistente.html" class="launcher-card"><div class="launcher-icon bg-amber-500/10"><i data-lucide="route" class="w-7 h-7 text-amber-300"></i></div><div><h3 class="text-white font-black text-base">Assistente Produzione</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Percorso operativo del brano: contatto, sessione, invio, follow-up, diritti e amministrazione.</p></div></a>
+                        <a href="sessioni.html" class="launcher-card"><div class="launcher-icon bg-cyan-500/10"><i data-lucide="calendar-clock" class="w-7 h-7 text-cyan-300"></i></div><div><h3 class="text-white font-black text-base">Sessioni Studio</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Agenda produttiva, follow-up intelligenti, master da consegnare e progetti fermi.</p></div></a>
+                        <a href="scheda_progetto.html" class="launcher-card"><div class="launcher-icon bg-indigo-500/10"><i data-lucide="panel-top-open" class="w-7 h-7 text-indigo-300"></i></div><div><h3 class="text-white font-black text-base">Scheda Progetto</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Tutto il brano in una vista: audio, invii, documenti, SIAE, IMAIE, fatture e spese.</p></div></a>
+                        <a href="protezione.html" class="launcher-card"><div class="launcher-icon bg-orange-500/10"><i data-lucide="shield-check" class="w-7 h-7 text-orange-300"></i></div><div><h3 class="text-white font-black text-base">Protezione Brano</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Radar su contratti, master, prove, SIAE, IMAIE, fatture e dati mancanti.</p></div></a>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="section-label mb-3">Audio, file e ascolto</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <a href="ascolto.html" class="launcher-card"><div class="launcher-icon bg-violet-500/10"><i data-lucide="headphones" class="w-7 h-7 text-violet-300"></i></div><div><h3 class="text-white font-black text-base">Stazione Ascolto</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Ascolta MP3/WAV da archivio, Dropbox diretto, Drive o file locali e salva note.</p></div></a>
+                        <a href="kyv_dropbox.html" class="launcher-card"><div class="launcher-icon bg-blue-500/10"><i data-lucide="box" class="w-7 h-7 text-blue-300"></i></div><div><h3 class="text-white font-black text-base">Audio Dropbox</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Registra link, hash, versioni, invii e conferme dei file audio pesanti.</p></div></a>
+                        <a href="kyv_drive.html" class="launcher-card"><div class="launcher-icon bg-emerald-500/10"><i data-lucide="hard-drive" class="w-7 h-7 text-emerald-300"></i></div><div><h3 class="text-white font-black text-base">Google Drive</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Ricerca file, cartelle progetto, prove, contratti e screenshot archiviati.</p></div></a>
+                        <a href="kyv_calendar.html" class="launcher-card"><div class="launcher-icon bg-sky-500/10"><i data-lucide="calendar" class="w-7 h-7 text-sky-300"></i></div><div><h3 class="text-white font-black text-base">Google Calendar</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Apri il modulo calendario per sessioni, appuntamenti e pianificazione.</p></div></a>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="section-label mb-3">Amministrazione, documenti e analisi</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <a href="documenti.html" class="launcher-card"><div class="launcher-icon bg-sky-500/10"><i data-lucide="folder-lock" class="w-7 h-7 text-sky-300"></i></div><div><h3 class="text-white font-black text-base">Documenti & Schede</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Contratti, cartelle Drive, schede richiesta dati SIAE/IMAIE/fatture.</p></div></a>
+                        <a href="documenti.html?tab=spese" class="launcher-card"><div class="launcher-icon bg-amber-500/10"><i data-lucide="receipt-euro" class="w-7 h-7 text-amber-300"></i></div><div><h3 class="text-white font-black text-base">Spese Extra</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Analizza estratti conto, importa CSV, collega spese a progetti e categorie.</p></div></a>
+                        <a href="report.html" class="launcher-card"><div class="launcher-icon bg-indigo-500/10"><i data-lucide="file-text" class="w-7 h-7 text-indigo-300"></i></div><div><h3 class="text-white font-black text-base">Report & PDF</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Report stampabili e sintesi operative da condividere o archiviare.</p></div></a>
+                        <a href="correlazione.html" class="launcher-card"><div class="launcher-icon bg-cyan-500/10"><i data-lucide="git-branch" class="w-7 h-7 text-cyan-300"></i></div><div><h3 class="text-white font-black text-base">Correlazione</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Controlla relazioni tra dati SIAE, fatture, progetti e rendiconti.</p></div></a>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="section-label mb-3">Diritti e anagrafiche avanzate</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <a href="autori.html" class="launcher-card"><div class="launcher-icon bg-violet-500/10"><i data-lucide="user-round-pen" class="w-7 h-7 text-violet-300"></i></div><div><h3 class="text-white font-black text-base">Dettaglio Autori</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Analisi per autore/compositore: opere, quote, società, anomalie.</p></div></a>
+                        <a href="quote.html" class="launcher-card"><div class="launcher-icon bg-fuchsia-500/10"><i data-lucide="pie-chart" class="w-7 h-7 text-fuchsia-300"></i></div><div><h3 class="text-white font-black text-base">Quote per Opera</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Vista principale sulle quote DEM/DRM, autori, compositori e posizioni.</p></div></a>
+                        <a href="rendiconto.html" class="launcher-card"><div class="launcher-icon bg-emerald-500/10"><i data-lucide="bar-chart-2" class="w-7 h-7 text-emerald-300"></i></div><div><h3 class="text-white font-black text-base">Rendiconto SIAE</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Analizza incassi e movimenti SIAE importati.</p></div></a>
+                        <a href="importexport.html" class="launcher-card"><div class="launcher-icon bg-purple-500/10"><i data-lucide="arrow-down-up" class="w-7 h-7 text-purple-300"></i></div><div><h3 class="text-white font-black text-base">Import / Export</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Importa o esporta CSV/Excel compatibili con Excel italiano.</p></div></a>
+                        <a href="diagnostica.html" class="launcher-card"><div class="launcher-icon bg-cyan-500/10"><i data-lucide="activity" class="w-7 h-7 text-cyan-300"></i></div><div><h3 class="text-white font-black text-base">Diagnostica Sistema</h3><p class="text-xs text-kyv-text mt-1 leading-relaxed">Controlla Supabase, Drive, proxy, cache, log e moduli comuni.</p></div></a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    <script>
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback Menu</aside>`;};}
+        loadKyvSidebar('integrazioni');
+        if(window.lucide) lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Percorso Brano</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0f111a">
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } };
+    </script>
+    <style>
+        body{background:#0f111a;color:#f8fafc}.kyv-card{background:#151923;border:1px solid #232838;border-radius:1.25rem}.kyv-soft{background:rgba(15,17,26,.72);border:1px solid rgba(35,40,56,.9);border-radius:1rem}.chip{display:inline-flex;align-items:center;border-radius:999px;padding:.28rem .55rem;font-size:.68rem;font-weight:900;border:1px solid rgba(148,163,184,.22);background:rgba(148,163,184,.08);color:#cbd5e1}.chip.red{border-color:rgba(244,63,94,.28);background:rgba(244,63,94,.1);color:#fecdd3}.chip.amber{border-color:rgba(245,158,11,.28);background:rgba(245,158,11,.1);color:#fde68a}.chip.green{border-color:rgba(16,185,129,.28);background:rgba(16,185,129,.1);color:#bbf7d0}.chip.blue{border-color:rgba(59,130,246,.28);background:rgba(59,130,246,.1);color:#bfdbfe}.chip.violet{border-color:rgba(168,85,247,.28);background:rgba(168,85,247,.1);color:#e9d5ff}.journey-step{position:relative}.journey-step:before{content:"";position:absolute;left:1.25rem;top:2.7rem;bottom:-1.1rem;width:1px;background:rgba(148,163,184,.15)}.journey-step:last-child:before{display:none}.step-dot{width:2.5rem;height:2.5rem;border-radius:999px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(148,163,184,.2);background:#0f111a}.step-dot.ok{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.35);color:#6ee7b7}.step-dot.warn{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#fcd34d}.step-dot.bad{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.35);color:#fda4af}.step-dot.todo{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.35);color:#c7d2fe}.project-card:hover{border-color:rgba(99,102,241,.45);transform:translateY(-1px)}.kanban-col{min-height:18rem}.pill-btn{border:1px solid rgba(148,163,184,.18);background:rgba(15,17,26,.6);border-radius:.85rem;padding:.7rem .85rem;color:#e2e8f0;font-weight:900;font-size:.75rem;display:inline-flex;align-items:center;justify-content:center;gap:.45rem}.pill-btn:hover{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.35)}.pill-btn:disabled{opacity:.45;cursor:not-allowed}.progress-track{height:.36rem;border-radius:999px;background:rgba(148,163,184,.14);overflow:hidden}.progress-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#6366f1,#22d3ee);transition:width .25s ease}.data-status{border-radius:1rem;border:1px solid rgba(99,102,241,.25);background:rgba(99,102,241,.08)}.data-status.ok{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.09)}.data-status.warn{border-color:rgba(245,158,11,.32);background:rgba(245,158,11,.09)}.data-status.bad{border-color:rgba(244,63,94,.35);background:rgba(244,63,94,.1)}@media(max-width:768px){.kyv-page-pad{padding-bottom:6.5rem}.journey-step:before{display:none}}
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 kyv-page-pad custom-scrollbar">
+            <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 mb-6">
+                <div class="flex items-start gap-3">
+                    <button class="md:hidden text-kyv-text hover:text-white mt-1 transition-colors" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-indigo-300 font-black">Un filo unico dall'idea all'incasso</p>
+                        <h1 class="text-2xl sm:text-4xl font-black tracking-tight mt-1">Percorso <span class="text-indigo-400">Brano</span></h1>
+                        <p class="text-kyv-text mt-2 max-w-4xl leading-relaxed">Parti dal contatto o da un file già presente su Drive/Dropbox. KYV collega sessioni e versioni, poi ti accompagna a master, invii, diritti, documenti, fattura e incasso.</p>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
+                    <button id="assistant-refresh" onclick="refreshAll()" class="pill-btn"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Aggiorna</button>
+                    <button onclick="copyDailyBrief()" data-requires-data class="pill-btn"><i data-lucide="copy" class="w-4 h-4"></i>Copia brief di oggi</button>
+                    <a href="scheda_progetto.html" class="pill-btn"><i data-lucide="panel-top-open" class="w-4 h-4"></i>Scheda progetto</a>
+                </div>
+            </header>
+
+            <section id="assistant-data-status" class="data-status p-4 mb-6" role="status" aria-live="polite">
+                <div class="flex items-start gap-3"><i data-lucide="database-zap" class="w-5 h-5 mt-0.5 text-indigo-200 shrink-0"></i><div><h2 id="assistant-data-title" class="text-sm font-black text-white">Verifica dei dati operativi…</h2><p id="assistant-data-message" class="text-xs text-kyv-text mt-1">Prima di proporre attività, KYV controlla che progetti, audio, invii, documenti e fatture siano leggibili.</p></div></div>
+            </section>
+
+            <section class="kyv-card p-5 mb-6 border-indigo-500/25 bg-gradient-to-br from-indigo-500/10 to-transparent">
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-5">
+                    <div><p class="text-[10px] uppercase tracking-[0.22em] text-indigo-300 font-black">Inizia da ciò che hai davvero</p><h2 class="text-xl font-black text-white mt-1">Avvia un nuovo lavoro</h2><p class="text-sm text-kyv-text mt-1 max-w-2xl">Non creare prima moduli vuoti: scegli il punto di partenza e collega subito persona, brano e file.</p></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full xl:w-auto">
+                        <a href="progetti.html?new=1" class="px-4 py-3 rounded-xl border border-sky-500/25 bg-sky-500/10 hover:bg-sky-500/20 text-sky-100 font-black text-xs flex items-center"><i data-lucide="user-round-plus" class="w-4 h-4 mr-2"></i>Da contatto / brief</a>
+                        <a href="archivio_musicale.html" class="px-4 py-3 rounded-xl border border-indigo-500/25 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-100 font-black text-xs flex items-center"><i data-lucide="folder-search-2" class="w-4 h-4 mr-2"></i>Da file Drive / Dropbox</a>
+                    </div>
+                </div>
+                <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2 text-[11px]">
+                    <div class="kyv-soft p-3"><b class="text-sky-200">1 · Contatto</b><p class="text-kyv-text mt-1">Referente e brief</p></div><div class="kyv-soft p-3"><b class="text-cyan-200">2 · Sessione</b><p class="text-kyv-text mt-1">Data e persone</p></div><div class="kyv-soft p-3"><b class="text-indigo-200">3 · Produzione</b><p class="text-kyv-text mt-1">Base e strumenti</p></div><div class="kyv-soft p-3"><b class="text-violet-200">4 · Voce/versioni</b><p class="text-kyv-text mt-1">Take, mix e revisioni</p></div><div class="kyv-soft p-3"><b class="text-blue-200">5 · Master/invio</b><p class="text-kyv-text mt-1">Consegna e feedback</p></div><div class="kyv-soft p-3"><b class="text-amber-200">6 · Diritti</b><p class="text-kyv-text mt-1">Split e documenti</p></div><div class="kyv-soft p-3"><b class="text-emerald-200">7 · Incasso</b><p class="text-kyv-text mt-1">Fattura e pagamento</p></div>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6" id="top-stats">
+                <div class="kyv-card p-5"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Da contattare / completare</p><h3 id="stat-contact" class="text-3xl font-black text-amber-200 mt-2">—</h3><p class="text-xs text-kyv-text mt-1">brief, manager, label, dati base</p></div>
+                <div class="kyv-card p-5"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">In studio / lavorazione</p><h3 id="stat-work" class="text-3xl font-black text-cyan-200 mt-2">—</h3><p class="text-xs text-kyv-text mt-1">sessioni, demo, pezzi grezzi</p></div>
+                <div class="kyv-card p-5"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">In ascolto senza risposta</p><h3 id="stat-wait" class="text-3xl font-black text-rose-200 mt-2">—</h3><p class="text-xs text-kyv-text mt-1">invii aperti oltre soglia</p></div>
+                <div class="kyv-card p-5"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Da chiudere admin</p><h3 id="stat-admin" class="text-3xl font-black text-emerald-200 mt-2">—</h3><p class="text-xs text-kyv-text mt-1">contratti, fee, fatture, incassi</p></div>
+            </section>
+
+            <section class="kyv-card p-5 mb-6" id="today-actions-panel">
+                <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-4">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.22em] text-amber-300 font-black">Segretario operativo</p>
+                        <h2 class="text-xl font-black text-white flex items-center mt-1"><i data-lucide="list-todo" class="w-5 h-5 mr-2 text-amber-300"></i>Azioni di oggi</h2>
+                        <p class="text-sm text-kyv-text mt-1">Lista corta e concreta: follow-up scaduti, pezzi in ascolto, dati mancanti prima di release, fatture o pagamenti da chiudere.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="copyTodayActions()" data-requires-data class="pill-btn"><i data-lucide="copy-check" class="w-4 h-4"></i>Copia azioni</button>
+                    </div>
+                </div>
+                <div id="today-actions-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+            </section>
+
+            <section class="kyv-card p-5 mb-6">
+                <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="text-xl font-black text-white flex items-center"><i data-lucide="route" class="w-5 h-5 mr-2 text-indigo-300"></i>Il viaggio professionale del brano</h2>
+                        <p class="text-sm text-kyv-text mt-1">Ogni progetto dovrebbe avanzare lungo questi passaggi. Il software segnala dove si blocca e cosa devi chiedere o completare.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="setView('today')" data-requires-data id="view-today" class="pill-btn bg-indigo-500/10 border-indigo-500/30">Priorità</button>
+                        <button onclick="setView('kanban')" data-requires-data id="view-kanban" class="pill-btn">Kanban</button>
+                        <button onclick="setView('journey')" data-requires-data id="view-journey" class="pill-btn">Metodo</button>
+                    </div>
+                </div>
+                <div id="view-container"></div>
+            </section>
+
+            <section class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div class="kyv-card p-5 xl:col-span-2">
+                    <div class="flex flex-col md:flex-row md:items-end gap-3 justify-between mb-4">
+                        <div>
+                            <h2 class="text-xl font-black text-white flex items-center"><i data-lucide="search-check" class="w-5 h-5 mr-2 text-cyan-300"></i>Ricerca guidata progetti</h2>
+                            <p class="text-sm text-kyv-text mt-1">Cerca un artista o un titolo e apri subito la scheda, oppure filtra per fase.</p>
+                        </div>
+                        <select id="stage-filter" data-requires-data onchange="renderProjectList()" class="bg-kyv-bg border border-kyv-border rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500">
+                            <option value="all">Tutte le fasi</option>
+                            <option value="contatto">Contatto / brief</option>
+                            <option value="sessione">Sessione / lavorazione</option>
+                            <option value="master">Master / pre-release</option>
+                            <option value="ascolto">In ascolto</option>
+                            <option value="diritti">Diritti / protezione</option>
+                            <option value="admin">Fatture / incassi</option>
+                        </select>
+                    </div>
+                    <div class="relative mb-4"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-kyv-text"></i><input id="project-search" data-requires-data oninput="renderProjectList()" placeholder="Cerca artista, titolo, manager, label, ISRC..." class="w-full bg-kyv-bg border border-kyv-border rounded-xl pl-10 pr-3 py-3 text-white outline-none focus:border-indigo-500"></div>
+                    <div id="project-list" class="space-y-3 max-h-[620px] overflow-y-auto custom-scrollbar pr-1"></div>
+                </div>
+                <aside class="kyv-card p-5">
+                    <h2 class="text-xl font-black text-white flex items-center"><i data-lucide="sparkles" class="w-5 h-5 mr-2 text-amber-300"></i>Azioni consigliate</h2>
+                    <p class="text-sm text-kyv-text mt-1 mb-4">Le prime cose da fare per non perdere pezzi, soldi, diritti o prove.</p>
+                    <div id="smart-actions" class="space-y-3"></div>
+                </aside>
+            </section>
+        </section>
+    </main>
+
+        <div id="followup-modal" class="fixed inset-0 bg-black/80 z-[90] hidden items-center justify-center p-4 backdrop-blur-sm" aria-hidden="true">
+            <div class="bg-kyv-bg border border-kyv-border rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden shadow-2xl flex flex-col">
+                <div class="p-5 border-b border-kyv-border flex items-start justify-between gap-4 bg-[#0f111a]">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-wider text-indigo-300 font-black">Follow-up operativo</p>
+                        <h3 id="followup-title" class="text-xl font-black text-white mt-1">Pianifica follow-up</h3>
+                        <p class="text-xs text-kyv-text mt-1">Se le colonne follow-up sono presenti in Supabase salva in PROGETTI; altrimenti registra una nota in DOCUMENTI_PROGETTO.</p>
+                    </div>
+                    <button onclick="closeFollowupModal()" class="p-2 rounded-lg border border-kyv-border text-kyv-text hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <form id="followup-form" class="p-5 space-y-4 overflow-y-auto custom-scrollbar">
+                    <input type="hidden" id="followup-project-id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Prossimo follow-up</span><input id="followup-next" type="date" class="w-full mt-1 bg-kyv-bg border border-kyv-border rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500"></label>
+                        <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Priorità</span><select id="followup-priority" class="w-full mt-1 bg-kyv-bg border border-kyv-border rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500"><option>Media</option><option>Alta</option><option>Bassa</option><option>Urgente</option></select></label>
+                    </div>
+                    <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Esito ascolto / stato risposta</span><select id="followup-outcome" class="w-full mt-1 bg-kyv-bg border border-kyv-border rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500"><option>In attesa risposta</option><option>Ascoltato ma senza decisione</option><option>Piaciuto / da approfondire</option><option>Rifiutato / archiviare</option><option>Opzionato / in trattativa</option><option>Da sollecitare</option></select></label>
+                    <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Note follow-up</span><textarea id="followup-note" rows="4" class="w-full mt-1 bg-kyv-bg border border-kyv-border rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500" placeholder="Es. mandato provino a Marcella, ha ascoltato ma aspetta feedback label; risentire venerdì."></textarea></label>
+                    <div class="flex flex-col sm:flex-row gap-2 justify-end pt-2 border-t border-kyv-border">
+                        <button type="button" onclick="copyFollowupDraft()" class="pill-btn"><i data-lucide="copy" class="w-4 h-4"></i>Copia messaggio</button>
+                        <button type="submit" id="followup-save" class="pill-btn bg-indigo-500/10 border-indigo-500/30"><i data-lucide="save" class="w-4 h-4"></i>Salva follow-up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+<script>
+const db = KYV.createSupabaseClient();
+let state = { projects: [], audio: [], versions: [], invii: [], docs: [], fatture: [], consegne: [], enriched: [], view: 'today', ready: false, loading: false, unifiedMode: false };
+const DAY = 24 * 60 * 60 * 1000;
+const today = new Date();
+
+function val(row, names, fallback = '') { return KYV.pickField(row, names, fallback); }
+function filled(v) { return v !== null && v !== undefined && String(v).trim() !== ''; }
+function norm(v) { return KYV.normalize(v); }
+function asDate(v) { if (!v) return null; const d = new Date(v); return Number.isNaN(d.getTime()) ? null : d; }
+function daysSince(v) { const d = asDate(v); return d ? Math.floor((today - d) / DAY) : null; }
+function contains(row, q) { const s = Object.values(row || {}).join(' '); return norm(s).includes(norm(q)); }
+function isMissingTableError(error) {
+    const code = String(error?.code || '').toUpperCase();
+    const message = String(error?.message || '');
+    return code === '42P01' || code === 'PGRST205' || /relation .* does not exist|could not find .* in the schema cache/i.test(message);
+}
+async function readTable(name, { optionalMissing = false } = {}) {
+    const { data, error } = await db.from(name).select('*').limit(3000);
+    if (error) {
+        console.error('Errore lettura dati Assistente:', { table: name, error });
+        if (optionalMissing && isMissingTableError(error)) return { rows: [], missing: true };
+        const failure = new Error(`${name}: ${error.message || 'lettura non riuscita'}`);
+        failure.code = error.code;
+        failure.table = name;
+        throw failure;
+    }
+    return { rows: data || [], missing: false };
+}
+function setDataControls(enabled) {
+    document.querySelectorAll('[data-requires-data]').forEach(el => { el.disabled = !enabled; el.setAttribute('aria-disabled', String(!enabled)); });
+}
+function setDataStatus(kind, title, message) {
+    const box = document.getElementById('assistant-data-status');
+    if (!box) return;
+    box.className = `data-status ${kind || ''} p-4 mb-6`;
+    KYV.setText('assistant-data-title', title);
+    KYV.setText('assistant-data-message', message);
+}
+function renderBlockedState() {
+    ['stat-contact','stat-work','stat-wait','stat-admin'].forEach(id => KYV.setText(id, '—'));
+    const message = '<div class="kyv-soft p-6 text-center text-rose-100"><i data-lucide="database-x" class="w-8 h-8 mx-auto mb-2 text-rose-300"></i>I dati non sono completi: nessuna priorità viene calcolata per evitare indicazioni sbagliate. Premi <b>Aggiorna</b> dopo aver ripristinato la connessione o i permessi.</div>';
+    document.getElementById('today-actions-list').innerHTML = message;
+    document.getElementById('view-container').innerHTML = message;
+    document.getElementById('project-list').innerHTML = message;
+    document.getElementById('smart-actions').innerHTML = message;
+    if (window.lucide) lucide.createIcons();
+}
+async function refreshAll() {
+    if (state.loading) return;
+    state.loading = true;
+    state.ready = false;
+    setDataControls(false);
+    const refreshButton = document.getElementById('assistant-refresh');
+    if (refreshButton) { refreshButton.disabled = true; refreshButton.setAttribute('aria-busy', 'true'); }
+    setDataStatus('', 'Verifica dei dati operativi…', 'Controllo progetti, versioni audio, invii, documenti e fatture prima di calcolare le priorità.');
+    document.getElementById('view-container').innerHTML = '<div class="text-kyv-text p-6 text-center"><i data-lucide="loader-2" class="w-7 h-7 animate-spin mx-auto mb-2 text-indigo-400"></i>Caricamento assistente...</div>';
+    lucide.createIcons();
+    try {
+        const [projects, audio, invii, docs, fatture, consegne, versions] = await Promise.all([
+            readTable('PROGETTI'), readTable('DROPBOX_AUDIO_FILES'), readTable('INVII_AUDIO'), readTable('DOCUMENTI_PROGETTO'), readTable('FATTURE'), readTable('CONSEGNE_MASTER'), readTable('AUDIO_VERSIONI', { optionalMissing: true })
+        ]);
+        state.projects = projects.rows; state.audio = audio.rows; state.invii = invii.rows; state.docs = docs.rows; state.fatture = fatture.rows; state.consegne = consegne.rows; state.versions = versions.rows;
+        state.unifiedMode = !versions.missing;
+        state.enriched = state.projects.map(enrichProject).sort((a,b) => b.priority - a.priority);
+        state.ready = true;
+        renderStats(); renderTodayActions(); renderView(); renderProjectList(); renderActions();
+        if (state.unifiedMode) setDataStatus('ok', 'Dati verificati: assistente operativo', `${state.projects.length} progetti e ${state.versions.length} versioni nell’archivio audio unificato. Le priorità sono calcolate su fonti complete.`);
+        else setDataStatus('warn', 'Dati verificati in modalità compatibilità', `Le fonti storiche sono leggibili, ma AUDIO_VERSIONI non è ancora attiva. Esegui la migrazione 2.23 per includere l’archivio audio unificato.`);
+        setDataControls(true);
+        if (window.loadKyvSidebar) loadKyvSidebar('assistente');
+    } catch (error) {
+        console.error('Assistente bloccato per dati incompleti:', error);
+        state.ready = false;
+        setDataStatus('bad', `Impossibile verificare ${error.table || 'i dati'}`, 'Le azioni sono sospese: un errore di lettura non viene interpretato come archivio vuoto. Controlla connessione, permessi o Diagnostica e riprova.');
+        renderBlockedState();
+        KYV.showToast('Assistente sospeso: dati incompleti. Nessuna priorità è stata ricalcolata.', 'error');
+    } finally {
+        state.loading = false;
+        if (refreshButton) { refreshButton.disabled = false; refreshButton.removeAttribute('aria-busy'); }
+        if (window.lucide) lucide.createIcons();
+    }
+}
+function projectKey(p) { return `${norm(p.TITOLO)} ${norm(p.ARTISTA)} ${norm(p.Nome_Vero_Artista)}`; }
+function matchProject(row, p) {
+    const id = Number(p.ID);
+    if (Number(row.ID_PROGETTO) === id) return true;
+    const key = projectKey(p);
+    const text = norm(Object.values(row || {}).join(' '));
+    const title = norm(p.TITOLO); const artist = norm(p.ARTISTA || p.Nome_Vero_Artista);
+    return (title && text.includes(title)) || (artist && text.includes(artist)) || (key && text.includes(key));
+}
+function hasInvoice(p) { return state.fatture.filter(f => matchProject(f, p)); }
+function isDriveAudioDoc(d) { return /audio[_ -]?drive|versione audio/i.test(String(d.Tipo_Documento || '')); }
+function hasDocs(p) { return state.docs.filter(d => matchProject(d, p) && !isDriveAudioDoc(d)); }
+function hasAudio(p) { return [...state.versions, ...state.audio, ...state.consegne, ...state.docs.filter(isDriveAudioDoc)].filter(a => matchProject(a, p)); }
+function projectInvii(p, audioRows) {
+    const ids = new Set(audioRows.map(a => Number(a.ID_FILE)).filter(Boolean));
+    return state.invii.filter(i => Number(i.ID_PROGETTO) === Number(p.ID) || ids.has(Number(i.ID_FILE)) || matchProject(i, p));
+}
+
+function hasFollowupFields(p) { return Object.prototype.hasOwnProperty.call(p || {}, 'Prossimo_Followup') || Object.prototype.hasOwnProperty.call(p || {}, 'Ultimo_Sollecito') || Object.prototype.hasOwnProperty.call(p || {}, 'Esito_Ascolto'); }
+function projectFollowDocs(p) { return state.docs.filter(d => matchProject(d, p) && /follow.?up|sollecito|risposta|ascolto/i.test(`${d.Tipo_Documento||''} ${d.Titolo_Documento||''} ${d.Note||''}`)); }
+function latestDate(values) { const dates = values.map(asDate).filter(Boolean).sort((a,b)=>b-a); return dates[0] || null; }
+function followupInfo(e) {
+    const p = e.p;
+    const next = asDate(p.Prossimo_Followup);
+    const lastSolicit = asDate(p.Ultimo_Sollecito);
+    const docs = projectFollowDocs(p);
+    const lastDoc = latestDate(docs.map(d => d.Data_Documento || d.created_at));
+    const invio = latestDate(e.inviiRows.map(i => i.Data_Invio));
+    const reference = latestDate([lastSolicit, lastDoc, invio]);
+    const days = reference ? Math.floor((today - reference) / DAY) : null;
+    const due = next ? Math.floor((today - next) / DAY) : null;
+    const outcome = p.Esito_Ascolto || (docs[0] && docs[0].Note) || '';
+    return { next, due, reference, days, outcome, docs };
+}
+function isFollowupDue(e) {
+    const f = followupInfo(e);
+    if (f.next && f.due >= 0) return true;
+    if (e.stage.id === 'ascolto') return true;
+    if (f.days !== null && f.days >= 10 && (e.inviiRows.length || f.docs.length)) return true;
+    return false;
+}
+
+function buildChecks(p, audioRows, inviiRows, docsRows, fattureRows) {
+    const checks = [
+        { k:'Titolo', ok:filled(p.TITOLO), area:'contatto', why:'identifica il brano' },
+        { k:'Artista', ok:filled(p.ARTISTA) || filled(p.Nome_Vero_Artista), area:'contatto', why:'serve per sessioni, invii e comunicazioni' },
+        { k:'Manager / Label', ok:filled(p.MANAGEMENT) || filled(p.Label), area:'contatto', why:'serve per follow-up e trattativa' },
+        { k:'Data sessione', ok:filled(p.Data_Sessione), area:'sessione', why:'fissa cronologia della creazione' },
+        { k:'Autori', ok:filled(p.AUTORI), area:'sessione', why:'base per quote e deposito SIAE' },
+        { k:'Note/Sviluppo', ok:filled(p.NOTE) || filled(p.SVILUPPO), area:'lavorazione', why:'evita di dimenticare lo stato creativo' },
+        { k:'Master / consegna', ok:filled(p.Data_Consegna_Master) || audioRows.length > 0, area:'master', why:'serve prima di invii ufficiali' },
+        { k:'Link audio', ok:audioRows.some(a => filled(a.LINK_FILE) || filled(a.Link_Dropbox) || filled(a.Link_Drive)), area:'master', why:'traccia le versioni su Drive o Dropbox' },
+        { k:'Hash SHA-256', ok:audioRows.some(a => filled(a.CONTENT_HASH) || filled(a.Hash_SHA256) || filled(a.Hash_File)), area:'master', why:'impronta tecnica del file' },
+        { k:'Invio registrato', ok:inviiRows.length > 0, area:'ascolto', why:'storico di ascolti e consegne' },
+        { k:'Conferma ricezione', ok:inviiRows.some(i => filled(i.Conferma_Ricezione)), area:'ascolto', why:'chiude il dubbio su ascolto/download' },
+        { k:'Contratto / Drive', ok:filled(p['Contratto link']) || docsRows.some(d => /contratto|accordo|split|liberatoria/i.test(`${d.Tipo_Documento} ${d.Titolo_Documento}`)), area:'admin', why:'base legale/operativa' },
+        { k:'Fee / Roy', ok:filled(p.FEE) || filled(p.ROY) || filled(p.Anticipo_Kill_Fee), area:'admin', why:'trattativa economica tracciata' },
+        { k:'Quote KYV', ok:filled(p.Quota_Musica_Kyv) || filled(p.Quota_Musica_Artista) || filled(p.Quota_Testo_Artista), area:'diritti', why:'split da chiarire prima del deposito' },
+        { k:'ISRC', ok:filled(p.Codice_ISRC), area:'diritti', why:'collega master/pubblicazione/IMAIE' },
+        { k:'Ruolo IMAIE', ok:filled(p.Ruolo_IMAIE_Kyv), area:'diritti', why:'verifica diritti connessi' },
+        { k:'Fattura', ok:fattureRows.length > 0 || filled(p.IDFT), area:'admin', why:'emissione amministrativa' },
+        { k:'Pagamento', ok:filled(p.PAGAMENTO) || fattureRows.some(f => KYV.isPaid(f.PAGATA)), area:'admin', why:'incasso reale' }
+    ];
+    return checks;
+}
+function stageFor(p, checks, inviiRows) {
+    const waiting = inviiRows.some(i => !filled(i.Conferma_Ricezione) && daysSince(i.Data_Invio) !== null && daysSince(i.Data_Invio) >= 7);
+    if (waiting) return { id:'ascolto', label:'In ascolto senza risposta', color:'red', icon:'hourglass' };
+    if (!filled(p.TITOLO) || (!filled(p.ARTISTA) && !filled(p.Nome_Vero_Artista)) || (!filled(p.MANAGEMENT) && !filled(p.Label))) return { id:'contatto', label:'Contatto / brief', color:'amber', icon:'handshake' };
+    if (!filled(p.Data_Sessione) || !filled(p.AUTORI) || (!filled(p.NOTE) && !filled(p.SVILUPPO))) return { id:'sessione', label:'Sessione / lavorazione', color:'blue', icon:'mic-2' };
+    if (!checks.find(c=>c.k==='Master / consegna').ok || !checks.find(c=>c.k==='Link audio').ok) return { id:'master', label:'Master / pre-release', color:'violet', icon:'waveform' };
+    if (!filled(p.FEE) && !filled(p.ROY) && !filled(p['Contratto link'])) return { id:'admin', label:'Trattativa economica', color:'amber', icon:'file-signature' };
+    if (!filled(p.Codice_ISRC) || !filled(p.Ruolo_IMAIE_Kyv) || !checks.find(c=>c.k==='Quote KYV').ok) return { id:'diritti', label:'SIAE / IMAIE', color:'violet', icon:'shield-check' };
+    if (!checks.find(c=>c.k==='Fattura').ok || !checks.find(c=>c.k==='Pagamento').ok) return { id:'admin', label:'Fattura / incasso', color:'green', icon:'receipt' };
+    return { id:'chiuso', label:'Chiuso / monitoraggio', color:'green', icon:'check-circle-2' };
+}
+function enrichProject(p) {
+    const audioRows = hasAudio(p);
+    const inviiRows = projectInvii(p, audioRows);
+    const docsRows = hasDocs(p);
+    const fattureRows = hasInvoice(p);
+    const checks = buildChecks(p, audioRows, inviiRows, docsRows, fattureRows);
+    const stage = stageFor(p, checks, inviiRows);
+    const missing = checks.filter(c => !c.ok);
+    let priority = missing.length * 4;
+    if (stage.id === 'ascolto') priority += 40;
+    if (isFollowupDue({ p, inviiRows, docsRows, audioRows, fattureRows, checks, missing, stage })) priority += 35;
+    if ((p.Priorita_Followup || '').toLowerCase().includes('urgente')) priority += 30;
+    else if ((p.Priorita_Followup || '').toLowerCase().includes('alta')) priority += 18;
+    if (stage.id === 'admin') priority += 16;
+    if (stage.id === 'diritti') priority += 14;
+    if (filled(p.Data_Pubblicazione) && missing.length) priority += 20;
+    const completed = checks.length - missing.length;
+    const completeness = checks.length ? Math.round((completed / checks.length) * 100) : 0;
+    return { p, audioRows, inviiRows, docsRows, fattureRows, checks, missing, completed, completeness, stage, priority };
+}
+
+function actionSeverity(e) {
+    const f = followupInfo(e);
+    if ((e.p.Priorita_Followup || '').toLowerCase().includes('urgente')) return 'red';
+    if (f.next && f.due >= 0) return 'red';
+    if (e.stage.id === 'ascolto') return 'red';
+    if (e.stage.id === 'admin') return 'amber';
+    if (e.stage.id === 'diritti') return 'violet';
+    return 'blue';
+}
+function todayActionRows(limit=9) {
+    return state.enriched
+        .map(e => ({...e, _follow: followupInfo(e), _due: isFollowupDue(e)}))
+        .filter(e => e._due || e.priority >= 24 || ['ascolto','admin','diritti'].includes(e.stage.id))
+        .sort((a,b) => (b._due - a._due) || b.priority - a.priority)
+        .slice(0, limit);
+}
+function renderTodayActions() {
+    const box = document.getElementById('today-actions-list');
+    if (!box) return;
+    const rows = todayActionRows(9);
+    if (!rows.length) {
+        box.innerHTML = '<div class="kyv-soft p-5 text-center text-kyv-text md:col-span-2 xl:col-span-3">Nessuna azione urgente. Controlla comunque i progetti in lavorazione o aggiorna gli invii audio.</div>';
+        return;
+    }
+    box.innerHTML = rows.map((e,idx) => {
+        const p=e.p, f=e._follow, sev=actionSeverity(e);
+        const when = f.next ? (f.due > 0 ? `${f.due} giorni in ritardo` : (f.due === 0 ? 'da fare oggi' : `tra ${Math.abs(f.due)} giorni`)) : (f.days !== null ? `ultimo movimento ${f.days} giorni fa` : 'senza data follow-up');
+        return `<article class="kyv-soft p-4 border-l-4 ${sev==='red'?'border-l-rose-400':sev==='amber'?'border-l-amber-400':sev==='violet'?'border-l-violet-400':'border-l-cyan-400'}">
+            <div class="flex items-start justify-between gap-2"><div><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Azione ${idx+1} · ${KYV.safeHtml(when)}</p><h3 class="text-white font-black mt-1">${KYV.safeHtml(p.ARTISTA || p.Nome_Vero_Artista || '—')} — ${KYV.safeHtml(p.TITOLO || 'Senza titolo')}</h3></div><div class="flex flex-col items-end gap-1"><span class="chip ${e.stage.color}">${e.stage.label}</span><span class="chip">${e.completeness}% completo</span></div></div>
+            <p class="text-sm text-amber-100/90 mt-3">${KYV.safeHtml(nextAction(e))}</p>
+            ${f.outcome ? `<p class="text-xs text-kyv-text mt-2">Esito/stato: ${KYV.safeHtml(String(f.outcome).slice(0,140))}</p>` : ''}
+            ${progressBar(e)}
+            <div class="flex flex-wrap gap-2 mt-3">${directActionLink(e)}<button class="pill-btn !py-2 !px-3" onclick="openFollowupModal(${Number(p.ID)})">Pianifica</button></div>
+        </article>`;
+    }).join('');
+    lucide.createIcons();
+}
+
+function renderStats() {
+    const contact = state.enriched.filter(e => e.stage.id === 'contatto').length;
+    const work = state.enriched.filter(e => ['sessione','master'].includes(e.stage.id)).length;
+    const wait = state.enriched.filter(e => e.stage.id === 'ascolto').length;
+    const admin = state.enriched.filter(e => e.stage.id === 'admin' || e.missing.some(m => ['Fee / Roy','Contratto / Drive','Fattura','Pagamento'].includes(m.k))).length;
+    KYV.setText('stat-contact', contact); KYV.setText('stat-work', work); KYV.setText('stat-wait', wait); KYV.setText('stat-admin', admin);
+}
+function setView(view) { if (!state.ready) return; state.view = view; renderView(); }
+function renderView() {
+    ['today','kanban','journey'].forEach(v => document.getElementById(`view-${v}`)?.classList.toggle('bg-indigo-500/10', state.view === v));
+    if (state.view === 'journey') renderJourneyMethod();
+    else if (state.view === 'kanban') renderKanban();
+    else renderToday();
+    lucide.createIcons();
+}
+function renderJourneyMethod() {
+    const steps = [
+        ['Contatto e brief','Rubrica, artista, manager, label, obiettivo della sessione. Il sistema deve sapere chi seguire e perché.','handshake'],
+        ['Sessione studio','Data sessione, presenti, autori, contributi, note creative. Qui si crea la prova cronologica del brano.','mic-2'],
+        ['Pezzo grezzo e lavorazione','Stato, sviluppo, demo, revisioni, pezzi fermi. Serve a non perdere idee e follow-up.','sliders-horizontal'],
+        ['Master / pre-release','Versioni Drive/Dropbox, hash, ISRC, data consegna e invii. Qui il brano diventa consegnabile.','waveform'],
+        ['Trattativa e diritti','Fee, royalties, kill fee, quote SIAE, ruolo IMAIE, contratto. Qui si protegge il valore.','file-signature'],
+        ['Fattura e incasso','Fattura, pagamento, spese extra, rendiconto. Qui si chiude il ciclo economico.','receipt']
+    ];
+    document.getElementById('view-container').innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${steps.map((s,i)=>`<div class="journey-step flex gap-4"><div class="step-dot todo shrink-0"><i data-lucide="${s[2]}" class="w-5 h-5"></i></div><div class="kyv-soft p-4 flex-1"><p class="text-[10px] text-indigo-300 font-black uppercase tracking-widest">Passaggio ${i+1}</p><h3 class="text-white font-black text-lg mt-1">${s[0]}</h3><p class="text-kyv-text text-sm mt-2 leading-relaxed">${s[1]}</p></div></div>`).join('')}</div>`;
+}
+function renderToday() {
+    const urgent = state.enriched.filter(e => e.stage.id === 'ascolto' || e.priority >= 24).slice(0, 8);
+    if (!urgent.length) { document.getElementById('view-container').innerHTML = `<div class="kyv-soft p-6 text-center text-kyv-text">Nessuna urgenza forte rilevata. Usa la ricerca guidata per lavorare su un progetto specifico.</div>`; return; }
+    document.getElementById('view-container').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">${urgent.map(renderMiniCard).join('')}</div>`;
+}
+function renderKanban() {
+    const cols = [ ['contatto','Contatto / brief'], ['sessione','Sessione / lavorazione'], ['master','Master / pre-release'], ['ascolto','In ascolto'], ['diritti','Diritti'], ['admin','Admin'] ];
+    document.getElementById('view-container').innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-6 gap-3">${cols.map(([id,label])=>`<div class="kyv-soft p-3 kanban-col"><div class="flex items-center justify-between mb-3"><h3 class="text-white font-black text-sm">${label}</h3><span class="chip">${state.enriched.filter(e=>e.stage.id===id).length}</span></div><div class="space-y-2">${state.enriched.filter(e=>e.stage.id===id).slice(0,8).map(renderMiniCard).join('') || '<p class="text-xs text-kyv-text italic">Vuoto</p>'}</div></div>`).join('')}</div>`;
+}
+function renderMiniCard(e) {
+    const p=e.p; return `<article class="project-card kyv-soft p-3 transition-all"><div class="flex items-start justify-between gap-2"><div><h4 class="text-white font-black leading-tight">${KYV.safeHtml(p.TITOLO || 'Senza titolo')}</h4><p class="text-xs text-cyan-200 font-bold mt-1">${KYV.safeHtml(p.ARTISTA || p.Nome_Vero_Artista || 'Artista da indicare')}</p></div><span class="chip ${e.stage.color}">${e.stage.label}</span></div><div class="flex items-center justify-between gap-2 mt-2"><p class="text-xs text-kyv-text">${e.missing.length} dati da completare</p><span class="chip">${e.completeness}%</span></div>${progressBar(e)}<p class="text-xs text-amber-100/90 mt-2">${KYV.safeHtml(nextAction(e))}</p><div class="flex flex-wrap gap-2 mt-3">${directActionLink(e)}<a class="pill-btn !py-2 !px-3" href="scheda_progetto.html?id=${encodeURIComponent(p.ID)}&tab=sintesi">Scheda</a></div></article>`;
+}
+function renderProjectList() {
+    const q = document.getElementById('project-search')?.value || '';
+    const filter = document.getElementById('stage-filter')?.value || 'all';
+    const rows = state.enriched.filter(e => (filter === 'all' || e.stage.id === filter) && (!q || contains(e.p, q))).slice(0, 80);
+    const box = document.getElementById('project-list');
+    if (!box) return;
+    box.innerHTML = rows.map(e => {
+        const p=e.p; return `<article class="project-card kyv-soft p-4 transition-all"><div class="flex flex-col lg:flex-row lg:items-start justify-between gap-3"><div class="min-w-0 flex-1"><div class="flex flex-wrap gap-2 mb-2"><span class="chip ${e.stage.color}"><i data-lucide="${e.stage.icon}" class="w-3 h-3 mr-1"></i>${e.stage.label}</span><span class="chip">${e.completeness}% completo</span><span class="chip">${e.missing.length} mancanti</span></div><h3 class="text-white font-black text-lg">${KYV.safeHtml(p.TITOLO || 'Senza titolo')}</h3><p class="text-cyan-200 font-bold text-sm mt-1">${KYV.safeHtml(p.ARTISTA || p.Nome_Vero_Artista || 'Artista da inserire')}</p><p class="text-xs text-kyv-text mt-2">Manager: ${KYV.safeHtml(p.MANAGEMENT || '-')} · Label: ${KYV.safeHtml(p.Label || '-')} · Stato: ${KYV.safeHtml(p.STATO || p.SVILUPPO || '-')}</p>${progressBar(e)}<p class="text-xs text-amber-100/90 mt-2">Prossima azione: ${KYV.safeHtml(nextAction(e))}</p></div><div class="flex flex-wrap gap-2 shrink-0">${directActionLink(e, false)}<a href="scheda_progetto.html?id=${encodeURIComponent(p.ID)}&tab=sintesi" class="pill-btn">Scheda</a><button onclick="openFollowupModal(${Number(p.ID)})" class="pill-btn">Pianifica</button></div></div></article>`;
+    }).join('') || '<div class="kyv-soft p-6 text-center text-kyv-text">Nessun progetto trovato.</div>';
+    lucide.createIcons();
+}
+function workflowAction(e) {
+    if (e.stage.id === 'ascolto') return { text:'Sollecita conferma o ascolto del file già inviato.', tab:'produzione', edit:false };
+    const first = e.missing[0];
+    if (!first) return { text:'Controlla la checklist finale e monitora rendiconti, incassi e sviluppi della release.', tab:'checklist', edit:false };
+    const map = {
+        'Titolo':'inserisci o conferma il titolo definitivo/provvisorio', 'Artista':'recupera nome artista e nome vero', 'Manager / Label':'associa manager, referente o label', 'Data sessione':'fissa o registra la data della sessione', 'Autori':'scrivi chi ha partecipato come autore', 'Note/Sviluppo':'aggiorna lo stato creativo del pezzo', 'Master / consegna':'carica/consegna il master o registra la versione audio', 'Link audio':'collega la versione presente su Drive o Dropbox', 'Hash SHA-256':'calcola l’impronta digitale del file', 'Invio registrato':'registra a chi hai mandato il brano', 'Conferma ricezione':'chiedi e salva conferma ricezione/ascolto', 'Contratto / Drive':'salva contratto o cartella Drive', 'Fee / Roy':'definisci fee, royalties o kill fee', 'Quote KYV':'chiarisci quote SIAE/autoriali', 'ISRC':'recupera codice ISRC', 'Ruolo IMAIE':'verifica ruolo IMAIE di KYV', 'Fattura':'emetti o collega fattura', 'Pagamento':'segna pagamento/incasso reale'
+    };
+    const tabs = {
+        'Titolo':'sintesi', 'Artista':'sintesi', 'Manager / Label':'sintesi',
+        'Data sessione':'produzione', 'Autori':'produzione', 'Note/Sviluppo':'produzione', 'Master / consegna':'produzione', 'Link audio':'produzione', 'Hash SHA-256':'produzione', 'Invio registrato':'produzione', 'Conferma ricezione':'produzione',
+        'Contratto / Drive':'docs', 'Fee / Roy':'amministrazione', 'Quote KYV':'diritti', 'ISRC':'diritti', 'Ruolo IMAIE':'diritti', 'Fattura':'amministrazione', 'Pagamento':'amministrazione'
+    };
+    const quickEdit = new Set(['Titolo','Artista','Manager / Label','Data sessione','Autori','Note/Sviluppo','Contratto / Drive','Fee / Roy','Quote KYV','ISRC','Ruolo IMAIE','Pagamento']);
+    return { text: map[first.k] || `completa ${first.k}`, tab: tabs[first.k] || 'sintesi', edit: quickEdit.has(first.k) };
+}
+function nextAction(e) { return workflowAction(e).text; }
+function actionHref(e) {
+    const action = workflowAction(e);
+    return `scheda_progetto.html?id=${encodeURIComponent(e.p.ID)}&tab=${encodeURIComponent(action.tab)}${action.edit?'&edit=1':''}`;
+}
+function directActionLink(e, compact = true) {
+    return `<a href="${actionHref(e)}" class="pill-btn ${compact?'!py-2 !px-3':''} bg-indigo-500/10 border-indigo-500/30 text-indigo-100"><i data-lucide="arrow-right-circle" class="w-4 h-4"></i>Fai ora</a>`;
+}
+function progressBar(e) {
+    return `<div class="progress-track mt-3" role="progressbar" aria-label="Completamento progetto" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${e.completeness}"><div class="progress-fill" style="width:${e.completeness}%"></div></div>`;
+}
+function renderActions() {
+    const actions = state.enriched.slice(0, 12).map(e => `<div class="kyv-soft p-3"><div class="flex items-start justify-between gap-2"><div><p class="text-white font-black text-sm">${KYV.safeHtml(e.p.TITOLO || 'Senza titolo')}</p><p class="text-xs text-cyan-200 font-bold">${KYV.safeHtml(e.p.ARTISTA || e.p.Nome_Vero_Artista || '—')}</p></div><span class="chip">${e.completeness}%</span></div><p class="text-xs text-kyv-text mt-2">${KYV.safeHtml(nextAction(e))}</p><div class="flex flex-wrap items-center gap-2 mt-3">${directActionLink(e)}<button onclick="openFollowupModal(${Number(e.p.ID)})" class="text-xs text-amber-200 font-black hover:text-white">Pianifica</button></div></div>`).join('');
+    document.getElementById('smart-actions').innerHTML = actions || '<p class="text-sm text-kyv-text">Nessuna azione disponibile.</p>';
+}
+
+function followupSqlText(){ return `-- KyvManagerPro v2.9.5 - Follow-up operativo e spese collegate\nalter table public."PROGETTI"\n  add column if not exists "Prossimo_Followup" date null,\n  add column if not exists "Ultimo_Sollecito" date null,\n  add column if not exists "Esito_Ascolto" text null,\n  add column if not exists "Priorita_Followup" text null,\n  add column if not exists "Note_Followup" text null;\n\nalter table public."Spese Extra"\n  add column if not exists "ID_PROGETTO" bigint null;\n\ncreate index if not exists "idx_progetti_prossimo_followup" on public."PROGETTI" ("Prossimo_Followup");\ncreate index if not exists "idx_spese_extra_id_progetto" on public."Spese Extra" ("ID_PROGETTO");`; }
+function showFollowupSql(){ navigator.clipboard.writeText(followupSqlText()).then(()=>KYV.showToast('SQL follow-up copiato. Incollalo in Supabase SQL Editor quando vuoi attivare i campi strutturati.', 'success')); }
+function openFollowupModal(id){
+    if (!state.ready) { KYV.showToast('Attendi la verifica completa dei dati prima di pianificare.', 'warning'); return; }
+    const e = state.enriched.find(x => Number(x.p.ID) === Number(id)); if(!e) return;
+    const p=e.p; const f=followupInfo(e);
+    document.getElementById('followup-project-id').value = p.ID;
+    document.getElementById('followup-title').textContent = `${p.ARTISTA || p.Nome_Vero_Artista || '—'} — ${p.TITOLO || 'Senza titolo'}`;
+    document.getElementById('followup-next').value = p.Prossimo_Followup ? String(p.Prossimo_Followup).slice(0,10) : '';
+    document.getElementById('followup-priority').value = p.Priorita_Followup || 'Media';
+    document.getElementById('followup-outcome').value = p.Esito_Ascolto || 'In attesa risposta';
+    document.getElementById('followup-note').value = p.Note_Followup || '';
+    const modal=document.getElementById('followup-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); modal.setAttribute('aria-hidden','false'); lucide.createIcons();
+}
+function closeFollowupModal(){ const modal=document.getElementById('followup-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); modal.setAttribute('aria-hidden','true'); }
+function currentFollowupEntry(){
+    const id=Number(document.getElementById('followup-project-id').value); const e=state.enriched.find(x=>Number(x.p.ID)===id); if(!e) return null;
+    return { e, payload: {
+        Prossimo_Followup: document.getElementById('followup-next').value || null,
+        Ultimo_Sollecito: new Date().toISOString().slice(0,10),
+        Esito_Ascolto: document.getElementById('followup-outcome').value || null,
+        Priorita_Followup: document.getElementById('followup-priority').value || null,
+        Note_Followup: document.getElementById('followup-note').value.trim() || null
+    }};
+}
+function followupDraftText(entry=currentFollowupEntry()){
+    if(!entry) return '';
+    const p=entry.e.p, pay=entry.payload;
+    return `FOLLOW-UP KYV\n\nProgetto: ${p.ARTISTA || p.Nome_Vero_Artista || '-'} - ${p.TITOLO || '-'}\nStato: ${entry.e.stage.label}\nEsito/ascolto: ${pay.Esito_Ascolto || '-'}\nProssimo follow-up: ${pay.Prossimo_Followup || '-'}\nPriorità: ${pay.Priorita_Followup || '-'}\nNota: ${pay.Note_Followup || '-'}\n\nAzione consigliata: ${nextAction(entry.e)}\nApri qui: ${actionHref(entry.e)}`;
+}
+function copyFollowupDraft(){ const txt=followupDraftText(); if(txt) navigator.clipboard.writeText(txt).then(()=>KYV.showToast('Messaggio follow-up copiato.', 'success')); }
+async function saveFollowup(e){
+    e.preventDefault(); if (!state.ready) { KYV.showToast('Salvataggio sospeso: i dati non sono stati verificati.', 'warning'); return; } const entry=currentFollowupEntry(); if(!entry) return; const {p}=entry.e; const btn=document.getElementById('followup-save'); btn.disabled=true;
+    try{
+        if(hasFollowupFields(p)){
+            const {data,error}=await db.from('PROGETTI').update(entry.payload).eq('ID', p.ID).select('*').single();
+            if(error) throw error;
+            const idx=state.projects.findIndex(x=>Number(x.ID)===Number(p.ID)); if(idx>=0) state.projects[idx]=data;
+            KYV.showToast('Follow-up salvato nel progetto.', 'success');
+        } else {
+            const note=followupDraftText(entry);
+            const {data,error}=await db.from('DOCUMENTI_PROGETTO').insert([{ID_PROGETTO:p.ID, Tipo_Documento:'Follow-up operativo', Titolo_Documento:`Follow-up — ${(p.ARTISTA || p.Nome_Vero_Artista || '')} ${(p.TITOLO || '')}`.trim(), Fonte:'Assistente Produzione', Link_Drive:null, Data_Documento:new Date().toISOString().slice(0,10), Note:note}]).select('*');
+            if(error) throw error;
+            state.docs=[...(data||[]), ...state.docs];
+            KYV.showToast('Colonne follow-up non presenti: salvato come nota in Documenti Progetto.', 'warning');
+        }
+        closeFollowupModal(); state.enriched=state.projects.map(enrichProject).sort((a,b)=>b.priority-a.priority); renderStats(); renderTodayActions(); renderView(); renderProjectList(); renderActions();
+    } catch(err){ console.error(err); KYV.showToast('Errore salvataggio follow-up. Controlla la connessione o apri Diagnostica.', 'error'); }
+    finally{ btn.disabled=false; lucide.createIcons(); }
+}
+function copyTodayActions(){
+    if (!state.ready) { KYV.showToast('Le azioni non sono disponibili finché i dati non sono verificati.', 'warning'); return; }
+    const rows=todayActionRows(10); const text=`KYV Manager Pro - Azioni di oggi\n\n${rows.map((e,i)=>`${i+1}. ${e.p.ARTISTA || e.p.Nome_Vero_Artista || '-'} - ${e.p.TITOLO || '-'}\n   Fase: ${e.stage.label}\n   Azione: ${nextAction(e)}\n   Follow-up: ${(e.p.Prossimo_Followup || '-')}`).join('\n\n')}`;
+    navigator.clipboard.writeText(text).then(()=>KYV.showToast('Azioni di oggi copiate.', 'success'));
+}
+
+function copyProjectAction(id) {
+    if (!state.ready) { KYV.showToast('Il follow-up non è disponibile finché i dati non sono verificati.', 'warning'); return; }
+    const e = state.enriched.find(x => Number(x.p.ID) === Number(id)); if (!e) return;
+    const p=e.p;
+    const text = `KYV Manager Pro - Follow-up progetto\n\nProgetto: ${p.TITOLO || '-'}\nArtista: ${p.ARTISTA || p.Nome_Vero_Artista || '-'}\nCompletamento: ${e.completeness}%\nFase: ${e.stage.label}\nAzione consigliata: ${nextAction(e)}\n\nDati mancanti:\n${e.missing.slice(0,10).map(m=>`- ${m.k}: ${m.why}`).join('\n') || '- Nessuna mancanza critica'}\n\nApri qui: ${actionHref(e)}`;
+    navigator.clipboard.writeText(text).then(()=>KYV.showToast('Follow-up copiato.', 'success'));
+}
+function copyDailyBrief() {
+    if (!state.ready) { KYV.showToast('Il brief non è disponibile finché i dati non sono verificati.', 'warning'); return; }
+    const top = state.enriched.slice(0, 10);
+    const text = `KYV Manager Pro - Brief operativo di oggi\n\n${top.map((e,i)=>`${i+1}. ${e.p.ARTISTA || e.p.Nome_Vero_Artista || '-'} - ${e.p.TITOLO || '-'}\n   Fase: ${e.stage.label}\n   Azione: ${nextAction(e)}`).join('\n\n')}`;
+    navigator.clipboard.writeText(text).then(()=>KYV.showToast('Brief operativo copiato.', 'success'));
+}
+
+document.addEventListener('DOMContentLoaded', () => { if (window.loadKyvSidebar) loadKyvSidebar('assistente'); document.getElementById('followup-form')?.addEventListener('submit', saveFollowup); refreshAll(); lucide.createIcons(); });
+</script>
+</body>
+</html>

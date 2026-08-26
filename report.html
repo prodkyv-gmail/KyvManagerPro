@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Report & PDF</title>
+    
+    <!-- Tailwind, Lucide, Supabase -->
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Chart.js per i Grafici a video -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- jsPDF e AutoTable per la generazione dei PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Configurazioni KYV -->
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }
+    </script>
+        <link rel="stylesheet" href="kyv-responsive.css">
+<style>
+        body { background-color: #0f111a; color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #232838; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        
+        /* Animazioni per il caricamento */
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+   /* Nuove Scrollbar Allargate e Chiare */
+        ::-webkit-scrollbar { width: 16px; height: 16px; } 
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; } 
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 8px; border: 4px solid #0f111a; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .custom-scrollbar { scrollbar-width: auto; scrollbar-color: #4b5563 rgba(255, 255, 255, 0.02); }
+        .custom-scrollbar::-webkit-scrollbar { width: 16px; height: 16px; }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+
+    <!-- CONTENITORE SIDEBAR -->
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        <!-- HEADER -->
+        <header class="pt-8 px-4 md:px-8 pb-4 border-b border-kyv-border/50 shrink-0 bg-kyv-bg z-10 relative">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3 transition-colors" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center">Centro <span class="text-sky-400 ml-2">Reportistica</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs md:text-sm">Analisi a video e generazione documenti PDF per la stampa.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3 w-full sm:w-auto">
+                    <!-- Tasto Esporta PDF Universale -->
+                    <button id="btn-export-pdf" onclick="generateCurrentPDF()" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition-all flex items-center text-sm shadow-lg shadow-sky-500/20 border border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="file-down" class="w-4 h-4 mr-2"></i> <span id="text-export-pdf">Scarica PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MENU TABS REPORT -->
+            <div class="mt-6 flex space-x-2 overflow-x-auto custom-scrollbar pb-2">
+                <button onclick="loadReport('CRM')" id="tab-CRM" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-sky-600 text-white shadow-lg shadow-sky-500/20 border border-sky-500 transition-all report-tab flex items-center"><i data-lucide="users" class="w-3 h-3 mr-2"></i> Rubrica per Tipo</button>
+                <button onclick="loadReport('FINANZE')" id="tab-FINANZE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all report-tab flex items-center"><i data-lucide="coins" class="w-3 h-3 mr-2"></i> Stato Finanziario</button>
+                <button onclick="loadReport('PROGETTI')" id="tab-PROGETTI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all report-tab flex items-center"><i data-lucide="music" class="w-3 h-3 mr-2"></i> Analisi Progetti</button>
+            </div>
+        </header>
+
+        <!-- AREA REPORT A VIDEO -->
+        <div class="flex-1 overflow-auto bg-kyv-bg relative custom-scrollbar p-4 md:p-8" id="report-container">
+            
+            <div id="loader" class="flex flex-col items-center justify-center h-full text-kyv-text">
+                <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-sky-500 mb-4"></i>
+                <p class="font-medium tracking-wider uppercase text-xs">Elaborazione Dati in corso...</p>
+            </div>
+
+            <div id="report-content" class="hidden fade-in max-w-7xl mx-auto flex flex-col gap-6">
+                <!-- Sezione Filtri: Cards Interattive -->
+                <div class="mb-2">
+                     <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-white text-sm flex items-center"><i data-lucide="filter" class="w-4 h-4 mr-2 text-kyv-text"></i> Filtra Dati</h3>
+                        <span class="text-[10px] text-kyv-text uppercase tracking-widest font-semibold" id="active-filter-label">Filtro Attivo: NESSUNO</span>
+                    </div>
+                    <div id="report-filters" class="flex space-x-3 overflow-x-auto custom-scrollbar pb-3">
+                        <!-- Generate via JS -->
+                    </div>
+                </div>
+
+                <!-- Sezione Superiore: Cards Riassuntive -->
+                <div id="report-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Generate via JS -->
+                </div>
+
+                <!-- Sezione Centrale: Il Grafico Accattivante -->
+                <div class="bg-kyv-card border border-kyv-border rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-sky-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h3 class="font-bold text-white text-lg flex items-center" id="chart-title"><i data-lucide="pie-chart" class="w-5 h-5 mr-2 text-sky-400"></i> Analisi Visiva</h3>
+                    </div>
+                    <div class="w-full h-[350px] relative z-10">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Sezione Inferiore: Tabella Dati (quella che andrà nel PDF) -->
+                <div class="bg-kyv-card border border-kyv-border rounded-2xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-kyv-border bg-[#12151e]">
+                        <h3 class="font-bold text-white text-sm">Dettaglio Dati</h3>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs whitespace-nowrap">
+                            <thead class="bg-kyv-bg text-kyv-text uppercase tracking-wider text-[10px] border-b border-kyv-border" id="table-head">
+                                <!-- JS -->
+                            </thead>
+                            <tbody class="divide-y divide-kyv-border/30" id="table-body">
+                                <!-- JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-emerald-600 text-white px-5 py-4 rounded-xl shadow-2xl flex items-center z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none">
+        <i data-lucide="check-circle-2" class="w-5 h-5 mr-3"></i>
+        <span id="toast-msg" class="text-sm font-semibold">PDF Generato con successo.</span>
+    </div>
+
+    <script>
+        // Setup base Menu e Supabase
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback</aside>`;};}
+        loadKyvSidebar('report');
+
+        const fallbackUrl = 'https://sfclxyexipbgiohpwlnl.supabase.co';
+        const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY';
+        const supabaseClient = KYV.createSupabaseClient();
+
+        const fmtEuro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+        function parseKyvNumber(val) { return (window.KYV_HELPERS ? KYV_HELPERS.parseKyvNumber(val) : KYV.parseNumber(val)); }
+        function showToast(msg) { return (window.KYV_TOAST ? KYV_TOAST.show(msg, 'success') : KYV.showToast(msg, 'success')); }
+
+        // Variabili Globali per il Motore Report
+        let chartInstance = null;
+        let currentReportType = 'CRM';
+        let pdfDataStore = { title: '', columns: [], rows: [] }; // Salva i dati pronti per AutoTable
+        
+        // Cache dei dati raw per permettere i filtri senza ricaricare da Supabase
+        let rawDataCache = [];
+        let currentActiveFilter = null; // null = nessun filtro (mostra tutti)
+
+        // Inizializza Chart.js Dark Mode
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+        Chart.defaults.plugins.legend.labels.color = '#f8fafc';
+
+        // --- MOTORE CENTRALE ---
+        async function loadReport(type) {
+            currentReportType = type;
+            currentActiveFilter = null; // Reset filtro al cambio tab
+            
+            // UI Aggiornamento Tabs
+            document.querySelectorAll('.report-tab').forEach(btn => {
+                btn.className = 'px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all report-tab flex items-center';
+            });
+            const activeBtn = document.getElementById('tab-' + type);
+            if(activeBtn) activeBtn.className = 'px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-sky-600 text-white shadow-lg shadow-sky-500/20 border border-sky-500 transition-all report-tab flex items-center';
+
+            // Reset UI
+            document.getElementById('report-content').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('btn-export-pdf').disabled = true;
+
+            try {
+                // Raccogliamo i dati raw una sola volta per tab
+                if (type === 'CRM') {
+                    const { data, error } = await supabaseClient.from('CLIENTI').select('*').order('Nome_Denominazione', {ascending: true});
+                    if (error) throw error; rawDataCache = data || [];
+                } else if (type === 'FINANZE') {
+                    const { data, error } = await supabaseClient.from('FATTURE').select('Numero, Data, Denominazione, PrezzoUnitario, PAGATA');
+                    if (error) throw error; rawDataCache = data || [];
+                } else if (type === 'PROGETTI') {
+                    const { data, error } = await supabaseClient.from('PROGETTI').select('TITOLO, ARTISTA, STATO, FEE, SVILUPPO');
+                    if (error) throw error; rawDataCache = data || [];
+                }
+
+                // Genera la UI (Filtri + Contenuto)
+                renderCurrentReportEngine();
+                
+                // Mostra il contenuto
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('report-content').classList.remove('hidden');
+                document.getElementById('btn-export-pdf').disabled = false;
+                if(window.lucide) lucide.createIcons();
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loader').innerHTML = '<p class="text-red-500">Errore caricamento dati dal Database.</p>';
+            }
+        }
+
+        // Funzione ponte per ricaricare la vista quando clicchi su un filtro
+        window.applyReportFilter = function(filterValue) {
+            currentActiveFilter = filterValue;
+            renderCurrentReportEngine();
+            if(window.lucide) lucide.createIcons();
+        }
+
+        // Smista ai renderers specifici e applica l'evidenziazione ai filtri
+        function renderCurrentReportEngine() {
+            document.getElementById('active-filter-label').innerText = `Filtro Attivo: ${currentActiveFilter ? currentActiveFilter.toUpperCase() : 'TUTTI I DATI'}`;
+            
+            if (currentReportType === 'CRM') buildCRMView();
+            else if (currentReportType === 'FINANZE') buildFinanzeView();
+            else if (currentReportType === 'PROGETTI') buildProgettiView();
+
+            // Evidenzia visivamente la Card Filtro attiva
+            document.querySelectorAll('.filter-card').forEach(card => {
+                const isActive = (card.dataset.filter === String(currentActiveFilter));
+                card.className = `filter-card min-w-[140px] flex-shrink-0 cursor-pointer rounded-xl p-3 border transition-all ${isActive ? 'bg-sky-600/10 border-sky-500 shadow-lg shadow-sky-500/10' : 'bg-kyv-card border-kyv-border hover:border-kyv-text/50'}`;
+            });
+        }
+
+        // --- 1. VISTA RUBRICA (CRM) ---
+        function buildCRMView() {
+            // 1. Costruisci Filtri (basati sui dati completi)
+            const tipiDisponibili = {};
+            rawDataCache.forEach(c => {
+                let tipo = c.Tipologia ? c.Tipologia.trim() : 'Altro';
+                tipiDisponibili[tipo] = (tipiDisponibili[tipo] || 0) + 1;
+            });
+            
+            let filtriHtml = `<div onclick="applyReportFilter(null)" data-filter="null" class="filter-card min-w-[140px] flex-shrink-0 cursor-pointer rounded-xl p-3 border transition-all bg-kyv-card border-kyv-border"><p class="text-[10px] text-kyv-text uppercase font-bold mb-1">Tutti</p><h4 class="text-lg font-black text-white">${rawDataCache.length}</h4></div>`;
+            Object.keys(tipiDisponibili).sort().forEach(tipo => {
+                filtriHtml += `<div onclick="applyReportFilter('${tipo}')" data-filter="${tipo}" class="filter-card min-w-[140px] flex-shrink-0 cursor-pointer rounded-xl p-3 border transition-all bg-kyv-card border-kyv-border"><p class="text-[10px] text-kyv-text uppercase font-bold mb-1 truncate">${tipo}</p><h4 class="text-lg font-black text-white">${tipiDisponibili[tipo]}</h4></div>`;
+            });
+            document.getElementById('report-filters').innerHTML = filtriHtml;
+
+            // 2. Applica Filtro ai Dati
+            let datiFiltrati = rawDataCache;
+            if (currentActiveFilter !== null) {
+                datiFiltrati = rawDataCache.filter(c => {
+                    let t = c.Tipologia ? c.Tipologia.trim() : 'Altro';
+                    return t === currentActiveFilter;
+                });
+            }
+
+            // Statistiche filtrate
+            const statsFiltrate = {};
+            datiFiltrati.forEach(c => {
+                let tipo = c.Tipologia ? c.Tipologia.trim() : 'Altro';
+                statsFiltrate[tipo] = (statsFiltrate[tipo] || 0) + 1;
+            });
+
+            // 3. Disegna Cards Centrali
+            document.getElementById('report-cards').innerHTML = `
+                <div class="bg-kyv-bg border border-kyv-border p-5 rounded-xl"><p class="text-[10px] font-bold text-kyv-text uppercase mb-1">Contatti (Visualizzati)</p><h3 class="text-2xl font-bold text-white">${datiFiltrati.length}</h3></div>
+                <div class="bg-kyv-bg border border-kyv-border p-5 rounded-xl"><p class="text-[10px] font-bold text-kyv-text uppercase mb-1">Categorie nel Filtro</p><h3 class="text-2xl font-bold text-white">${Object.keys(statsFiltrate).length}</h3></div>
+                <div class="bg-kyv-bg border border-kyv-border p-5 rounded-xl"><p class="text-[10px] font-bold text-kyv-text uppercase mb-1">Tipo più frequente</p><h3 class="text-xl font-bold text-sky-400 mt-1 truncate">${Object.keys(statsFiltrate).length ? Object.keys(statsFiltrate).reduce((a, b) => statsFiltrate[a] > statsFiltrate[b] ? a : b) : '-'}</h3></div>
+            `;
+
+            // 4. Disegna Grafico
+            document.getElementById('chart-title').innerHTML = '<i data-lucide="pie-chart" class="w-5 h-5 mr-2 text-sky-400"></i> Distribuzione Contatti';
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(document.getElementById('mainChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statsFiltrate),
+                    datasets: [{ data: Object.values(statsFiltrate), backgroundColor: ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#64748b'], borderWidth: 0, hoverOffset: 10 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '60%' }
+            });
+
+            // 5. Prepara Tabella
+            document.getElementById('table-head').innerHTML = '<tr><th class="px-4 py-3">Nominativo</th><th class="px-4 py-3">Tipologia</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">P.IVA / C.F.</th><th class="px-4 py-3">Telefono</th></tr>';
+            let tbody = ''; let pdfRows = [];
+            datiFiltrati.forEach(c => {
+                let nom = c.Nome_Denominazione || '-'; let tip = c.Tipologia || '-'; let em = c.Email || '-'; let piva = c.Partita_IVA || '-'; let tel = c.Telefono || '-';
+                tbody += `<tr class="hover:bg-kyv-border/30"><td class="px-4 py-3 font-medium text-white">${nom}</td><td class="px-4 py-3"><span class="bg-kyv-border px-2 py-1 rounded text-[10px]">${tip}</span></td><td class="px-4 py-3 text-sky-400">${em}</td><td class="px-4 py-3 font-mono">${piva}</td><td class="px-4 py-3">${tel}</td></tr>`;
+                pdfRows.push([nom, tip, em, piva, tel]);
+            });
+            document.getElementById('table-body').innerHTML = tbody;
+
+            // PDF Setup
+            let pdfTitle = 'Rubrica Contatti';
+            if (currentActiveFilter) pdfTitle += ` (Filtro: ${currentActiveFilter})`;
+            pdfDataStore = { title: pdfTitle, columns: ['Nominativo', 'Tipologia', 'Email', 'P.IVA', 'Telefono'], rows: pdfRows };
+        }
+
+        // --- 2. VISTA FINANZE ---
+        function buildFinanzeView() {
+            // 1. Costruisci Filtri (Pagata, Non Pagata)
+            let totP = 0, totNP = 0;
+            rawDataCache.forEach(f => {
+                let isPag = f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI');
+                if(isPag) totP++; else totNP++;
+            });
+            
+            let filtriHtml = `
+                <div onclick="applyReportFilter(null)" data-filter="null" class="filter-card min-w-[140px] flex-shrink-0 cursor-pointer rounded-xl p-3 border transition-all bg-kyv-card border-kyv-border"><p class="text-[10px] text-kyv-text uppercase font-bold mb-1">Tutte</p><h4 class="text-lg font-black text-white">${rawDataCache.length}</h4></div>
+                <div onclick="applyReportFilter('PAGATA')" data-filter="PAGATA" class="filter-card min-w-[140px] flex-shrink-0 cursor-pointer rounded-xl p-3 border transition-all bg-kyv-card border-kyv-border"><p class="text-[10px] text-emerald-400 uppercase font-bold mb-1">Pagate</p><h4 class="text-lg font-black text-white">${totP}</h4></div>
+                <div onclick="applyReportFilter('ATTESA')" data-filter="ATTESA" class="filter-card min-w-[140px] flex-shrink-0 cursor-pointer rounded-xl p-3 border transition-all bg-kyv-card border-kyv-border"><p class="text-[10px] text-amber-400 uppercase font-bold mb-1">In Attesa</p><h4 class="text-lg font-black text-white">${totNP}</h4></div>
+            `;
+            document.getElementById('report-filters').innerHTML = filtriHtml;
+
+            // 2. Applica Filtro ai Dati
+            let datiFiltrati = rawDataCache;
+            if (currentActiveFilter === 'PAGATA') {
+                datiFiltrati = rawDataCache.filter(f => f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI'));
+            } else if (currentActiveFilter === 'ATTESA') {
+                datiFiltrati = rawDataCache.filter(f => !(f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI')));
+            }
+
+            // Statistiche filtrate
+            let totIncassato = 0; let totSospeso = 0;
+            datiFiltrati.forEach(f => {
+                let v = parseKyvNumber(f.PrezzoUnitario);
+                if (f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI')) totIncassato += v;
+                else totSospeso += v;
+            });
+
+            // 3. Disegna Cards
+            document.getElementById('report-cards').innerHTML = `
+                <div class="bg-kyv-bg border border-emerald-500/30 p-5 rounded-xl"><p class="text-[10px] font-bold text-emerald-400 uppercase mb-1">Incassato (Selezione)</p><h3 class="text-2xl font-bold text-emerald-400">${fmtEuro.format(totIncassato)}</h3></div>
+                <div class="bg-kyv-bg border border-amber-500/30 p-5 rounded-xl"><p class="text-[10px] font-bold text-amber-400 uppercase mb-1">Sospeso (Selezione)</p><h3 class="text-2xl font-bold text-amber-400">${fmtEuro.format(totSospeso)}</h3></div>
+                <div class="bg-kyv-bg border border-sky-500/30 p-5 rounded-xl"><p class="text-[10px] font-bold text-sky-400 uppercase mb-1">Totale Fatturato (Selezione)</p><h3 class="text-2xl font-bold text-sky-400">${fmtEuro.format(totIncassato + totSospeso)}</h3></div>
+            `;
+
+            // 4. Disegna Grafico
+            document.getElementById('chart-title').innerHTML = '<i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-emerald-400"></i> Stato Finanziario (Macro)';
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(document.getElementById('mainChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Incassato', 'In Attesa (Sospeso)'],
+                    datasets: [{ label: 'Importo (€)', data: [totIncassato, totSospeso], backgroundColor: ['#10b981', '#f59e0b'], borderRadius: 8 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#232838' } }, x: { grid: { display: false } } } }
+            });
+
+            // 5. Prepara Tabella
+            document.getElementById('table-head').innerHTML = '<tr><th class="px-4 py-3">N° Fattura</th><th class="px-4 py-3">Data</th><th class="px-4 py-3">Cliente</th><th class="px-4 py-3 text-right">Importo</th><th class="px-4 py-3 text-center">Stato</th></tr>';
+            let tbody = ''; let pdfRows = [];
+            datiFiltrati.sort((a,b) => new Date(b.Data || 0) - new Date(a.Data || 0));
+            datiFiltrati.forEach(f => {
+                let n = f.Numero || '-'; let d = f.Data ? new Date(f.Data).toLocaleDateString('it-IT') : '-'; let c = f.Denominazione || '-';
+                let imp = fmtEuro.format(parseKyvNumber(f.PrezzoUnitario)); let isPag = f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI');
+                let badge = isPag ? '<span class="text-emerald-400">Pagata</span>' : '<span class="text-amber-400 font-bold">In Attesa</span>';
+                tbody += `<tr class="hover:bg-kyv-border/30"><td class="px-4 py-3 font-mono text-white">${n}</td><td class="px-4 py-3 text-kyv-text">${d}</td><td class="px-4 py-3 truncate max-w-[200px]">${c}</td><td class="px-4 py-3 text-right font-bold text-white">${imp}</td><td class="px-4 py-3 text-center">${badge}</td></tr>`;
+                pdfRows.push([n, d, c, imp, isPag ? 'Pagata' : 'In Attesa']);
+            });
+            document.getElementById('table-body').innerHTML = tbody;
+
+            // PDF
+            let pdfTitle = 'Report Finanziario';
+            if (currentActiveFilter) pdfTitle += ` (Filtro: ${currentActiveFilter})`;
+            pdfDataStore = { title: pdfTitle, columns: ['Numero', 'Data', 'Cliente', 'Importo', 'Stato'], rows: pdfRows };
+        }
+
+        // --- 3. VISTA PROGETTI ---
+        function buildProgettiView() {
+            // 1. Filtri (Stato Lavorazione)
+            const statiDisp = {};
+            rawDataCache.forEach(p => {
+                let st = p.STATO ? p.STATO.trim().toUpperCase() : 'NON DEFINITO';
+                statiDisp[st] = (statiDisp[st] || 0) + 1;
+            });
+            
+            let filtriHtml = `<div onclick="applyReportFilter(null)" data-filter="null" class="filter-card min-w-[140px] flex-shrink-0 cursor-pointer rounded-xl p-3 border transition-all bg-kyv-card border-kyv-border"><p class="text-[10px] text-kyv-text uppercase font-bold mb-1">Tutti i Progetti</p><h4 class="text-lg font-black text-white">${rawDataCache.length}</h4></div>`;
+            Object.keys(statiDisp).sort().forEach(st => {
+                filtriHtml += `<div onclick="applyReportFilter('${st}')" data-filter="${st}" class="filter-card min-w-[140px] flex-shrink-0 cursor-pointer rounded-xl p-3 border transition-all bg-kyv-card border-kyv-border"><p class="text-[10px] text-indigo-400 uppercase font-bold mb-1 truncate">${st}</p><h4 class="text-lg font-black text-white">${statiDisp[st]}</h4></div>`;
+            });
+            document.getElementById('report-filters').innerHTML = filtriHtml;
+
+            // 2. Applica Filtro ai Dati
+            let datiFiltrati = rawDataCache;
+            if (currentActiveFilter !== null) {
+                datiFiltrati = rawDataCache.filter(p => {
+                    let st = p.STATO ? p.STATO.trim().toUpperCase() : 'NON DEFINITO';
+                    return st === currentActiveFilter;
+                });
+            }
+
+            // Statistiche
+            let totFee = 0; let countUscite = 0; const statsFiltrate = {};
+            datiFiltrati.forEach(p => {
+                totFee += parseKyvNumber(p.FEE);
+                if (p.SVILUPPO === 'FINITA' || String(p.STATO).toUpperCase().includes('USCITA')) countUscite++;
+                let st = p.STATO ? p.STATO.trim().toUpperCase() : 'NON DEFINITO';
+                statsFiltrate[st] = (statsFiltrate[st] || 0) + 1;
+            });
+
+            // 3. Disegna Cards
+            document.getElementById('report-cards').innerHTML = `
+                <div class="bg-kyv-bg border border-kyv-border p-5 rounded-xl"><p class="text-[10px] font-bold text-kyv-text uppercase mb-1">Lavori (Visualizzati)</p><h3 class="text-2xl font-bold text-white">${datiFiltrati.length}</h3></div>
+                <div class="bg-kyv-bg border border-indigo-500/30 p-5 rounded-xl"><p class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Brani Pubblicati in elenco</p><h3 class="text-2xl font-bold text-indigo-400">${countUscite}</h3></div>
+                <div class="bg-kyv-bg border border-purple-500/30 p-5 rounded-xl"><p class="text-[10px] font-bold text-purple-400 uppercase mb-1">Fee Contrattualizzata (Elenco)</p><h3 class="text-2xl font-bold text-purple-400">${fmtEuro.format(totFee)}</h3></div>
+            `;
+
+            // 4. Disegna Grafico
+            document.getElementById('chart-title').innerHTML = '<i data-lucide="music" class="w-5 h-5 mr-2 text-indigo-400"></i> Densità Fasi di Lavorazione';
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(document.getElementById('mainChart').getContext('2d'), {
+                type: 'polarArea',
+                data: {
+                    labels: Object.keys(statsFiltrate),
+                    datasets: [{ data: Object.values(statsFiltrate), backgroundColor: ['rgba(139, 92, 246, 0.6)', 'rgba(56, 189, 248, 0.6)', 'rgba(16, 185, 129, 0.6)', 'rgba(244, 63, 94, 0.6)', 'rgba(245, 158, 11, 0.6)'], borderWidth: 1, borderColor: '#151923' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, scales: { r: { grid: { color: '#232838' }, ticks: { display: false } } } }
+            });
+
+            // 5. Prepara Tabella
+            document.getElementById('table-head').innerHTML = '<tr><th class="px-4 py-3">Progetto</th><th class="px-4 py-3">Artista</th><th class="px-4 py-3">Stato</th><th class="px-4 py-3 text-right">Fee Pattuita</th></tr>';
+            let tbody = ''; let pdfRows = [];
+            datiFiltrati.forEach(p => {
+                let t = p.TITOLO || '-'; let a = p.ARTISTA || '-'; let s = p.STATO || '-'; let f = p.FEE ? fmtEuro.format(parseKyvNumber(p.FEE)) : '-';
+                tbody += `<tr class="hover:bg-kyv-border/30"><td class="px-4 py-3 font-bold text-white">${t}</td><td class="px-4 py-3 text-kyv-text">${a}</td><td class="px-4 py-3"><span class="bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded text-[10px] border border-indigo-500/30">${s}</span></td><td class="px-4 py-3 text-right text-emerald-400 font-mono">${f}</td></tr>`;
+                pdfRows.push([t, a, s, f]);
+            });
+            document.getElementById('table-body').innerHTML = tbody;
+
+            // PDF
+            let pdfTitle = 'Analisi Progetti';
+            if (currentActiveFilter) pdfTitle += ` (Stato: ${currentActiveFilter})`;
+            pdfDataStore = { title: pdfTitle, columns: ['Titolo Progetto', 'Artista', 'Stato Attuale', 'Fee Contrattuale'], rows: pdfRows };
+        }
+
+        // --- FUNZIONE MAGICA: ESPORTAZIONE PDF ---
+        function generateCurrentPDF() {
+            const btn = document.getElementById('btn-export-pdf');
+            const iconSpan = document.getElementById('text-export-pdf');
+            btn.disabled = true; iconSpan.innerText = "Generazione in corso...";
+            
+            try {
+                // 1. Inizializza jsPDF (formato A4 portrait)
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = doc.internal.pageSize.getWidth();
+                
+                // 2. Colori e Stile Intestazione
+                doc.setFillColor(15, 17, 26); // Sfondo Scuro KYV
+                doc.rect(0, 0, pageWidth, 40, 'F');
+                
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(22);
+                doc.setFont('helvetica', 'bold');
+                doc.text("KYV Studio Manager", 15, 20);
+                
+                doc.setTextColor(100, 116, 139); // Grigietto
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text("Report Generato il: " + new Date().toLocaleDateString('it-IT') + " " + new Date().toLocaleTimeString('it-IT'), 15, 28);
+
+                // Titolo specifico del Report
+                doc.setTextColor(0, 0, 0); // Torna al nero per il resto del documento
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text(pdfDataStore.title, 15, 55);
+
+                let startYForTable = 65;
+
+                // 3. CATTURA IL GRAFICO (Magia Visiva)
+                const canvas = document.getElementById('mainChart');
+                if (canvas && chartInstance) {
+                    // Crea un background bianco temporaneo per il canvas prima di esportare (altrimenti è trasparente e si perde nel PDF bianco)
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0, tempCanvas.width, tempCanvas.height);
+                    ctx.drawImage(canvas, 0, 0);
+                    
+                    const imgData = tempCanvas.toDataURL('image/jpeg', 1.0);
+                    // Calcola le dimensioni per farlo stare nella pagina
+                    const imgWidth = 120; // Larghezza in mm
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    // Centra l'immagine
+                    const xPos = (pageWidth - imgWidth) / 2;
+                    doc.addImage(imgData, 'JPEG', xPos, startYForTable, imgWidth, imgHeight);
+                    
+                    startYForTable += imgHeight + 15; // Sposta la tabella sotto al grafico
+                }
+
+                // 4. DISEGNA LA TABELLA
+                doc.autoTable({
+                    startY: startYForTable,
+                    head: [pdfDataStore.columns],
+                    body: pdfDataStore.rows,
+                    theme: 'striped',
+                    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' }, // Blu Sky Tailwind
+                    styles: { fontSize: 9, cellPadding: 3, textColor: 40 },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    margin: { top: 20, left: 15, right: 15 }
+                });
+
+                // 5. Salva il file
+                const filename = `KYV_Report_${currentReportType}_${new Date().getTime()}.pdf`;
+                doc.save(filename);
+                showToast("Documento salvato: " + filename);
+
+            } catch(e) {
+                console.error("Errore PDF:", e);
+                alert("Errore durante la generazione del PDF. Verifica la console.");
+            } finally {
+                btn.disabled = false; iconSpan.innerText = "Scarica PDF";
+            }
+        }
+
+        // Avvio iniziale (carica Rubrica come default)
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReport('CRM');
+        });
+
+    </script>
+</body>
+</html>

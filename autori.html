@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Dettaglio Autori</title>
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }</script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <style>
+        body { background-color: #0f111a; color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { width: 12px; height: 12px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #232838; border-radius: 6px; }
+        .author-row:hover { background: rgba(139, 92, 246, .10); }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        <section class="flex-1 flex flex-col h-full">
+            <header class="pt-8 px-4 md:px-8 pb-4 border-b border-kyv-border/50 shrink-0">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                    <div class="flex items-center">
+                        <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                        <div>
+                            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center">Dettaglio <span class="text-violet-400 ml-2">Autori</span></h2>
+                            <p class="text-kyv-text mt-1 text-xs md:text-sm">Vista per persona: opere collegate, ruoli, società, quote medie e possibili anomalie.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <div class="relative flex-1 md:w-80">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-kyv-text"></i>
+                            <input type="text" id="author-search" placeholder="Cerca autore, società, opera..." class="w-full bg-kyv-bg border border-kyv-border rounded-lg pl-9 pr-4 py-2 text-white outline-none" oninput="renderAuthors()">
+                        </div>
+                        <button onclick="fetchAuthors()" class="px-4 py-2 bg-kyv-card border border-kyv-border text-white rounded-lg flex items-center shadow-sm"><i data-lucide="refresh-cw" class="w-4 h-4 sm:mr-2 text-kyv-text"></i> <span class="hidden sm:inline">Ricarica</span></button>
+                    </div>
+                </div>
+                <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="bg-kyv-card border border-kyv-border rounded-xl p-3"><p class="text-[10px] uppercase text-kyv-text font-bold">Autori unici</p><p id="metric-authors" class="text-2xl font-black text-white">-</p></div>
+                    <div class="bg-kyv-card border border-kyv-border rounded-xl p-3"><p class="text-[10px] uppercase text-kyv-text font-bold">Opere analizzate</p><p id="metric-works" class="text-2xl font-black text-white">-</p></div>
+                    <div class="bg-kyv-card border border-kyv-border rounded-xl p-3"><p class="text-[10px] uppercase text-kyv-text font-bold">Senza società</p><p id="metric-missing-soc" class="text-2xl font-black text-amber-300">-</p></div>
+                    <div class="bg-kyv-card border border-kyv-border rounded-xl p-3"><p class="text-[10px] uppercase text-kyv-text font-bold">Ruoli diversi</p><p id="metric-multi-role" class="text-2xl font-black text-violet-300">-</p></div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-hidden bg-kyv-bg relative p-4 md:p-8 flex flex-col lg:flex-row gap-6">
+                <div class="w-full lg:w-2/5 xl:w-1/3 bg-kyv-card rounded-xl border border-kyv-border flex flex-col h-[45vh] lg:h-full overflow-hidden">
+                    <div class="p-4 border-b border-kyv-border shrink-0">
+                        <h3 class="font-black text-white flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-violet-300"></i> Rubrica autoriale da SIAE</h3>
+                        <p class="text-xs text-kyv-text mt-1">Questa non è la pagina quote del brano: qui parti dalla persona e capisci su quali opere compare.</p>
+                    </div>
+                    <div class="flex-1 overflow-y-auto custom-scrollbar p-2" id="authors-list"><div class="p-4 text-center text-kyv-text">Caricamento autori...</div></div>
+                </div>
+                <div class="w-full lg:w-3/5 xl:w-2/3 bg-kyv-card rounded-xl border border-kyv-border flex flex-col h-[55vh] lg:h-full overflow-y-auto custom-scrollbar p-6">
+                    <div id="author-empty" class="flex flex-col items-center justify-center h-full text-kyv-text opacity-60 text-center">
+                        <i data-lucide="user-round-search" class="w-16 h-16 mb-4"></i>
+                        <p class="font-bold text-white">Seleziona un autore</p>
+                        <p class="text-xs mt-1 max-w-md">Vedrai repertorio, ruoli, società DEM/DRM, quote e opere collegate. Per la ripartizione di un singolo brano usa invece Quote Autori.</p>
+                    </div>
+                    <div id="author-detail" class="hidden"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback Menu</aside>`;};}
+        loadKyvSidebar('autori');
+        let supabaseClient;
+        let rawRows = [];
+        let authors = [];
+        let selectedAuthorKey = null;
+
+        function n(value) { return KYV.parseNumber(String(value || '').replace('%', '')); }
+        function authorKey(row) {
+            const name = `${row['Cognome / Denominazione'] || ''} ${row.Nome || ''}`.trim();
+            return KYV.normalize(name || 'Sconosciuto');
+        }
+        function authorName(row) {
+            return `${row['Cognome / Denominazione'] || ''}${row.Nome ? ' ' + row.Nome : ''}`.trim() || 'Sconosciuto';
+        }
+        function buildAuthors(rows) {
+            const map = new Map();
+            rows.forEach(row => {
+                const key = authorKey(row);
+                if (!map.has(key)) map.set(key, { key, name: authorName(row), rows: [], works: new Set(), roles: new Set(), socDem: new Set(), socDrm: new Set(), demTotal: 0, drmTotal: 0 });
+                const a = map.get(key);
+                a.rows.push(row);
+                if (row.Titolo) a.works.add(String(row.Titolo).trim());
+                if (row.Qualifica) a.roles.add(String(row.Qualifica).trim().toUpperCase());
+                if (row['Società DEM']) a.socDem.add(String(row['Società DEM']).trim());
+                if (row['Società DRM']) a.socDrm.add(String(row['Società DRM']).trim());
+                a.demTotal += n(row['Quota DEM']);
+                a.drmTotal += n(row['Quota DRM']);
+            });
+            return Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name));
+        }
+        function filteredAuthors() {
+            const q = KYV.normalize(document.getElementById('author-search').value);
+            if (!q) return authors;
+            return authors.filter(a => {
+                const blob = KYV.normalize([a.name, Array.from(a.works).join(' '), Array.from(a.roles).join(' '), Array.from(a.socDem).join(' '), Array.from(a.socDrm).join(' ')].join(' '));
+                return blob.includes(q);
+            });
+        }
+        window.renderAuthors = function() {
+            const list = filteredAuthors();
+            const c = document.getElementById('authors-list');
+            if (!list.length) { c.innerHTML = '<div class="p-4 text-center text-kyv-text opacity-60">Nessun autore trovato.</div>'; return; }
+            c.innerHTML = list.map(a => `
+                <button onclick="selectAuthor('${a.key}')" class="author-row w-full text-left p-3 mb-2 rounded-xl border ${selectedAuthorKey === a.key ? 'border-violet-400 bg-violet-500/10' : 'border-kyv-border bg-kyv-bg'} transition-colors">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <h4 class="font-black text-white text-sm truncate">${KYV.safeHtml(a.name)}</h4>
+                            <p class="text-[10px] text-kyv-text mt-1">${a.works.size} opere · ${Array.from(a.roles).join(', ') || 'ruolo non indicato'}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-200 text-[10px] font-bold">${a.rows.length}</span>
+                    </div>
+                </button>`).join('');
+            if(window.lucide) lucide.createIcons({root: c});
+            if (!selectedAuthorKey && list[0]) selectAuthor(list[0].key);
+        }
+        window.selectAuthor = function(key) {
+            selectedAuthorKey = key;
+            renderAuthors();
+            const a = authors.find(x => x.key === key);
+            if (!a) return;
+            document.getElementById('author-empty').classList.add('hidden');
+            const detail = document.getElementById('author-detail');
+            detail.classList.remove('hidden');
+            const works = Array.from(a.works).sort();
+            const rows = [...a.rows].sort((x,y) => String(x.Titolo || '').localeCompare(String(y.Titolo || '')));
+            const missingSoc = rows.filter(r => !r['Società DEM'] && !r['Società DRM']).length;
+            detail.innerHTML = `
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 border-b border-kyv-border pb-5 mb-5">
+                    <div>
+                        <p class="text-[10px] text-violet-300 uppercase font-black tracking-wider">Scheda autore / avente diritto</p>
+                        <h3 class="text-2xl font-black text-white mt-1">${KYV.safeHtml(a.name)}</h3>
+                        <p class="text-sm text-kyv-text mt-2">Vista pensata per controllare continuità dei dati: ruoli, società, opere associate e anomalie da sistemare.</p>
+                    </div>
+                    <button onclick="copyAuthorRecap('${a.key}')" class="px-4 py-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/25 rounded-xl text-violet-100 font-bold text-xs inline-flex items-center justify-center"><i data-lucide="copy" class="w-4 h-4 mr-2"></i>Copia recap</button>
+                </div>
+                <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+                    <div class="bg-kyv-bg border border-kyv-border rounded-xl p-4"><p class="text-[10px] uppercase font-bold text-kyv-text">Opere</p><p class="text-2xl font-black text-white">${works.length}</p></div>
+                    <div class="bg-kyv-bg border border-kyv-border rounded-xl p-4"><p class="text-[10px] uppercase font-bold text-kyv-text">Media DEM</p><p class="text-2xl font-black text-emerald-300">${(a.demTotal / Math.max(a.rows.length,1)).toFixed(2)}%</p></div>
+                    <div class="bg-kyv-bg border border-kyv-border rounded-xl p-4"><p class="text-[10px] uppercase font-bold text-kyv-text">Media DRM</p><p class="text-2xl font-black text-purple-300">${(a.drmTotal / Math.max(a.rows.length,1)).toFixed(2)}%</p></div>
+                    <div class="bg-kyv-bg border ${missingSoc ? 'border-amber-500/35' : 'border-emerald-500/25'} rounded-xl p-4"><p class="text-[10px] uppercase font-bold text-kyv-text">Senza società</p><p class="text-2xl font-black ${missingSoc ? 'text-amber-300' : 'text-emerald-300'}">${missingSoc}</p></div>
+                </div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+                    <div class="bg-kyv-bg border border-kyv-border rounded-xl p-4"><p class="text-[10px] uppercase font-bold text-kyv-text mb-2">Ruoli rilevati</p><div class="flex flex-wrap gap-2">${Array.from(a.roles).map(r => `<span class="kyv-chip">${KYV.safeHtml(r)}</span>`).join('') || '<span class="text-kyv-text">Nessun ruolo</span>'}</div></div>
+                    <div class="bg-kyv-bg border border-kyv-border rounded-xl p-4"><p class="text-[10px] uppercase font-bold text-kyv-text mb-2">Società DEM/DRM</p><p class="text-sm text-white break-words">DEM: ${Array.from(a.socDem).join(', ') || '-'}<br>DRM: ${Array.from(a.socDrm).join(', ') || '-'}</p></div>
+                </div>
+                <h4 class="font-black text-white mb-3 flex items-center"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-violet-300"></i> Opere e quote collegate</h4>
+                <div class="overflow-x-auto border border-kyv-border rounded-xl">
+                    <table class="w-full text-left text-xs whitespace-nowrap">
+                        <thead class="bg-kyv-bg text-kyv-text uppercase text-[10px]"><tr><th class="px-3 py-2">Opera</th><th class="px-3 py-2">Qualifica</th><th class="px-3 py-2">DEM</th><th class="px-3 py-2">DRM</th><th class="px-3 py-2">Società</th></tr></thead>
+                        <tbody class="divide-y divide-kyv-border/40">${rows.map(r => `<tr><td class="px-3 py-2 font-bold text-white">${KYV.safeHtml(r.Titolo || '-')}</td><td class="px-3 py-2 text-violet-200">${KYV.safeHtml(r.Qualifica || '-')}</td><td class="px-3 py-2 text-emerald-300 font-bold">${n(r['Quota DEM']).toFixed(2)}%</td><td class="px-3 py-2 text-purple-300 font-bold">${n(r['Quota DRM']).toFixed(2)}%</td><td class="px-3 py-2 text-kyv-text">${KYV.safeHtml(r['Società DEM'] || r['Società DRM'] || '-')}</td></tr>`).join('')}</tbody>
+                    </table>
+                </div>`;
+            if(window.lucide) lucide.createIcons({root: detail});
+        }
+        window.copyAuthorRecap = async function(key) {
+            const a = authors.find(x => x.key === key); if (!a) return;
+            const text = `DETTAGLIO AUTORE\nNome: ${a.name}\nOpere: ${Array.from(a.works).join(', ')}\nRuoli: ${Array.from(a.roles).join(', ') || '-'}\nSocietà DEM: ${Array.from(a.socDem).join(', ') || '-'}\nSocietà DRM: ${Array.from(a.socDrm).join(', ') || '-'}\nRighe repertorio: ${a.rows.length}`;
+            try { await navigator.clipboard.writeText(text); KYV.showToast('Recap autore copiato.', 'success'); } catch(e) { KYV.showToast('Copia non riuscita.', 'warning'); }
+        }
+        async function fetchAuthors() {
+            document.getElementById('authors-list').innerHTML = '<div class="p-4 text-center text-kyv-text"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto"></i></div>'; if(window.lucide) lucide.createIcons();
+            try {
+                const { data, error } = await supabaseClient.from('EXPORT SIAE VERTICALE').select('Titolo, "Cognome / Denominazione", Nome, Qualifica, "Quota DEM", "Quota DRM", "Società DEM", "Società DRM"');
+                if (error) throw error;
+                rawRows = data || [];
+                authors = buildAuthors(rawRows);
+                const workSet = new Set(rawRows.map(r => r.Titolo).filter(Boolean));
+                KYV.setText('metric-authors', authors.length);
+                KYV.setText('metric-works', workSet.size);
+                KYV.setText('metric-missing-soc', rawRows.filter(r => !r['Società DEM'] && !r['Società DRM']).length);
+                KYV.setText('metric-multi-role', authors.filter(a => a.roles.size > 1).length);
+                selectedAuthorKey = null;
+                renderAuthors();
+            } catch(e) {
+                console.error(e);
+                document.getElementById('authors-list').innerHTML = `<div class="p-4 text-center text-rose-300">Errore caricamento: ${KYV.safeHtml(e.message || 'verifica tabella SIAE verticale')}</div>`;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => { supabaseClient = KYV.createSupabaseClient(); fetchAuthors(); if(window.lucide) lucide.createIcons(); });
+    </script>
+</body>
+</html>

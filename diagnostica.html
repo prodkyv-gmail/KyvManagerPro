@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Diagnostica Sistema</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0f111a">
+    <script>
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-system-diagnostics.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{kyv:{bg:'#0f111a',card:'#151923',border:'#232838',text:'#94a3b8'}}}}}</script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <link rel="stylesheet" href="kyv-theme.css">
+    <style>
+        body{background:#0f111a;color:#f8fafc}.kyv-panel{background:#151923;border:1px solid #232838;border-radius:1.25rem}.mini-label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;font-weight:900;margin-bottom:.35rem}
+        ::-webkit-scrollbar{width:16px;height:16px}::-webkit-scrollbar-track{background:rgba(255,255,255,.02);border-radius:8px}::-webkit-scrollbar-thumb{background:#4b5563;border-radius:8px;border:4px solid #0f111a}::-webkit-scrollbar-thumb:hover{background:#6b7280}.custom-scrollbar{scrollbar-width:auto;scrollbar-color:#4b5563 rgba(255,255,255,.02)}
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar relative z-10">
+            <header class="flex flex-col xl:flex-row justify-between xl:items-end gap-4 mb-6 border-b border-kyv-border/50 pb-6">
+                <div class="flex items-center min-w-0">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div class="min-w-0">
+                        <p class="text-xs uppercase tracking-[.18em] text-indigo-300 font-black">KyvManagerPro v2.12.0</p>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Diagnostica <span class="text-indigo-400">Sistema</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm max-w-4xl">Controlla Supabase, Drive, proxy Vercel, service worker, moduli comuni e log locali senza aprire DevTools.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="runDiagnostics()" class="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs"><i data-lucide="activity" class="w-4 h-4 inline mr-2"></i>Riesegui diagnosi</button>
+                    <button onclick="KYV_DIAGNOSTICS.downloadReport()" class="px-4 py-3 rounded-xl bg-kyv-card border border-kyv-border text-white font-black text-xs hover:border-cyan-400/50"><i data-lucide="file-down" class="w-4 h-4 inline mr-2"></i>Scarica report</button>
+                    <button onclick="KYV_DIAGNOSTICS.clearAllLogs()" class="px-4 py-3 rounded-xl bg-rose-600/10 border border-rose-500/30 text-rose-100 font-black text-xs hover:bg-rose-600/20"><i data-lucide="eraser" class="w-4 h-4 inline mr-2"></i>Pulisci log</button>
+                </div>
+            </header>
+
+            <section class="max-w-7xl mx-auto space-y-5">
+                <div id="diagnostics-summary" class="space-y-4"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <a href="kyv_drive.html" class="kyv-panel p-4 hover:border-emerald-400/50 transition-colors">
+                        <p class="text-[10px] uppercase tracking-[.16em] text-emerald-300 font-black">Drive</p>
+                        <h3 class="text-white font-black mt-1">Configura / testa Drive</h3>
+                        <p class="text-xs text-kyv-text mt-2 leading-relaxed">Apri Google Drive per incollare nuovi URL Apps Script e usare la Diagnosi collegamento.</p>
+                    </a>
+                    <a href="importexport.html" class="kyv-panel p-4 hover:border-purple-400/50 transition-colors">
+                        <p class="text-[10px] uppercase tracking-[.16em] text-purple-300 font-black">Backup</p>
+                        <h3 class="text-white font-black mt-1">Backup e ripristino</h3>
+                        <p class="text-xs text-kyv-text mt-2 leading-relaxed">Verifica backup, ripristino sicuro e report collisioni ID.</p>
+                    </a>
+                    <a href="editor.html" class="kyv-panel p-4 hover:border-indigo-400/50 transition-colors">
+                        <p class="text-[10px] uppercase tracking-[.16em] text-indigo-300 font-black">Database</p>
+                        <h3 class="text-white font-black mt-1">Studio Editor</h3>
+                        <p class="text-xs text-kyv-text mt-2 leading-relaxed">Controlla tabelle, record e campi con suggerimenti.</p>
+                    </a>
+                </div>
+                <div id="diagnostics-results" class="min-h-[360px]">
+                    <div class="kyv-panel p-6 text-kyv-text text-sm">Avvio diagnostica...</div>
+                </div>
+                <div class="kyv-panel p-5 text-xs text-kyv-text leading-relaxed">
+                    <h3 class="text-white font-black mb-2 flex items-center"><i data-lucide="shield-check" class="w-4 h-4 mr-2 text-emerald-300"></i>Nota v2.12.0</h3>
+                    <p>Questa pagina non modifica dati Supabase. Esegue controlli di lettura e scarica solo report JSON locali. Gli URL Drive salvati in locale restano gestiti da <b class="text-white">kyv_drive.html</b>.</p>
+                </div>
+            </section>
+        </section>
+    </main>
+    <script>
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML='<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback Menu</aside>';};}
+        loadKyvSidebar('diagnostica');
+        async function runDiagnostics(){
+            const root = document.getElementById('diagnostics-results');
+            if(root) root.innerHTML = '<div class="kyv-panel p-6 text-kyv-text text-sm flex items-center"><i data-lucide="loader-2" class="w-5 h-5 mr-2 animate-spin text-indigo-300"></i>Diagnosi in corso...</div>';
+            if(window.lucide) lucide.createIcons();
+            try{ await KYV_DIAGNOSTICS.runAll(); }
+            catch(err){
+                if(root) root.innerHTML = `<div class="rounded-2xl border border-rose-500/30 bg-rose-600/10 p-6 text-rose-100 font-bold">Errore diagnostica: ${String(err.message || err)}</div>`;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', runDiagnostics);
+        if(window.lucide) lucide.createIcons();
+    </script>
+</body>
+</html>

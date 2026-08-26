@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Accesso Riservato</title>
+    
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="menu.js"></script>
+<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }</script>
+        <link rel="stylesheet" href="kyv-responsive.css">
+<style>
+        body { background-color: #0f111a; color: #f8fafc; }
+        .kyv-input { width: 100%; background-color: #0f111a; border: 1px solid #232838; color: white; padding: 0.75rem 1rem 0.75rem 2.5rem; border-radius: 0.5rem; outline: none; transition: all 0.2s ease; }
+        .kyv-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen items-center justify-center overflow-hidden relative selection:bg-indigo-500/30">
+
+    <!-- Effetti di Luce Ambientali -->
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <div class="w-full max-w-md px-6 relative z-10">
+        <!-- Logo e Titolo -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-3xl text-white shadow-xl shadow-indigo-500/30 mb-6">K</div>
+            <h1 class="text-3xl font-extrabold text-white tracking-tight">KYV Studio</h1>
+            <p class="text-indigo-400 font-bold tracking-widest uppercase text-xs mt-2">Manager Pro 2.0</p>
+        </div>
+
+        <!-- Form Box -->
+        <div class="bg-kyv-card/80 backdrop-blur-xl border border-kyv-border p-8 rounded-2xl shadow-2xl">
+            <h2 class="text-lg font-bold text-white mb-6">Accesso Riservato</h2>
+            
+            <form id="login-form" class="space-y-5">
+                <div class="relative">
+                    <i data-lucide="mail" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-kyv-text"></i>
+                    <input type="email" id="email" required class="kyv-input" placeholder="La tua email">
+                </div>
+                
+                <div class="relative">
+                    <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-kyv-text"></i>
+                    <input type="password" id="password" required class="kyv-input" placeholder="Password">
+                </div>
+
+                <div id="error-msg" class="hidden bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-lg flex items-start">
+                    <i data-lucide="alert-circle" class="w-4 h-4 mr-2 shrink-0"></i>
+                    <span id="error-text">Credenziali non valide.</span>
+                </div>
+
+                <button type="submit" id="btn-login" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-500/20 border border-indigo-500 flex justify-center items-center">
+                    Accedi al Gestionale
+                </button>
+            </form>
+        </div>
+        
+        <p class="text-center text-[10px] text-kyv-text mt-8 opacity-50 uppercase tracking-widest">
+            Sistema protetto da crittografia end-to-end
+        </p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if(window.lucide) lucide.createIcons();
+            
+            // Inizializza Supabase
+            const supabase = window.supabase.createClient(KYV_CONFIG.SUPABASE_URL, KYV_CONFIG.SUPABASE_KEY);
+
+            const form = document.getElementById('login-form');
+            const btn = document.getElementById('btn-login');
+            const errorBox = document.getElementById('error-msg');
+            const errorText = document.getElementById('error-text');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // UI di caricamento
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
+                btn.disabled = true;
+                errorBox.classList.add('hidden');
+                if(window.lucide) lucide.createIcons({root: btn});
+
+                // Chiamata Autenticazione Supabase
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    // Accesso Negato
+                    errorText.innerText = "Email o password errati.";
+                    errorBox.classList.remove('hidden');
+                    btn.innerHTML = 'Accedi al Gestionale';
+                    btn.disabled = false;
+                } else {
+                    // Accesso Consentito! Vai alla Dashboard
+                    window.location.replace('index.html');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

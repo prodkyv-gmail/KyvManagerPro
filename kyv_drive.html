@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Google Drive</title>
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-audio-project.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{kyv:{bg:'#0f111a',card:'#151923',border:'#232838',text:'#94a3b8'}}}}}</script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <link rel="stylesheet" href="kyv-theme.css">
+    <style>
+        body{background:#0f111a;color:#f8fafc}.kyv-input{width:100%;background:#0f111a;border:1px solid #232838;color:white;padding:.75rem 1rem;border-radius:.75rem;outline:none}.kyv-input:focus{border-color:#10b981;box-shadow:0 0 0 2px rgba(16,185,129,.18)}.kyv-panel{background:#151923;border:1px solid #232838;border-radius:1.25rem}.mini-label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;font-weight:900;margin-bottom:.35rem}.drive-card:nth-child(even){background:rgba(255,255,255,.025)}.drive-card:nth-child(odd){background:rgba(255,255,255,.04)}
+        ::-webkit-scrollbar{width:16px;height:16px}::-webkit-scrollbar-track{background:rgba(255,255,255,.02);border-radius:8px}::-webkit-scrollbar-thumb{background:#4b5563;border-radius:8px;border:4px solid #0f111a}::-webkit-scrollbar-thumb:hover{background:#6b7280}
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar relative z-10">
+            <header class="flex flex-col sm:flex-row justify-between sm:items-end gap-4 mb-6 border-b border-kyv-border/50 pb-6">
+                <div class="flex items-center">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Google <span class="text-emerald-400">Drive</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm max-w-4xl">Ricerca nei Drive collegati: info@kyvprod.net e prodkyv@gmail.com. Puoi leggere un Drive singolo o tutti quelli configurati.</p>
+                    </div>
+                </div>
+                <a href="ascolto.html" class="px-4 py-3 rounded-xl bg-violet-600/15 border border-violet-500/25 text-violet-100 font-black text-xs hover:bg-violet-600/25"><i data-lucide="radio" class="w-4 h-4 inline mr-2"></i>Apri Radio</a>
+            </header>
+
+            <section class="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-5">
+                <aside class="space-y-5">
+                    <div class="kyv-panel p-5 space-y-4">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="hard-drive" class="w-5 h-5 mr-2 text-emerald-300"></i>Drive collegati</h3>
+                        <div><label class="mini-label">Account Drive</label><select id="drive-account" class="kyv-input"></select></div>
+                        <div><label class="mini-label">Filtro rapido</label><input id="drive-search" class="kyv-input" placeholder="Cerca file, cartella, account..." oninput="renderDriveFiles()"></div>
+                        <label class="flex items-center gap-2 text-xs text-kyv-text"><input id="audio-only" type="checkbox" class="accent-emerald-500" checked> Mostra solo file audio</label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="scanDrive()" id="btn-drive-scan" class="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="search" class="w-4 h-4 inline mr-2"></i>Cerca nel Drive</button>
+                            <button onclick="scanAllDrives()" class="px-4 py-3 rounded-xl bg-indigo-600/15 border border-indigo-500/25 text-indigo-100 font-black text-xs hover:bg-indigo-600/25"><i data-lucide="layers" class="w-4 h-4 inline mr-2"></i>Cerca in tutti i Drive</button>
+                            <button onclick="diagnoseDrive()" id="btn-drive-diagnose" class="px-4 py-3 rounded-xl bg-cyan-600/15 border border-cyan-500/25 text-cyan-100 font-black text-xs hover:bg-cyan-600/25"><i data-lucide="stethoscope" class="w-4 h-4 inline mr-2"></i>Diagnosi collegamento</button>
+                            <button onclick="downloadDriveLogs()" class="px-4 py-3 rounded-xl bg-kyv-bg border border-kyv-border text-white font-black text-xs hover:border-cyan-400/50"><i data-lucide="file-down" class="w-4 h-4 inline mr-2"></i>Scarica log</button>
+                            <button onclick="clearDriveLogs()" class="px-4 py-3 rounded-xl bg-kyv-bg border border-kyv-border text-white font-black text-xs hover:border-rose-400/50"><i data-lucide="eraser" class="w-4 h-4 inline mr-2"></i>Pulisci log</button>
+                            <button onclick="clearResults()" class="px-4 py-3 rounded-xl bg-kyv-bg border border-kyv-border text-white font-black text-xs hover:border-emerald-400/50"><i data-lucide="x" class="w-4 h-4 inline mr-2"></i>Svuota risultati</button>
+                        </div>
+                    </div>
+
+                    <div id="drive-status" class="kyv-panel p-5 text-xs text-kyv-text leading-relaxed"></div>
+                    <div class="kyv-panel p-5 space-y-3 text-xs text-kyv-text leading-relaxed">
+                        <h4 class="text-white font-black mb-1 flex items-center"><i data-lucide="wrench" class="w-4 h-4 mr-2 text-amber-300"></i>Configura nuovo URL Drive</h4>
+                        <p>Quando ricrei Apps Script, incolla qui il nuovo URL <code class="text-emerald-200">/exec</code>. Viene salvato nel browser e usato subito, senza dover ricompilare la webapp.</p>
+                        <div><label class="mini-label">Account da configurare</label><select id="drive-setup-account" class="kyv-input"></select></div>
+                        <div><label class="mini-label">Nuovo URL Apps Script /exec</label><input id="drive-setup-url" class="kyv-input" placeholder="https://script.google.com/macros/s/.../exec"></div>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="saveDriveSetupUrl()" class="px-4 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black text-xs"><i data-lucide="save" class="w-4 h-4 inline mr-2"></i>Salva URL e ricarica account</button>
+                            <button onclick="clearDriveSetupUrl()" class="px-4 py-3 rounded-xl bg-kyv-bg border border-kyv-border text-white font-black text-xs hover:border-amber-400/50"><i data-lucide="rotate-ccw" class="w-4 h-4 inline mr-2"></i>Rimuovi URL locale</button>
+                        </div>
+                    </div>
+                    <div class="kyv-panel p-5 text-xs text-kyv-text leading-relaxed">
+                        <h4 class="text-white font-black mb-2">Nota tecnica</h4>
+                        <p>La v2.11.7 usa un proxy Vercel interno <code class="text-emerald-200">/api/drive-proxy</code> per evitare i blocchi CORS di Google Apps Script. Gli Apps Script devono comunque essere pubblicati come Web App accessibile a Anyone.</p>
+                    </div>
+                </aside>
+
+                <section class="kyv-panel p-4 sm:p-5 min-h-[620px]">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="list-music" class="w-5 h-5 mr-2 text-emerald-300"></i>Risultati Drive</h3>
+                            <p id="drive-count" class="text-xs text-kyv-text mt-1">Nessun file caricato.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="copyResultList()" class="px-3 py-2 rounded-lg bg-kyv-bg border border-kyv-border text-xs font-black hover:border-emerald-400/50"><i data-lucide="copy" class="w-4 h-4 inline mr-2"></i>Copia lista</button>
+                            <button onclick="openFirstPlayable()" class="px-3 py-2 rounded-lg bg-emerald-600/15 border border-emerald-500/25 text-emerald-100 text-xs font-black hover:bg-emerald-600/25"><i data-lucide="play" class="w-4 h-4 inline mr-2"></i>Apri primo</button>
+                        </div>
+                    </div>
+                    <div id="files-list" class="grid grid-cols-1 2xl:grid-cols-2 gap-4"></div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML='<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback Menu</aside>';};}
+        loadKyvSidebar('drive');
+
+        let driveFiles = [];
+        let filteredFiles = [];
+        let projects = [];
+        let supabaseClient = null;
+        const H = (v) => (window.KYV && KYV.safeHtml) ? KYV.safeHtml(v ?? '') : String(v ?? '').replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#039;','"':'&quot;'}[c]));
+        const $ = (id) => document.getElementById(id);
+        function initSupabase(){ if(supabaseClient) return supabaseClient; supabaseClient = KYV.createSupabaseClient(); return supabaseClient; }
+        function projectOptionLabel(p){ return [p.ARTISTA,p.TITOLO].filter(Boolean).join(' - ') || p.TITOLO || p.ARTISTA || ('Progetto #' + p.ID); }
+        async function loadProjects(){ try{ const {data,error}=await initSupabase().from('PROGETTI').select('*').limit(2000); if(error) throw error; projects = (data || []); }catch(err){ console.warn('PROGETTI non caricati', err); projects = []; } }
+
+        function showToast(msg, type='success'){
+            if(window.KYV && KYV.showToast) return KYV.showToast(msg, type);
+            alert(msg);
+        }
+        function initDriveSelector(){
+            const sel = $('drive-account');
+            sel.innerHTML = window.KYV_DRIVE ? KYV_DRIVE.optionHtml('all', true) : '<option value="all">Drive</option>';
+            initDriveSetupControls();
+            renderDriveStatus();
+        }
+        function initDriveSetupControls(){
+            const setupSel = $('drive-setup-account');
+            if(!setupSel || !window.KYV_DRIVE) return;
+            const accounts = KYV_DRIVE.accountList();
+            setupSel.innerHTML = accounts.map(a => `<option value="${H(a.id)}">${H(a.label || a.email || a.id)}</option>`).join('');
+            const preferred = accounts.find(a => a.id === 'prodkyv') || accounts[0];
+            if(preferred) setupSel.value = preferred.id;
+            syncDriveSetupUrl();
+            setupSel.onchange = syncDriveSetupUrl;
+        }
+        function syncDriveSetupUrl(){
+            if(!window.KYV_DRIVE) return;
+            const setupSel = $('drive-setup-account');
+            const input = $('drive-setup-url');
+            if(!setupSel || !input) return;
+            const a = KYV_DRIVE.accountList().find(x => x.id === setupSel.value);
+            input.value = a && a.url ? a.url : '';
+        }
+        function refreshDriveSelectors(selected){
+            const sel = $('drive-account');
+            if(sel && window.KYV_DRIVE){
+                sel.innerHTML = KYV_DRIVE.optionHtml(selected || sel.value || 'all', true);
+                if(selected) sel.value = selected;
+            }
+            initDriveSetupControls();
+            renderDriveStatus('Configurazione Drive aggiornata.');
+        }
+        function saveDriveSetupUrl(){
+            try{
+                if(!window.KYV_DRIVE) throw new Error('Modulo Drive non caricato.');
+                const accountId = $('drive-setup-account').value;
+                const url = $('drive-setup-url').value;
+                KYV_DRIVE.saveAccountUrl(accountId, url);
+                refreshDriveSelectors(accountId);
+                showToast('URL Drive salvato nel browser. Ora prova Diagnosi collegamento.', 'success');
+            }catch(err){ showToast(err.message || String(err), 'error'); }
+        }
+        function clearDriveSetupUrl(){
+            try{
+                if(!window.KYV_DRIVE) throw new Error('Modulo Drive non caricato.');
+                const accountId = $('drive-setup-account').value;
+                KYV_DRIVE.clearAccountUrl(accountId);
+                refreshDriveSelectors(accountId);
+                showToast('URL locale rimosso. Resta quello scritto in config.js, se presente.', 'success');
+            }catch(err){ showToast(err.message || String(err), 'error'); }
+        }
+        function renderDriveStatus(extra=''){
+            const box = $('drive-status');
+            const accounts = (window.KYV_DRIVE && KYV_DRIVE.accountList()) || [];
+            const configured = accounts.filter(a=>a.url);
+            const missing = accounts.filter(a=>!a.url);
+            box.innerHTML = `<h4 class="text-white font-black mb-3">Stato configurazione</h4>
+                <div class="space-y-2">${accounts.map(a=>`<div class="flex items-start justify-between gap-3 rounded-xl border border-kyv-border bg-kyv-bg/60 p-3"><div><p class="text-white font-black">${H(a.label)}</p><p class="text-[10px] text-kyv-text">${H(a.email || a.id)}</p></div><span class="text-[10px] font-black px-2 py-1 rounded-full ${a.url?'bg-emerald-500/10 text-emerald-200 border border-emerald-500/25':'bg-amber-500/10 text-amber-200 border border-amber-500/25'}">${a.url?'Configurato':'Da configurare'}</span></div>`).join('')}</div>
+                ${missing.length ? `<p class="mt-3 text-amber-200">Da configurare: ${H(missing.map(a=>a.email||a.label).join(', '))}.</p>` : ''}
+                ${extra ? `<p class="mt-3 text-emerald-200">${H(extra)}</p>` : ''}`;
+        }
+        function fileDate(v){ if(!v) return '-'; const d = new Date(v); return Number.isNaN(d.getTime()) ? String(v) : d.toLocaleDateString('it-IT'); }
+        function fileUrl(f){ return f.playUrl || f.webContentLink || f.url || f.webViewLink || ''; }
+
+        function isAudioDriveFile(f){
+            if(window.KYV_AUDIO_PROJECT) return KYV_AUDIO_PROJECT.isAudioItem(f);
+            if(window.KYV_DRIVE) return KYV_DRIVE.isAudioFile(f);
+            return /\.(mp3|wav|m4a|aif|aiff|flac)(\?|#|$)/i.test(`${f.name||''} ${fileUrl(f)}`);
+        }
+        function driveProjectAction(f, idx){
+            if(!window.KYV_AUDIO_PROJECT) return '';
+            const url = fileUrl(f) || f.url || '';
+            if(!isAudioDriveFile(f)) return ''; // per i file non audio resta il comando Copia link standard
+            return KYV_AUDIO_PROJECT.buttonHtml(f, projects, `createProjectFromDriveFile(${idx})`, `copyFileLink(${idx})`);
+        }
+        async function createProjectFromDriveFile(idx){
+            const f = filteredFiles[idx];
+            if(!f || !window.KYV_AUDIO_PROJECT) return;
+            try{
+                const created = await KYV_AUDIO_PROJECT.createFromItem({ ...f, link:fileUrl(f), fileName:f.name, title:f.name, source:f.driveLabel || f.driveEmail || 'Google Drive' }, { db:initSupabase(), projects });
+                if(!created || !created.ID) return;
+                await loadProjects();
+                renderDriveFiles();
+            }catch(err){
+                console.error(err);
+                showToast('Errore creazione progetto: ' + (err.message || ''), 'error');
+            }
+        }
+
+        async function scanDrive(accountId){
+            const sel = $('drive-account');
+            if(!accountId) accountId = sel.value || 'all';
+            await runScan(accountId);
+        }
+        async function scanAllDrives(){ await runScan('all'); }
+        async function runScan(accountId){
+            if(!window.KYV_DRIVE){ showToast('Modulo Drive non caricato.', 'error'); return; }
+            const btn = $('btn-drive-scan');
+            const list = $('files-list');
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2 animate-spin"></i>Ricerca...';
+            list.innerHTML = '<div class="col-span-full p-12 text-center text-emerald-200"><i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-3 animate-spin"></i><p class="font-black">Scansione Drive in corso...</p></div>';
+            if(window.lucide) lucide.createIcons({root:list});
+            try{
+                const audioOnly = $('audio-only').checked;
+                const result = await KYV_DRIVE.listFiles({accountId, pages:12, audioOnly});
+                driveFiles = result.files || [];
+                if(result.errors?.length) showToast(result.errors.join(' | '), 'error');
+                else showToast(`${driveFiles.length} file trovati.`, 'success');
+                renderDriveStatus(`${driveFiles.length} file letti dai Drive configurati.`);
+                renderDriveFiles();
+            }catch(err){
+                driveFiles = [];
+                list.innerHTML = `<div class="col-span-full p-12 text-center text-rose-200 border border-rose-500/25 rounded-2xl bg-rose-500/10"><i data-lucide="alert-triangle" class="w-10 h-10 mx-auto mb-3"></i><p class="font-black">${H(err.message || err)}</p><p class="text-xs text-kyv-text mt-2">Verifica gli URL Apps Script in config.js e che lo script sia pubblicato come Web App.</p></div>`;
+                showToast(err.message || 'Errore Drive.', 'error');
+                renderDriveStatus();
+                if(window.lucide) lucide.createIcons({root:list});
+            }finally{
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="search" class="w-4 h-4 inline mr-2"></i>Cerca nel Drive';
+                if(window.lucide) lucide.createIcons();
+            }
+        }
+        async function diagnoseDrive(){
+            if(!window.KYV_DRIVE){ showToast('Modulo Drive non caricato.', 'error'); return; }
+            const sel = $('drive-account');
+            const accountId = sel.value || 'all';
+            const btn = $('btn-drive-diagnose');
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2 animate-spin"></i>Diagnosi...';
+            try{
+                const rows = await KYV_DRIVE.ping(accountId);
+                const ok = rows.filter(r=>r.ok);
+                const fail = rows.filter(r=>!r.ok);
+                const msg = rows.map(r => `${r.account.email || r.account.label}: ${r.ok ? 'OK' : (r.error || 'ERRORE')}`).join(' | ');
+                renderDriveStatus(msg);
+                showToast(fail.length ? msg : `${ok.length} Drive collegato/i correttamente.`, fail.length ? 'error' : 'success');
+            }catch(err){
+                showToast(err.message || String(err), 'error');
+            }finally{
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="stethoscope" class="w-4 h-4 inline mr-2"></i>Diagnosi collegamento';
+                if(window.lucide) lucide.createIcons();
+            }
+        }
+
+        function downloadDriveLogs(){
+            if(!window.KYV_DRIVE || !KYV_DRIVE.downloadLogs){ showToast('Log Drive non disponibile.', 'warning'); return; }
+            const logs = KYV_DRIVE.downloadLogs();
+            showToast(`${logs.length} eventi Drive esportati.`, logs.length ? 'success' : 'warning');
+        }
+        function clearDriveLogs(){
+            if(!window.KYV_DRIVE || !KYV_DRIVE.clearLogs){ showToast('Log Drive non disponibile.', 'warning'); return; }
+            KYV_DRIVE.clearLogs();
+            showToast('Log Drive pulito.', 'success');
+        }
+
+        function renderDriveFiles(){
+            const q = ($('drive-search').value || '').toLowerCase().trim();
+            filteredFiles = driveFiles.filter(f => !q || `${f.name} ${f.folder} ${f.driveEmail} ${f.driveLabel}`.toLowerCase().includes(q));
+            $('drive-count').textContent = `${filteredFiles.length} file visualizzati su ${driveFiles.length} caricati.`;
+            const list = $('files-list');
+            if(!filteredFiles.length){
+                list.innerHTML = '<div class="col-span-full p-12 text-center text-kyv-text border border-dashed border-kyv-border rounded-2xl"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-50"></i><p class="font-bold">Nessun file da mostrare.</p></div>';
+                if(window.lucide) lucide.createIcons({root:list});
+                return;
+            }
+            list.innerHTML = filteredFiles.map((f, idx)=>{
+                const url = fileUrl(f);
+                return `<article class="drive-card border border-kyv-border rounded-2xl p-4 hover:border-emerald-500/45 transition-all">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0"><i data-lucide="music" class="w-5 h-5 text-emerald-300"></i></div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-white font-black truncate" title="${H(f.name)}">${H(f.name)}</h4>
+                            <p class="text-xs text-emerald-200 font-bold mt-1">${H(f.driveLabel || f.driveEmail || 'Drive')}</p>
+                            <p class="text-[10px] text-kyv-text mt-1 truncate">/ ${H(f.folder || 'Drive')}</p>
+                            <div class="flex flex-wrap gap-2 mt-3 text-[10px] text-kyv-text">
+                                <span class="px-2 py-1 rounded-lg bg-kyv-bg border border-kyv-border">Modifica: ${H(fileDate(f.updated))}</span>
+                                ${f.size ? `<span class="px-2 py-1 rounded-lg bg-kyv-bg border border-kyv-border">${H(f.size)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        ${url ? `<a href="${H(url)}" target="_blank" class="px-3 py-2 rounded-lg bg-emerald-600/15 border border-emerald-500/25 text-emerald-100 text-xs font-black hover:bg-emerald-600/25"><i data-lucide="play" class="w-4 h-4 inline mr-2"></i>Apri</a>` : ''}
+                        ${f.url ? `<a href="${H(f.url)}" target="_blank" class="px-3 py-2 rounded-lg bg-kyv-bg border border-kyv-border text-xs font-black hover:border-emerald-400/50"><i data-lucide="external-link" class="w-4 h-4 inline mr-2"></i>Drive</a>` : ''}
+                        <button onclick="copyFileLink(${idx})" class="px-3 py-2 rounded-lg bg-kyv-bg border border-kyv-border text-xs font-black hover:border-emerald-400/50"><i data-lucide="copy" class="w-4 h-4 inline mr-2"></i>Copia link</button>
+                            ${driveProjectAction(f, idx)}
+                    </div>
+                </article>`;
+            }).join('');
+            if(window.lucide) lucide.createIcons({root:list});
+        }
+        async function copyText(text){
+            try{ await navigator.clipboard.writeText(String(text||'')); showToast('Copiato negli appunti.', 'success'); }
+            catch(e){ const ta=document.createElement('textarea'); ta.value=String(text||''); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); showToast('Copiato negli appunti.', 'success'); }
+        }
+        function copyFileLink(idx){ const f = filteredFiles[idx]; copyText(fileUrl(f) || f.url || ''); }
+        function copyResultList(){ copyText(filteredFiles.map(f => `${f.driveEmail || f.driveLabel || 'Drive'} | ${f.name} | ${fileUrl(f) || f.url || ''}`).join('\n')); }
+        function openFirstPlayable(){ const f = filteredFiles.find(x => fileUrl(x)); if(f) window.open(fileUrl(f), '_blank'); else showToast('Nessun link apribile.', 'error'); }
+        function clearResults(){ driveFiles=[]; filteredFiles=[]; $('drive-search').value=''; renderDriveFiles(); renderDriveStatus(); }
+
+        document.addEventListener('DOMContentLoaded', async () => { initDriveSelector(); await loadProjects(); renderDriveFiles(); if(window.lucide) lucide.createIcons(); });
+    </script>
+</body>
+</html>

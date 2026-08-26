@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Documenti, Spese & Schede</title>
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }</script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <style>
+        body { background:#0f111a; color:#f8fafc; }
+        .kyv-input { width:100%; background:#0f111a; border:1px solid #232838; color:#fff; padding:.72rem .85rem; border-radius:.75rem; outline:none; }
+        .kyv-input:focus { border-color:#6366f1; box-shadow:0 0 0 2px rgba(99,102,241,.18); }
+        .doc-card { transition: transform .16s ease, border-color .16s ease, background .16s ease; }
+        .doc-card:hover { transform: translateY(-1px); border-color: rgba(59,130,246,.45); background: rgba(21,25,35,.98); }
+        .tab-btn { border:1px solid rgba(35,40,56,.95); background:rgba(21,25,35,.85); color:#94a3b8; border-radius:999px; padding:.68rem .95rem; font-size:.75rem; font-weight:900; display:inline-flex; align-items:center; gap:.45rem; white-space:nowrap; transition:.15s ease; }
+        .tab-btn:hover { background:rgba(35,40,56,.9); color:#fff; }
+        .tab-btn.active { background:rgba(14,165,233,.15); border-color:rgba(14,165,233,.42); color:#bae6fd; }
+        .mini-pill { display:inline-flex; align-items:center; gap:.3rem; padding:.22rem .5rem; border-radius:999px; font-size:.68rem; font-weight:900; border:1px solid rgba(148,163,184,.16); background:rgba(148,163,184,.08); color:#cbd5e1; }
+        .sheet-row { border:1px solid rgba(35,40,56,.9); background:rgba(15,17,26,.72); border-radius:.8rem; padding:.8rem; }
+        .sheet-row.ok { border-color:rgba(16,185,129,.28); background:rgba(16,185,129,.07); }
+        .sheet-row.missing { border-color:rgba(245,158,11,.34); background:rgba(245,158,11,.07); }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar">
+            <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-6 border-b border-kyv-border/50 pb-6">
+                <div class="flex items-start">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-sky-500/20 bg-sky-500/10 text-sky-200 text-[10px] font-black uppercase tracking-[0.18em] mb-3"><i data-lucide="folder-lock" class="w-3.5 h-3.5"></i> Archivio operativo</div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Documenti, <span class="text-sky-400">Spese</span> & Schede</h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm max-w-5xl">Un unico punto per catalogare contratti e link Drive, analizzare le spese extra provenienti da estratto conto o inserimento manuale, e generare schede/richieste dati per SIAE, IMAIE e fatture.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 w-full xl:w-auto">
+                    <div class="relative min-w-0 sm:w-96">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-kyv-text"></i>
+                        <input id="doc-search" class="kyv-input pl-9" type="search" placeholder="Cerca artista, titolo, manager, label, spesa..." oninput="renderActiveTab()">
+                    </div>
+                    <button onclick="fetchAll()" class="px-5 py-2.5 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg transition-colors flex items-center justify-center font-bold shadow-sm"><i data-lucide="refresh-cw" class="w-4 h-4 mr-2 text-kyv-text"></i>Ricarica</button>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Progetti</p><h3 id="doc-total" class="text-2xl font-black text-white mt-1">0</h3></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Da completare</p><h3 id="doc-open" class="text-2xl font-black text-rose-300 mt-1">0</h3></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Contratti</p><h3 id="doc-contracts" class="text-2xl font-black text-emerald-300 mt-1">0</h3></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Drive</p><h3 id="doc-drive" class="text-2xl font-black text-sky-300 mt-1">0</h3></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Spese Extra</p><h3 id="expense-total" class="text-2xl font-black text-amber-300 mt-1">€0</h3></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Schede salvate</p><h3 id="sheet-total" class="text-2xl font-black text-violet-300 mt-1">0</h3></div>
+            </div>
+
+            <nav class="flex gap-2 overflow-x-auto custom-scrollbar pb-2 mb-5" aria-label="Sezioni documenti">
+                <button class="tab-btn active" data-tab="documenti" onclick="setDocTab('documenti')"><i data-lucide="folder-lock" class="w-4 h-4"></i>Documenti & Contratti</button>
+                <button class="tab-btn" data-tab="spese" onclick="setDocTab('spese')"><i data-lucide="receipt-euro" class="w-4 h-4"></i>Spese Extra</button>
+                <button class="tab-btn" data-tab="schede" onclick="setDocTab('schede')"><i data-lucide="clipboard-list" class="w-4 h-4"></i>Schede dati SIAE / IMAIE / Fatture</button>
+            </nav>
+
+            <section id="tab-documenti" class="doc-tab-panel grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-5">
+                <div class="kyv-panel p-4 sm:p-5 min-h-[420px]">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="file-stack" class="w-5 h-5 mr-2 text-sky-400"></i>Progetti e documentazione</h3>
+                            <p class="text-xs text-kyv-text mt-1">Clicca un progetto per catalogare contratto, cartella Drive, ricevute, split o schede operative.</p>
+                            <p id="doc-result-count" class="text-[11px] text-sky-200 mt-2">0 progetti visualizzati</p>
+                        </div>
+                        <select id="doc-filter" class="kyv-input sm:w-64" onchange="renderDocuments()">
+                            <option value="all">Tutti</option>
+                            <option value="missing">Dati mancanti</option>
+                            <option value="review">Da verificare</option>
+                            <option value="complete">Completi</option>
+                            <option value="sheets">Con schede salvate</option>
+                        </select>
+                    </div>
+                    <div id="doc-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+                </div>
+                <aside class="space-y-5">
+                    <div class="kyv-panel p-5">
+                        <h3 class="font-black text-white flex items-center"><i data-lucide="route" class="w-5 h-5 mr-2 text-emerald-400"></i>Procedura corretta</h3>
+                        <ol class="text-sm text-kyv-text mt-4 space-y-3 list-decimal list-inside">
+                            <li>Ricevi contratto o documento su mail/WhatsApp.</li>
+                            <li>Salvalo nella cartella Drive del progetto.</li>
+                            <li>Rinomina il file con data, artista, titolo e tipo documento.</li>
+                            <li>Incolla qui il link del documento o della cartella.</li>
+                            <li>Apri Scheda Progetto/Protezione per verificare che lo stato sia aggiornato.</li>
+                        </ol>
+                    </div>
+                    <div class="kyv-panel p-5">
+                        <h3 class="font-black text-white flex items-center"><i data-lucide="copy" class="w-5 h-5 mr-2 text-sky-400"></i>Template cartella Drive</h3>
+                        <p class="text-xs text-kyv-text mt-2">Copia questa struttura per ogni brano importante.</p>
+                        <button onclick="copyDriveTemplate()" class="mt-4 w-full px-4 py-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-100 font-black text-xs">Copia struttura Drive</button>
+                    </div>
+                    <div class="kyv-panel p-5 border-violet-500/25 bg-violet-500/[0.04]">
+                        <h3 class="font-black text-white flex items-center"><i data-lucide="clipboard-list" class="w-5 h-5 mr-2 text-violet-300"></i>Metodo schede</h3>
+                        <p class="text-xs text-kyv-text mt-2 leading-relaxed">Le schede non sostituiscono SIAE, IMAIE o la fattura elettronica: servono a capire quali dati mancano e a generare una richiesta ordinata da mandare a manager, artista, label o amministrazione.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section id="tab-spese" class="doc-tab-panel hidden">
+                <div class="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-5">
+                    <div class="space-y-5">
+                        <div class="kyv-panel p-5">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="receipt-euro" class="w-5 h-5 mr-2 text-amber-300"></i>Analisi Spese Extra</h3>
+                                    <p class="text-xs text-kyv-text mt-1">Analizza movimenti extra importati da estratto conto o inseriti manualmente.</p>
+                                </div>
+                                <select id="expense-filter" class="kyv-input sm:w-56" onchange="renderExpenses()"><option value="all">Tutte le spese</option><option value="month">Mese corrente</option><option value="uncategorized">Senza categoria/Altro</option></select>
+                            </div>
+                            <div id="expense-analysis" class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5"></div>
+                            <div id="expense-list" class="overflow-x-auto custom-scrollbar"></div>
+                        </div>
+                        <div class="kyv-panel p-5">
+                            <h3 class="font-black text-white flex items-center"><i data-lucide="file-up" class="w-5 h-5 mr-2 text-cyan-300"></i>Importa da estratto conto CSV</h3>
+                            <p class="text-xs text-kyv-text mt-2">Carica un CSV bancario. Il sistema prova a riconoscere automaticamente data, descrizione e importo, applica una categoria indicativa e salta i duplicati già presenti.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 mt-4">
+                                <input id="expense-csv-file" type="file" accept=".csv,.txt" class="kyv-input">
+                                <button onclick="previewExpenseCsv()" class="px-4 py-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/25 text-cyan-100 font-black text-xs">Anteprima</button>
+                                <button onclick="importExpensePreview()" id="expense-import-btn" disabled class="px-4 py-3 rounded-xl bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs">Importa nuovi</button>
+                            </div>
+                            <div id="expense-preview" class="mt-4 overflow-x-auto custom-scrollbar"></div>
+                        </div>
+                    </div>
+                    <aside class="space-y-5">
+                        <form id="expense-form" class="kyv-panel p-5 space-y-4">
+                            <h3 class="font-black text-white flex items-center"><i data-lucide="plus-circle" class="w-5 h-5 mr-2 text-emerald-300"></i>Aggiungi spesa manuale</h3>
+                            <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Data</span><input id="expense-date" type="date" class="kyv-input mt-1" style="color-scheme:dark"></label>
+                            <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Descrizione</span><input id="expense-desc" class="kyv-input mt-1" placeholder="Es. Abbonamento plugin, taxi sessione, manutenzione studio..."></label>
+                            <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Categoria</span><select id="expense-cat" class="kyv-input mt-1"><option>Studio</option><option>Software</option><option>Attrezzatura</option><option>Trasporti</option><option>Servizi</option><option>Banca/Fisco</option><option>Collaboratori</option><option>Altro</option></select></label>
+                            <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Progetto collegato opzionale</span><select id="expense-project" class="kyv-input mt-1"><option value="">Nessun progetto collegato</option></select><span class="block text-[10px] text-kyv-text mt-1">Richiede la colonna ID_PROGETTO in Spese Extra; se manca, la spesa viene salvata comunque senza collegamento diretto.</span></label>
+                            <label class="block"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Importo</span><input id="expense-amount" class="kyv-input mt-1" inputmode="decimal" placeholder="Es. 49,99"></label>
+                            <button id="expense-save" type="submit" class="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs inline-flex items-center justify-center"><i data-lucide="save" class="w-4 h-4 mr-2"></i>Salva spesa</button>
+                        </form>
+                        <div class="kyv-panel p-5 border-amber-500/25 bg-amber-500/[0.04]">
+                            <h3 class="font-black text-white flex items-center"><i data-lucide="lightbulb" class="w-5 h-5 mr-2 text-amber-300"></i>Regola pratica</h3>
+                            <p class="text-xs text-kyv-text mt-2 leading-relaxed">L'estratto conto è la fonte primaria, l'inserimento manuale serve per anticipi, spese non ancora transitate o piccole note operative. La categorizzazione automatica è solo un primo livello: puoi correggerla nello Studio Editor.</p>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            <section id="tab-schede" class="doc-tab-panel hidden">
+                <div class="grid grid-cols-1 xl:grid-cols-[430px_1fr] gap-5">
+                    <aside class="kyv-panel p-5 self-start">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="clipboard-list" class="w-5 h-5 mr-2 text-violet-300"></i>Schede richiesta dati</h3>
+                        <p class="text-xs text-kyv-text mt-2">Scegli un progetto e genera una scheda semplice per chiedere i dati mancanti a manager, artista, label, editore o amministrazione.</p>
+                        <label class="block mt-5"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Progetto</span><select id="sheet-project" class="kyv-input mt-1" onchange="renderSheetBuilder()"></select></label>
+                        <label class="block mt-4"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Tipo scheda</span><select id="sheet-type" class="kyv-input mt-1" onchange="renderSheetBuilder()"><option value="SIAE">Comunicazione / dati SIAE</option><option value="IMAIE">Comunicazione / dati IMAIE</option><option value="FATTURA">Dati per fattura da emettere</option></select></label>
+                        <label class="block mt-4"><span class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Destinatario richiesta</span><input id="sheet-recipient" class="kyv-input mt-1" placeholder="Es. manager, artista, label, amministrazione..."></label>
+                        <div class="grid grid-cols-1 gap-2 mt-5">
+                            <button onclick="copySheetRequest()" class="px-4 py-3 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/25 text-violet-100 font-black text-xs"><i data-lucide="copy" class="w-4 h-4 inline mr-2"></i>Copia richiesta dati</button>
+                            <button onclick="saveSheetRequest()" class="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="save" class="w-4 h-4 inline mr-2"></i>Salva scheda in Documenti</button>
+                            <a id="sheet-open-project" href="#" class="px-4 py-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-100 font-black text-xs text-center"><i data-lucide="panel-top-open" class="w-4 h-4 inline mr-2"></i>Apri Scheda Progetto</a>
+                        </div>
+                    </aside>
+                    <div class="kyv-panel p-5 min-h-[520px]">
+                        <div id="sheet-builder"></div>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <div id="doc-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] hidden items-center justify-center p-2 sm:p-4" aria-hidden="true">
+        <div class="kyv-modal-panel bg-kyv-card border border-kyv-border rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col">
+            <div class="px-4 sm:px-6 py-4 border-b border-kyv-border bg-kyv-bg/60 flex items-start justify-between gap-4 shrink-0">
+                <div><p class="text-[10px] uppercase tracking-[0.2em] text-sky-300 font-black">Catalogazione documento</p><h3 id="doc-modal-title" class="text-xl font-black text-white mt-1">Progetto</h3></div>
+                <button onclick="closeDocModal()" class="w-10 h-10 rounded-xl bg-kyv-card border border-kyv-border hover:bg-kyv-border flex items-center justify-center text-kyv-text hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="doc-form" class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div data-field-wrapper><label data-field-label class="block text-[10px] font-black text-kyv-text uppercase tracking-wider mb-1">Tipo documento</label><select id="doc-type" class="kyv-input"><option>Contratto produzione</option><option>Split sheet</option><option>Liberatoria musicisti/esecutori</option><option>Accordo royalties / kill fee</option><option>NDA</option><option>Approvazione crediti</option><option>Scheda richiesta dati SIAE</option><option>Scheda richiesta dati IMAIE</option><option>Scheda dati fattura</option><option>Ricevuta deposito SIAE</option><option>Ricevuta / verifica IMAIE</option><option>Screenshot mail/WhatsApp</option><option>Documento amministrativo</option><option>Cartella generale progetto</option></select></div>
+                    <div data-field-wrapper><label data-field-label class="block text-[10px] font-black text-kyv-text uppercase tracking-wider mb-1">Data contratto/documento</label><input type="date" id="doc-date" data-key="Data Contratto" class="kyv-input kyv-priority-input" style="color-scheme:dark"></div>
+                    <div data-field-wrapper class="md:col-span-2"><label data-field-label class="block text-[10px] font-black text-kyv-text uppercase tracking-wider mb-1">Link contratto/documento principale</label><input type="url" id="doc-contract-link" data-key="Contratto link" class="kyv-input kyv-priority-input" placeholder="https://drive.google.com/..."></div>
+                    <div data-field-wrapper class="md:col-span-2"><label data-field-label class="block text-[10px] font-black text-kyv-text uppercase tracking-wider mb-1">Link cartella Drive progetto</label><input type="url" id="doc-drive-link" data-key="LINK" class="kyv-input kyv-priority-input" placeholder="https://drive.google.com/drive/folders/..."></div>
+                    <div data-field-wrapper class="md:col-span-2"><label data-field-label class="block text-[10px] font-black text-kyv-text uppercase tracking-wider mb-1">Nota catalogazione</label><textarea id="doc-note" rows="5" class="kyv-input" placeholder="Es. Contratto ricevuto via mail da management, salvato in 04_CONTRATTI..."></textarea></div>
+                </div>
+                <div class="border-t border-kyv-border pt-4 flex flex-col sm:flex-row gap-3 sm:justify-between">
+                    <div class="flex flex-wrap gap-2"><a id="open-contract" href="#" target="_blank" class="hidden px-4 py-2 rounded-xl border border-sky-500/25 bg-sky-500/10 text-sky-100 font-bold text-xs"><i data-lucide="external-link" class="w-4 h-4 inline mr-2"></i>Apri contratto</a><a id="open-drive" href="#" target="_blank" class="hidden px-4 py-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-100 font-bold text-xs"><i data-lucide="folder-open" class="w-4 h-4 inline mr-2"></i>Apri Drive</a></div>
+                    <div class="flex gap-2"><button type="button" onclick="closeDocModal()" class="px-4 py-2 rounded-xl border border-kyv-border text-kyv-text hover:text-white hover:bg-kyv-border font-bold text-xs">Annulla</button><button type="submit" id="doc-save" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-black text-xs inline-flex items-center"><i data-lucide="save" class="w-4 h-4 mr-2"></i>Salva documentazione</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        if (typeof loadKyvSidebar === 'undefined') { window.toggleMobileMenu = () => {}; window.loadKyvSidebar = () => {}; }
+        loadKyvSidebar('spese');
+        let supabaseClient;
+        let projects = [];
+        let expenses = [];
+        let docs = [];
+        let currentProject = null;
+        let activeTab = (new URLSearchParams(location.search).get('tab') || location.hash.replace('#','') || 'documenti').replace(/[^a-z]/gi,'');
+        let expensePreviewRows = [];
+        const H = (v) => KYV.safeHtml(v ?? '');
+        const N = (v) => KYV.normalize(v ?? '');
+        const has = (v) => String(v || '').trim() !== '';
+        const today = new Date();
+        const currentMonth = today.toISOString().slice(0, 7);
+
+        function showIcons(root=document){ if(window.lucide) lucide.createIcons({root}); }
+        async function safeSelect(table, orderCol){ try{ let q=supabaseClient.from(table).select('*'); if(orderCol) q=q.order(orderCol,{ascending:false}); const {data,error}=await q.limit(2000); if(error) throw error; return data||[]; } catch(err){ console.warn('Tabella non disponibile:', table, err.message); return []; } }
+        function getProjectDocs(id){ return docs.filter(d => String(d.ID_PROGETTO || '') === String(id)); }
+        function isSheetDoc(d){ return /scheda|richiesta dati|fattura|siae|imaie/i.test([d.Tipo_Documento,d.Titolo_Documento,d.Note].join(' ')); }
+        function docStatus(row){ const contract = has(row['Contratto link']); const drive = has(row.LINK); if (contract && drive) return {key:'complete', label:'Completato', cls:'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'}; if (contract || drive) return {key:'review', label:'Da verificare', cls:'border-amber-500/30 bg-amber-500/10 text-amber-100'}; return {key:'missing', label:'Dati mancanti', cls:'border-rose-500/30 bg-rose-500/10 text-rose-100'}; }
+        function expenseKey(row){ return [KYV.toDbDate(row.Data)||'', N(row.Descrizione), String(KYV.parseNumber(row.Importo)).replace(/\.0+$/,'')].join('|'); }
+        function expenseAmount(row){ return KYV.parseNumber(row.Importo); }
+        function autoCategory(desc){ const d=N(desc); if(/plugin|splice|sound|sample|preset|software|ableton|logic|studioone|waves|izotope|uaudio|uad/.test(d)) return 'Software'; if(/chitarra|basso|corde|microfono|cavo|scheda|monitor|strument|hardware|audio/.test(d)) return 'Attrezzatura'; if(/taxi|uber|treno|metro|benzina|parcheggio|autostrada|frecciarossa/.test(d)) return 'Trasporti'; if(/affitto|studio|sala|cowork|energia|luce|gas|condominio/.test(d)) return 'Studio'; if(/commercialista|f24|iva|inps|agenzia|banca|commissione|imposta|bollo/.test(d)) return 'Banca/Fisco'; if(/mix|master|musicista|turnista|grafica|video|fotografo|collabor/.test(d)) return 'Collaboratori'; return 'Altro'; }
+        function setDocTab(tab){ activeTab = tab; document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab === tab)); document.querySelectorAll('.doc-tab-panel').forEach(p=>p.classList.add('hidden')); const el=document.getElementById(`tab-${tab}`); if(el) el.classList.remove('hidden'); if(history.replaceState) history.replaceState(null, '', tab === 'documenti' ? location.pathname : `${location.pathname}?tab=${tab}`); renderActiveTab(); showIcons(); }
+        window.setDocTab = setDocTab;
+        window.renderActiveTab = function(){ if(activeTab === 'spese') renderExpenses(); else if(activeTab === 'schede') renderSheetBuilder(); else renderDocuments(); updateStats(); };
+        function updateStats(){ KYV.setText('doc-total', projects.length); KYV.setText('doc-open', projects.filter(p => docStatus(p).key !== 'complete').length); KYV.setText('doc-contracts', projects.filter(p => has(p['Contratto link'])).length); KYV.setText('doc-drive', projects.filter(p => has(p.LINK)).length); KYV.setText('expense-total', KYV.formatEuro(expenses.reduce((s,e)=>s+expenseAmount(e),0))); KYV.setText('sheet-total', docs.filter(isSheetDoc).length); }
+
+        function filteredProjects(){ const q=N(document.getElementById('doc-search')?.value||''); const mode=document.getElementById('doc-filter')?.value||'all'; return projects.filter(row=>{ const projectDocs=getProjectDocs(row.ID); const blob=N([row.TITOLO,row.ARTISTA,row.MANAGEMENT,row.Label,row.NOTE,row['Contratto link'],row.LINK,projectDocs.map(d=>[d.Tipo_Documento,d.Titolo_Documento,d.Note].join(' ')).join(' ')].join(' ')); if(q && !blob.includes(q)) return false; const status=docStatus(row).key; if(mode==='missing') return status==='missing'; if(mode==='review') return status==='review'; if(mode==='complete') return status==='complete'; if(mode==='sheets') return projectDocs.some(isSheetDoc); return true; }); }
+        window.renderDocuments = function(){ const rows=filteredProjects(); const grid=document.getElementById('doc-grid'); KYV.setText('doc-result-count', `${rows.length} ${rows.length === 1 ? 'progetto visualizzato' : 'progetti visualizzati'}`); if(!rows.length){ grid.innerHTML='<div class="text-center text-kyv-text p-10 border border-dashed border-kyv-border rounded-2xl">Nessun progetto trovato.</div>'; return; } grid.innerHTML=rows.map(row=>{ const st=docStatus(row); const projectDocs=getProjectDocs(row.ID); const sheetCount=projectDocs.filter(isSheetDoc).length; return `<article role="button" tabindex="0" aria-label="Cataloga documenti per ${H(row.TITOLO || 'progetto')}" class="doc-card kyv-interactive-card bg-kyv-bg border border-kyv-border rounded-2xl p-4 cursor-pointer" onclick="openDocModal('${H(row.ID)}')" onkeydown="if ((event.key === 'Enter' || event.key === ' ') && event.target === this) { event.preventDefault(); openDocModal('${H(row.ID)}'); }">
+            <div class="flex items-start justify-between gap-3"><div class="min-w-0"><h4 class="font-black text-white text-base truncate">${H(row.TITOLO || 'Senza titolo')}</h4><p class="text-sm text-sky-200 font-bold mt-1 truncate">${H(row.ARTISTA || 'Artista non indicato')}</p></div><span class="rounded-full border px-2 py-1 text-[10px] font-black uppercase ${st.cls}">${st.label}</span></div>
+            <div class="mt-3 flex flex-wrap gap-2 text-[11px] text-kyv-text">${row.MANAGEMENT ? `<span class="mini-pill"><i data-lucide="briefcase-business" class="w-3 h-3"></i>${H(row.MANAGEMENT)}</span>` : ''}${row.Label ? `<span class="mini-pill"><i data-lucide="tag" class="w-3 h-3"></i>${H(row.Label)}</span>` : ''}${sheetCount ? `<span class="mini-pill text-violet-100 border-violet-500/25 bg-violet-500/10"><i data-lucide="clipboard-list" class="w-3 h-3"></i>${sheetCount} schede</span>` : ''}</div>
+            <div class="mt-4 grid grid-cols-3 gap-2 text-xs"><div class="rounded-xl border ${has(row['Contratto link'])?'border-emerald-500/25 bg-emerald-500/10 text-emerald-100':'border-rose-500/25 bg-rose-500/10 text-rose-100'} p-3"><i data-lucide="${has(row['Contratto link'])?'check-circle-2':'circle-alert'}" class="w-4 h-4 mb-1"></i><span class="block font-bold">Contratto</span><span class="block text-[9px] uppercase mt-1 opacity-80">${has(row['Contratto link'])?'Presente':'Mancante'}</span></div><div class="rounded-xl border ${has(row.LINK)?'border-emerald-500/25 bg-emerald-500/10 text-emerald-100':'border-rose-500/25 bg-rose-500/10 text-rose-100'} p-3"><i data-lucide="${has(row.LINK)?'check-circle-2':'circle-alert'}" class="w-4 h-4 mb-1"></i><span class="block font-bold">Drive</span><span class="block text-[9px] uppercase mt-1 opacity-80">${has(row.LINK)?'Presente':'Mancante'}</span></div><div class="rounded-xl border ${sheetCount?'border-emerald-500/25 bg-emerald-500/10 text-emerald-100':'border-amber-500/25 bg-amber-500/10 text-amber-100'} p-3"><i data-lucide="${sheetCount?'check-circle-2':'circle-help'}" class="w-4 h-4 mb-1"></i><span class="block font-bold">Schede</span><span class="block text-[9px] uppercase mt-1 opacity-80">${sheetCount?'Presenti':'Da verificare'}</span></div></div>
+            <div class="mt-3 flex flex-wrap gap-2">${has(row['Contratto link']) ? `<a href="${H(row['Contratto link'])}" onclick="event.stopPropagation()" target="_blank" class="text-[11px] kyv-doc-link">Apri contratto</a>` : ''}${has(row.LINK) ? `<a href="${H(row.LINK)}" onclick="event.stopPropagation()" target="_blank" class="text-[11px] kyv-doc-link">Apri Drive</a>` : ''}<a href="scheda_progetto.html?id=${encodeURIComponent(row.ID)}" onclick="event.stopPropagation()" class="text-[11px] kyv-doc-link">Scheda progetto</a></div>
+        </article>`; }).join(''); showIcons(grid); };
+        window.openDocModal = function(id){ currentProject = projects.find(p => String(p.ID) === String(id)); if(!currentProject) return; document.getElementById('doc-modal-title').textContent = `${currentProject.TITOLO || 'Senza titolo'} · ${currentProject.ARTISTA || '-'}`; document.getElementById('doc-date').value = currentProject['Data Contratto'] ? String(currentProject['Data Contratto']).slice(0,10) : ''; document.getElementById('doc-contract-link').value = currentProject['Contratto link'] || ''; document.getElementById('doc-drive-link').value = currentProject.LINK || ''; document.getElementById('doc-note').value = ''; const oc=document.getElementById('open-contract'); const od=document.getElementById('open-drive'); if(currentProject['Contratto link']){ oc.href=currentProject['Contratto link']; oc.classList.remove('hidden'); } else oc.classList.add('hidden'); if(currentProject.LINK){ od.href=currentProject.LINK; od.classList.remove('hidden'); } else od.classList.add('hidden'); const modal=document.getElementById('doc-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); modal.setAttribute('aria-hidden','false'); if(window.KYV_PRIORITY) KYV_PRIORITY.bind(document.getElementById('doc-form')); showIcons(modal); };
+        window.closeDocModal = function(){ const modal=document.getElementById('doc-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); modal.setAttribute('aria-hidden','true'); currentProject=null; };
+        window.copyDriveTemplate = async function(){ const txt=`01_SESSIONE\n02_AUDIO_DEMO\n03_MASTER_CONSEGNE\n04_CONTRATTI\n05_SIAE\n06_IMAIE\n07_FATTURE_PAGAMENTI\n08_CHAT_MAIL\n09_NOTE`; try{ await navigator.clipboard.writeText(txt); KYV.showToast('Struttura Drive copiata.', 'success'); }catch(e){ KYV.showToast('Copia non riuscita.', 'warning'); } };
+
+        document.getElementById('doc-form').addEventListener('submit', async (e)=>{ e.preventDefault(); if(!currentProject) return; const type=document.getElementById('doc-type').value; const note=document.getElementById('doc-note').value.trim(); const stamp=new Date().toLocaleDateString('it-IT'); const appendNote=note?`\n[${stamp} · ${type}] ${note}`:''; const payload={'Data Contratto':document.getElementById('doc-date').value||null,'Contratto link':document.getElementById('doc-contract-link').value.trim()||null,'LINK':document.getElementById('doc-drive-link').value.trim()||null}; if(appendNote) payload.NOTE=`${currentProject.NOTE||''}${appendNote}`.trim(); const btn=document.getElementById('doc-save'); btn.disabled=true; btn.innerHTML='<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Salvo...'; try{ const {data,error}=await supabaseClient.from('PROGETTI').update(payload).eq('ID', currentProject.ID).select('*').single(); if(error) throw error; const {data:docData,error:docError}=await supabaseClient.from('DOCUMENTI_PROGETTO').insert([{ID_PROGETTO: currentProject.ID, Tipo_Documento:type, Titolo_Documento:`${currentProject.ARTISTA||''} - ${currentProject.TITOLO||''}`.replace(/^ - | - $/g,'').trim()||type, Fonte:'Catalogazione manuale app', Link_Drive:payload['Contratto link']||payload.LINK||null, Data_Documento:payload['Data Contratto'], Note:note||null}]).select('*'); if(docError) console.warn('DOCUMENTI_PROGETTO non disponibile:', docError); else docs=[...(docData||[]),...docs]; const idx=projects.findIndex(p=>String(p.ID)===String(currentProject.ID)); if(idx>=0) projects[idx]=data; KYV.showToast('Documentazione salvata.', 'success'); closeDocModal(); renderActiveTab(); }catch(err){ console.error(err); KYV.showToast('Errore salvataggio documentazione.', 'error'); } finally{ btn.disabled=false; btn.innerHTML='<i data-lucide="save" class="w-4 h-4 mr-2"></i>Salva documentazione'; showIcons(btn.parentElement); } });
+
+
+        function projectLabel(p){ return [p.ARTISTA || p.Nome_Vero_Artista, p.TITOLO].filter(Boolean).join(' - ') || `Progetto #${p.ID}`; }
+        function sortedProjectsByLabel(){ return [...projects].sort((a,b)=>String(projectLabel(a)).localeCompare(String(projectLabel(b)), 'it', {sensitivity:'base', numeric:true})); }
+        function renderExpenseProjectOptions(){ const sel=document.getElementById('expense-project'); if(!sel) return; const current=sel.value; sel.innerHTML='<option value="">Nessun progetto collegato</option>'+sortedProjectsByLabel().map(p=>`<option value="${H(p.ID)}">${H(projectLabel(p))}</option>`).join(''); if(current) sel.value=current; if(window.KYV_SELECTS) window.KYV_SELECTS.refreshSelect(sel); }
+        function projectNameById(id){ const p=projects.find(x=>String(x.ID)===String(id)); return p ? projectLabel(p) : (id ? `Progetto #${id}` : '-'); }
+
+        function renderExpenses(){ const q=N(document.getElementById('doc-search')?.value||''); const mode=document.getElementById('expense-filter')?.value||'all'; let rows=expenses.filter(e=>!q || N([e.Descrizione,e.Categoria,e.Importo,e.Data].join(' ')).includes(q)); if(mode==='month') rows=rows.filter(e=>String(e.Data||'').slice(0,7)===currentMonth); if(mode==='uncategorized') rows=rows.filter(e=>!has(e.Categoria)||N(e.Categoria)==='altro'); const total=rows.reduce((s,e)=>s+expenseAmount(e),0); const month=expenses.filter(e=>String(e.Data||'').slice(0,7)===currentMonth).reduce((s,e)=>s+expenseAmount(e),0); const unc=expenses.filter(e=>!has(e.Categoria)||N(e.Categoria)==='altro').length; const byCat={}; rows.forEach(e=>{ const c=e.Categoria||'Altro'; byCat[c]=(byCat[c]||0)+expenseAmount(e); }); document.getElementById('expense-analysis').innerHTML=`<div class="kyv-soft p-4"><p class="text-[10px] uppercase text-kyv-text font-black">Totale filtro</p><p class="text-2xl font-black text-white">${KYV.formatEuro(total)}</p></div><div class="kyv-soft p-4"><p class="text-[10px] uppercase text-kyv-text font-black">Mese corrente</p><p class="text-2xl font-black text-amber-300">${KYV.formatEuro(month)}</p></div><div class="kyv-soft p-4"><p class="text-[10px] uppercase text-kyv-text font-black">Da categorizzare</p><p class="text-2xl font-black text-violet-300">${unc}</p></div>${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([cat,val])=>`<div class="kyv-soft p-4"><div class="flex justify-between gap-2"><span class="font-black text-white">${H(cat)}</span><span class="text-amber-200 font-black">${KYV.formatEuro(val)}</span></div><div class="mt-3 h-2 rounded-full bg-kyv-border overflow-hidden"><div class="h-full bg-amber-400" style="width:${Math.min(100, total?val/Math.abs(total)*100:0)}%"></div></div></div>`).join('')}`; document.getElementById('expense-list').innerHTML=rows.length?`<table class="w-full text-xs"><thead class="text-left text-kyv-text uppercase"><tr><th class="p-3">Data</th><th class="p-3">Descrizione</th><th class="p-3">Categoria</th><th class="p-3">Progetto</th><th class="p-3 text-right">Importo</th></tr></thead><tbody>${rows.slice(0,120).map(e=>`<tr class="border-b border-kyv-border/50"><td class="p-3 text-kyv-text">${H(KYV.formatDate(e.Data,'-'))}</td><td class="p-3 text-white font-bold">${H(e.Descrizione||'-')}</td><td class="p-3"><span class="mini-pill">${H(e.Categoria||'Altro')}</span></td><td class="p-3 text-sky-200 text-[11px]">${H(projectNameById(e.ID_PROGETTO))}</td><td class="p-3 text-right font-black ${expenseAmount(e)<0?'text-rose-300':'text-emerald-300'}">${KYV.formatEuro(e.Importo)}</td></tr>`).join('')}</tbody></table>`:'<div class="p-10 text-center text-kyv-text border border-dashed border-kyv-border rounded-2xl">Nessuna spesa trovata.</div>'; showIcons(document.getElementById('tab-spese')); }
+        document.getElementById('expense-form').addEventListener('submit', async (e)=>{ e.preventDefault(); const projectId=document.getElementById('expense-project')?.value||''; const row={Data:document.getElementById('expense-date').value||null, Descrizione:document.getElementById('expense-desc').value.trim(), Categoria:document.getElementById('expense-cat').value, Importo:KYV.toDbNumber(document.getElementById('expense-amount').value)||'0'}; if(projectId) row.ID_PROGETTO=Number(projectId); if(!row.Descrizione){ KYV.showToast('Inserisci una descrizione.', 'warning'); return; } const btn=document.getElementById('expense-save'); btn.disabled=true; try{ let {data,error}=await supabaseClient.from('Spese Extra').insert([row]).select('*'); if(error && projectId && /ID_PROGETTO|column|schema/i.test(error.message||'')){ const fallback={...row}; delete fallback.ID_PROGETTO; ({data,error}=await supabaseClient.from('Spese Extra').insert([fallback]).select('*')); if(error) throw error; KYV.showToast('Spesa salvata. Per collegarla direttamente al progetto esegui la SQL v2.9.5.', 'warning'); } else if(error) throw error; expenses=[...(data||[]),...expenses]; e.target.reset(); document.getElementById('expense-date').value=new Date().toISOString().slice(0,10); renderExpenseProjectOptions(); renderExpenses(); updateStats(); KYV.showToast(projectId?'Spesa salvata con collegamento progetto.':'Spesa salvata.', 'success'); }catch(err){ console.error(err); KYV.showToast('Errore salvataggio spesa.', 'error'); } finally{ btn.disabled=false; } });
+
+        function detectDelimiter(line){ const candidates=[';','\t',',']; return candidates.map(d=>[d,(line.match(new RegExp(d==='\t'?'\\t':`\\${d}`,'g'))||[]).length]).sort((a,b)=>b[1]-a[1])[0][0]; }
+        function parseCsvLine(line, delimiter){ const out=[]; let cur=''; let quoted=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(ch==='"'){ if(quoted && line[i+1]==='"'){ cur+='"'; i++; } else quoted=!quoted; } else if(ch===delimiter && !quoted){ out.push(cur); cur=''; } else cur+=ch; } out.push(cur); return out.map(x=>x.trim()); }
+        function parseCsv(text){ let lines=text.replace(/^\ufeff/,'').split(/\r?\n/).filter(l=>l.trim()); if(lines[0] && /^sep=/i.test(lines[0])) lines=lines.slice(1); if(!lines.length) return []; const delimiter=detectDelimiter(lines[0]); const head=parseCsvLine(lines[0],delimiter).map(h=>h.trim()); return lines.slice(1).map(line=>{ const cells=parseCsvLine(line,delimiter); const obj={}; head.forEach((h,i)=>obj[h||`Colonna ${i+1}`]=cells[i]||''); return obj; }); }
+        function pickHeader(row, names){ const keys=Object.keys(row); const found=keys.find(k=>names.some(n=>N(k).includes(N(n)))); return found ? row[found] : ''; }
+        function normalizeBankRow(row){ let data=pickHeader(row,['data','date','contabilizzazione','valuta']); let desc=pickHeader(row,['descrizione','causale','operazione','movimento','dettaglio']); let amount=pickHeader(row,['importo','amount','valore']); const uscita=pickHeader(row,['uscite','dare','addebiti']); const entrata=pickHeader(row,['entrate','avere','accrediti']); if(!amount && uscita) amount=`-${uscita}`; if(!amount && entrata) amount=entrata; const vals=Object.values(row); if(!data) data=vals[0]||''; if(!desc) desc=vals[1]||''; if(!amount) amount=vals[2]||''; return {Data:KYV.toDbDate(data), Descrizione:desc || 'Movimento bancario', Categoria:autoCategory(desc), Importo:KYV.toDbNumber(amount)||'0'}; }
+        window.previewExpenseCsv = async function(){ const file=document.getElementById('expense-csv-file').files[0]; if(!file){ KYV.showToast('Seleziona un file CSV.', 'warning'); return; } const text=await file.text(); const parsed=parseCsv(text).map(normalizeBankRow).filter(r=>r.Descrizione || r.Importo); const existing=new Set(expenses.map(expenseKey)); expensePreviewRows=parsed.map(r=>({...r,_duplicate:existing.has(expenseKey(r))})); const newRows=expensePreviewRows.filter(r=>!r._duplicate); document.getElementById('expense-import-btn').disabled=!newRows.length; document.getElementById('expense-preview').innerHTML=expensePreviewRows.length?`<div class="mb-3 text-xs text-kyv-text">Righe lette: <strong class="text-white">${expensePreviewRows.length}</strong> · Nuove: <strong class="text-emerald-300">${newRows.length}</strong> · Duplicate: <strong class="text-amber-300">${expensePreviewRows.length-newRows.length}</strong></div><table class="w-full text-xs"><thead class="text-left text-kyv-text uppercase"><tr><th class="p-3">Stato</th><th class="p-3">Data</th><th class="p-3">Descrizione</th><th class="p-3">Categoria</th><th class="p-3">Importo</th></tr></thead><tbody>${expensePreviewRows.slice(0,60).map(r=>`<tr class="border-b border-kyv-border/50"><td class="p-3">${r._duplicate?'<span class="mini-pill text-amber-100 border-amber-500/25 bg-amber-500/10">Duplicato</span>':'<span class="mini-pill text-emerald-100 border-emerald-500/25 bg-emerald-500/10">Nuovo</span>'}</td><td class="p-3 text-kyv-text">${H(KYV.formatDate(r.Data,'-'))}</td><td class="p-3 text-white">${H(r.Descrizione)}</td><td class="p-3 text-kyv-text">${H(r.Categoria)}</td><td class="p-3 font-black">${KYV.formatEuro(r.Importo)}</td></tr>`).join('')}</tbody></table>`:'<div class="p-6 text-center text-kyv-text border border-dashed border-kyv-border rounded-2xl">Nessuna riga valida letta.</div>'; showIcons(document.getElementById('expense-preview')); };
+        window.importExpensePreview = async function(){ const rows=expensePreviewRows.filter(r=>!r._duplicate).map(({_duplicate,...r})=>r); if(!rows.length){ KYV.showToast('Nessuna nuova spesa da importare.', 'warning'); return; } const btn=document.getElementById('expense-import-btn'); btn.disabled=true; try{ const {data,error}=await supabaseClient.from('Spese Extra').insert(rows).select('*'); if(error) throw error; expenses=[...(data||[]),...expenses]; expensePreviewRows=[]; document.getElementById('expense-preview').innerHTML=''; document.getElementById('expense-csv-file').value=''; renderExpenses(); updateStats(); KYV.showToast(`${rows.length} spese importate.`, 'success'); }catch(err){ console.error(err); KYV.showToast('Errore import spese.', 'error'); } finally{ btn.disabled=false; } };
+
+        const sheetConfigs={
+            SIAE:{title:'Scheda dati SIAE', tone:'violet', intro:'deposito/controllo SIAE e quote autoriali', fields:[['Titolo definitivo',['TITOLO']],['Artista/interprete pubblico',['ARTISTA']],['Autori/compositori/testo',['AUTORI']],['Quota musica KYV',['Quota_Musica_Kyv']],['Quote altri autori musica/testo',['Quota_Musica_Artista','Quota_Testo_Artista']],['Codice IPI artista/autori',['Codice_IPI_Artista']],['Split sheet o conferma quote',['Contratto link']],['Eventuale ISWC/Codice opera',['Codice_ISRC']]]},
+            IMAIE:{title:'Scheda dati IMAIE', tone:'cyan', intro:'verifica diritti connessi, interpreti/esecutori e pubblicazione', fields:[['Titolo opera/master',['TITOLO']],['Artista principale',['ARTISTA']],['Nome vero artista',['Nome_Vero_Artista']],['Codice ISRC',['Codice_ISRC']],['Ruolo IMAIE KYV',['Ruolo_IMAIE_Kyv']],['Strumenti/performance KYV',['Strumenti_Suonati_Kyv']],['Data pubblicazione',['Data_Pubblicazione']],['Produttore fonografico/label',['Produttore_Fonografico','Label']]]},
+            FATTURA:{title:'Scheda dati fattura', tone:'emerald', intro:'emissione fattura e controllo amministrativo', fields:[['Titolo/progetto',['TITOLO']],['Artista/commessa',['ARTISTA']],['Cliente o referente fatturazione',['Label','MANAGEMENT']],['Importo/FEE',['IMPORTO','FEE']],['Descrizione prestazione',['SVILUPPO','NOTE']],['Data fattura prevista',['Datafattura']],['Contratto o ordine collegato',['Contratto link']],['Stato pagamento',['PAGAMENTO']]]}
+        };
+        function fieldValue(p, keys){ for(const k of keys){ if(has(p[k])) return p[k]; } return ''; }
+        function selectedSheetProject(){ const id=document.getElementById('sheet-project')?.value; return projects.find(p=>String(p.ID)===String(id)) || projects[0] || null; }
+        function buildSheetMessage(){ const p=selectedSheetProject(); if(!p) return ''; const type=document.getElementById('sheet-type').value; const recipient=document.getElementById('sheet-recipient').value.trim() || 'ciao'; const cfg=sheetConfigs[type]; const missing=cfg.fields.filter(f=>!has(fieldValue(p,f[1]))).map(f=>f[0]); const present=cfg.fields.filter(f=>has(fieldValue(p,f[1]))).map(f=>`${f[0]}: ${fieldValue(p,f[1])}`); return [`${recipient},`, '', `per completare la ${cfg.title} del brano "${p.TITOLO || '-'}" (${p.ARTISTA || '-'}) mi servirebbero questi dati:`, '', ...(missing.length?missing.map(m=>`- ${m}`):['- Al momento non risultano mancanze principali, ti chiedo solo conferma che i dati sotto siano corretti.']), '', 'Dati già presenti nel gestionale:', ...(present.length?present.map(x=>`- ${x}`):['- Nessun dato rilevante già compilato.']), '', 'Grazie, così posso aggiornare archivio, documentazione e pratiche collegate.'].join('\n'); }
+        window.renderSheetBuilder = function(){ const sel=document.getElementById('sheet-project'); if(sel && !sel.options.length){ sel.innerHTML=sortedProjectsByLabel().map(p=>`<option value="${H(p.ID)}">${H(projectLabel(p))}</option>`).join(''); if(window.KYV_SELECTS) window.KYV_SELECTS.refreshSelect(sel); } const p=selectedSheetProject(); const out=document.getElementById('sheet-builder'); if(!p){ out.innerHTML='<div class="text-center text-kyv-text p-10 border border-dashed border-kyv-border rounded-2xl">Nessun progetto disponibile.</div>'; return; } const type=document.getElementById('sheet-type').value; const cfg=sheetConfigs[type]; document.getElementById('sheet-open-project').href=`scheda_progetto.html?id=${encodeURIComponent(p.ID)}`; const rows=cfg.fields.map(([label,keys])=>{ const val=fieldValue(p,keys); return `<div class="sheet-row ${has(val)?'ok':'missing'}"><div class="flex items-start gap-3"><i data-lucide="${has(val)?'check-circle-2':'circle-alert'}" class="w-5 h-5 shrink-0 ${has(val)?'text-emerald-300':'text-amber-300'}"></i><div class="min-w-0"><p class="text-white font-black">${H(label)}</p><p class="text-xs ${has(val)?'text-emerald-100':'text-amber-100'} mt-1 break-words">${has(val)?H(val):'Dato mancante / da richiedere'}</p><p class="text-[10px] text-kyv-text mt-1">Campo/i: ${H(keys.join(', '))}</p></div></div></div>`; }).join(''); const missing=cfg.fields.filter(f=>!has(fieldValue(p,f[1]))).length; out.innerHTML=`<div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-5"><div><p class="text-[10px] uppercase tracking-[0.18em] text-${cfg.tone}-300 font-black">${H(cfg.title)}</p><h3 class="text-2xl font-black text-white mt-1">${H(p.ARTISTA||'Artista')} · ${H(p.TITOLO||'Senza titolo')}</h3><p class="text-sm text-kyv-text mt-2">Uso: ${H(cfg.intro)}.</p></div><span class="rounded-full border px-3 py-1 text-xs font-black ${missing?'border-amber-500/25 bg-amber-500/10 text-amber-100':'border-emerald-500/25 bg-emerald-500/10 text-emerald-100'}">${missing ? `${missing} dati mancanti` : 'Completa'}</span></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${rows}</div><div class="mt-5"><label class="block text-[10px] uppercase tracking-wider text-kyv-text font-black mb-1">Messaggio generato</label><textarea readonly rows="12" class="kyv-input text-xs leading-relaxed">${H(buildSheetMessage())}</textarea></div>`; showIcons(out); };
+        window.copySheetRequest = async function(){ try{ await navigator.clipboard.writeText(buildSheetMessage()); KYV.showToast('Richiesta dati copiata.', 'success'); }catch(e){ KYV.showToast('Copia non riuscita.', 'warning'); } };
+        window.saveSheetRequest = async function(){ const p=selectedSheetProject(); if(!p) return; const type=document.getElementById('sheet-type').value; const cfg=sheetConfigs[type]; try{ const {data,error}=await supabaseClient.from('DOCUMENTI_PROGETTO').insert([{ID_PROGETTO:p.ID, Tipo_Documento:`Scheda richiesta dati ${type}`, Titolo_Documento:`${cfg.title} — ${p.ARTISTA||''} ${p.TITOLO||''}`.trim(), Fonte:'Schede operative app', Link_Drive:null, Data_Documento:new Date().toISOString().slice(0,10), Note:buildSheetMessage()}]).select('*'); if(error) throw error; docs=[...(data||[]),...docs]; updateStats(); renderSheetBuilder(); KYV.showToast('Scheda salvata in Documenti Progetto.', 'success'); }catch(err){ console.error(err); KYV.showToast('Errore salvataggio scheda.', 'error'); } };
+
+        function ensureValidInitialTab(){ if(!['documenti','spese','schede'].includes(activeTab)) activeTab='documenti'; setDocTab(activeTab); }
+
+        async function fetchAll(){ document.getElementById('doc-grid').innerHTML='<div class="p-8 text-center text-kyv-text"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>Caricamento...</div>'; showIcons(); try{ const [p,s,d]=await Promise.all([safeSelect('PROGETTI','ID'), safeSelect('Spese Extra','ID_SPESE'), safeSelect('DOCUMENTI_PROGETTO','ID_DOCUMENTO')]); projects=(p||[]).sort((a,b)=>String(projectLabel(a)).localeCompare(String(projectLabel(b)), 'it', {sensitivity:'base', numeric:true})); expenses=s; docs=d; const sel=document.getElementById('sheet-project'); if(sel) sel.innerHTML=''; renderExpenseProjectOptions(); updateStats(); ensureValidInitialTab(); }catch(err){ console.error(err); KYV.showToast('Errore caricamento dati.', 'error'); } }
+        document.addEventListener('DOMContentLoaded', () => { supabaseClient=KYV.createSupabaseClient(); document.getElementById('expense-date').value=new Date().toISOString().slice(0,10); fetchAll(); showIcons(); });
+    </script>
+</body>
+</html>

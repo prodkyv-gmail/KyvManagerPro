@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Rendiconto SIAE</title>
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }</script>
+        <link rel="stylesheet" href="kyv-responsive.css">
+<style> body { background-color: #0f111a; color: #f8fafc; } ::-webkit-scrollbar { width: 12px; height: 12px; } ::-webkit-scrollbar-thumb { background: #232838; border-radius: 6px; } .custom-scrollbar::-webkit-scrollbar { height: 12px; width: 12px; } 
+    /* Nuove Scrollbar Allargate e Chiare */
+        ::-webkit-scrollbar { width: 16px; height: 16px; } 
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; } 
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 8px; border: 4px solid #0f111a; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .custom-scrollbar { scrollbar-width: auto; scrollbar-color: #4b5563 rgba(255, 255, 255, 0.02); }
+        .custom-scrollbar::-webkit-scrollbar { width: 16px; height: 16px; }
+    </style>
+<!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f111a">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Registrazione del Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker PWA registrato con successo.');
+                    })
+                    .catch(error => {
+                        console.error('Errore di registrazione ServiceWorker PWA:', error);
+                    });
+            });
+        }
+    </script>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        <section class="flex-1 overflow-y-auto w-full h-full flex flex-col">
+            <header class="pt-8 px-4 sm:px-8 pb-4 flex justify-between items-end border-b border-kyv-border/50 shrink-0">
+                <div class="flex items-center"><button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                <div><h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Rendiconto <span class="text-indigo-400">SIAE</span></h2><p class="text-kyv-text mt-1 text-xs sm:text-sm">Analisi visuale dei dati estratti da SIAE.</p></div></div>
+                <button onclick="fetchSiaeDataForRendiconto()" class="flex items-center px-4 py-2 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg shadow-sm"><i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> <span class="hidden sm:inline">Aggiorna</span></button>
+            </header>
+            
+            <div class="p-4 sm:p-8 pt-6 flex-1 overflow-y-auto">
+                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-emerald-900/10 border border-emerald-500/20 p-5 rounded-xl flex flex-col"><div class="flex items-center mb-2"><i data-lucide="coins" class="w-4 h-4 text-emerald-400 mr-2"></i><p class="text-[10px] font-bold text-emerald-400/80 uppercase">Totale Incassi SIAE</p></div><h3 class="text-3xl font-bold text-emerald-400 mt-1" id="val-siae-entrate">€ 0,00</h3><div id="siae-entrate-anni" class="mt-3 flex-1 overflow-y-auto custom-scrollbar"></div></div>
+                    <div class="bg-kyv-card p-5 rounded-xl border border-kyv-border"><div class="flex items-center mb-2"><i data-lucide="music-4" class="w-4 h-4 text-indigo-400 mr-2"></i><p class="text-[10px] font-bold text-kyv-text uppercase">Totale Opere Depositate</p></div><h3 class="text-3xl font-bold text-white mt-1" id="val-siae-opere">0</h3></div>
+                    <div class="bg-kyv-card p-5 rounded-xl border border-kyv-border"><div class="flex items-center mb-2"><i data-lucide="users-2" class="w-4 h-4 text-indigo-400 mr-2"></i><p class="text-[10px] font-bold text-kyv-text uppercase">Autori/Editori Coinvolti</p></div><h3 class="text-3xl font-bold text-white mt-1" id="val-siae-autori">0</h3></div>
+                    <div class="bg-kyv-card p-5 rounded-xl border border-kyv-border"><div class="flex items-center mb-2"><i data-lucide="pie-chart" class="w-4 h-4 text-purple-400 mr-2"></i><p class="text-[10px] font-bold text-kyv-text uppercase">Quote KYV (Media Stimata)</p></div><h3 class="text-3xl font-bold text-purple-100 mt-1" id="val-siae-quote">0%</h3></div>
+                 </div>
+                 <div class="bg-kyv-card rounded-xl border border-kyv-border p-5 h-[300px] sm:h-[450px] flex flex-col mb-10"><div class="flex items-center mb-4"><i data-lucide="bar-chart" class="w-4 h-4 text-indigo-400 mr-2"></i><h3 class="font-semibold text-white text-sm">Distribuzione Quote DEM</h3></div><div class="flex-1 relative w-full"><canvas id="chartSiaeHistogram"></canvas></div></div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback Menu</aside>`;};}
+        loadKyvSidebar('rendiconto');
+
+        const fallbackUrl = 'https://sfclxyexipbgiohpwlnl.supabase.co';
+        const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY';
+        const supabaseClient = KYV.createSupabaseClient();
+
+        const fmtEuro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+        function parseKyvNumber(val) { return (window.KYV_HELPERS ? KYV_HELPERS.parseKyvNumber(val) : KYV.parseNumber(val)); }
+
+        let chartSiaeHistogramInstance = null;
+        async function fetchSiaeDataForRendiconto() {
+            try {
+                const [siaeRes, estrattoRes] = await Promise.all([supabaseClient.from('EXPORT SIAE').select('*'), supabaseClient.from('ESTRATTO SIAE').select('IMPORTO, DATA')]);
+                const allSiaeData = siaeRes.data||[]; const estrattoData = estrattoRes.data||[]; let totEntrate = 0, entratePerAnno = {};
+                estrattoData.forEach(r => { let imp = parseKyvNumber(r.IMPORTO); if(imp>0){ totEntrate+=imp; let a = r.DATA ? new Date(r.DATA).getFullYear() : '-'; entratePerAnno[a] = (entratePerAnno[a]||0)+imp; }});
+                document.getElementById('val-siae-entrate').innerText = fmtEuro.format(totEntrate);
+                document.getElementById('siae-entrate-anni').innerHTML = Object.keys(entratePerAnno).sort((a,b)=>b-a).map(y => `<div class="flex justify-between items-center text-xs mt-2 border-t border-emerald-500/20 pt-2"><span class="text-emerald-500/70 font-semibold uppercase text-[9px]">${y}</span><span class="font-bold text-white">${fmtEuro.format(entratePerAnno[y])}</span></div>`).join('');
+                
+                if(allSiaeData.length > 0) {
+                     document.getElementById('val-siae-opere').innerText = allSiaeData.length; const autoriUnici = new Set(); let totQuota = 0, valide = 0;
+                     allSiaeData.forEach(r => {
+                         if(r['Cognome / Denominazione']) autoriUnici.add(r['Cognome / Denominazione'].trim());
+                         for(let i=1; i<=10; i++) if(r[`Cognome / Denominazione_${i}`]) autoriUnici.add(r[`Cognome / Denominazione_${i}`].trim());
+                         let q = parseFloat(String(r['Quota DEM']||'').replace(/%/g, '')); if(!isNaN(q)){ totQuota+=q; valide++; }
+                     });
+                     document.getElementById('val-siae-autori').innerText = autoriUnici.size; document.getElementById('val-siae-quote').innerText = valide>0 ? (totQuota/valide).toFixed(1)+'%' : '0%';
+                     const bins = {'0-8%': 0, '8-16%': 0, '16-24%': 0, '24-32%': 0, '32-40%': 0, '40-50%': 0, '> 50%': 0};
+                     allSiaeData.forEach(r => { let q = parseFloat(String(r['Quota DEM']||'').replace(/%/g, ''))||0; if(q<=8) bins['0-8%']++; else if(q<=16) bins['8-16%']++; else if(q<=24) bins['16-24%']++; else if(q<=32) bins['24-32%']++; else if(q<=40) bins['32-40%']++; else if(q<=50) bins['40-50%']++; else bins['> 50%']++; });
+                     if(chartSiaeHistogramInstance) { chartSiaeHistogramInstance.data.labels = Object.keys(bins); chartSiaeHistogramInstance.data.datasets[0].data = Object.values(bins); chartSiaeHistogramInstance.update(); }
+                }
+            } catch(e) {}
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            Chart.defaults.color = '#94a3b8'; Chart.defaults.font.family = 'Inter';
+            chartSiaeHistogramInstance = new Chart(document.getElementById('chartSiaeHistogram').getContext('2d'), {type: 'bar', data: { labels: [], datasets: [{ label: 'Numero Opere', data: [], backgroundColor: 'rgba(99, 102, 241, 0.7)', borderColor: '#6366f1', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#232838' }, border: { display: false } }, x: { grid: { display: false }, border: { display: false } } } } });
+            fetchSiaeDataForRendiconto(); if(window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

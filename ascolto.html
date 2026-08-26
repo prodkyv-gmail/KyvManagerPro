@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Stazione Ascolto MP3</title>
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="kpapjm7sybfs8ze"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-audio-project.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', text: '#94a3b8' } } } } }</script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <style>
+        body { background:#0f111a; color:#f8fafc; }
+        .kyv-input { width:100%; background:#0f111a; border:1px solid #232838; color:#fff; padding:.78rem .9rem; border-radius:.75rem; outline:none; transition:.18s ease; }
+        .kyv-input:focus { border-color:#8b5cf6; box-shadow:0 0 0 2px rgba(139,92,246,.18); }
+        .kyv-panel { background:#151923; border:1px solid #232838; border-radius:1.25rem; }
+        .tab-btn { border:1px solid #232838; background:#151923; color:#94a3b8; }
+        .tab-btn.active { background:rgba(139,92,246,.16); border-color:rgba(139,92,246,.45); color:#ddd6fe; }
+        .track-card { transition:transform .14s ease, border-color .14s ease, background .14s ease; }
+        .track-card:hover { transform:translateY(-1px); border-color:rgba(139,92,246,.5); background:#111827; }
+        .track-card.active { border-color:rgba(34,197,94,.65); background:rgba(34,197,94,.06); }
+        .mini-label { font-size:10px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em; }
+        audio { width:100%; }
+        .range { accent-color:#8b5cf6; }
+        .source-pill { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; border-radius:999px; padding:.25rem .55rem; }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar relative z-10">
+            <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-6 border-b border-kyv-border/50 pb-6">
+                <div class="flex items-start">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-200 text-[10px] font-black uppercase tracking-[0.18em] mb-3"><i data-lucide="headphones" class="w-3.5 h-3.5"></i> Listening station</div>
+                        <h2 class="text-2xl sm:text-3xl font-black tracking-tight">Stazione <span class="text-violet-400">Ascolto MP3</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm max-w-5xl">Ascolta demo, master e reference senza uscire dal gestionale. La nuova modalità Radio crea una playlist unica con i brani MP3/audio presenti in Archivio Dropbox/Supabase, Google Drive e Dropbox diretto: puoi scegliere il brano, mettere in pausa, andare avanti, tornare indietro e ripetere.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="switchSource('radio')" id="tab-radio" class="tab-btn active px-4 py-2 rounded-xl text-xs font-black"><i data-lucide="radio" class="w-4 h-4 inline mr-2"></i>Radio</button>
+                    <button onclick="switchSource('supabase')" id="tab-supabase" class="tab-btn px-4 py-2 rounded-xl text-xs font-black"><i data-lucide="database" class="w-4 h-4 inline mr-2"></i>Archivio</button>
+                    <button onclick="switchSource('dropbox')" id="tab-dropbox" class="tab-btn px-4 py-2 rounded-xl text-xs font-black"><i data-lucide="cloud" class="w-4 h-4 inline mr-2"></i>Dropbox diretto</button>
+                    <button onclick="switchSource('drive')" id="tab-drive" class="tab-btn px-4 py-2 rounded-xl text-xs font-black"><i data-lucide="hard-drive" class="w-4 h-4 inline mr-2"></i>Drive</button>
+                    <button onclick="switchSource('local')" id="tab-local" class="tab-btn px-4 py-2 rounded-xl text-xs font-black"><i data-lucide="folder-open" class="w-4 h-4 inline mr-2"></i>Locale</button>
+                </div>
+            </header>
+
+            <section class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-5">
+                <aside class="space-y-5">
+                    <div class="kyv-panel p-5 border-violet-500/20 bg-violet-500/[0.04]">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="disc-3" class="w-5 h-5 mr-2 text-violet-300"></i>Player</h3>
+                        <div id="now-playing" class="mt-4 rounded-2xl border border-kyv-border bg-kyv-bg p-4 min-h-[150px] flex flex-col justify-center">
+                            <p class="text-xs text-kyv-text">Seleziona un brano dalla lista per iniziare l’ascolto.</p>
+                        </div>
+                        <audio id="audio-player" class="mt-4" controls preload="metadata" onended="handleAudioEnded()"></audio>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+                            <button onclick="playPrev()" class="px-3 py-2 rounded-xl bg-kyv-bg border border-kyv-border text-xs font-black hover:border-violet-400/50"><i data-lucide="skip-back" class="w-4 h-4 inline mr-1"></i>Indietro</button>
+                            <button id="play-toggle-btn" onclick="toggleCurrentPlay()" class="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-black"><i data-lucide="play" class="w-4 h-4 inline mr-1"></i>Play/Pausa</button>
+                            <button onclick="playNext()" class="px-3 py-2 rounded-xl bg-kyv-bg border border-kyv-border text-xs font-black hover:border-violet-400/50">Avanti<i data-lucide="skip-forward" class="w-4 h-4 inline ml-1"></i></button>
+                            <button id="repeat-btn" onclick="toggleRepeatMode()" class="px-3 py-2 rounded-xl bg-kyv-bg border border-kyv-border text-xs font-black hover:border-violet-400/50"><i data-lucide="repeat" class="w-4 h-4 inline mr-1"></i>Ripeti lista</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <button onclick="loadRadioTracks(true)" class="px-3 py-2 rounded-xl bg-fuchsia-600/20 border border-fuchsia-500/30 text-fuchsia-100 text-xs font-black hover:bg-fuchsia-600/30"><i data-lucide="radio" class="w-4 h-4 inline mr-1"></i>Avvia radio</button>
+                            <button onclick="shufflePlay()" class="px-3 py-2 rounded-xl bg-kyv-bg border border-kyv-border text-xs font-black hover:border-violet-400/50"><i data-lucide="shuffle" class="w-4 h-4 inline mr-1"></i>Casuale</button>
+                        </div>
+                    </div>
+
+                    <div class="kyv-panel p-5 space-y-4">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="sliders-horizontal" class="w-5 h-5 mr-2 text-cyan-300"></i>Filtri</h3>
+                        <div><label class="mini-label">Cerca</label><input id="search-input" class="kyv-input" placeholder="Titolo, artista, file, progetto..." oninput="renderTracks()"></div>
+                        <div><label class="mini-label">Progetto</label><select id="project-filter" class="kyv-input" onchange="renderTracks()"><option value="">Tutti i progetti</option></select></div>
+                        <div><label class="mini-label">Tipo file</label><select id="type-filter" class="kyv-input" onchange="renderTracks()"><option value="">Tutti</option><option>Demo ascolto</option><option>Master</option><option>Mix</option><option>Provino / topline</option><option>Reference</option><option>Altro</option></select></div>
+                        <div id="radio-tools" class="rounded-2xl border border-fuchsia-500/20 bg-fuchsia-500/[0.05] p-4 space-y-3">
+                            <p class="text-xs text-kyv-text leading-relaxed">Radio unica: unisce Archivio Audio Dropbox/Supabase, file audio trovati su Google Drive e file scelti con Dropbox diretto. Per Dropbox non registrato serve comunque scegliere i file dal Chooser.</p>
+                            <button onclick="loadRadioTracks(true)" class="w-full px-4 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-black text-xs"><i data-lucide="radio" class="w-4 h-4 inline mr-2"></i>Carica Radio Drive + Dropbox</button>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button onclick="appendDriveTracks()" class="px-3 py-3 rounded-xl bg-emerald-600/15 border border-emerald-500/25 text-emerald-100 text-xs font-black hover:bg-emerald-600/25"><i data-lucide="hard-drive" class="w-4 h-4 inline mr-2"></i>Aggiungi Drive</button>
+                                <button onclick="openDirectDropboxChooser(true)" class="px-3 py-3 rounded-xl bg-blue-600/15 border border-blue-500/25 text-blue-100 text-xs font-black hover:bg-blue-600/25"><i data-lucide="cloud" class="w-4 h-4 inline mr-2"></i>Aggiungi Dropbox</button>
+                            </div>
+                            <button onclick="clearRadio()" class="w-full px-4 py-3 rounded-xl bg-kyv-bg border border-kyv-border text-kyv-text hover:text-white font-black text-xs"><i data-lucide="list-x" class="w-4 h-4 inline mr-2"></i>Svuota radio</button>
+                        </div>
+                        <div id="dropbox-tools" class="hidden rounded-2xl border border-blue-500/20 bg-blue-500/[0.05] p-4 space-y-3">
+                            <p class="text-xs text-kyv-text leading-relaxed">Sfoglia Dropbox in diretta: puoi ascoltare MP3/WAV/M4A anche se non sono ancora salvati in Supabase. Poi, se vuoi, puoi registrarli nell’Archivio Audio.</p>
+                            <div><label class="mini-label">Collega a progetto, opzionale</label><select id="dropbox-target-project" class="kyv-input"><option value="">Nessun progetto / ascolto libero</option></select></div>
+                            <div><label class="mini-label">Tipo file predefinito</label><select id="dropbox-target-type" class="kyv-input"><option>Demo ascolto</option><option>Master</option><option>Mix</option><option>Provino / topline</option><option>Reference</option><option>Altro</option></select></div>
+                            <button onclick="openDirectDropboxChooser()" class="w-full px-4 py-3 rounded-xl bg-[#0061FF] hover:bg-[#0052cc] text-white font-black text-xs"><i data-lucide="folder-search" class="w-4 h-4 inline mr-2"></i>Scegli file da Dropbox</button>
+                            <button onclick="saveCurrentDropboxToArchive()" class="w-full px-4 py-3 rounded-xl bg-blue-600/15 hover:bg-blue-600/25 border border-blue-500/25 text-blue-100 font-black text-xs"><i data-lucide="database" class="w-4 h-4 inline mr-2"></i>Salva brano corrente in Archivio</button>
+                        </div>
+                        <div id="drive-tools" class="hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.05] p-4 space-y-3">
+                            <p class="text-xs text-kyv-text leading-relaxed">Legge i Drive configurati in config.js. Puoi cercare su info@kyvprod.net, prodkyv@gmail.com o su tutti i Drive disponibili.</p>
+                            <div><label class="mini-label">Account Drive</label><select id="radio-drive-account" class="kyv-input"></select></div>
+                            <button onclick="fetchDriveTracks()" class="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="refresh-cw" class="w-4 h-4 inline mr-2"></i>Cerca MP3 su Drive</button>
+                        </div>
+                        <div id="local-tools" class="hidden rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-4 space-y-3">
+                            <p class="text-xs text-kyv-text leading-relaxed">Ascolto locale temporaneo: i file non vengono caricati su Supabase e spariscono quando chiudi la pagina.</p>
+                            <input id="local-files" type="file" multiple accept="audio/*,.mp3,.wav,.m4a,.aif,.aiff" class="w-full text-xs text-kyv-text file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-600/20 file:text-amber-200" onchange="loadLocalTracks(event)">
+                        </div>
+                    </div>
+
+                    <div class="kyv-panel p-5 space-y-4">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="notebook-pen" class="w-5 h-5 mr-2 text-emerald-300"></i>Note ascolto</h3>
+                        <textarea id="listen-notes" rows="5" class="kyv-input" placeholder="Es. Strofa forte, ritornello da aprire, basso troppo avanti, versione buona per invio label..."></textarea>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button onclick="copyFeedback()" class="px-3 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs"><i data-lucide="copy" class="w-4 h-4 inline mr-2"></i>Copia feedback</button>
+                            <button onclick="saveListeningNote()" class="px-3 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="save" class="w-4 h-4 inline mr-2"></i>Registra ascolto</button>
+                        </div>
+                        <p class="text-[10px] text-kyv-text leading-relaxed">“Registra ascolto” salva una nota in <strong>DOCUMENTI_PROGETTO</strong> se il brano è collegato a un progetto. Non crea nuove tabelle.</p>
+                    </div>
+                </aside>
+
+                <section class="kyv-panel p-4 sm:p-5 min-h-[640px]">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="list-music" class="w-5 h-5 mr-2 text-violet-300"></i>Playlist</h3>
+                            <p id="track-count" class="text-xs text-kyv-text mt-1">0 brani caricati.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="loadRadioTracks(true)" class="px-3 py-2 rounded-lg bg-fuchsia-600/20 border border-fuchsia-500/30 text-fuchsia-100 text-xs font-black hover:bg-fuchsia-600/30"><i data-lucide="radio" class="w-4 h-4 inline mr-2"></i>Radio</button>
+                            <button onclick="shufflePlay()" class="px-3 py-2 rounded-lg bg-kyv-bg border border-kyv-border text-xs font-black hover:border-violet-400/50"><i data-lucide="shuffle" class="w-4 h-4 inline mr-2"></i>Casuale</button>
+                            <button onclick="openDirectDropboxChooser(true)" class="px-3 py-2 rounded-lg bg-blue-600/15 border border-blue-500/25 text-blue-200 text-xs font-black hover:bg-blue-600/25"><i data-lucide="cloud" class="w-4 h-4 inline mr-2"></i>Dropbox diretto</button>
+                            <button onclick="copyPlaylist()" class="px-3 py-2 rounded-lg bg-kyv-bg border border-kyv-border text-xs font-black hover:border-violet-400/50"><i data-lucide="copy" class="w-4 h-4 inline mr-2"></i>Copia lista</button>
+                            <a href="kyv_dropbox.html" class="px-3 py-2 rounded-lg bg-blue-600/15 border border-blue-500/25 text-blue-200 text-xs font-black hover:bg-blue-600/25"><i data-lucide="archive" class="w-4 h-4 inline mr-2"></i>Archivio audio</a>
+                        </div>
+                    </div>
+                    <div id="tracks-list" class="grid grid-cols-1 2xl:grid-cols-2 gap-4"></div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback Menu</aside>`;};}
+        loadKyvSidebar('ascolto');
+
+        let supabaseClient = null;
+        let projects = [];
+        let tracks = [];
+        let filteredTracks = [];
+        let currentIndex = -1;
+        let currentSource = 'radio';
+        let repeatMode = 'playlist';
+        let localObjectUrls = [];
+
+        const H = (v) => KYV.safeHtml(v ?? '');
+        const N = (v) => KYV.normalize(v ?? '');
+        const J = (v) => JSON.stringify(v).replace(/</g, '\\u003c');
+
+        function initSupabase(){
+            if(supabaseClient) return supabaseClient;
+            supabaseClient = KYV.createSupabaseClient();
+            return supabaseClient;
+        }
+
+        function projectTitle(p){ return [p.ARTISTA, p.TITOLO].filter(Boolean).join(' - ') || p.TITOLO || p.ARTISTA || `Progetto #${p.ID}`; }
+        const sortByLabel = (arr, labelFn) => [...(arr || [])].sort((a,b)=>String(labelFn(a)).localeCompare(String(labelFn(b)), 'it', {sensitivity:'base', numeric:true}));
+        function findProjectById(id){ return projects.find(p => String(p.ID) === String(id)); }
+
+        function normalizeAudioUrl(url){
+            if(!url) return '';
+            let u = String(url).trim();
+            try {
+                const parsed = new URL(u);
+                if(parsed.hostname.includes('dropbox.com')){
+                    parsed.searchParams.delete('dl');
+                    parsed.searchParams.set('raw', '1');
+                    return parsed.toString();
+                }
+                if(parsed.hostname.includes('drive.google.com')){
+                    const id = extractDriveId(u);
+                    if(id) return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
+                }
+            } catch(e) {}
+            return u;
+        }
+
+        function extractDriveId(url){
+            const raw = String(url || '');
+            let m = raw.match(/\/d\/([^/]+)/);
+            if(m) return m[1];
+            m = raw.match(/[?&]id=([^&]+)/);
+            if(m) return decodeURIComponent(m[1]);
+            return '';
+        }
+
+        function makeTrack(row, source){
+            const project = row.ID_PROGETTO ? findProjectById(row.ID_PROGETTO) : null;
+            const title = row.Titolo || row.Progetto || row.Nome_File || row.filename || row.name || 'Audio';
+            const artist = row.Artista || (project ? project.ARTISTA : '') || '';
+            const link = row.Link_Dropbox || row.Link || row.url || row.webViewLink || row.webContentLink || '';
+            return {
+                uid: `${source}-${row.ID_FILE || row.ID_CONSEGNA || row.id || row.name || Math.random()}`,
+                source,
+                idFile: row.ID_FILE || '',
+                idProgetto: row.ID_PROGETTO || (project ? project.ID : ''),
+                progetto: row.Progetto || (project ? projectTitle(project) : ''),
+                artist,
+                title,
+                fileName: row.Nome_File || row.Hash_File || row.name || row.filename || title,
+                type: row.Tipo_File || row.Contesto || row.mimeType || (String(title).toLowerCase().includes('master') ? 'Master' : 'Demo ascolto'),
+                version: row.Versione || '',
+                link,
+                playUrl: row.playUrl || normalizeAudioUrl(link),
+                date: row.Data_Caricamento || row.Data_Consegna || row.created || row.updated || '',
+                hash: row.Hash_SHA256 || row.Hash_File || '',
+                note: row.Note || row.folder || row.driveLabel || ''
+            };
+        }
+
+        async function loadProjects(){
+            const { data, error } = await initSupabase().from('PROGETTI').select('*').limit(1000);
+            if(error) throw error;
+            projects = sortByLabel(data || [], projectTitle);
+            const sel = document.getElementById('project-filter');
+            sel.innerHTML = '<option value="">Tutti i progetti</option>' + projects.map(p => `<option value="${H(p.ID)}">${H(projectTitle(p))}</option>`).join('');
+            if(window.KYV_SELECTS) window.KYV_SELECTS.refreshSelect(sel, { forceSnapshot:true });
+            const targetSel = document.getElementById('dropbox-target-project');
+            if(targetSel){ targetSel.innerHTML = '<option value="">Nessun progetto / ascolto libero</option>' + projects.map(p => `<option value="${H(p.ID)}">${H(projectTitle(p))}</option>`).join(''); if(window.KYV_SELECTS) window.KYV_SELECTS.refreshSelect(targetSel, { forceSnapshot:true }); }
+        }
+
+        function isAudioTrack(t){
+            const blob = `${t.fileName || ''} ${t.type || ''} ${t.link || ''} ${t.playUrl || ''}`;
+            return /\.(mp3|wav|m4a|aif|aiff|flac)(\?|#|$)/i.test(blob) || /audio/i.test(blob);
+        }
+
+        function trackKey(t){
+            return N(t.link || t.playUrl || t.fileName || t.title || t.uid);
+        }
+
+        function addUniqueTracks(items){
+            const existing = new Set(tracks.map(trackKey).filter(Boolean));
+            let added = 0;
+            (items || []).forEach(t => {
+                const key = trackKey(t);
+                if(!key || existing.has(key)) return;
+                existing.add(key);
+                tracks.push(t);
+                added++;
+            });
+            return added;
+        }
+
+        async function loadSupabaseTracks(options = {}){
+            const { append=false, render=true } = options;
+            if(!append) tracks = [];
+            const found = [];
+            const db = initSupabase();
+            try {
+                const { data, error } = await db.from('DROPBOX_AUDIO_FILES').select('*').order('ID_FILE', { ascending:false }).limit(1000);
+                if(error) throw error;
+                found.push(...(data || []).map(r => makeTrack(r, 'supabase')).filter(isAudioTrack));
+            } catch(err) {
+                console.warn('DROPBOX_AUDIO_FILES non disponibile', err);
+            }
+            try {
+                const { data, error } = await db.from('CONSEGNE_MASTER').select('*').order('ID_CONSEGNA', { ascending:false }).limit(1000);
+                if(!error && data) found.push(...data.map(r => makeTrack(r, 'consegna')).filter(isAudioTrack));
+            } catch(err) { console.warn('CONSEGNE_MASTER non disponibile', err); }
+            if(append) addUniqueTracks(found); else tracks = found;
+            if(render) renderTracks();
+            return found.length;
+        }
+
+        async function fetchDriveTracks(options = {}){
+            const { append=false, silent=false, render=true, accountId=null } = options;
+            const selectedAccount = accountId || document.getElementById('radio-drive-account')?.value || 'all';
+            const list = document.getElementById('tracks-list');
+            if(render){
+                list.innerHTML = `<div class="col-span-full p-10 text-center text-emerald-200"><i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-3 animate-spin"></i><p class="font-black">Scansione Google Drive...</p><p class="text-xs text-kyv-text mt-2">Account: ${H(selectedAccount === 'all' ? 'tutti i Drive configurati' : selectedAccount)}</p></div>`;
+                if(window.lucide) lucide.createIcons({ root:list });
+            }
+            try {
+                if(!window.KYV_DRIVE) throw new Error('Modulo Drive non caricato.');
+                const result = await KYV_DRIVE.listFiles({ accountId:selectedAccount, pages:12, audioOnly:true });
+                const found = (result.files || []).map(f => makeTrack(f, 'drive')).filter(isAudioTrack);
+                if(append) addUniqueTracks(found); else tracks = found;
+                const errorText = (result.errors || []).join(' | ');
+                if(!silent){
+                    if(errorText) KYV.showToast(errorText, 'error');
+                    else KYV.showToast(`${found.length} file audio trovati su Drive.`, 'success');
+                }
+                if(render) renderTracks();
+                return found.length;
+            } catch(err){
+                console.error(err);
+                if(!silent) KYV.showToast(err.message || 'Errore lettura Drive.', 'error');
+                if(!append) tracks = [];
+                if(render) renderTracks();
+                return 0;
+            }
+        }
+
+        async function appendDriveTracks(){
+            const before = tracks.length;
+            const added = await fetchDriveTracks({ append:true, silent:true, render:true });
+            KYV.showToast(`${tracks.length - before} brani Drive aggiunti alla radio.`, tracks.length > before ? 'success' : 'info');
+            return added;
+        }
+
+        async function loadRadioTracks(autoplay=false){
+            currentSource = 'radio';
+            ['radio','supabase','dropbox','drive','local'].forEach(s => document.getElementById(`tab-${s}`)?.classList.toggle('active', s === 'radio'));
+            document.getElementById('radio-tools')?.classList.remove('hidden');
+            document.getElementById('dropbox-tools')?.classList.add('hidden');
+            document.getElementById('drive-tools')?.classList.add('hidden');
+            document.getElementById('local-tools')?.classList.add('hidden');
+            currentIndex = -1;
+            tracks = [];
+            const list = document.getElementById('tracks-list');
+            list.innerHTML = `<div class="col-span-full p-10 text-center text-fuchsia-200"><i data-lucide="radio" class="w-8 h-8 mx-auto mb-3 animate-pulse"></i><p class="font-black">Creo radio da Drive + Dropbox...</p><p class="text-xs text-kyv-text mt-2">Carico archivio Dropbox/Supabase e cerco file audio su Google Drive.</p></div>`;
+            if(window.lucide) lucide.createIcons({ root:list });
+            const dbCount = await loadSupabaseTracks({ append:true, render:false });
+            const beforeDrive = tracks.length;
+            await fetchDriveTracks({ append:true, silent:true, render:false });
+            const driveCount = tracks.length - beforeDrive;
+            renderTracks();
+            KYV.showToast(`Radio pronta: ${tracks.length} brani (${dbCount} archivio, ${driveCount} Drive). Per Dropbox non archiviato usa “Aggiungi Dropbox”.`, 'success');
+            if(autoplay && filteredTracks.length) playTrack(0);
+        }
+
+        function clearRadio(){
+            const player = document.getElementById('audio-player');
+            player.pause();
+            player.removeAttribute('src');
+            player.load();
+            currentIndex = -1;
+            tracks = [];
+            document.getElementById('now-playing').innerHTML = '<p class="text-xs text-kyv-text">Radio svuotata. Carica Drive + Dropbox per iniziare.</p>';
+            renderTracks();
+        }
+
+        function loadLocalTracks(event){
+            localObjectUrls.forEach(u => URL.revokeObjectURL(u));
+            localObjectUrls = [];
+            const files = Array.from(event.target.files || []);
+            tracks = files.map((file, idx) => {
+                const url = URL.createObjectURL(file);
+                localObjectUrls.push(url);
+                return { uid:`local-${idx}-${file.name}`, source:'locale', idProgetto:'', progetto:'Ascolto locale', artist:'', title:file.name.replace(/\.[^.]+$/, ''), fileName:file.name, type:file.type || 'Audio locale', version:'', link:'', playUrl:url, date:new Date(file.lastModified || Date.now()).toISOString(), hash:'', note:`${Math.round(file.size/1024/1024*10)/10} MB` };
+            });
+            renderTracks();
+        }
+
+        function selectedDropboxProject(){
+            const id = document.getElementById('dropbox-target-project')?.value || '';
+            return id ? findProjectById(id) : null;
+        }
+
+        function openDirectDropboxChooser(appendToRadio=false){
+            const tag = document.getElementById('dropboxjs');
+            if(!tag || tag.getAttribute('data-app-key') === 'INSERISCI_QUI_LA_TUA_APP_KEY'){ KYV.showToast('Dropbox App Key non configurata.', 'error'); return; }
+            if(!window.Dropbox || !Dropbox.choose){ KYV.showToast('Dropbox Chooser non disponibile. Verifica connessione e blocchi browser.', 'error'); return; }
+            const p = selectedDropboxProject();
+            const type = document.getElementById('dropbox-target-type')?.value || 'Demo ascolto';
+            const append = appendToRadio || currentSource === 'radio';
+            Dropbox.choose({
+                success(files){
+                    const chosen = Array.from(files || []);
+                    if(!chosen.length) return;
+                    const chosenTracks = chosen.map((file, idx) => {
+                        const clean = String(file.name || 'Audio Dropbox').replace(/\.[^/.]+$/, '');
+                        return {
+                            uid:`dropbox-direct-${Date.now()}-${idx}-${file.name || idx}`,
+                            source:'dropbox-direct',
+                            idProgetto:p?.ID || '',
+                            progetto:p ? projectTitle(p) : 'Dropbox diretto non archiviato',
+                            artist:p?.ARTISTA || '',
+                            title:p?.TITOLO || clean,
+                            fileName:file.name || clean,
+                            type,
+                            version:'',
+                            link:file.link || '',
+                            playUrl:normalizeAudioUrl(file.link || ''),
+                            date:new Date().toISOString(),
+                            hash:'',
+                            note:file.bytes ? `${Math.round(file.bytes/1024/1024*10)/10} MB` : 'Scelto da Dropbox Chooser'
+                        };
+                    }).filter(isAudioTrack);
+                    if(append){
+                        const before = tracks.length;
+                        addUniqueTracks(chosenTracks);
+                        KYV.showToast(`${tracks.length - before} file Dropbox aggiunti alla radio.`, 'success');
+                    } else {
+                        tracks = chosenTracks;
+                        currentIndex = -1;
+                        KYV.showToast(`${tracks.length} file pescati da Dropbox. Puoi ascoltarli subito o salvarli in Archivio.`, 'success');
+                    }
+                    renderTracks();
+                },
+                cancel(){},
+                linkType:'direct',
+                multiselect:true,
+                folderselect:false,
+                extensions:['audio']
+            });
+        }
+
+        async function saveDropboxTrackToArchive(index){
+            const t = filteredTracks[index];
+            if(!t || t.source !== 'dropbox-direct'){ KYV.showToast('Seleziona un brano pescato da Dropbox diretto.', 'warning'); return; }
+            const p = t.idProgetto ? findProjectById(t.idProgetto) : selectedDropboxProject();
+            const payload = {
+                ID_PROGETTO: p?.ID ? Number(p.ID) : null,
+                Progetto: p ? projectTitle(p) : (t.progetto && t.progetto !== 'Dropbox diretto non archiviato' ? t.progetto : null),
+                Artista: t.artist || p?.ARTISTA || null,
+                Titolo: t.title || p?.TITOLO || t.fileName || 'Audio Dropbox',
+                Tipo_File: t.type || document.getElementById('dropbox-target-type')?.value || 'Demo ascolto',
+                Versione: t.version || null,
+                Nome_File: t.fileName || null,
+                Link_Dropbox: t.link || t.playUrl,
+                Data_Caricamento: new Date().toISOString().slice(0,10),
+                Note: 'Salvato dalla Stazione Ascolto MP3 tramite Dropbox diretto'
+            };
+            if(!payload.Link_Dropbox){ KYV.showToast('Link Dropbox mancante.', 'error'); return; }
+            try {
+                const { data, error } = await initSupabase().from('DROPBOX_AUDIO_FILES').insert([payload]).select().single();
+                if(error) throw error;
+                t.source = 'supabase';
+                t.idProgetto = payload.ID_PROGETTO || '';
+                t.progetto = payload.Progetto || t.progetto;
+                t.uid = `supabase-${data?.ID_FILE || Date.now()}`;
+                KYV.showToast('Brano salvato in Archivio Audio.', 'success');
+                renderTracks();
+            } catch(err){
+                console.error(err);
+                KYV.showToast('Errore salvataggio in Archivio Audio. Verifica tabella DROPBOX_AUDIO_FILES/RLS.', 'error');
+            }
+        }
+
+        function saveCurrentDropboxToArchive(){
+            if(currentIndex < 0){ KYV.showToast('Metti in ascolto un brano Dropbox diretto prima di salvarlo.', 'warning'); return; }
+            return saveDropboxTrackToArchive(currentIndex);
+        }
+
+        function switchSource(source){
+            currentSource = source;
+            ['radio','supabase','dropbox','drive','local'].forEach(s => document.getElementById(`tab-${s}`)?.classList.toggle('active', s === source));
+            document.getElementById('radio-tools')?.classList.toggle('hidden', source !== 'radio');
+            document.getElementById('dropbox-tools').classList.toggle('hidden', source !== 'dropbox');
+            document.getElementById('drive-tools').classList.toggle('hidden', source !== 'drive');
+            document.getElementById('local-tools').classList.toggle('hidden', source !== 'local');
+            currentIndex = -1;
+            if(source === 'radio'){
+                if(!tracks.length) loadRadioTracks(false); else renderTracks();
+            } else if(source === 'supabase'){
+                loadSupabaseTracks();
+            } else {
+                tracks = [];
+                renderTracks();
+            }
+        }
+
+        function filtered(){
+            const q = N(document.getElementById('search-input').value);
+            const project = document.getElementById('project-filter').value;
+            const type = N(document.getElementById('type-filter').value);
+            return tracks.filter(t => {
+                const hay = N([t.artist,t.title,t.fileName,t.progetto,t.type,t.note,t.hash].join(' '));
+                if(q && !hay.includes(q)) return false;
+                if(project && String(t.idProgetto) !== String(project)) return false;
+                if(type && !N(t.type).includes(type)) return false;
+                return true;
+            });
+        }
+
+        function sourceBadge(t){
+            if(t.source === 'supabase') return '<span class="source-pill bg-blue-500/10 border border-blue-500/25 text-blue-200">Supabase</span>';
+            if(t.source === 'consegna') return '<span class="source-pill bg-amber-500/10 border border-amber-500/25 text-amber-200">Consegna</span>';
+            if(t.source === 'dropbox-direct') return '<span class="source-pill bg-blue-500/10 border border-blue-500/25 text-blue-200">Dropbox diretto</span>';
+            if(t.source === 'drive') return '<span class="source-pill bg-emerald-500/10 border border-emerald-500/25 text-emerald-200">Drive</span>';
+            return '<span class="source-pill bg-violet-500/10 border border-violet-500/25 text-violet-200">Locale</span>';
+        }
+
+
+        function audioProjectAction(t, idx){
+            if(!window.KYV_AUDIO_PROJECT) return '';
+            return KYV_AUDIO_PROJECT.buttonHtml(t, projects, `createProjectFromTrack(${idx})`, `copyTrackLink(${idx})`);
+        }
+
+        async function refreshProjectsAfterCreate(selectedId=''){
+            await loadProjects();
+            if(selectedId){
+                const sel = document.getElementById('project-filter');
+                if(sel) sel.value = String(selectedId);
+                if(window.KYV_SELECTS) window.KYV_SELECTS.refreshAll(document, { forceSnapshot:true });
+            }
+        }
+
+        async function createProjectFromTrack(index){
+            const t = filteredTracks[index];
+            if(!t || !window.KYV_AUDIO_PROJECT) return;
+            try{
+                const created = await KYV_AUDIO_PROJECT.createFromItem(t, { db:initSupabase(), projects });
+                if(!created || !created.ID) return;
+                t.idProgetto = created.ID;
+                t.progetto = [created.ARTISTA, created.TITOLO].filter(Boolean).join(' - ') || created.TITOLO || `Progetto #${created.ID}`;
+                t.artist = t.artist || created.ARTISTA || '';
+                if(t.idFile){
+                    try{
+                        await initSupabase().from('DROPBOX_AUDIO_FILES').update({
+                            ID_PROGETTO: Number(created.ID),
+                            Progetto: t.progetto,
+                            Artista: created.ARTISTA || t.artist || null,
+                            Titolo: created.TITOLO || t.title || null
+                        }).eq('ID_FILE', t.idFile);
+                    }catch(updateErr){ console.warn('Collegamento audio-progetto non aggiornato', updateErr); }
+                }
+                await refreshProjectsAfterCreate(created.ID);
+                renderTracks();
+            }catch(err){
+                console.error(err);
+                KYV.showToast('Errore creazione progetto: ' + (err.message || ''), 'error');
+            }
+        }
+
+        function renderTracks(){
+            filteredTracks = filtered();
+            const count = document.getElementById('track-count');
+            count.textContent = `${filteredTracks.length} brani visibili su ${tracks.length} caricati.`;
+            const list = document.getElementById('tracks-list');
+            if(!filteredTracks.length){
+                list.innerHTML = `<div class="col-span-full p-10 text-center border border-dashed border-kyv-border rounded-2xl text-kyv-text"><i data-lucide="music-2" class="w-12 h-12 mx-auto mb-4 opacity-50"></i><p class="font-bold">Nessun brano nella stazione.</p><p class="text-xs mt-2">Usa Archivio, Dropbox diretto, Drive o Locale per caricare una playlist.</p></div>`;
+                if(window.lucide) lucide.createIcons({ root:list });
+                return;
+            }
+            list.innerHTML = filteredTracks.map((t, idx) => `
+                <article class="track-card ${idx===currentIndex?'active':''} rounded-2xl border border-kyv-border bg-kyv-bg p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">${sourceBadge(t)}<span class="text-[10px] text-kyv-text font-bold uppercase tracking-wider">${H(t.type || '-')}</span></div>
+                            <h4 class="font-black text-white truncate" title="${H(t.title)}">${H(t.artist ? `${t.artist} - ${t.title}` : t.title)}</h4>
+                            <p class="text-xs text-violet-200 font-bold mt-1 truncate">${H(t.progetto || t.fileName || '-')}</p>
+                            <p class="text-[11px] text-kyv-text mt-1 truncate">${H(t.fileName)} ${t.version ? '· ' + H(t.version) : ''}</p>
+                        </div>
+                        <button onclick="playTrack(${idx})" class="shrink-0 w-11 h-11 rounded-xl bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center"><i data-lucide="play" class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        ${t.idProgetto ? `<a href="scheda_progetto.html?id=${encodeURIComponent(t.idProgetto)}" class="px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/25 text-cyan-200 text-xs font-bold">Scheda</a>` : ''}
+                        ${t.link ? `<a href="${H(t.link)}" target="_blank" rel="noopener" class="px-3 py-2 rounded-lg bg-kyv-card border border-kyv-border text-xs font-bold text-kyv-text hover:text-white">Apri esterno</a>` : ''}
+                        <button onclick="copyTrackLink(${idx})" class="px-3 py-2 rounded-lg bg-kyv-card border border-kyv-border text-xs font-bold text-kyv-text hover:text-white">Copia link</button>
+                        ${audioProjectAction(t, idx)}
+                        ${t.source === 'dropbox-direct' ? `<button onclick="saveDropboxTrackToArchive(${idx})" class="px-3 py-2 rounded-lg bg-blue-600/15 border border-blue-500/25 text-blue-200 text-xs font-bold hover:bg-blue-600/25">Salva archivio</button>` : ''}
+                    </div>
+                </article>`).join('');
+            if(window.lucide) lucide.createIcons({ root:list });
+        }
+
+        function playableUrlForTrack(t){
+            const url = String(t?.playUrl || t?.link || '').trim();
+            if(!url) return '';
+            // Google Drive spesso restituisce una pagina HTML se il file non è pubblico/scaricabile.
+            // Proviamo comunque solo se abbiamo un link diretto o un link convertibile.
+            return normalizeAudioUrl(url);
+        }
+
+        function playTrack(index){
+            const t = filteredTracks[index];
+            if(!t) return;
+            currentIndex = index;
+            const player = document.getElementById('audio-player');
+            const src = playableUrlForTrack(t);
+            if(!src){
+                KYV.showToast('Questo brano non ha un link audio riproducibile. Usa Apri esterno.', 'warning');
+                renderNowPlaying(t);
+                renderTracks();
+                return;
+            }
+            player.pause();
+            player.src = src;
+            player.load();
+            player.play().catch(() => {
+                // Evita rumore in console: alcuni link Drive/Dropbox non pubblici non sono stream audio validi.
+                KYV.showToast('Il browser non riesce a riprodurre questo link. Prova Apri esterno oppure usa un link Dropbox raw/MP3 pubblico.', 'warning');
+            });
+            renderNowPlaying(t);
+            renderTracks();
+        }
+
+        function renderNowPlaying(t){
+            document.getElementById('now-playing').innerHTML = `
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[10px] text-violet-200 uppercase tracking-[0.16em] font-black mb-2">In ascolto</p>
+                        <h3 class="text-lg font-black text-white truncate">${H(t.artist ? `${t.artist} - ${t.title}` : t.title)}</h3>
+                        <p class="text-xs text-kyv-text mt-1 truncate">${H(t.fileName || '')}</p>
+                        <div class="mt-3 flex flex-wrap gap-2">${sourceBadge(t)}${t.idProgetto ? `<span class="source-pill bg-cyan-500/10 border border-cyan-500/25 text-cyan-200">Progetto #${H(t.idProgetto)}</span>`:''}</div>
+                    </div>
+                    <i data-lucide="audio-lines" class="w-8 h-8 text-violet-300 shrink-0"></i>
+                </div>`;
+            if(window.lucide) lucide.createIcons({ root:document.getElementById('now-playing') });
+        }
+
+        function updatePlayButton(){
+            const p = document.getElementById('audio-player');
+            const btn = document.getElementById('play-toggle-btn');
+            if(!btn) return;
+            btn.innerHTML = p && !p.paused ? '<i data-lucide="pause" class="w-4 h-4 inline mr-1"></i>Pausa' : '<i data-lucide="play" class="w-4 h-4 inline mr-1"></i>Play';
+            if(window.lucide) lucide.createIcons({ root:btn });
+        }
+
+        function toggleCurrentPlay(){
+            const p = document.getElementById('audio-player');
+            if(!p.src && filteredTracks.length) return playTrack(0);
+            if(p.paused) p.play(); else p.pause();
+            setTimeout(updatePlayButton, 50);
+        }
+
+        function handleAudioEnded(){
+            if(repeatMode === 'one'){
+                const p = document.getElementById('audio-player');
+                p.currentTime = 0;
+                p.play().catch(()=>{});
+                return;
+            }
+            playNext(true);
+        }
+
+        function playNext(fromEnded=false){
+            if(!filteredTracks.length) return;
+            if(currentIndex < 0) return playTrack(0);
+            const atEnd = currentIndex >= filteredTracks.length - 1;
+            if(atEnd && repeatMode === 'off'){
+                if(fromEnded) updatePlayButton();
+                return;
+            }
+            const n = atEnd ? 0 : currentIndex + 1;
+            playTrack(n);
+        }
+
+        function playPrev(){
+            if(!filteredTracks.length) return;
+            if(currentIndex <= 0){
+                if(repeatMode === 'off') return playTrack(0);
+                return playTrack(filteredTracks.length - 1);
+            }
+            playTrack(currentIndex - 1);
+        }
+
+        function shufflePlay(){ if(!filteredTracks.length) return; playTrack(Math.floor(Math.random() * filteredTracks.length)); }
+
+        function toggleRepeatMode(){
+            repeatMode = repeatMode === 'playlist' ? 'one' : (repeatMode === 'one' ? 'off' : 'playlist');
+            updateRepeatButton();
+        }
+
+        function updateRepeatButton(){
+            const btn = document.getElementById('repeat-btn');
+            if(!btn) return;
+            const label = repeatMode === 'playlist' ? 'Ripeti lista' : (repeatMode === 'one' ? 'Ripeti brano' : 'Ripeti off');
+            const icon = repeatMode === 'one' ? 'repeat-1' : 'repeat';
+            btn.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 inline mr-1"></i>${label}`;
+            btn.classList.toggle('border-fuchsia-500/50', repeatMode !== 'off');
+            btn.classList.toggle('text-fuchsia-100', repeatMode !== 'off');
+            if(window.lucide) lucide.createIcons({ root:btn });
+        }
+
+        function currentTrack(){ return currentIndex >= 0 ? filteredTracks[currentIndex] : null; }
+        function copyTrackLink(index){ const t = filteredTracks[index]; if(!t) return; navigator.clipboard.writeText(t.link || t.playUrl || '').then(()=>KYV.showToast('Link copiato.', 'success')); }
+        function copyPlaylist(){
+            const txt = filteredTracks.map((t,i)=>`${i+1}. ${t.artist ? t.artist + ' - ' : ''}${t.title}\n${t.link || t.playUrl || ''}`).join('\n\n');
+            navigator.clipboard.writeText(txt || 'Playlist vuota').then(()=>KYV.showToast('Playlist copiata.', 'success'));
+        }
+        function copyFeedback(){
+            const t = currentTrack();
+            const notes = document.getElementById('listen-notes').value.trim();
+            const txt = [`ASCOLTO KYV`, t ? `Brano: ${t.artist ? t.artist + ' - ' : ''}${t.title}` : '', t?.progetto ? `Progetto: ${t.progetto}` : '', notes ? `Note: ${notes}` : 'Note: -', t?.link ? `Link: ${t.link}` : ''].filter(Boolean).join('\n');
+            navigator.clipboard.writeText(txt).then(()=>KYV.showToast('Feedback copiato.', 'success'));
+        }
+        async function saveListeningNote(){
+            const t = currentTrack();
+            if(!t){ KYV.showToast('Seleziona prima un brano.', 'warning'); return; }
+            if(!t.idProgetto && t.source === 'dropbox-direct'){ const p=selectedDropboxProject(); if(p){ t.idProgetto=p.ID; t.progetto=projectTitle(p); t.artist=t.artist||p.ARTISTA||''; t.title=t.title||p.TITOLO||t.fileName; } }
+            if(!t.idProgetto){ KYV.showToast('Il brano non è collegato a un progetto: puoi copiare il feedback, ma non salvarlo in DOCUMENTI_PROGETTO.', 'warning'); return; }
+            const notes = document.getElementById('listen-notes').value.trim() || 'Ascolto registrato senza note.';
+            const payload = { ID_PROGETTO:Number(t.idProgetto), Tipo_Documento:'ASCOLTO_MP3', Titolo_Documento:`Ascolto - ${t.artist ? t.artist + ' - ' : ''}${t.title}`, Fonte:'Stazione Ascolto MP3', Link_Drive:t.link || null, Data_Documento:new Date().toISOString().slice(0,10), Note:notes };
+            try {
+                const { error } = await initSupabase().from('DOCUMENTI_PROGETTO').insert([payload]);
+                if(error) throw error;
+                KYV.showToast('Ascolto registrato in Documenti Progetto.', 'success');
+            } catch(err){ console.error(err); KYV.showToast('Errore salvataggio ascolto.', 'error'); }
+        }
+
+
+        function loadExternalAudioFromParams(){
+            const params = new URLSearchParams(window.location.search || '');
+            const audioUrl = params.get('audio') || params.get('play') || params.get('url');
+            if(!audioUrl) return false;
+            const title = params.get('title') || params.get('name') || 'Audio da link';
+            const safeUrl = String(audioUrl).trim();
+            if(!safeUrl) return false;
+            const extTrack = {
+                uid: `external-${Date.now()}`,
+                source: 'external-link',
+                idProgetto: '',
+                progetto: 'Ascolto da link',
+                artist: '',
+                title,
+                fileName: title,
+                type: 'Audio da LINK',
+                version: '',
+                link: safeUrl,
+                playUrl: normalizeAudioUrl(safeUrl),
+                date: new Date().toISOString().slice(0,10),
+                hash: ''
+            };
+            addUniqueTracks([extTrack]);
+            renderTracks();
+            const idx = filteredTracks.findIndex(t => t.uid === extTrack.uid);
+            if(idx >= 0) playTrack(idx);
+            KYV.showToast('Audio aperto da campo LINK.', 'success');
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const driveSel = document.getElementById('radio-drive-account');
+                if(driveSel && window.KYV_DRIVE){ driveSel.innerHTML = KYV_DRIVE.optionHtml('all', true); }
+                await loadProjects();
+                if(window.KYV_SELECTS) window.KYV_SELECTS.refreshAll(document, { forceSnapshot:true });
+                await loadRadioTracks(false);
+                loadExternalAudioFromParams();
+                updateRepeatButton();
+                const player = document.getElementById('audio-player');
+                player.addEventListener('play', updatePlayButton);
+                player.addEventListener('pause', updatePlayButton);
+            } catch(err){ console.error(err); KYV.showToast(err.message || 'Errore inizializzazione radio.', 'error'); }
+            if(window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

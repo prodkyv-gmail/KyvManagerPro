@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Sessioni Studio</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0f111a">
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }
+    </script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <style>
+        body { background-color:#0f111a; color:#f8fafc; }
+        .session-card { transition: transform .16s ease, border-color .16s ease, background .16s ease; }
+        .session-card:hover { transform: translateY(-1px); border-color: rgba(99,102,241,.42); background: rgba(21,25,35,.98); }
+        .kyv-input { width:100%; background-color:#0f111a; border:1px solid #232838; color:white; padding:.65rem .8rem; border-radius:.65rem; outline:none; transition:border-color .15s ease, box-shadow .15s ease; }
+        .kyv-input:focus { border-color:#6366f1; box-shadow:0 0 0 2px rgba(99,102,241,.20); }
+        .timeline-line { position:relative; }
+        .timeline-line::before { content:""; position:absolute; left:1.05rem; top:2.5rem; bottom:.5rem; width:1px; background:linear-gradient(to bottom, rgba(99,102,241,.55), rgba(99,102,241,0)); }
+        @media (max-width: 767px) { .session-card:hover { transform:none; } .timeline-line::before { display:none; } }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar">
+            <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-6 border-b border-kyv-border/50 pb-6">
+                <div class="flex items-start">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3 transition-colors" onclick="toggleMobileMenu()" aria-label="Apri menu">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-cyan-200 text-[10px] font-black uppercase tracking-[0.18em] mb-3">
+                            <i data-lucide="radio-tower" class="w-3.5 h-3.5"></i> Control Room
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Sessioni <span class="text-cyan-400">Studio</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm kyv-page-subtitle">Agenda operativa per sessioni, follow-up, consegne master e uscite. Usa i dati già presenti nella tabella PROGETTI.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 w-full xl:w-auto">
+                    <div class="relative min-w-0 sm:w-80">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-kyv-text"></i>
+                        <input id="session-search" class="kyv-input pl-9" type="search" placeholder="Cerca artista, titolo, autori, label..." oninput="renderSessioni()">
+                    </div>
+                    <select id="session-filter" class="kyv-input sm:w-52" onchange="renderSessioni()">
+                        <option value="tutto">Tutto</option>
+                        <option value="oggi">Oggi</option>
+                        <option value="prossime">Prossime sessioni</option>
+                        <option value="followup">Follow-up aperti</option>
+                        <option value="master">Master da consegnare</option>
+                        <option value="uscite">Uscite future</option>
+                    </select>
+                    <button onclick="fetchSessioni()" class="px-5 py-2.5 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg transition-colors flex items-center justify-center font-bold shadow-sm">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 text-kyv-text"></i> Ricarica
+                    </button>
+                    <button onclick="openNewProjectPopup()" class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors flex items-center justify-center font-black shadow-lg shadow-cyan-500/15">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Nuovo progetto
+                    </button>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6" id="session-metrics">
+                <div class="kyv-panel p-4 kyv-metric-card"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Oggi</p><h3 id="metric-oggi" class="text-2xl font-black mt-1">0</h3><p class="text-xs text-kyv-text mt-1">sessioni/data lavoro</p></div>
+                <div class="kyv-panel p-4 kyv-metric-card"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Prossime</p><h3 id="metric-prossime" class="text-2xl font-black mt-1 text-cyan-300">0</h3><p class="text-xs text-kyv-text mt-1">entro 30 giorni</p></div>
+                <div class="kyv-panel p-4 kyv-metric-card"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Master</p><h3 id="metric-master" class="text-2xl font-black mt-1 text-amber-300">0</h3><p class="text-xs text-kyv-text mt-1">da chiudere/consegnare</p></div>
+                <div class="kyv-panel p-4 kyv-metric-card"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Uscite</p><h3 id="metric-uscite" class="text-2xl font-black mt-1 text-emerald-300">0</h3><p class="text-xs text-kyv-text mt-1">future con data</p></div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-[1.15fr_.85fr] gap-5">
+                <div class="kyv-panel p-4 sm:p-5 timeline-line">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="calendar-days" class="w-5 h-5 mr-2 text-cyan-400"></i>Timeline operativa</h3>
+                            <p class="text-xs text-kyv-text mt-1">Sessioni, consegne e uscite ordinate per urgenza.</p>
+                        </div>
+                        <span id="timeline-count" class="kyv-chip">0 elementi</span>
+                    </div>
+                    <div id="timeline-list" class="space-y-3 min-h-[260px]"></div>
+                </div>
+
+                <div class="space-y-5">
+                    <div class="kyv-panel p-4 sm:p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="clipboard-check" class="w-5 h-5 mr-2 text-amber-400"></i>Follow-up intelligenti</h3>
+                            <span class="kyv-chip">priorità</span>
+                        </div>
+                        <div id="followup-list" class="space-y-3"></div>
+                    </div>
+
+                    <div class="kyv-panel p-4 sm:p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="rocket" class="w-5 h-5 mr-2 text-emerald-400"></i>Release radar</h3>
+                            <span class="kyv-chip">pubblicazioni</span>
+                        </div>
+                        <div id="release-list" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODALE PROGETTO RAPIDO: usata dai follow-up intelligenti e dalle card sessione -->
+    <div id="session-project-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] hidden items-center justify-center p-2 sm:p-4" aria-hidden="true">
+        <div class="kyv-modal-panel bg-kyv-card border border-kyv-border rounded-2xl shadow-2xl w-full max-w-6xl max-h-[92vh] overflow-hidden flex flex-col">
+            <div class="px-4 sm:px-6 py-4 border-b border-kyv-border bg-kyv-bg/60 flex items-start justify-between gap-4 shrink-0">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-cyan-300 font-black">Popup progetto</p>
+                    <h3 id="project-modal-title" class="text-xl font-black text-white mt-1">Modifica progetto</h3>
+                    <p class="text-xs text-kyv-text mt-1">I colori dei campi indicano priorità: rosso = critico mancante, ambra/viola = consigliato o diritti, verde = compilato.</p>
+                </div>
+                <button onclick="closeProjectPopup()" class="w-10 h-10 rounded-xl bg-kyv-card border border-kyv-border hover:bg-kyv-border flex items-center justify-center text-kyv-text hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="project-popup-form" class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-5">
+                <div id="project-popup-fields"></div>
+                <div class="border-t border-kyv-border pt-4 flex flex-col sm:flex-row gap-3 sm:justify-between">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="copyPopupChecklist()" class="px-4 py-2 rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-100 font-bold text-xs inline-flex items-center justify-center"><i data-lucide="clipboard-list" class="w-4 h-4 mr-2"></i>Copia checklist</button>
+                        <a id="popup-full-sheet-link" href="#" class="px-4 py-2 rounded-xl border border-cyan-500/25 bg-cyan-500/10 text-cyan-100 font-bold text-xs inline-flex items-center justify-center"><i data-lucide="panel-top-open" class="w-4 h-4 mr-2"></i>Scheda completa</a>
+                        <a id="popup-contract-link" href="#" target="_blank" class="hidden px-4 py-2 rounded-xl border border-sky-500/25 bg-sky-500/10 text-sky-100 font-bold text-xs inline-flex items-center justify-center"><i data-lucide="file-signature" class="w-4 h-4 mr-2"></i>Apri contratto</a>
+                        <a id="popup-drive-link" href="#" target="_blank" class="hidden px-4 py-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-100 font-bold text-xs inline-flex items-center justify-center"><i data-lucide="folder-open" class="w-4 h-4 mr-2"></i>Apri Drive</a>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeProjectPopup()" class="px-4 py-2 rounded-xl border border-kyv-border text-kyv-text hover:text-white hover:bg-kyv-border font-bold text-xs">Annulla</button>
+                        <button type="submit" id="project-popup-save" class="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs inline-flex items-center justify-center"><i data-lucide="save" class="w-4 h-4 mr-2"></i>Salva progetto</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        if (typeof loadKyvSidebar === 'undefined') { window.toggleMobileMenu = () => {}; window.loadKyvSidebar = () => {}; }
+        loadKyvSidebar('sessioni');
+
+        let supabaseClient;
+        let progetti = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        function d(value) {
+            if (!value) return null;
+            const parsed = new Date(value);
+            if (Number.isNaN(parsed.getTime())) return null;
+            parsed.setHours(0, 0, 0, 0);
+            return parsed;
+        }
+        function daysFromToday(value) {
+            const date = d(value);
+            if (!date) return null;
+            return Math.round((date - today) / 86400000);
+        }
+        function isDone(row) {
+            const stato = KYV.normalize(row.STATO || '');
+            return /uscita|pubblicat|completat|chiuso|master/.test(stato);
+        }
+        function text(row, field) { return KYV.safeHtml(row[field] || ''); }
+        function projectSearchBlob(row) {
+            return KYV.normalize([row.TITOLO, row.ARTISTA, row.AUTORI, row.Label, row.MANAGEMENT, row.NOTE, row.STATO].join(' '));
+        }
+        function statusBadge(row) {
+            const raw = row.STATO || 'Non definito';
+            const n = KYV.normalize(raw);
+            let cls = 'border-slate-500/20 bg-slate-500/10 text-slate-200';
+            if (/demo|bozza|provino/.test(n)) cls = 'border-rose-500/30 bg-rose-500/10 text-rose-200';
+            else if (/session|registr/.test(n)) cls = 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200';
+            else if (/mix|master/.test(n)) cls = 'border-violet-500/30 bg-violet-500/10 text-violet-200';
+            else if (/uscita|pubblicat|complet/.test(n)) cls = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200';
+            return `<span class="inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-wider ${cls}">${KYV.safeHtml(raw)}</span>`;
+        }
+        function dateBadge(label, value, icon = 'calendar') {
+            const delta = daysFromToday(value);
+            const dateText = KYV.formatDate(value, '—');
+            let tone = 'border-slate-500/20 bg-slate-500/10 text-slate-200';
+            let suffix = '';
+            if (delta !== null) {
+                if (delta < 0) { tone = 'border-rose-500/30 bg-rose-500/10 text-rose-200'; suffix = `${Math.abs(delta)}g fa`; }
+                else if (delta === 0) { tone = 'border-cyan-500/40 bg-cyan-500/15 text-cyan-100'; suffix = 'oggi'; }
+                else if (delta <= 7) { tone = 'border-amber-500/30 bg-amber-500/10 text-amber-100'; suffix = `tra ${delta}g`; }
+                else { tone = 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100'; suffix = `tra ${delta}g`; }
+            }
+            return `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-wider ${tone}" title="${KYV.safeHtml(label)}"><i data-lucide="${icon}" class="w-3 h-3"></i>${KYV.safeHtml(dateText)}${suffix ? `<em class="not-italic opacity-70 normal-case tracking-normal">${suffix}</em>` : ''}</span>`;
+        }
+        function briefText(row) {
+            const bits = [
+                `Titolo: ${row.TITOLO || '-'}`,
+                `Artista: ${row.ARTISTA || '-'}`,
+                row.Data_Sessione ? `Sessione: ${KYV.formatDate(row.Data_Sessione)}` : null,
+                row.Data_Consegna_Master ? `Master: ${KYV.formatDate(row.Data_Consegna_Master)}` : null,
+                row.Data_Pubblicazione ? `Uscita: ${KYV.formatDate(row.Data_Pubblicazione)}` : null,
+                row.STATO ? `Stato: ${row.STATO}` : null,
+                row.NOTE ? `Note: ${row.NOTE}` : null
+            ].filter(Boolean);
+            return bits.join('\n');
+        }
+        async function copyBrief(id) {
+            const row = progetti.find(p => String(p.ID) === String(id));
+            if (!row) return;
+            try {
+                await navigator.clipboard.writeText(briefText(row));
+                KYV.showToast('Brief copiato per WhatsApp/mail.', 'success');
+            } catch (err) {
+                KYV.showToast('Copia non riuscita dal browser.', 'warning');
+            }
+        }
+        window.copyBrief = copyBrief;
+
+        function classifyTimeline(row) {
+            const sessionDelta = daysFromToday(row.Data_Sessione);
+            const masterDelta = daysFromToday(row.Data_Consegna_Master);
+            const releaseDelta = daysFromToday(row.Data_Pubblicazione);
+            const items = [];
+            if (sessionDelta !== null && sessionDelta >= -1) items.push({ type: 'sessione', label: 'Sessione', date: row.Data_Sessione, delta: sessionDelta, icon: 'mic-2' });
+            if (masterDelta !== null && masterDelta >= -7) items.push({ type: 'master', label: 'Master', date: row.Data_Consegna_Master, delta: masterDelta, icon: 'send' });
+            if (releaseDelta !== null && releaseDelta >= -3) items.push({ type: 'uscita', label: 'Uscita', date: row.Data_Pubblicazione, delta: releaseDelta, icon: 'rocket' });
+            return items;
+        }
+        function projectCard(row, meta = null) {
+            const primaryDate = meta ? dateBadge(meta.label, meta.date, meta.icon) : '';
+            const title = text(row, 'TITOLO') || '<span class="opacity-60">Senza titolo</span>';
+            const artist = text(row, 'ARTISTA') || '<span class="opacity-60">Artista non indicato</span>';
+            const manager = text(row, 'MANAGEMENT');
+            const authors = text(row, 'AUTORI');
+            const note = text(row, 'NOTE');
+            return `
+                <article role="button" tabindex="0" aria-label="Modifica progetto ${KYV.safeHtml(row.TITOLO || '')}" onclick="openProjectPopup('${String(row.ID).replaceAll("\'", "\\\'")}')" onkeydown="if ((event.key === 'Enter' || event.key === ' ') && event.target === this) { event.preventDefault(); openProjectPopup('${String(row.ID).replaceAll("\'", "\\\'")}'); }" class="session-card kyv-project-card-clickable kyv-interactive-card border border-kyv-border rounded-2xl bg-kyv-card/80 p-4 shadow-xl shadow-black/10">
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 shrink-0 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-300">
+                            <i data-lucide="${meta ? meta.icon : 'music-2'}" class="w-4 h-4"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">${primaryDate}${statusBadge(row)}</div>
+                            <h4 class="font-black text-white text-base leading-tight break-words">${title}</h4>
+                            <p class="text-sm text-cyan-200 font-bold mt-1 break-words">${artist}</p>
+                            <div class="mt-3 flex flex-wrap gap-2 text-[11px] text-kyv-text">
+                                ${authors ? `<span class="kyv-chip"><i data-lucide="pen-line" class="w-3 h-3"></i>${authors}</span>` : ''}
+                                ${manager ? `<span class="kyv-chip"><i data-lucide="briefcase-business" class="w-3 h-3"></i>${manager}</span>` : ''}
+                                ${row.Label ? `<span class="kyv-chip"><i data-lucide="tag" class="w-3 h-3"></i>${text(row, 'Label')}</span>` : ''}
+                                ${row.Codice_ISRC ? `<span class="kyv-chip"><i data-lucide="barcode" class="w-3 h-3"></i>${text(row, 'Codice_ISRC')}</span>` : ''}
+                            </div>
+                            ${note ? `<p class="mt-3 text-xs text-kyv-text leading-relaxed line-clamp-2">${note}</p>` : ''}
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <button onclick="event.stopPropagation();copyBrief('${String(row.ID).replaceAll("'", "\\'")}')" class="px-3 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-100 text-xs font-bold inline-flex items-center"><i data-lucide="copy" class="w-3.5 h-3.5 mr-1.5"></i>Copia brief</button>
+                                <a href="scheda_progetto.html?id=${encodeURIComponent(row.ID)}" onclick="event.stopPropagation()" class="px-3 py-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-100 text-xs font-bold inline-flex items-center"><i data-lucide="panel-top-open" class="w-3.5 h-3.5 mr-1.5"></i>Scheda unica</a>
+                            </div>
+                        </div>
+                    </div>
+                </article>`;
+        }
+        function emptyState(title, subtitle, icon = 'inbox') {
+            return `<div class="min-h-[180px] flex flex-col items-center justify-center text-center text-kyv-text border border-dashed border-kyv-border rounded-2xl p-8"><i data-lucide="${icon}" class="w-10 h-10 mb-3 opacity-60"></i><p class="font-black text-white">${KYV.safeHtml(title)}</p><p class="text-xs mt-1 max-w-sm">${KYV.safeHtml(subtitle)}</p></div>`;
+        }
+
+        const PROJECT_POPUP_GROUPS = [
+            { title: 'Identità progetto', icon: 'music-2', fields: ['TITOLO', 'ARTISTA', 'Nome_Vero_Artista', 'AUTORI', 'Label', 'MANAGEMENT', 'STATO', 'SVILUPPO'] },
+            { title: 'Sessione, master e uscita', icon: 'calendar-clock', fields: ['Data_Sessione', 'Data_Consegna_Master', 'Data_Pubblicazione', 'Codice_ISRC'] },
+            { title: 'Diritti SIAE / IMAIE', icon: 'shield-check', fields: ['Quota_Musica_Kyv', 'Quota_Musica_Artista', 'Quota_Testo_Artista', 'Codice_IPI_Artista', 'Ruolo_IMAIE_Kyv', 'Strumenti_Suonati_Kyv', 'Produttore_Fonografico'] },
+            { title: 'Economia', icon: 'badge-euro', fields: ['FEE', 'ROY', 'IMPORTO', 'PAGAMENTO', 'Anticipo_Kill_Fee'] },
+            { title: 'Archivio e note', icon: 'folder-open', fields: ['Contratto link', 'LINK', 'NOTE'] }
+        ];
+        let popupCurrentProjectId = null;
+        let popupCurrentRow = null;
+        let popupIsNew = false;
+
+        function popupFieldType(key) {
+            if (key.toLowerCase().includes('data')) return 'date';
+            if (key === 'NOTE' || key === 'AUTORI' || key === 'SVILUPPO') return 'textarea';
+            return 'text';
+        }
+        function popupField(row, key) {
+            let value = row && row[key] !== null && row[key] !== undefined ? String(row[key]) : '';
+            if (popupFieldType(key) === 'date' && value) value = value.slice(0, 10);
+            const safe = KYV.safeHtml(value);
+            const type = popupFieldType(key);
+            const labelClass = KYV_PRIORITY ? KYV_PRIORITY.labelClassFor(key, value) : '';
+            const fieldClass = KYV_PRIORITY ? KYV_PRIORITY.classFor(key, value) : '';
+            const hint = KYV_PRIORITY ? KYV_PRIORITY.explain(key) : '';
+            if (type === 'textarea') {
+                return `<div data-field-wrapper class="space-y-1 md:col-span-2"><label data-field-label class="block text-[10px] font-black text-kyv-text uppercase tracking-wider ${labelClass}" title="${KYV.safeHtml(hint)}">${KYV.safeHtml(key)}</label><textarea data-key="${KYV.safeHtml(key)}" rows="3" class="kyv-input kyv-priority-input ${fieldClass}" placeholder="Inserisci...">${safe}</textarea></div>`;
+            }
+            return `<div data-field-wrapper class="space-y-1"><label data-field-label class="block text-[10px] font-black text-kyv-text uppercase tracking-wider ${labelClass}" title="${KYV.safeHtml(hint)}">${KYV.safeHtml(key)}</label><input type="${type}" data-key="${KYV.safeHtml(key)}" value="${safe.replaceAll('&quot;', '&quot;')}" class="kyv-input kyv-priority-input ${fieldClass}" placeholder="Inserisci..." ${type === 'date' ? 'style="color-scheme:dark"' : ''}></div>`;
+        }
+        function renderPopupFields(row) {
+            return PROJECT_POPUP_GROUPS.map(group => `
+                <section class="bg-kyv-bg/70 border border-kyv-border rounded-2xl p-4">
+                    <h4 class="font-black text-white mb-3 flex items-center"><i data-lucide="${group.icon}" class="w-4 h-4 mr-2 text-cyan-300"></i>${group.title}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">${group.fields.map(key => popupField(row, key)).join('')}</div>
+                </section>`).join('');
+        }
+        function missingChecklist(row) {
+            const checks = [
+                ['Titolo', row.TITOLO], ['Artista', row.ARTISTA], ['Autori', row.AUTORI], ['Data sessione', row.Data_Sessione], ['Contratto', row['Contratto link']],
+                ['Cartella Drive', row.LINK], ['Master consegnato', row.Data_Consegna_Master], ['ISRC', row.Codice_ISRC], ['Ruolo IMAIE', row.Ruolo_IMAIE_Kyv],
+                ['FEE', row.FEE], ['ROY', row.ROY], ['Pagamento', row.PAGAMENTO]
+            ];
+            return checks.filter(([_, v]) => !String(v || '').trim()).map(([name]) => name);
+        }
+        window.openProjectPopup = async function(id) {
+            try {
+                const { data, error } = await supabaseClient.from('PROGETTI').select('*').eq('ID', id).single();
+                if (error) throw error;
+                popupIsNew = false;
+                popupCurrentProjectId = id;
+                popupCurrentRow = data;
+                document.getElementById('project-modal-title').textContent = `${data.TITOLO || 'Senza titolo'} · ${data.ARTISTA || 'Artista non indicato'}`;
+                document.getElementById('project-popup-fields').innerHTML = renderPopupFields(data);
+                const fullSheet = document.getElementById('popup-full-sheet-link'); if (fullSheet) { fullSheet.href = 'scheda_progetto.html?id=' + encodeURIComponent(id); fullSheet.classList.remove('hidden'); }
+                const contract = document.getElementById('popup-contract-link');
+                const drive = document.getElementById('popup-drive-link');
+                if (data['Contratto link']) { contract.href = data['Contratto link']; contract.classList.remove('hidden'); } else contract.classList.add('hidden');
+                if (data.LINK) { drive.href = data.LINK; drive.classList.remove('hidden'); } else drive.classList.add('hidden');
+                const modal = document.getElementById('session-project-modal');
+                modal.classList.remove('hidden'); modal.classList.add('flex'); modal.setAttribute('aria-hidden', 'false');
+                if (window.KYV_PRIORITY) KYV_PRIORITY.bind(document.getElementById('project-popup-fields'));
+                if (window.lucide) lucide.createIcons({root: modal});
+            } catch (err) {
+                console.error(err);
+                KYV.showToast('Errore apertura progetto.', 'error');
+            }
+        }
+        window.openNewProjectPopup = function() {
+            popupIsNew = true;
+            popupCurrentProjectId = null;
+            popupCurrentRow = {};
+            document.getElementById('project-modal-title').textContent = 'Nuovo progetto';
+            document.getElementById('project-popup-fields').innerHTML = renderPopupFields({});
+            ['popup-contract-link', 'popup-drive-link', 'popup-full-sheet-link'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+            const modal = document.getElementById('session-project-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.setAttribute('aria-hidden', 'false');
+            if (window.KYV_PRIORITY) KYV_PRIORITY.bind(document.getElementById('project-popup-fields'));
+            if (window.lucide) lucide.createIcons({root: modal});
+            document.querySelector('#project-popup-fields [data-key]')?.focus();
+        }
+        window.closeProjectPopup = function() {
+            const modal = document.getElementById('session-project-modal');
+            modal.classList.add('hidden'); modal.classList.remove('flex'); modal.setAttribute('aria-hidden', 'true');
+            popupCurrentProjectId = null; popupCurrentRow = null; popupIsNew = false;
+        }
+        window.copyPopupChecklist = async function() {
+            if (!popupCurrentRow) return;
+            const missing = missingChecklist(popupCurrentRow);
+            const text = `CHECKLIST PROGETTO\nTitolo: ${popupCurrentRow.TITOLO || '-'}\nArtista: ${popupCurrentRow.ARTISTA || '-'}\nMancano: ${missing.length ? missing.join(', ') : 'nessun dato principale'}\nContratto: ${popupCurrentRow['Contratto link'] || '-'}\nDrive: ${popupCurrentRow.LINK || '-'}\nISRC: ${popupCurrentRow.Codice_ISRC || '-'}\nIMAIE: ${popupCurrentRow.Ruolo_IMAIE_Kyv || '-'}\nNote: ${popupCurrentRow.NOTE || '-'}`;
+            try { await navigator.clipboard.writeText(text); KYV.showToast('Checklist progetto copiata.', 'success'); } catch(e) { KYV.showToast('Copia non riuscita.', 'warning'); }
+        }
+        document.addEventListener('submit', async (event) => {
+            if (event.target.id !== 'project-popup-form') return;
+            event.preventDefault();
+            if (!popupIsNew && !popupCurrentProjectId) return;
+            const btn = document.getElementById('project-popup-save');
+            btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Salvataggio...';
+            const payload = {};
+            document.querySelectorAll('#project-popup-fields [data-key]').forEach(input => {
+                const key = input.dataset.key;
+                let val = input.value.trim();
+                payload[key] = val === '' ? null : val;
+            });
+            try {
+                const query = popupIsNew
+                    ? supabaseClient.from('PROGETTI').insert([payload]).select('*').single()
+                    : supabaseClient.from('PROGETTI').update(payload).eq('ID', popupCurrentProjectId).select('*').single();
+                const { data, error } = await query;
+                if (error) throw error;
+                if (popupIsNew) progetti.push(data);
+                else {
+                    const idx = progetti.findIndex(p => String(p.ID) === String(popupCurrentProjectId));
+                    if (idx >= 0) progetti[idx] = data;
+                }
+                popupCurrentRow = data;
+                KYV.showToast(popupIsNew ? 'Nuovo progetto creato.' : 'Progetto aggiornato.', 'success');
+                closeProjectPopup();
+                renderSessioni();
+            } catch(err) {
+                console.error(err);
+                KYV.showToast('Errore salvataggio progetto.', 'error');
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i>Salva progetto';
+                if(window.lucide) lucide.createIcons({root: btn.parentElement});
+            }
+        });
+
+        function filteredRows() {
+            const q = KYV.normalize(document.getElementById('session-search').value);
+            const mode = document.getElementById('session-filter').value;
+            return progetti.filter(row => {
+                if (q && !projectSearchBlob(row).includes(q)) return false;
+                const sessionDelta = daysFromToday(row.Data_Sessione);
+                const releaseDelta = daysFromToday(row.Data_Pubblicazione);
+                const needsMaster = !row.Data_Consegna_Master && !isDone(row);
+                const follow = needsMaster || !row.Codice_ISRC || !row['Contratto link'];
+                if (mode === 'oggi') return sessionDelta === 0;
+                if (mode === 'prossime') return sessionDelta !== null && sessionDelta >= 0;
+                if (mode === 'followup') return follow;
+                if (mode === 'master') return needsMaster;
+                if (mode === 'uscite') return releaseDelta !== null && releaseDelta >= 0;
+                return true;
+            });
+        }
+        function renderSessioni() {
+            const rows = filteredRows();
+            const now30 = 30;
+            const todayCount = progetti.filter(r => daysFromToday(r.Data_Sessione) === 0).length;
+            const upcomingCount = progetti.filter(r => { const n = daysFromToday(r.Data_Sessione); return n !== null && n >= 0 && n <= now30; }).length;
+            const masterCount = progetti.filter(r => !r.Data_Consegna_Master && !isDone(r)).length;
+            const releaseCount = progetti.filter(r => { const n = daysFromToday(r.Data_Pubblicazione); return n !== null && n >= 0; }).length;
+            KYV.setText('metric-oggi', todayCount);
+            KYV.setText('metric-prossime', upcomingCount);
+            KYV.setText('metric-master', masterCount);
+            KYV.setText('metric-uscite', releaseCount);
+
+            const timelineItems = rows.flatMap(row => classifyTimeline(row).map(meta => ({ row, meta })))
+                .sort((a, b) => (a.meta.delta ?? 9999) - (b.meta.delta ?? 9999))
+                .slice(0, 24);
+            KYV.setText('timeline-count', `${timelineItems.length} elementi`);
+            document.getElementById('timeline-list').innerHTML = timelineItems.length
+                ? timelineItems.map(({ row, meta }) => projectCard(row, meta)).join('')
+                : emptyState('Nessuna scadenza in timeline', 'Aggiungi Data_Sessione, Data_Consegna_Master o Data_Pubblicazione nei progetti.', 'calendar-x');
+
+            const followups = rows.filter(row => !row.Data_Consegna_Master && !isDone(row) || !row.Codice_ISRC || !row['Contratto link']).slice(0, 8);
+            document.getElementById('followup-list').innerHTML = followups.length
+                ? followups.map(row => {
+                    const missing = [!row.Data_Consegna_Master ? 'Master' : null, !row.Codice_ISRC ? 'ISRC' : null, !row['Contratto link'] ? 'Contratto' : null].filter(Boolean).join(' · ');
+                    return `<div class="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">${projectCard(row)}<p class="mt-2 text-[11px] text-amber-100 font-bold uppercase tracking-wider">Da verificare: ${KYV.safeHtml(missing)}</p></div>`;
+                }).join('')
+                : emptyState('Nessun follow-up urgente', 'I progetti filtrati hanno già i dati principali compilati.', 'check-circle-2');
+
+            const releases = rows.filter(row => daysFromToday(row.Data_Pubblicazione) !== null && daysFromToday(row.Data_Pubblicazione) >= 0)
+                .sort((a, b) => daysFromToday(a.Data_Pubblicazione) - daysFromToday(b.Data_Pubblicazione)).slice(0, 8);
+            document.getElementById('release-list').innerHTML = releases.length
+                ? releases.map(row => projectCard(row, { type: 'uscita', label: 'Uscita', date: row.Data_Pubblicazione, delta: daysFromToday(row.Data_Pubblicazione), icon: 'rocket' })).join('')
+                : emptyState('Nessuna uscita futura', 'Compila Data_Pubblicazione per vedere qui il radar release.', 'rocket');
+
+            if (window.lucide) lucide.createIcons();
+        }
+        async function fetchSessioni() {
+            try {
+                document.getElementById('timeline-list').innerHTML = emptyState('Caricamento sessioni...', 'Sto leggendo i progetti da Supabase.', 'loader-2');
+                if (window.lucide) lucide.createIcons();
+                const { data, error } = await supabaseClient.from('PROGETTI').select('*').order('Data_Sessione', { ascending: true, nullsFirst: false });
+                if (error) throw error;
+                progetti = data || [];
+                renderSessioni();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('timeline-list').innerHTML = emptyState('Errore caricamento', err.message || 'Impossibile leggere i progetti.', 'triangle-alert');
+                KYV.showToast('Errore caricamento sessioni.', 'error');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            supabaseClient = KYV.createSupabaseClient();
+            const requestedFilter = new URLSearchParams(location.search).get('filter');
+            const filterSelect = document.getElementById('session-filter');
+            if (requestedFilter && filterSelect && Array.from(filterSelect.options).some(option => option.value === requestedFilter)) filterSelect.value = requestedFilter;
+            fetchSessioni();
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

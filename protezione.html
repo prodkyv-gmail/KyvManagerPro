@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Protezione Brano</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0f111a">
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-record-editor.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }
+    </script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <style>
+        body { background-color: #0f111a; color: #f8fafc; }
+        ::-webkit-scrollbar { width: 16px; height: 16px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,.02); border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 8px; border: 4px solid #0f111a; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .custom-scrollbar { scrollbar-width: auto; scrollbar-color: #4b5563 rgba(255,255,255,.02); }
+        .kyv-input { width: 100%; background-color: #0f111a; border: 1px solid #232838; color: white; padding: .7rem .85rem; border-radius: .8rem; outline: none; transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
+        .kyv-input:focus-visible { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.18); }
+        .kyv-panel { background: rgba(21,25,35,.94); border: 1px solid #232838; border-radius: 1rem; box-shadow: 0 16px 45px rgba(0,0,0,.22); }
+        .kyv-chip { display: inline-flex; align-items: center; gap: .35rem; border: 1px solid rgba(148,163,184,.18); background: rgba(15,17,26,.72); color: #cbd5e1; border-radius: 999px; padding: .28rem .62rem; font-size: .68rem; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+        .score-ring { --score: 0; background: conic-gradient(#22c55e calc(var(--score) * 1%), rgba(255,255,255,.08) 0); }
+        .score-ring.warn { background: conic-gradient(#f59e0b calc(var(--score) * 1%), rgba(255,255,255,.08) 0); }
+        .score-ring.bad { background: conic-gradient(#f43f5e calc(var(--score) * 1%), rgba(255,255,255,.08) 0); }
+        details summary { cursor: pointer; list-style: none; }
+        details summary::-webkit-details-marker { display: none; }
+        .check-row { display: flex; align-items: flex-start; gap: .65rem; padding: .55rem 0; border-bottom: 1px solid rgba(35,40,56,.55); }
+        .check-row:last-child { border-bottom: 0; }
+        @media (max-width: 767px) {
+            .protection-card { border-radius: 1rem; }
+            .sticky-mobile-actions { position: sticky; bottom: calc(74px + env(safe-area-inset-bottom)); z-index: 20; }
+        }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar">
+            <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-6 border-b border-kyv-border/50 pb-6">
+                <div class="flex items-start">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3 transition-colors" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-200 text-[10px] font-black uppercase tracking-[0.18em] mb-3">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Protezione Brano
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Radar <span class="text-amber-400">SIAE / IMAIE</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm max-w-3xl">Checklist operativa per capire se un progetto è documentato: sessione, quote, deposito SIAE, ruolo IMAIE, ISRC, master, Dropbox, Drive, fatture e pagamento.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 w-full xl:w-auto">
+                    <div class="relative min-w-0 sm:w-96">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-kyv-text"></i>
+                        <input id="protection-search" class="kyv-input pl-9" type="search" placeholder="Cerca titolo, artista, label, manager..." oninput="renderProtections()">
+                    </div>
+                    <select id="protection-filter" class="kyv-input sm:w-56" onchange="renderProtections()">
+                        <option value="tutto">Tutti i progetti</option>
+                        <option value="critici">Critici / scoperti</option>
+                        <option value="siaemanca">SIAE da verificare</option>
+                        <option value="imaiemanca">IMAIE da verificare</option>
+                        <option value="mastermanca">Master / Dropbox mancanti</option>
+                        <option value="adminmanca">Contratti / fatture mancanti</option>
+                        <option value="protetti">Più completi</option>
+                    </select>
+                    <button onclick="fetchProtections()" class="px-5 py-2.5 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-xl transition-colors flex items-center justify-center font-bold shadow-sm"><i data-lucide="refresh-cw" class="w-4 h-4 mr-2 text-kyv-text"></i> Ricarica</button>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6" id="protection-metrics">
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Score medio</p><h3 id="metric-score" class="text-2xl font-black mt-1">0%</h3><p class="text-xs text-kyv-text mt-1">su progetti letti</p></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Critici</p><h3 id="metric-critical" class="text-2xl font-black mt-1 text-rose-300">0</h3><p class="text-xs text-kyv-text mt-1">da sistemare prima</p></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">SIAE</p><h3 id="metric-siae" class="text-2xl font-black mt-1 text-violet-300">0</h3><p class="text-xs text-kyv-text mt-1">deposito/codici mancanti</p></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">IMAIE</p><h3 id="metric-imaie" class="text-2xl font-black mt-1 text-cyan-300">0</h3><p class="text-xs text-kyv-text mt-1">ruolo/ISRC da verificare</p></div>
+                <div class="kyv-panel p-4"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Master</p><h3 id="metric-master" class="text-2xl font-black mt-1 text-amber-300">0</h3><p class="text-xs text-kyv-text mt-1">consegna/hash mancanti</p></div>
+            </div>
+
+            <div class="grid grid-cols-1 2xl:grid-cols-[1fr_380px] gap-5">
+                <div class="space-y-4">
+                    <div class="kyv-panel p-4 sticky-mobile-actions">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="list-checks" class="w-5 h-5 mr-2 text-amber-400"></i>Checklist progetti</h3>
+                                <p id="result-count" class="text-xs text-kyv-text mt-1">Caricamento...</p>
+                                <div class="flex flex-wrap gap-2 mt-3" aria-label="Legenda stato controlli">
+                                    <span class="kyv-chip border-rose-500/25 bg-rose-500/10 text-rose-100"><i data-lucide="circle-alert" class="w-3 h-3"></i><span id="state-missing">0</span> mancanti</span>
+                                    <span class="kyv-chip border-amber-500/25 bg-amber-500/10 text-amber-100"><i data-lucide="circle-help" class="w-3 h-3"></i><span id="state-review">0</span> da verificare</span>
+                                    <span class="kyv-chip border-emerald-500/25 bg-emerald-500/10 text-emerald-100"><i data-lucide="check-circle-2" class="w-3 h-3"></i><span id="state-complete">0</span> completati</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="exportProtectionCsv()" class="px-3 py-2 rounded-lg border border-kyv-border bg-kyv-bg hover:bg-kyv-border text-xs font-bold text-white inline-flex items-center"><i data-lucide="download" class="w-4 h-4 mr-2 text-kyv-text"></i>Export CSV</button>
+                                <a href="kyv_dropbox.html" class="px-3 py-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 hover:bg-cyan-500/20 text-xs font-bold text-cyan-100 inline-flex items-center"><i data-lucide="send" class="w-4 h-4 mr-2"></i>Consegna Dropbox</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="protection-list" class="space-y-4 min-h-[360px]"></div>
+                </div>
+
+                <aside class="space-y-5">
+                    <div class="kyv-panel p-5">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="workflow" class="w-5 h-5 mr-2 text-cyan-400"></i>Workflow ideale</h3>
+                        <ol class="mt-4 space-y-3 text-sm text-kyv-text">
+                            <li><strong class="text-white">1. Sessione:</strong> inserisci data, presenti, autori, manager, note e ruolo creativo.</li>
+                            <li><strong class="text-white">2. Quote:</strong> conferma musica/testo e codici IPI prima del deposito.</li>
+                            <li><strong class="text-white">3. SIAE:</strong> deposita o controlla codice opera/ISWC negli export importati.</li>
+                            <li><strong class="text-white">4. Master:</strong> consegna file via Dropbox, salva link e hash.</li>
+                            <li><strong class="text-white">5. IMAIE:</strong> verifica ISRC, ruolo KYV, interpreti/esecutori e pubblicazione.</li>
+                            <li><strong class="text-white">6. Amministrazione:</strong> collega contratto, fattura, pagamento e cartella Drive.</li>
+                        </ol>
+                    </div>
+
+                    <div class="kyv-panel p-5">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="folder-tree" class="w-5 h-5 mr-2 text-emerald-400"></i>Archivio Drive consigliato</h3>
+                        <pre class="mt-4 text-[11px] leading-relaxed bg-kyv-bg border border-kyv-border rounded-xl p-4 text-slate-300 overflow-x-auto custom-scrollbar">KYV Manager Pro / Progetti /
+ARTISTA - TITOLO - ANNO
+  01_SESSIONE
+  02_AUDIO_DEMO
+  03_MASTER_CONSEGNE
+  04_CONTRATTI
+  05_SIAE
+  06_IMAIE
+  07_FATTURE_PAGAMENTI
+  08_CHAT_MAIL
+  09_NOTE</pre>
+                        <button onclick="copyDriveStructure()" class="mt-3 w-full px-3 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-100 text-xs font-bold inline-flex items-center justify-center"><i data-lucide="copy" class="w-4 h-4 mr-2"></i>Copia struttura</button>
+                    </div>
+
+                    <div class="kyv-panel p-5">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="cloud-upload" class="w-5 h-5 mr-2 text-sky-400"></i>Procedura Dropbox audio</h3>
+                        <div class="mt-4 space-y-3 text-sm text-kyv-text">
+                            <p>Usa Dropbox per la <strong class="text-white">consegna</strong>, non come archivio unico. Drive resta archivio documentale.</p>
+                            <ul class="space-y-2 list-disc list-inside">
+                                <li>Nomina file con artista, titolo, versione e data.</li>
+                                <li>Carica WAV/ZIP/STEMS su Dropbox.</li>
+                                <li>Genera link condivisibile.</li>
+                                <li>Inserisci link in Consegne Master.</li>
+                                <li>Calcola/salva hash e chiedi conferma ricezione.</li>
+                            </ul>
+                        </div>
+                        <button onclick="copyDropboxMessage()" class="mt-3 w-full px-3 py-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 text-sky-100 text-xs font-bold inline-flex items-center justify-center"><i data-lucide="message-square" class="w-4 h-4 mr-2"></i>Copia messaggio consegna</button>
+                    </div>
+
+                    <div class="kyv-panel p-5 border-amber-500/20 bg-amber-500/[0.04]">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="scale" class="w-5 h-5 mr-2 text-amber-400"></i>Nota legale</h3>
+                        <p class="text-sm text-kyv-text leading-relaxed mt-3">Questa pagina è un controllo operativo interno. Non sostituisce contratto, consulente legale, commercialista, deposito ufficiale SIAE, registrazione IMAIE, firma digitale, PEC o marca temporale. Serve a non perdere pezzi e a capire cosa va verificato.</p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        if (typeof loadKyvSidebar === 'undefined') { window.toggleMobileMenu = () => {}; window.loadKyvSidebar = () => {}; }
+        loadKyvSidebar('protezione');
+
+        let supabaseClient;
+        let protectionRows = [];
+        let protectionDatasets = {};
+        let protectionEditor;
+
+        const H = (v) => KYV.safeHtml(v || '');
+        const N = (v) => KYV.normalize(v || '');
+        const titleOf = (row) => row.TITOLO || row.Titolo || row.TITOLO_OPERA || '';
+        const has = (value) => value !== null && value !== undefined && String(value).trim() !== '';
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+
+        function daysFrom(value) {
+            if (!value) return null;
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return null;
+            d.setHours(0,0,0,0);
+            return Math.round((d - today) / 86400000);
+        }
+
+        async function safeTable(table, select = '*') {
+            try {
+                const { data, error } = await supabaseClient.from(table).select(select).limit(3000);
+                if (error) {
+                    console.warn(`Tabella non letta: ${table}`, error.message);
+                    return [];
+                }
+                return data || [];
+            } catch (err) {
+                console.warn(`Tabella non disponibile: ${table}`, err);
+                return [];
+            }
+        }
+
+        function matchByTitle(list, projectTitle, fields) {
+            const p = N(projectTitle);
+            if (!p) return null;
+            return (list || []).find(item => fields.some(field => {
+                const t = N(item[field]);
+                return t && (t === p || t.includes(p) || p.includes(t));
+            })) || null;
+        }
+
+        function matchConsegna(project) {
+            const id = String(project.ID || '');
+            const title = project.TITOLO || '';
+            const audioByProject = (protectionDatasets.audioFiles || []).find(item => id && String(item.ID_PROGETTO || '') === id);
+            const audioByTitle = matchByTitle(protectionDatasets.audioFiles, title, ['Titolo', 'Progetto', 'Nome_File']);
+            const legacyByTitle = matchByTitle(protectionDatasets.consegne, title, ['Progetto']);
+            const found = audioByProject || audioByTitle || legacyByTitle || null;
+            if (found && found.Link_Dropbox && !found.Hash_File && found.Hash_SHA256) found.Hash_File = found.Hash_SHA256;
+            return found;
+        }
+
+        function matchDocumenti(project) {
+            const id = String(project.ID || '');
+            return (protectionDatasets.documenti || []).filter(item => id && String(item.ID_PROGETTO || '') === id);
+        }
+
+        function matchFatture(project) {
+            const id = String(project.ID || '');
+            const idft = String(project.IDFT || project.FT || '');
+            return (protectionDatasets.fatture || []).filter(f => {
+                return (id && String(f.ID_PROGETTO || '') === id) || (idft && (String(f.ID_FT || '') === idft || String(f.Numero || '') === idft));
+            });
+        }
+
+        function matchSiae(project) {
+            const vertical = matchByTitle(protectionDatasets.siaeVerticale, project.TITOLO, ['Titolo']);
+            const wide = matchByTitle(protectionDatasets.siae, project.TITOLO, ['Titolo']);
+            return vertical || wide || null;
+        }
+
+        function matchImaie(project) {
+            return matchByTitle(protectionDatasets.imaie, project.TITOLO, ['TITOLO_OPERA']);
+        }
+
+        function isReleased(project) {
+            const stato = N(project.STATO);
+            const rel = daysFrom(project.Data_Pubblicazione);
+            return /uscit|pubblicat|released|online/.test(stato) || (rel !== null && rel <= 0);
+        }
+
+        function isMasterPhase(project) {
+            const stato = N(project.STATO);
+            return /master|mix|consegn|chius|pubblic|uscit/.test(stato) || has(project.Data_Consegna_Master) || isReleased(project);
+        }
+
+        function makeCheck(label, ok, category, weight, fix, pendingState = 'missing') {
+            const complete = Boolean(ok);
+            return { label, ok: complete, category, weight, fix, state: complete ? 'complete' : pendingState };
+        }
+
+        function buildProtection(project) {
+            const consegna = matchConsegna(project);
+            const documenti = matchDocumenti(project);
+            const fatture = matchFatture(project);
+            const siae = matchSiae(project);
+            const imaie = matchImaie(project);
+            const quotePresenti = has(project.Quota_Musica_Kyv) || has(project.Quota_Musica_Artista) || has(project.Quota_Testo_Artista);
+            const fatturaPagata = fatture.some(f => KYV.isPaid(f.PAGATA) || KYV.isPaid(f.PAGAMENTO));
+            const checks = [
+                makeCheck('Data sessione compilata', has(project.Data_Sessione), 'Sessione', 6, 'Compila Data_Sessione nella scheda progetto.'),
+                makeCheck('Artista e titolo definiti', has(project.ARTISTA) && has(project.TITOLO), 'Sessione', 8, 'Completa TITOLO e ARTISTA.'),
+                makeCheck('Autori indicati', has(project.AUTORI), 'Sessione', 7, 'Inserisci AUTORI e, se possibile, ruoli o split provvisori.'),
+                makeCheck('Manager / label / referente presenti', has(project.MANAGEMENT) || has(project.Label), 'Sessione', 4, 'Inserisci MANAGEMENT o Label per sapere chi contattare.'),
+                makeCheck('Contratto o cartella contratti collegata', has(project['Contratto link']) || documenti.some(d => /contratto|split|liberatoria|royalties|nda/i.test(d.Tipo_Documento || '')), 'Contratti', 10, 'Aggiungi link al contratto/documento in Documenti & Contratti.', 'review'),
+                makeCheck('Fee / royalty / kill fee tracciate', has(project.FEE) || has(project.ROY) || has(project.Anticipo_Kill_Fee), 'Contratti', 7, 'Compila FEE, ROY o Anticipo_Kill_Fee.'),
+                makeCheck('Quote musica/testo presenti', quotePresenti, 'SIAE', 8, 'Compila le quote KYV/artista o verifica lo split sheet.'),
+                makeCheck('Codice IPI artista presente', has(project.Codice_IPI_Artista), 'SIAE', 4, 'Recupera o inserisci Codice_IPI_Artista.'),
+                makeCheck('Opera trovata negli export SIAE', Boolean(siae), 'SIAE', 10, 'Importa export SIAE o verifica il titolo depositato.', 'review'),
+                makeCheck('Codice ISWC / codice opera presente', Boolean(siae && (has(siae['Codice ISWC']) || has(siae['Cod. Opera']))), 'SIAE', 8, 'Associa codice opera/ISWC dal deposito SIAE.', 'review'),
+                makeCheck('Codice ISRC compilato', has(project.Codice_ISRC), 'IMAIE', 10, 'Inserisci Codice_ISRC dopo distribuzione/pubblicazione.'),
+                makeCheck('Ruolo IMAIE KYV definito', has(project.Ruolo_IMAIE_Kyv), 'IMAIE', 7, 'Specifica se KYV è interprete/esecutore, musicista o non rivendicabile.'),
+                makeCheck('Produttore fonografico / label tracciati', has(project.Produttore_Fonografico) || has(project.Label), 'IMAIE', 5, 'Compila Produttore_Fonografico o Label.'),
+                makeCheck('Opera trovata in estratto IMAIE', Boolean(imaie), 'IMAIE', 6, 'Importa/aggiorna ESTRATTO_IMAIE o verifica titolo/ISRC.', 'review'),
+                makeCheck('Data consegna master presente', has(project.Data_Consegna_Master), 'Master', 8, 'Compila Data_Consegna_Master quando mandi file finali.'),
+                makeCheck('File audio Dropbox registrato', Boolean(consegna && has(consegna.Link_Dropbox)), 'Master', 9, 'Registra il file in DROPBOX_AUDIO_FILES o, in fallback, CONSEGNE_MASTER.', 'review'),
+                makeCheck('Hash SHA-256 file salvato', Boolean(consegna && (has(consegna.Hash_SHA256) || has(consegna.Hash_File))), 'Master', 8, 'Calcola/salva hash SHA-256 del file audio.', 'review'),
+                makeCheck('Cartella Drive progetto collegata', has(project.LINK), 'Archivio', 6, 'Inserisci LINK alla cartella Drive del progetto.'),
+                makeCheck('Fattura collegata al progetto', fatture.length > 0 || has(project.IDFT) || has(project.FT), 'Amministrazione', 7, 'Collega o crea fattura in FATTURE.', 'review'),
+                makeCheck('Pagamento tracciato', fatturaPagata || has(project.PAGAMENTO), 'Amministrazione', 6, 'Aggiorna PAGATA/PAGAMENTO quando incassi.', 'review'),
+            ];
+
+            // I progetti molto iniziali non vanno trattati come pubblicazioni scoperte, ma devono comunque mostrare cosa manca.
+            const gatedChecks = checks.filter(c => {
+                if (c.category === 'IMAIE') return isReleased(project) || has(project.Codice_ISRC) || has(project.Ruolo_IMAIE_Kyv) || Boolean(imaie);
+                if (c.category === 'Master') return isMasterPhase(project) || Boolean(consegna);
+                return true;
+            });
+            const total = gatedChecks.reduce((sum, c) => sum + c.weight, 0) || 1;
+            const done = gatedChecks.reduce((sum, c) => sum + (c.ok ? c.weight : 0), 0);
+            const score = Math.round((done / total) * 100);
+            const missing = gatedChecks.filter(c => !c.ok);
+            const criticalMissing = missing.filter(c => ['Contratti', 'SIAE', 'IMAIE', 'Master'].includes(c.category));
+            const status = score < 46 ? 'Scoperto' : score < 71 ? 'Da completare' : score < 88 ? 'Buono' : 'Protetto';
+            return { project, checks, gatedChecks, score, missing, criticalMissing, consegna, documenti, fatture, siae, imaie, status };
+        }
+
+        function scoreTone(score) {
+            if (score < 46) return { ring: 'bad', badge: 'border-rose-500/30 bg-rose-500/10 text-rose-100', dot: 'text-rose-300' };
+            if (score < 71) return { ring: 'warn', badge: 'border-amber-500/30 bg-amber-500/10 text-amber-100', dot: 'text-amber-300' };
+            return { ring: '', badge: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100', dot: 'text-emerald-300' };
+        }
+
+        function groupChecks(item) {
+            const groups = {};
+            item.gatedChecks.forEach(c => { if (!groups[c.category]) groups[c.category] = []; groups[c.category].push(c); });
+            return groups;
+        }
+
+        function categoryIcon(cat) {
+            return ({ Sessione: 'mic-2', Contratti: 'file-signature', SIAE: 'music-2', IMAIE: 'radio', Master: 'send', Archivio: 'folder-open', Amministrazione: 'receipt' })[cat] || 'check';
+        }
+
+        function renderCheck(c) {
+            const state = c.state || (c.ok ? 'complete' : 'missing');
+            const visual = state === 'complete'
+                ? { icon: 'check-circle-2', iconClass: 'text-emerald-400', badge: 'Completato', badgeClass: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100' }
+                : state === 'review'
+                    ? { icon: 'circle-help', iconClass: 'text-amber-400', badge: 'Da verificare', badgeClass: 'border-amber-500/25 bg-amber-500/10 text-amber-100' }
+                    : { icon: 'circle-alert', iconClass: 'text-rose-400', badge: 'Mancante', badgeClass: 'border-rose-500/25 bg-rose-500/10 text-rose-100' };
+            return `<div class="check-row">
+                <i data-lucide="${visual.icon}" class="w-4 h-4 mt-0.5 ${visual.iconClass} shrink-0"></i>
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2"><p class="text-sm font-bold ${c.ok ? 'text-slate-200' : 'text-white'}">${H(c.label)}</p><span class="rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${visual.badgeClass}">${visual.badge}</span></div>
+                    ${c.ok ? '' : `<p class="text-xs text-kyv-text mt-1">${H(c.fix)}</p>`}
+                </div>
+            </div>`;
+        }
+
+        function renderProtectionCard(item) {
+            const p = item.project;
+            const tone = scoreTone(item.score);
+            const groups = groupChecks(item);
+            const topMissing = item.missing.slice(0, 4).map(c => `<span class="kyv-chip ${c.state === 'review' ? 'border-amber-500/20 bg-amber-500/10 text-amber-100' : 'border-rose-500/20 bg-rose-500/10 text-rose-100'}">${H(c.category)}: ${H(c.label)}</span>`).join('');
+            const details = Object.entries(groups).map(([cat, checks]) => {
+                const ok = checks.filter(c => c.ok).length;
+                return `<details class="rounded-xl border border-kyv-border bg-kyv-bg/45 p-3" ${item.score < 71 && item.missing.some(m => m.category === cat) ? 'open' : ''}>
+                    <summary class="flex items-center justify-between gap-3">
+                        <span class="flex items-center text-sm font-black text-white"><i data-lucide="${categoryIcon(cat)}" class="w-4 h-4 mr-2 text-slate-400"></i>${H(cat)}</span>
+                        <span class="text-[10px] font-black text-kyv-text uppercase tracking-wider">${ok}/${checks.length}</span>
+                    </summary>
+                    <div class="mt-3">${checks.map(renderCheck).join('')}</div>
+                </details>`;
+            }).join('');
+            const links = [
+                p.LINK ? `<a onclick="event.stopPropagation()" class="text-cyan-200 hover:text-cyan-100 font-bold" href="${H(p.LINK)}" target="_blank" rel="noopener">Drive</a>` : null,
+                p['Contratto link'] ? `<a onclick="event.stopPropagation()" class="text-violet-200 hover:text-violet-100 font-bold" href="${H(p['Contratto link'])}" target="_blank" rel="noopener">Contratto</a>` : null,
+                item.consegna && item.consegna.Link_Dropbox ? `<a onclick="event.stopPropagation()" class="text-sky-200 hover:text-sky-100 font-bold" href="${H(item.consegna.Link_Dropbox)}" target="_blank" rel="noopener">Dropbox</a>` : null,
+                item.documenti && item.documenti.length ? `<span class="text-emerald-200 font-bold">${item.documenti.length} doc</span>` : null
+            ].filter(Boolean).join('<span class="text-kyv-text mx-2">·</span>');
+            return `<article class="protection-card kyv-panel p-4 sm:p-5" data-score="${item.score}">
+                <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    <div role="button" tabindex="0" aria-label="Modifica dati progetto ${H(p.TITOLO || '')}" onclick="openProtectionProject('${String(p.ID).replaceAll("'", "\\'")}')" onkeydown="if ((event.key === 'Enter' || event.key === ' ') && event.target === this) { event.preventDefault(); openProtectionProject('${String(p.ID).replaceAll("'", "\\'")}'); }" class="kyv-interactive-card min-w-0 flex-1 rounded-xl cursor-pointer">
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <span class="inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-wider ${tone.badge}"><i data-lucide="shield" class="w-3 h-3 mr-1"></i>${H(item.status)}</span>
+                            ${p.STATO ? `<span class="kyv-chip">${H(p.STATO)}</span>` : ''}
+                            ${isReleased(p) ? '<span class="kyv-chip border-emerald-500/20 bg-emerald-500/10 text-emerald-100">Pubblicato / in uscita</span>' : ''}
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-black text-white truncate">${H(p.TITOLO || 'Senza titolo')}</h3>
+                        <p class="text-sm text-cyan-200 font-bold truncate mt-1">${H(p.ARTISTA || 'Artista non indicato')}</p>
+                        <p class="text-xs text-kyv-text mt-2 line-clamp-2">${H([p.AUTORI, p.MANAGEMENT, p.Label].filter(Boolean).join(' · ') || 'Autori/management/label non completi')}</p>
+                        <div class="mt-3 flex flex-wrap gap-2">${topMissing || '<span class="kyv-chip border-emerald-500/20 bg-emerald-500/10 text-emerald-100">Nessuna mancanza prioritaria nel filtro attuale</span>'}</div>
+                        ${links ? `<div class="mt-3 text-xs">${links}</div>` : ''}
+                        <p class="mt-3 text-[10px] uppercase tracking-wider text-indigo-200 font-black inline-flex items-center"><i data-lucide="pencil" class="w-3 h-3 mr-1"></i>Clicca qui per correggere i dati</p>
+                    </div>
+                    <div class="flex lg:flex-col items-center lg:items-end justify-between gap-3 shrink-0">
+                        <div class="score-ring ${tone.ring} w-20 h-20 rounded-full p-1" style="--score:${item.score}">
+                            <div class="w-full h-full rounded-full bg-kyv-card flex items-center justify-center text-lg font-black text-white">${item.score}%</div>
+                        </div>
+                        <button onclick="event.stopPropagation();copyProjectChecklist('${String(p.ID).replaceAll("'", "\\'")}')" class="px-3 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-100 text-xs font-bold inline-flex items-center"><i data-lucide="copy" class="w-4 h-4 mr-2"></i>Copia checklist</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 mt-5">${details}</div>
+            </article>`;
+        }
+
+        function getFilteredRows() {
+            const q = N(document.getElementById('protection-search')?.value || '');
+            const f = document.getElementById('protection-filter')?.value || 'tutto';
+            return protectionRows.filter(item => {
+                const p = item.project;
+                const blob = N([p.TITOLO, p.ARTISTA, p.AUTORI, p.Label, p.MANAGEMENT, p.STATO, p.NOTE].join(' '));
+                if (q && !blob.includes(q)) return false;
+                if (f === 'critici') return item.score < 55 || item.criticalMissing.length >= 4;
+                if (f === 'siaemanca') return item.missing.some(c => c.category === 'SIAE');
+                if (f === 'imaiemanca') return item.missing.some(c => c.category === 'IMAIE');
+                if (f === 'mastermanca') return item.missing.some(c => c.category === 'Master');
+                if (f === 'adminmanca') return item.missing.some(c => c.category === 'Contratti' || c.category === 'Amministrazione' || c.category === 'Archivio');
+                if (f === 'protetti') return item.score >= 80;
+                return true;
+            }).sort((a,b) => a.score - b.score || String(a.project.ARTISTA || '').localeCompare(String(b.project.ARTISTA || '')));
+        }
+
+        function renderMetrics() {
+            const rows = protectionRows;
+            const checks = rows.flatMap(row => row.gatedChecks || []);
+            const avg = rows.length ? Math.round(rows.reduce((s, r) => s + r.score, 0) / rows.length) : 0;
+            KYV.setText('metric-score', `${avg}%`);
+            KYV.setText('metric-critical', rows.filter(r => r.score < 55 || r.criticalMissing.length >= 4).length);
+            KYV.setText('metric-siae', rows.filter(r => r.missing.some(c => c.category === 'SIAE')).length);
+            KYV.setText('metric-imaie', rows.filter(r => r.missing.some(c => c.category === 'IMAIE')).length);
+            KYV.setText('metric-master', rows.filter(r => r.missing.some(c => c.category === 'Master')).length);
+            KYV.setText('state-missing', checks.filter(c => c.state === 'missing').length);
+            KYV.setText('state-review', checks.filter(c => c.state === 'review').length);
+            KYV.setText('state-complete', checks.filter(c => c.state === 'complete').length);
+        }
+
+        function renderProtections() {
+            renderMetrics();
+            const list = document.getElementById('protection-list');
+            const rows = getFilteredRows();
+            KYV.setText('result-count', `${rows.length} progetti visualizzati su ${protectionRows.length}. Ordinati dal più scoperto al più completo.`);
+            if (!list) return;
+            if (!rows.length) {
+                list.innerHTML = '<div class="kyv-panel p-8 text-center text-kyv-text"><i data-lucide="search-x" class="w-8 h-8 mx-auto mb-3 text-slate-500"></i>Nessun progetto corrisponde al filtro.</div>';
+            } else {
+                list.innerHTML = rows.map(renderProtectionCard).join('');
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function fetchProtections() {
+            const list = document.getElementById('protection-list');
+            if (list) list.innerHTML = '<div class="kyv-panel p-8 text-center text-kyv-text"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3 text-amber-400"></i>Analisi protezioni in corso...</div>';
+            try {
+                protectionDatasets = {
+                    progetti: await safeTable('PROGETTI'),
+                    consegne: await safeTable('CONSEGNE_MASTER'),
+                    audioFiles: await safeTable('DROPBOX_AUDIO_FILES'),
+                    documenti: await safeTable('DOCUMENTI_PROGETTO'),
+                    fatture: await safeTable('FATTURE'),
+                    siaeVerticale: await safeTable('EXPORT SIAE VERTICALE'),
+                    siae: await safeTable('EXPORT SIAE'),
+                    imaie: await safeTable('ESTRATTO_IMAIE')
+                };
+                protectionRows = (protectionDatasets.progetti || []).map(buildProtection);
+                renderProtections();
+            } catch (err) {
+                console.error(err);
+                if (list) list.innerHTML = `<div class="kyv-panel p-8 text-center text-rose-200"><i data-lucide="circle-alert" class="w-8 h-8 mx-auto mb-3"></i>Errore lettura dati: ${H(err.message)}</div>`;
+            }
+        }
+
+        function checklistText(item) {
+            const p = item.project;
+            const lines = [
+                `PROTEZIONE BRANO — ${p.ARTISTA || '-'} / ${p.TITOLO || '-'}`,
+                `Score: ${item.score}% (${item.status})`,
+                `Stato progetto: ${p.STATO || '-'}`,
+                '',
+                'MANCANZE PRIORITARIE:',
+                ...(item.missing.length ? item.missing.map(c => `- [${c.category}] ${c.label}: ${c.fix}`) : ['- Nessuna mancanza prioritaria rilevata.']),
+                '',
+                'DATI CHIAVE:',
+                `- Sessione: ${KYV.formatDate(p.Data_Sessione, '-')}`,
+                `- Consegna master: ${KYV.formatDate(p.Data_Consegna_Master, '-')}`,
+                `- Pubblicazione: ${KYV.formatDate(p.Data_Pubblicazione, '-')}`,
+                `- ISRC: ${p.Codice_ISRC || '-'}`,
+                `- Ruolo IMAIE KYV: ${p.Ruolo_IMAIE_Kyv || '-'}`,
+                `- Contratto: ${p['Contratto link'] || '-'}`,
+                `- Drive: ${p.LINK || '-'}`,
+                `- Dropbox: ${(item.consegna && item.consegna.Link_Dropbox) || '-'}`,
+                `- Hash: ${(item.consegna && (item.consegna.Hash_SHA256 || item.consegna.Hash_File)) || '-'}`,
+                `- Documenti catalogati: ${(item.documenti && item.documenti.length) || 0}`
+            ];
+            return lines.join('\n');
+        }
+
+        async function copyProjectChecklist(id) {
+            const item = protectionRows.find(r => String(r.project.ID) === String(id));
+            if (!item) return;
+            try {
+                await navigator.clipboard.writeText(checklistText(item));
+                KYV.showToast('Checklist protezione copiata.', 'success');
+            } catch (err) {
+                KYV.showToast('Copia non riuscita dal browser.', 'warning');
+            }
+        }
+
+        window.openProtectionProject = function(id) {
+            if (!protectionEditor) {
+                KYV.showToast('Editor non ancora pronto.', 'warning');
+                return;
+            }
+            protectionEditor.open('PROGETTI', id).catch(err => {
+                console.error(err);
+                KYV.showToast('Impossibile aprire il progetto.', 'error');
+            });
+        }
+
+        function exportProtectionCsv() {
+            const rows = getFilteredRows();
+            const header = ['ID', 'Artista', 'Titolo', 'Score', 'Stato protezione', 'Mancanze', 'ISRC', 'Ruolo IMAIE', 'Contratto link', 'Drive link', 'Dropbox link', 'Hash'];
+            const escapeCsv = (v) => `"${String(v ?? '').replaceAll('"', '""')}"`;
+            const csv = ['sep=;', header.map(escapeCsv).join(';')].concat(rows.map(item => {
+                const p = item.project;
+                return [
+                    p.ID, p.ARTISTA, p.TITOLO, `${item.score}%`, item.status,
+                    item.missing.map(c => `${c.category}: ${c.label}`).join(' | '),
+                    p.Codice_ISRC, p.Ruolo_IMAIE_Kyv, p['Contratto link'], p.LINK,
+                    item.consegna && item.consegna.Link_Dropbox,
+                    item.consegna && (item.consegna.Hash_SHA256 || item.consegna.Hash_File),
+                    item.documenti && item.documenti.length
+                ].map(escapeCsv).join(';');
+            })).join('\n');
+            KYV.downloadTextFile(`kyv_protezione_brani_${new Date().toISOString().slice(0,10)}.csv`, csv, 'text/csv;charset=utf-8');
+        }
+
+        async function copyDriveStructure() {
+            const text = `KYV Manager Pro / Progetti / ARTISTA - TITOLO - ANNO\n01_SESSIONE\n02_AUDIO_DEMO\n03_MASTER_CONSEGNE\n04_CONTRATTI\n05_SIAE\n06_IMAIE\n07_FATTURE_PAGAMENTI\n08_CHAT_MAIL\n09_NOTE`;
+            try { await navigator.clipboard.writeText(text); KYV.showToast('Struttura Drive copiata.', 'success'); }
+            catch { KYV.showToast('Copia non riuscita.', 'warning'); }
+        }
+
+        async function copyDropboxMessage() {
+            const text = `Ciao,\nti mando il link alla consegna del file audio:\n\nProgetto: [TITOLO]\nFile: [NOME FILE]\nVersione: [MASTER/STEMS/v01]\nLink Dropbox: [LINK]\n\nIl file è stato consegnato in data [DATA]. Ti chiedo gentilmente conferma di ricezione e corretto download del file.\n\nGrazie,\nKYV`;
+            try { await navigator.clipboard.writeText(text); KYV.showToast('Messaggio Dropbox copiato.', 'success'); }
+            catch { KYV.showToast('Copia non riuscita.', 'warning'); }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                supabaseClient = KYV.createSupabaseClient();
+                protectionEditor = KYV_RECORD_EDITOR.create({
+                    client: supabaseClient,
+                    onSaved: async () => fetchProtections()
+                });
+                fetchProtections();
+            } catch (err) {
+                const list = document.getElementById('protection-list');
+                if (list) list.innerHTML = `<div class="kyv-panel p-8 text-center text-rose-200">${H(err.message)}</div>`;
+            }
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

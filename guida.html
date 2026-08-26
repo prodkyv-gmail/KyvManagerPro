@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+<title>KYV Studio - Manuale Operativo Completo v2.24</title>
+<script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="kyv-help.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="kyv-responsive.css">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{kyv:{bg:'#0f111a',card:'#151923',border:'#232838',accent:'#6366f1',text:'#94a3b8'}}}}}</script>
+<style>
+body{background:#0f111a;color:#f8fafc} html{scroll-behavior:smooth} .guide-section{scroll-margin-top:7.5rem} .manual-card{background:#151923;border:1px solid #232838;border-radius:1.1rem} .manual-card-soft{background:rgba(15,17,26,.55);border:1px solid rgba(35,40,56,.95);border-radius:1rem} .section-title{font-size:1.7rem;line-height:1.12;font-weight:900;letter-spacing:-.04em;color:#fff} .sub-title{font-size:1.05rem;font-weight:850;color:#fff} .mini-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;font-weight:900} .toc-link{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem .8rem;border-radius:999px;white-space:nowrap;background:#151923;border:1px solid #232838;color:#fff;font-size:.76rem;font-weight:850;transition:.18s} .toc-link:hover{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.65);color:#c7d2fe} .callout{border-radius:1rem;padding:1rem;border:1px solid rgba(99,102,241,.35);background:rgba(99,102,241,.12);color:#dbeafe} .success{border-color:rgba(16,185,129,.45);background:rgba(16,185,129,.10);color:#bbf7d0} .warning{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.10);color:#fde68a} .danger{border-color:rgba(244,63,94,.45);background:rgba(244,63,94,.10);color:#fecdd3} .field-table th{text-align:left;color:#c7d2fe;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;padding:.75rem;border-bottom:1px solid #232838} .field-table td{padding:.75rem;border-bottom:1px solid rgba(35,40,56,.7);color:#cbd5e1;vertical-align:top} .kbd{display:inline-flex;border:1px solid #334155;background:#0d0f16;border-radius:.45rem;padding:.12rem .45rem;font-size:.72rem;color:#e2e8f0;font-weight:850} .open-link{display:inline-flex;align-items:center;justify-content:center;padding:.65rem .9rem;border-radius:.8rem;background:rgba(99,102,241,.16);border:1px solid rgba(99,102,241,.35);color:#c7d2fe;font-weight:900;font-size:.8rem} .journey-step{background:#151923;border:1px solid #232838;border-radius:1rem;padding:1rem;display:flex;gap:1rem;align-items:flex-start} .step-dot{width:2rem;height:2rem;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:900;color:white;flex-shrink:0}
+</style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+<div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+<header class="px-4 md:px-8 pt-7 pb-5 border-b border-kyv-border/70 bg-[#0f111a] shrink-0 z-20 shadow-xl shadow-black/10">
+ <div class="flex items-start md:items-center justify-between gap-4">
+  <div class="flex items-start md:items-center gap-3 min-w-0"><button class="md:hidden text-kyv-text hover:text-white mt-1" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button><div class="min-w-0"><div class="mini-label mb-2">Manuale operativo v2.24</div><h1 class="text-2xl md:text-4xl font-black tracking-tight text-white leading-tight">KYV Studio Manager <span class="text-indigo-400">Guida completa</span></h1><p class="text-kyv-text mt-2 max-w-5xl">Manuale dettagliato su passaggi, moduli, sezioni, bottoni, dati coinvolti e obiettivi. Pensato per guidare KYV dal primo contatto alla sessione, dal demo al master, fino a SIAE, IMAIE, fattura, incasso e archivio.</p></div></div>
+  <span class="hidden lg:inline-flex px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-black">v2.24</span>
+ </div>
+ <nav class="mt-6 flex gap-2 overflow-x-auto custom-scrollbar pb-2" aria-label="Indice manuale"><a class="toc-link" href="#percorso-v224">Novità v2.24</a><a class="toc-link" href="#archivio-v223">Archivio v2.23</a><a class="toc-link" href="#navigazione">Navigazione</a><a class="toc-link" href="#viaggio">Viaggio</a><a class="toc-link" href="#routine">Routine</a><a class="toc-link" href="#bottoni">Bottoni</a><a class="toc-link" href="#panoramica">Panoramica</a><a class="toc-link" href="#assistente">Assistente Produzione</a><a class="toc-link" href="#progetti">Progetti &amp; Uscite</a><a class="toc-link" href="#scheda">Scheda Progetto Unica</a><a class="toc-link" href="#sessioni">Sessioni Studio</a><a class="toc-link" href="#crm">Rubrica CRM</a><a class="toc-link" href="#dropbox">Audio Dropbox &amp; Invii</a><a class="toc-link" href="#documenti">Documenti, Spese &amp; Schede</a><a class="toc-link" href="#protezione">Protezione Brano</a><a class="toc-link" href="#fatture">Fatture</a><a class="toc-link" href="#fisco">Piano Fiscale</a><a class="toc-link" href="#diritti">Quote, Autori, Rendiconti SIAE/IMAIE</a><a class="toc-link" href="#importexport">Import</a><a class="toc-link" href="#editor">Studio Editor</a><a class="toc-link" href="#report">Report &amp; PDF</a><a class="toc-link" href="#integrazioni">Drive</a><a class="toc-link" href="#login">Login</a></nav>
+</header>
+<div class="flex-1 overflow-auto custom-scrollbar p-4 md:p-8 pb-28 md:pb-8"><div class="max-w-7xl mx-auto space-y-8">
+<section id="percorso-v224" class="guide-section manual-card p-5 md:p-7">
+  <div class="mini-label mb-2">Novità v2.24</div>
+  <h2 class="section-title mb-4">Una sola prossima azione, aperta nel punto giusto.</h2>
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Prima verifica i dati</h3><p class="text-kyv-text mt-3 leading-relaxed">Percorso Brano controlla tutte le fonti necessarie prima di calcolare le priorità. Verde significa dati completi; giallo indica la compatibilità senza AUDIO_VERSIONI; rosso sospende i suggerimenti per evitare falsi “dati mancanti”.</p></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Poi usa Fai ora</h3><ol class="list-decimal ml-5 mt-3 space-y-2 text-kyv-text leading-relaxed"><li>Leggi fase e percentuale del brano.</li><li>Controlla la prossima azione proposta.</li><li>Premi <b>Fai ora</b>.</li><li>Completa il dato nella sezione già aperta della Scheda Progetto.</li><li>Torna all’Assistente e premi Aggiorna.</li></ol></div>
+  </div>
+  <div class="callout mt-5"><b>Scopo:</b> eliminare passaggi generici e portare ogni attività direttamente in Sintesi, Produzione, Documenti, Diritti, Amministrazione o Checklist. Nessuna nuova migrazione richiesta.</div>
+</section>
+<section id="archivio-v223" class="guide-section manual-card p-5 md:p-7">
+  <div class="mini-label mb-2">Novita v2.23</div>
+  <h2 class="section-title mb-4">Archivio audio affidabile: prima verifica, poi salva.</h2>
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Procedura consigliata</h3><ol class="list-decimal ml-5 mt-3 space-y-2 text-kyv-text leading-relaxed"><li>Esegui <span class="kbd">SUPABASE_MIGRATION_V2_23_AUDIO_VERSIONI.sql</span> nel SQL Editor Supabase.</li><li>Apri Archivio Musicale e controlla il messaggio verde “Controllo duplicati v2.23 attivo”.</li><li>Cerca su Drive oppure scegli i file Dropbox.</li><li>Controlla se il file è già presente, è una nuova revisione o appartiene a un progetto esistente.</li><li>Collega la versione o crea progetto e versione nella stessa operazione.</li></ol></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Messaggi di sicurezza</h3><ul class="list-disc ml-5 mt-3 space-y-2 text-kyv-text leading-relaxed"><li><b class="text-emerald-200">Verde:</b> archivio unificato disponibile e salvataggio atomico attivo.</li><li><b class="text-amber-200">Giallo:</b> migrazione non installata; il confronto usa le tabelle precedenti e la creazione combinata resta bloccata.</li><li><b class="text-rose-200">Rosso:</b> non è possibile leggere tutti gli archivi; ricerca e inserimenti sono disabilitati per evitare duplicati.</li><li><b>Nuova revisione:</b> lo stesso file cloud risulta modificato; va controllato prima di aggiungerlo.</li></ul></div>
+  </div>
+  <div class="callout warning mt-5"><b>Importante:</b> la v2.22 sulla protezione degli accessi resta sospesa. La migrazione v2.23 mantiene temporaneamente il modello di accesso corrente e non sostituisce il futuro lavoro su autenticazione e permessi.</div>
+</section>
+<section class="guide-section manual-card p-5 md:p-8 relative overflow-hidden"><div class="absolute right-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div><div class="relative z-10 grid lg:grid-cols-[1.2fr_.8fr] gap-8 items-start"><div><div class="mini-label mb-3">Visione</div><h2 class="section-title mb-4">Un viaggio guidato nella produzione musicale, poi nell’amministrazione.</h2><p class="text-kyv-text leading-relaxed text-base mb-5">KyvManagerPro deve comportarsi come un assistente: quando nasce una possibilità, ti aiuta a trasformarla in progetto; quando fai una sessione, ti aiuta a tracciarla; quando mandi un file, registra link, hash, destinatario e conferma; quando il brano si avvicina alla release, controlla quote, SIAE, IMAIE, contratto e fattura.</p><div class="callout"><b class="text-white">Ragionamento:</b> ogni campo vuoto non è solo un dato mancante. È una possibile azione: chiedere un dato, salvare un documento, sollecitare un ascolto, emettere una fattura, recuperare una prova.</div></div><div class="manual-card-soft p-5 space-y-3"><h3 class="sub-title">Domande a cui deve rispondere</h3><ul class="space-y-3 text-kyv-text leading-relaxed"><li><b class="text-white">Cosa devo fare oggi?</b></li><li><b class="text-white">Quali pezzi sono fermi o dimenticati?</b></li><li><b class="text-white">Chi devo ricontattare?</b></li><li><b class="text-white">Quali soldi o diritti sono scoperti?</b></li><li><b class="text-white">Dove sono file, contratti e prove?</b></li></ul></div></div></section>
+
+<section id="navigazione" class="guide-section manual-card p-5 md:p-7">
+  <div class="mini-label mb-2">Navigazione v2.9.8</div>
+  <h2 class="section-title mb-4">Barra laterale semplificata: poche porte principali, strumenti secondari nel Launcher.</h2>
+  <p class="text-kyv-text leading-relaxed text-base">La sidebar ora mostra solo le sezioni che KYV usa come ingresso principale: Panoramica, Progetti & Uscite, Rubriche, Fatture, Spese Extra, Studio Editor, Piano Fiscale, Quote per Opera, Rendiconto SIAE, App Launcher, Stazione Ascolto, Import/Export e Manuale.</p>
+  <div class="grid md:grid-cols-2 gap-4 mt-5">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dove sono finite le altre pagine?</h3><ul class="text-kyv-text leading-relaxed mt-3 space-y-2 list-disc list-inside"><li><b>Assistente Produzione, Sessioni Studio, Scheda Progetto e Protezione Brano</b>: restano accessibili da Panoramica e App Launcher, perché sono strumenti di percorso più che sezioni amministrative fisse.</li><li><b>Audio Dropbox, Google Drive e Google Calendar</b>: stanno in App Launcher, insieme alla Stazione Ascolto.</li><li><b>Documenti & Schede</b>: resta dentro la pagina Documenti, ma dalla sidebar entri direttamente su Spese Extra perché è una sezione primaria richiesta.</li><li><b>Dettaglio Autori, Correlazione e Report</b>: restano nel Launcher come strumenti avanzati.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Perché questa scelta</h3><p class="text-kyv-text leading-relaxed mt-3">Uno studio di produzione musicale lavora per flussi, non per decine di menu. Prima devi sapere: quale progetto, chi sono i referenti, che fase creativa è, quali file ascoltare, quali diritti/fatture/spese chiudere. Le sezioni principali devono essere poche; gli strumenti specialistici devono restare disponibili senza creare confusione.</p></div>
+  </div>
+</section>
+<section id="viaggio" class="guide-section"><div class="mini-label mb-2">Percorso professionale</div><h2 class="section-title mb-5">Il viaggio operativo del brano</h2><div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+<div class="journey-step"><div class="step-dot bg-indigo-600">1</div><div><h3 class="sub-title">Contatto / opportunità</h3><p class="mini-label mt-1">CRM + Progetti + Assistente</p><p class="text-kyv-text mt-2 leading-relaxed">Arriva una proposta da artista, manager, label, autore o editore.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Creare o aggiornare il contatto; creare un progetto anche provvisorio; annotare chi ha chiesto cosa e qual è il prossimo passo.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Preparare una scheda contatto più completa, allegare screenshot della chat, creare evento Calendar o cartella Drive.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">2</div><div><h3 class="sub-title">Brief e preparazione sessione</h3><p class="mini-label mt-1">Sessioni Studio + Calendar + Progetti</p><p class="text-kyv-text mt-2 leading-relaxed">La sessione deve essere pianificata e tracciata.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Compilare Data_Sessione, artista, autori, manager, label, obiettivo della sessione, note operative.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Inviare recap di convocazione, preparare cartella Drive, caricare reference o appunti.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">3</div><div><h3 class="sub-title">Sessione in studio</h3><p class="mini-label mt-1">Sessioni Studio + Scheda Progetto</p><p class="text-kyv-text mt-2 leading-relaxed">Nascono idee, ruoli creativi, contributi, topline, testi, beat, parti suonate.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Annotare presenti, ruoli, contributi, strumenti suonati da KYV, note su quote provvisorie.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Copiare checklist sessione, salvare foto/screenshot/appunti, creare documento recap.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">4</div><div><h3 class="sub-title">Demo / pezzo grezzo</h3><p class="mini-label mt-1">Progetti + Audio Dropbox + Assistente</p><p class="text-kyv-text mt-2 leading-relaxed">Il brano esiste ma non è ancora chiuso. Rischia di restare fermo.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Aggiornare STATO/SVILUPPO, salvare versioni demo, registrare invii in ascolto, impostare follow-up.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Inviare demo a manager/label/artista, registrare feedback, creare versione successiva.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">5</div><div><h3 class="sub-title">Lavorazione / revisioni</h3><p class="mini-label mt-1">Scheda Progetto + Audio Dropbox</p><p class="text-kyv-text mt-2 leading-relaxed">Arrivano modifiche, feedback, richieste di mix, arrangiamento, topline o produzione.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Aggiornare note, registrare file inviati, distinguere versioni, segnare cosa è stato approvato e cosa no.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Salvare più versioni Dropbox, chiedere conferma scritta, archiviare screenshot in Drive.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">6</div><div><h3 class="sub-title">Master / pre-release</h3><p class="mini-label mt-1">Audio Dropbox + Protezione Brano</p><p class="text-kyv-text mt-2 leading-relaxed">Il file è consegnabile ma bisogna provarne versione, data e destinatario.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Caricare file su Dropbox, salvare link in Supabase, scegliere file locale per hash SHA-256, registrare invio e conferma.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Generare messaggio WhatsApp/email, salvare prova Drive, verificare ISRC e data uscita.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">7</div><div><h3 class="sub-title">Contrattazione</h3><p class="mini-label mt-1">Progetti + Documenti + Schede dati</p><p class="text-kyv-text mt-2 leading-relaxed">Fee, roy, kill fee, percentuali e contratti devono essere chiari.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Compilare FEE, ROY, Anticipo_Kill_Fee, quote, contratto link, data contratto, pagamento.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Richiedere contratto, split sheet, conferma quote, liberatorie, NDA o accordo produzione.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">8</div><div><h3 class="sub-title">SIAE / IMAIE / protezioni</h3><p class="mini-label mt-1">Protezione + Quote + Autori + Schede dati</p><p class="text-kyv-text mt-2 leading-relaxed">Serve non perdere diritti d’autore e diritti connessi.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Verificare quote SIAE, codici IPI, ISWC, ISRC, ruolo IMAIE KYV, produttore fonografico, ricevute.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Generare richiesta dati SIAE/IMAIE, archiviare ricevute Drive, controllare rendiconti.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">9</div><div><h3 class="sub-title">Fattura / incasso / spese</h3><p class="mini-label mt-1">Fatture + Fisco + Spese Extra</p><p class="text-kyv-text mt-2 leading-relaxed">Il lavoro deve diventare incasso tracciato e costo contabilizzato.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Creare/collegare fattura, segnare pagata/non pagata, registrare spese, controllare piano fiscale.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Importare estratto conto, categorizzare costi, preparare recap per commercialista.</p></div></div>
+
+<div class="journey-step"><div class="step-dot bg-indigo-600">10</div><div><h3 class="sub-title">Archivio e memoria storica</h3><p class="mini-label mt-1">Scheda Progetto + Report + Drive</p><p class="text-kyv-text mt-2 leading-relaxed">Il progetto deve restare ricostruibile nel tempo.</p><p class="text-slate-300 mt-3"><b>Da fare:</b> Aprire scheda unica e controllare che audio, invii, documenti, fatture, spese e protezione siano presenti.</p><p class="text-kyv-text mt-2"><b>Si potrebbe fare:</b> Chiudere progetto, esportare report PDF, salvare recap finale in Drive.</p></div></div>
+</div></section>
+<section id="routine" class="guide-section manual-card p-5 md:p-7"><div class="mini-label mb-2">Cosa fare concretamente</div><h2 class="section-title mb-5">Routine consigliate</h2><div class="grid lg:grid-cols-2 gap-4 text-kyv-text leading-relaxed"><div class="manual-card-soft p-5"><h3 class="sub-title">Ogni giorno</h3><ol class="list-decimal ml-5 mt-3 space-y-2"><li>Apri Panoramica.</li><li>Apri Assistente Produzione.</li><li>Copia brief di oggi.</li><li>Controlla progetti in ascolto senza risposta.</li><li>Apri Scheda Progetto dei casi urgenti.</li></ol></div><div class="manual-card-soft p-5"><h3 class="sub-title">Dopo una sessione</h3><ol class="list-decimal ml-5 mt-3 space-y-2"><li>Aggiorna Sessioni Studio.</li><li>Annota presenti, ruoli e contributi.</li><li>Salva demo/versioni in Audio Dropbox se inviate.</li><li>Registra follow-up e prossime azioni.</li></ol></div><div class="manual-card-soft p-5"><h3 class="sub-title">Prima di consegnare master</h3><ol class="list-decimal ml-5 mt-3 space-y-2"><li>Carica file su Dropbox.</li><li>Registra link in Audio Dropbox.</li><li>Calcola hash SHA-256 scegliendo il file locale identico.</li><li>Registra invio a destinatario.</li><li>Salva conferma e prova Drive.</li></ol></div><div class="manual-card-soft p-5"><h3 class="sub-title">Prima della release</h3><ol class="list-decimal ml-5 mt-3 space-y-2"><li>Apri Protezione Brano.</li><li>Controlla contratto, quote, ISRC, SIAE, IMAIE.</li><li>Usa Schede dati per chiedere dati mancanti.</li><li>Controlla fattura e pagamento.</li></ol></div></div></section>
+
+<section id="panoramica" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Controllo giornaliero generale</div>
+      <h2 class="section-title">Panoramica / Dashboard</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">index.html</span></p>
+    </div>
+    <a href="index.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">È la prima pagina da aprire. Serve a vedere il quadro complessivo: andamento economico, scadenze operative, collegamenti rapidi e moduli più urgenti. Non sostituisce le pagine specialistiche, ma ti dice dove andare.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Ogni mattina o prima di iniziare una giornata di lavoro. Utile anche dopo un deploy o dopo aver aggiornato molti dati.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Radar operativo</b>: Mostra indicatori sintetici su sessioni, progetti, master, fatture, protezione e attività recenti.</li><li><b>Quick access</b>: Porta rapidamente ad Assistente Produzione, Sessioni Studio, Scheda Progetto e Protezione Brano.</li><li><b>Dati economici</b>: Riassume importi, fatture, pagamenti e stato amministrativo generale.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge principalmente PROGETTI, FATTURE, Spese Extra e dati operativi collegati ai moduli recenti.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Dare una risposta rapida a: “Dove devo entrare adesso?”</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Aggiorna</b></td><td>Ricarica i dati da Supabase e aggiorna i riepiloghi. Usalo dopo modifiche fatte in altre pagine.</td></tr><tr><td><b>Assistente KYV</b></td><td>Apre il percorso guidato del brano, cioè la pagina che suggerisce cosa fare oggi.</td></tr><tr><td><b>Apri Sessioni</b></td><td>Apre Sessioni Studio per vedere sessioni, follow-up e progetti da lavorare.</td></tr><tr><td><b>Scheda Progetto</b></td><td>Apre l’hub del singolo brano/progetto.</td></tr><tr><td><b>Protezione</b></td><td>Apre il radar legale/burocratico SIAE, IMAIE, contratti, master, fatture.</td></tr></tbody></table></div>
+</section>
+<section id="assistente" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Viaggio completo del brano</div>
+      <h2 class="section-title">Assistente Produzione</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">assistente.html</span></p>
+    </div>
+    <a href="assistente.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">È il centro operativo del sistema. Traduce i dati verificati in stati concreti: contatto, sessione, lavorazione, master, ascolto senza risposta, diritti e amministrazione. Ogni brano mostra percentuale, mancanze e una sola prossima azione.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">All’inizio della giornata, dopo modifiche importanti e quando devi recuperare pezzi fermi o preparare una call.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Stato dati</b>: conferma se le fonti sono complete prima di calcolare priorità.</li><li><b>Priorità</b>: elenca follow-up, dati mancanti, invii senza conferma, contratti o fatture assenti.</li><li><b>Kanban</b>: organizza i progetti per fase del percorso.</li><li><b>Ricerca</b>: filtra per artista, titolo, label, manager o parola chiave.</li><li><b>Fai ora</b>: apre direttamente la sezione corretta della Scheda Progetto.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge PROGETTI, AUDIO_VERSIONI quando disponibile, DROPBOX_AUDIO_FILES, INVII_AUDIO, DOCUMENTI_PROGETTO, CONSEGNE_MASTER e FATTURE.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> dire cosa seguire, chi ricontattare e dove completare il primo dato realmente mancante.</p><div class="callout mt-5"><b>Metodo:</b> controlla prima il messaggio verde/giallo/rosso, poi usa Fai ora. Se lo stato è rosso, ripristina i dati e non prendere decisioni dalle vecchie card.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Aggiorna</b></td><td>Verifica tutte le fonti e ricalcola priorità e percentuali.</td></tr><tr><td><b>Fai ora</b></td><td>Apre il progetto direttamente nella sezione del primo dato da completare.</td></tr><tr><td><b>Pianifica</b></td><td>Imposta un follow-up quando serve una data o un sollecito.</td></tr><tr><td><b>Scheda</b></td><td>Apre la sintesi generale del progetto.</td></tr><tr><td><b>Copia brief di oggi</b></td><td>Crea un testo riepilogativo con le priorità operative.</td></tr><tr><td><b>Priorità / Kanban / Metodo</b></td><td>Cambia il modo di leggere il percorso senza modificare i dati.</td></tr></tbody></table></div>
+</section>
+<section id="archivio" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5"><div><div class="mini-label mb-2">Ricerca file su richiesta</div><h2 class="section-title">Archivio Musicale</h2><p class="text-kyv-text mt-2"><span class="kbd">archivio_musicale.html</span></p></div><a href="archivio_musicale.html" class="open-link">Apri modulo</a></div>
+  <div class="grid xl:grid-cols-2 gap-5 mt-6"><div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Cerca audio su Google Drive oppure permette di scegliere più file da Dropbox. Prima dell'inserimento confronta ogni risultato con progetti e versioni già archiviate.</p><h3 class="sub-title mt-5">Stati</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Già inserito</b>: duplicato certo e non selezionabile.</li><li><b>Nuova versione</b>: possibile progetto esistente da confermare.</li><li><b>Da verificare</b>: stesso nome o file Drive modificato.</li><li><b>Nuovo brano</b>: nessuna corrispondenza.</li></ul></div><div class="manual-card-soft p-5"><h3 class="sub-title">Procedura consigliata</h3><ol class="list-decimal ml-5 text-kyv-text leading-relaxed mt-2 space-y-2"><li>Avvia una ricerca Drive o apri Dropbox.</li><li>Filtra e controlla gli stati.</li><li>Seleziona soltanto i file utili.</li><li>Conferma o modifica il progetto suggerito.</li><li>Inserisci i selezionati e verifica la Scheda Progetto.</li></ol><div class="callout mt-5"><b>Regola:</b> la somiglianza del titolo non collega automaticamente un file.</div></div></div>
+</section>
+<section id="progetti" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Archivio centrale del brano</div>
+      <h2 class="section-title">Progetti &amp; Uscite</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">progetti.html</span></p>
+    </div>
+    <a href="progetti.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">È la tabella madre. Ogni brano, produzione, uscita, demo o sessione importante deve esistere qui. Tutti gli altri moduli ruotano intorno al progetto.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando nasce un nuovo brano, cambia stato, vengono definiti fee/roy/quote, si aggiunge ISRC, data pubblicazione, contratto o pagamento.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Lista progetti</b>: Mostra tutti i progetti musicali e permette ricerca/filtri.</li><li><b>Filtri stato</b>: Permettono di vedere tutti, uscite finite o progetti in lavorazione.</li><li><b>Popup modifica</b>: Permette di modificare campi creativi, economici, burocratici e documentali.</li><li><b>Campi colorati</b>: Evidenziano dati critici mancanti o compilati in base all’importanza.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge e scrive PROGETTI. I campi più importanti sono TITOLO, ARTISTA, AUTORI, Data_Sessione, Data_Consegna_Master, Data_Pubblicazione, FEE, ROY, STATO, SVILUPPO, Contratto link, LINK, Codice_ISRC, Ruolo_IMAIE_Kyv, quote e pagamento.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Avere una scheda minima ma completa per ogni brano, anche quando è solo un’idea provvisoria.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Ricarica</b></td><td>Rilegge PROGETTI da Supabase.</td></tr><tr><td><b>Tutti i Progetti</b></td><td>Mostra l’intero archivio.</td></tr><tr><td><b>Solo Uscite (Finiti)</b></td><td>Filtra progetti chiusi/pubblicati/finiti.</td></tr><tr><td><b>In Lavorazione</b></td><td>Filtra brani ancora aperti.</td></tr><tr><td><b>Salva Modifiche</b></td><td>Aggiorna il record in PROGETTI.</td></tr><tr><td><b>Annulla</b></td><td>Chiude il popup senza salvare.</td></tr></tbody></table></div>
+</section>
+<section id="scheda" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Hub del singolo brano</div>
+      <h2 class="section-title">Scheda Progetto Unica</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">scheda_progetto.html</span></p>
+    </div>
+    <a href="scheda_progetto.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">È la pagina da aprire quando vuoi vedere tutto di un progetto: dati creativi, timeline, audio, invii, documenti, SIAE/IMAIE, fatture, spese, checklist. Non è una tabella: è il fascicolo operativo del brano.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Prima di una call, prima di consegnare un master, prima di chiedere dati SIAE/IMAIE, prima di fatturare, o quando vuoi capire perché un progetto è fermo.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Sintesi</b>: Dati essenziali, stato, artista, label, manager, fee, roy, quote, link utili.</li><li><b>Timeline</b>: Date chiave: sessione, contratto, consegna master, pubblicazione, fattura.</li><li><b>Audio &amp; Invii</b>: File Dropbox, hash, consegne storiche, invii audio e conferme.</li><li><b>Documenti</b>: Contratti, split sheet, liberatorie, screenshot, ricevute e link Drive.</li><li><b>SIAE / IMAIE</b>: Quote, codici, ISRC, ruolo IMAIE, controlli collegati.</li><li><b>Fisco / Fatture</b>: Fatture collegate, importi, pagamento.</li><li><b>Spese</b>: Movimenti di Spese Extra collegati in modo leggero al progetto.</li><li><b>Checklist</b>: Mancanze operative e protezione brano.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge PROGETTI, DROPBOX_AUDIO_FILES, INVII_AUDIO, DOCUMENTI_PROGETTO, CONSEGNE_MASTER, FATTURE, EXPORT SIAE, EXPORT SIAE VERTICALE, ESTRATTO_IMAIE, Spese Extra.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Ricostruire tutta la storia del brano in un punto solo.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Aggiorna dati</b></td><td>Ricarica da tutte le tabelle collegate.</td></tr><tr><td><b>Lista progetti</b></td><td>Torna alla selezione dei progetti.</td></tr><tr><td><b>Copia recap</b></td><td>Copia un riassunto completo del progetto per note, WhatsApp, email o call.</td></tr><tr><td><b>Copia mancanze</b></td><td>Copia solo i dati mancanti e le azioni da completare.</td></tr><tr><td><b>Modifica dati</b></td><td>Apre il popup di modifica rapida del record PROGETTI.</td></tr><tr><td><b>Apri Drive</b></td><td>Apre il link Drive salvato nel campo LINK, se presente.</td></tr><tr><td><b>Apri contratto</b></td><td>Apre il link salvato nel campo Contratto link.</td></tr><tr><td><b>Sintesi / Timeline / Audio &amp; Invii / Documenti / SIAE / IMAIE / Fisco / Spese / Checklist</b></td><td>Cambiano tab interna senza uscire dalla scheda.</td></tr><tr><td><b>Salva modifiche</b></td><td>Aggiorna PROGETTI dai campi del popup.</td></tr><tr><td><b>Annulla</b></td><td>Chiude il popup senza salvare.</td></tr></tbody></table></div>
+</section>
+<section id="sessioni" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Preparazione, sessione, follow-up</div>
+      <h2 class="section-title">Sessioni Studio</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">sessioni.html</span></p>
+    </div>
+    <a href="sessioni.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Serve a organizzare il lavoro creativo: sessioni future, sessioni di oggi, master da consegnare, progetti da seguire e follow-up intelligenti.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Prima di andare in studio, subito dopo una sessione, o quando vuoi capire quali progetti creativi sono rimasti aperti.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Sessioni future / oggi</b>: Mostra progetti con Data_Sessione utile.</li><li><b>Master da consegnare</b>: Segnala progetti con consegna master vicina o mancante.</li><li><b>Follow-up intelligenti</b>: Evidenzia progetti che richiedono azione: contratto, ISRC, ruolo IMAIE, master, pagamento, note.</li><li><b>Popup progetto</b>: Permette di modificare il progetto senza uscire dalla pagina.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge/scrive PROGETTI, soprattutto Data_Sessione, Data_Consegna_Master, Data_Pubblicazione, AUTORI, NOTE, STATO, SVILUPPO, Codice_ISRC, Ruolo_IMAIE_Kyv, Contratto link e LINK.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Trasformare una sessione creativa in una traccia organizzata e recuperabile.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Ricarica</b></td><td>Aggiorna sessioni e follow-up.</td></tr><tr><td><b>Copia checklist</b></td><td>Copia una checklist operativa della sessione/progetto.</td></tr><tr><td><b>Scheda completa</b></td><td>Apre scheda_progetto.html per quel progetto.</td></tr><tr><td><b>Apri contratto</b></td><td>Apre il link del contratto se presente.</td></tr><tr><td><b>Apri Drive</b></td><td>Apre la cartella Drive del progetto se presente.</td></tr><tr><td><b>Salva progetto</b></td><td>Aggiorna PROGETTI dal popup.</td></tr><tr><td><b>Annulla</b></td><td>Chiude il popup senza salvare.</td></tr></tbody></table></div>
+</section>
+<section id="crm" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Contatti e relazioni</div>
+      <h2 class="section-title">Rubrica CRM</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">clienti.html</span></p>
+    </div>
+    <a href="clienti.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Serve a tenere separati ma collegabili artisti, manager, label, editori, amministrazioni e collaboratori. È la rubrica professionale del sistema.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando nasce un nuovo contatto, devi fatturare a qualcuno, devi segnare un referente o recuperare mail/telefono/SDI/P.IVA.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Lista contatti</b>: Mostra tutti i clienti/contatti.</li><li><b>Nuovo/modifica contatto</b>: Permette di inserire dati anagrafici e amministrativi.</li><li><b>Note</b>: Serve per informazioni operative: referente, ruolo, preferenze, storico rapporti.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge/scrive CLIENTI: Nome_Denominazione, Tipologia, Email, Telefono, Partita_IVA, Codice_SDI, Indirizzo, Note.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Evitare di cercare dati amministrativi e contatti tra chat, mail e fogli sparsi.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Nuovo Contatto</b></td><td>Apre il form per creare un nuovo record CLIENTI.</td></tr><tr><td><b>Salva Contatto</b></td><td>Inserisce o aggiorna il contatto in Supabase.</td></tr><tr><td><b>Elimina</b></td><td>Cancella il contatto selezionato.</td></tr><tr><td><b>Annulla</b></td><td>Chiude il form senza salvare.</td></tr></tbody></table></div>
+</section>
+<section id="dropbox" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">File audio, ascolti, master, prove tecniche</div>
+      <h2 class="section-title">Audio Dropbox &amp; Invii</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">kyv_dropbox.html</span></p>
+    </div>
+    <a href="kyv_dropbox.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Serve a collegare i file audio Dropbox ai progetti e a registrare invii, hash, destinatari e conferme. Dropbox contiene il file; Supabase contiene lo storico; Drive conserva prove e screenshot.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Ogni volta che mandi demo, master, stems, revisioni mix o file per ascolto a artista, manager, label, editore o collaboratore.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Archivio file</b>: Registra file audio con progetto, link Dropbox, tipo file, versione, nome file e hash SHA-256.</li><li><b>Invii audio</b>: Seleziona file salvati, genera messaggio e registra a chi è stato mandato.</li><li><b>Storico</b>: Mostra invii già registrati e permette di salvare conferma ricezione e link prova Drive.</li><li><b>Impronta digitale</b>: Calcola hash SHA-256 dal file locale corrispondente al file caricato su Dropbox.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Scrive DROPBOX_AUDIO_FILES, INVII_AUDIO e copia compatibile in CONSEGNE_MASTER. Usa PROGETTI per collegare il brano.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Sapere esattamente quale file è stato mandato, a chi, quando, con quale link e con quale hash.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Archivio file</b></td><td>Mostra la sezione per salvare file Dropbox in Supabase.</td></tr><tr><td><b>Invii audio</b></td><td>Mostra la sezione per preparare e registrare invii.</td></tr><tr><td><b>Storico</b></td><td>Mostra invii salvati e conferme.</td></tr><tr><td><b>Pesca file da Dropbox</b></td><td>Apre Dropbox Chooser per selezionare un file già caricato e ottenere il link.</td></tr><tr><td><b>Salva file in Supabase</b></td><td>Registra il file in DROPBOX_AUDIO_FILES e mantiene compatibilità con CONSEGNE_MASTER.</td></tr><tr><td><b>Genera testo</b></td><td>Prepara il messaggio di invio senza registrarlo.</td></tr><tr><td><b>Registra e copia</b></td><td>Salva l’invio in INVII_AUDIO e copia il messaggio negli appunti.</td></tr><tr><td><b>Apri WhatsApp</b></td><td>Apre WhatsApp con il testo pronto. L’invio finale resta manuale.</td></tr><tr><td><b>Apri Email</b></td><td>Apre il client email con subject/body già pronti.</td></tr><tr><td><b>Ricarica</b></td><td>Aggiorna file e storico invii.</td></tr><tr><td><b>Salva conferma</b></td><td>Aggiorna INVII_AUDIO con conferma ricezione, data e link prova Drive.</td></tr></tbody></table></div>
+</section>
+<section id="documenti" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Burocrazia, contratti, costi e richieste dati</div>
+      <h2 class="section-title">Documenti, Spese &amp; Schede</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">documenti.html</span></p>
+    </div>
+    <a href="documenti.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">È il modulo amministrativo-documentale. Serve a catalogare contratti, salvare link Drive, registrare spese extra, importare movimenti da estratto conto e generare schede dati SIAE/IMAIE/fatture.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando arriva un contratto via mail/WhatsApp, quando salvi documenti su Drive, quando importi spese da conto bancario, quando devi chiedere dati a manager/label/amministrazione.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Documenti &amp; Contratti</b>: Collega contratto, split sheet, liberatorie, ricevute o screenshot a un progetto.</li><li><b>Spese Extra</b>: Analizza e inserisce spese manuali o da CSV bancario.</li><li><b>Schede dati SIAE / IMAIE / Fatture</b>: Genera messaggi di richiesta dati mancanti per depositi, diritti connessi o fatturazione.</li><li><b>Struttura Drive</b>: Copia una struttura cartelle standard per progetto.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge/scrive DOCUMENTI_PROGETTO, PROGETTI, Spese Extra. Può aggiornare Contratto link, LINK e Data Contratto in PROGETTI.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Trasformare documenti e costi dispersi in un archivio rintracciabile e collegato al brano.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Ricarica</b></td><td>Aggiorna documenti, progetti e spese.</td></tr><tr><td><b>Documenti &amp; Contratti</b></td><td>Mostra il pannello documentale.</td></tr><tr><td><b>Spese Extra</b></td><td>Mostra analisi e inserimento/import spese.</td></tr><tr><td><b>Schede dati SIAE / IMAIE / Fatture</b></td><td>Mostra generatore richieste dati.</td></tr><tr><td><b>Copia struttura Drive</b></td><td>Copia negli appunti la struttura cartelle consigliata.</td></tr><tr><td><b>Anteprima</b></td><td>Legge il CSV spese scelto e mostra anteprima prima dell’import.</td></tr><tr><td><b>Importa nuovi</b></td><td>Inserisce in Spese Extra solo movimenti non duplicati.</td></tr><tr><td><b>Salva spesa</b></td><td>Inserisce una spesa manuale in Spese Extra.</td></tr><tr><td><b>Copia richiesta dati</b></td><td>Copia un messaggio pronto da inviare a chi deve fornire dati SIAE/IMAIE/fattura.</td></tr><tr><td><b>Salva scheda in Documenti</b></td><td>Salva la richiesta generata in DOCUMENTI_PROGETTO.</td></tr><tr><td><b>Apri Scheda Progetto</b></td><td>Apre la scheda completa del progetto selezionato.</td></tr><tr><td><b>Apri contratto</b></td><td>Apre il link contratto salvato.</td></tr><tr><td><b>Apri Drive</b></td><td>Apre la cartella/documento Drive.</td></tr><tr><td><b>Salva documentazione</b></td><td>Aggiorna PROGETTI e, se possibile, salva anche record in DOCUMENTI_PROGETTO.</td></tr><tr><td><b>Annulla</b></td><td>Chiude popup/form senza salvare.</td></tr></tbody></table></div>
+</section>
+<section id="protezione" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Controllo rischi e tutele</div>
+      <h2 class="section-title">Protezione Brano</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">protezione.html</span></p>
+    </div>
+    <a href="protezione.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">È il radar che dice se un progetto è scoperto o protetto: contratto, quote, ISRC, SIAE, IMAIE, master, hash, fatture, pagamenti, Drive.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Prima di una release, prima di consegnare master, prima di fatturare, o quando vuoi controllare quali brani hanno rischi aperti.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Score protezione</b>: Punteggio sintetico sullo stato del progetto.</li><li><b>Checklist mancanze</b>: Mostra cosa manca e perché è importante.</li><li><b>Filtri critici</b>: Permettono di vedere solo progetti scoperti o con area specifica mancante.</li><li><b>Azioni rapide</b>: Copia struttura, messaggi di consegna o export CSV.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge PROGETTI, DROPBOX_AUDIO_FILES, CONSEGNE_MASTER, DOCUMENTI_PROGETTO, FATTURE, export SIAE/IMAIE.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Evitare che un brano esca o venga consegnato senza dati essenziali, prove o accordi.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Ricarica</b></td><td>Ricalcola score e checklist.</td></tr><tr><td><b>Export CSV</b></td><td>Scarica un CSV con stato protezione dei progetti.</td></tr><tr><td><b>Consegna Dropbox</b></td><td>Porta ad Audio Dropbox per salvare/inviare file.</td></tr><tr><td><b>Copia struttura</b></td><td>Copia struttura cartelle Drive consigliata.</td></tr><tr><td><b>Copia messaggio consegna</b></td><td>Copia un testo standard per invio/consegna master.</td></tr></tbody></table></div>
+</section>
+<section id="fatture" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Emissione e incasso</div>
+      <h2 class="section-title">Fatture</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">fatture.html</span></p>
+    </div>
+    <a href="fatture.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Serve a monitorare fatture collegate ai progetti: numero, data, cliente, importi, descrizione, pagamento e stato pagata/non pagata.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando una fee viene confermata, quando devi emettere fattura, quando arriva pagamento o quando prepari controllo amministrativo.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Lista fatture</b>: Mostra fatture e stato.</li><li><b>Collegamento progetto</b>: Usa ID_PROGETTO per collegare fattura al brano.</li><li><b>Stato pagamento</b>: Permette di sapere cosa è stato pagato e cosa no.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge FATTURE e incrocia ID_PROGETTO con PROGETTI quando possibile.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Non perdere incassi e non dimenticare fatture da emettere o sollecitare.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Ricarica</b></td><td>Aggiorna dati fatture da Supabase.</td></tr></tbody></table></div>
+</section>
+<section id="fisco" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Accantonamenti e tributi</div>
+      <h2 class="section-title">Piano Fiscale</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">fisco.html</span></p>
+    </div>
+    <a href="fisco.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Serve a stimare e memorizzare piano fiscale annuale: fatturato lordo, imponibile, IRPEF, INPS, F24, crediti e accantonamenti.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando aggiorni situazione annuale, prepari liquidità per imposte/contributi o fai recap con commercialista.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Piano anno</b>: Dati economici annuali.</li><li><b>F24 e crediti</b>: Scadenze/valori IRPEF e INPS.</li><li><b>Totale accantonato</b>: Stato prudenziale della liquidità fiscale.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge/scrive PIANI_FISCALI.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Tenere separato il risultato creativo dagli obblighi fiscali futuri.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Salva Piano</b></td><td>Inserisce o aggiorna record in PIANI_FISCALI.</td></tr></tbody></table></div>
+</section>
+<section id="diritti" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Diritti, autorialità, rendiconti</div>
+      <h2 class="section-title">Quote, Autori, Rendiconti SIAE/IMAIE</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">quote.html / autori.html / rendiconto.html / correlazione.html</span></p>
+    </div>
+    <a href="quote.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Questi moduli servono a leggere SIAE e IMAIE non come file isolati, ma come sistema di controllo: quote per opera, attività di ogni autore, rendiconti e correlazioni con progetti.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando importi export SIAE/IMAIE, controlli quote, cerchi opere dove compari, confronti rendiconti o prepari richieste dati.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Quote per Opera</b>: Parte dal brano e mostra autori/quote DEM/DRM.</li><li><b>Dettaglio Autori</b>: Parte da una persona e mostra opere/quote/ruoli.</li><li><b>Rendiconto</b>: Analizza incassi SIAE nel tempo.</li><li><b>Correlazione</b>: Aiuta a collegare dati SIAE a progetti interni.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge EXPORT SIAE, EXPORT SIAE VERTICALE, ESTRATTO SIAE, ESTRATTO_IMAIE e PROGETTI.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Capire se le quote e i diritti corrispondono davvero al lavoro fatto.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Ricarica</b></td><td>Aggiorna dati nei moduli quote/autori/correlazione/fatture.</td></tr><tr><td><b>Aggiorna</b></td><td>Rilegge rendiconti e ricalcola analisi.</td></tr><tr><td><b>Salva Modifiche</b></td><td>Nei moduli che lo prevedono, salva collegamenti/correlazioni.</td></tr><tr><td><b>Annulla</b></td><td>Chiude modifica senza salvare.</td></tr></tbody></table></div>
+</section>
+<section id="importexport" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Entrata/uscita dati</div>
+      <h2 class="section-title">Import / Export</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">importexport.html</span></p>
+    </div>
+    <a href="importexport.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Serve a importare file CSV/Excel nelle tabelle giuste, scaricare template compatibili e deduplicare dati. È essenziale quando arrivano export SIAE, estratti conto, tabelle clienti o dati amministrativi.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando devi caricare molti dati senza inserirli a mano.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Scelta tabella</b>: Seleziona tabella Supabase di destinazione.</li><li><b>Template CSV</b>: Scarica intestazioni corrette.</li><li><b>Anteprima import</b>: Mostra dati prima di scrivere.</li><li><b>Deduplica</b>: Evita duplicati secondo chiavi ragionate.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Interagisce con molte tabelle: CLIENTI, PROGETTI, FATTURE, Spese Extra, SIAE, IMAIE e nuove tabelle audio/documenti se abilitate nello schema.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Ridurre errori manuali e velocizzare caricamento dati reali.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Scarica template CSV della tabella</b></td><td>Crea CSV con separatore italiano ; e intestazioni reali.</td></tr><tr><td><b>Sfoglia nel PC</b></td><td>Seleziona file CSV/Excel locale.</td></tr><tr><td><b>Importa nel DB</b></td><td>Scrive i record nuovi in Supabase dopo controlli.</td></tr></tbody></table></div>
+</section>
+<section id="editor" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Manutenzione dati</div>
+      <h2 class="section-title">Studio Editor</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">editor.html</span></p>
+    </div>
+    <a href="editor.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">È il pannello tecnico per visualizzare e modificare direttamente le tabelle Supabase. È potente: va usato con attenzione.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando devi correggere un record, verificare una tabella, eliminare dati errati o intervenire su campi non esposti nei moduli dedicati.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Tab tabelle</b>: Progetti, Clienti, Fatture, Consegne, Spese, Piani Fiscali, SIAE, Audio, Invii, Documenti.</li><li><b>Versioni Audio</b>: mostra <code>AUDIO_VERSIONI</code> in sola lettura; gli inserimenti si fanno da Archivio Musicale.</li><li><b>Griglia dati</b>: Mostra record della tabella selezionata.</li><li><b>Form modifica</b>: Permette update/insert/delete nelle tabelle operative non protette.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Interagisce direttamente con le tabelle definite in kyv-schema.js.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Avere un’officina dati interna senza aprire sempre Supabase.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Progetti / Clienti / Fatture / Consegne / Spese Extra / Piani Fiscali / SIAE / Audio Dropbox / Invii Audio / Documenti / Nuovo IMAIE</b></td><td>Cambiano tabella da visualizzare/modificare.</td></tr><tr><td><b>Esporta</b></td><td>Scarica i dati della tabella.</td></tr><tr><td><b>Aggiungi</b></td><td>Apre form nuovo record.</td></tr><tr><td><b>Salva</b></td><td>Scrive modifica o nuovo record in Supabase.</td></tr><tr><td><b>Elimina Record</b></td><td>Cancella il record selezionato.</td></tr><tr><td><b>Annulla</b></td><td>Chiude form senza salvare.</td></tr></tbody></table></div>
+</section>
+<section id="report" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Condivisione e analisi</div>
+      <h2 class="section-title">Report &amp; PDF</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">report.html</span></p>
+    </div>
+    <a href="report.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Serve a generare report leggibili su rubrica, stato finanziario e analisi progetti, anche in PDF.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando vuoi stampare/condividere un riepilogo, preparare call, fare controllo mensile o archiviare una fotografia dello stato.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Rubrica per Tipo</b>: Organizza contatti per tipologia.</li><li><b>Stato Finanziario</b>: Riepilogo economico.</li><li><b>Analisi Progetti</b>: Riepilogo dei brani e stati.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Legge CLIENTI, PROGETTI, FATTURE e dati collegati secondo il report.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Trasformare il database in documento leggibile.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Scarica PDF</b></td><td>Genera PDF del report selezionato.</td></tr><tr><td><b>Rubrica per Tipo</b></td><td>Mostra report contatti.</td></tr><tr><td><b>Stato Finanziario</b></td><td>Mostra report economico.</td></tr><tr><td><b>Analisi Progetti</b></td><td>Mostra report progetti.</td></tr></tbody></table></div>
+</section>
+<section id="integrazioni" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Collegamenti esterni</div>
+      <h2 class="section-title">Drive / Calendar / App Launcher</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">integrazioni.html / kyv_drive.html / kyv_calendar.html</span></p>
+    </div>
+    <a href="integrazioni.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Questi moduli collegano il gestionale agli strumenti esterni: Calendar per sessioni, Drive per file/documenti, Dropbox per audio.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando devi cercare file, creare sessioni su calendario, passare da una integrazione all’altra.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Integrazioni</b>: Pagina launcher dei moduli esterni.</li><li><b>Google Calendar</b>: Legge/crea eventi di sessione.</li><li><b>Google Drive</b>: Cerca file o documenti collegati.</li><li><b>Dropbox</b>: Rimanda al modulo audio/invii.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Interagisce con Google Apps Script/Drive/Calendar e con i link salvati in PROGETTI/DOCUMENTI_PROGETTO.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Evitare che il gestionale sia scollegato dagli strumenti che usi davvero ogni giorno.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Apri Modulo</b></td><td>Apre il modulo scelto dal launcher.</td></tr><tr><td><b>Sincronizza Ora</b></td><td>Aggiorna calendario/eventi.</td></tr><tr><td><b>Crea su Calendar</b></td><td>Crea un evento Google Calendar.</td></tr><tr><td><b>Avvia Ricerca</b></td><td>Cerca file su Drive.</td></tr><tr><td><b>Indietro / Avanti</b></td><td>Naviga tra risultati Drive.</td></tr></tbody></table></div>
+</section>
+<section id="login" class="guide-section manual-card p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+    <div>
+      <div class="mini-label mb-2">Accesso</div>
+      <h2 class="section-title">Login</h2>
+      <p class="text-kyv-text mt-2"><span class="kbd">login.html</span></p>
+    </div>
+    <a href="login.html" class="open-link">Apri modulo</a>
+  </div>
+  <div class="grid xl:grid-cols-[1fr_1fr] gap-5 mt-6">
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">È la porta di ingresso. Usa Supabase Auth per accedere al gestionale.</p><h3 class="sub-title mt-5">Quando usarla</h3><p class="text-kyv-text leading-relaxed mt-2">Quando apri il gestionale da browser o dopo logout/sessione scaduta.</p><h3 class="sub-title mt-5">Sezioni interne</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Form accesso</b>: Email/password.</li><li><b>Messaggi errore</b>: Avvisi se credenziali errate o problemi di connessione.</li></ul></div>
+    <div class="manual-card-soft p-5"><h3 class="sub-title">Dati e obiettivo</h3><p class="text-kyv-text leading-relaxed mt-2"><b class="text-white">Interagisce con:</b> Interagisce con Supabase Auth, non con tabelle operative.</p><p class="text-kyv-text leading-relaxed mt-4"><b class="text-white">Mira a:</b> Separare accesso utente dal lavoro gestionale.</p><div class="callout mt-5"><b>Metodo:</b> apri questa pagina quando la fase indicata è attiva; se un dato manca, trasformalo in azione, richiesta o documento da salvare.</div></div>
+  </div>
+  <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Accedi al Gestionale</b></td><td>Invia credenziali a Supabase Auth e, se corrette, apre la dashboard.</td></tr></tbody></table></div>
+</section>
+<section id="bottoni" class="guide-section manual-card p-5 md:p-7"><div class="mini-label mb-2">Consultazione rapida</div><h2 class="section-title mb-5">Regole operative e possibili evoluzioni</h2><div class="grid md:grid-cols-2 xl:grid-cols-4 gap-4"><div class="manual-card-soft p-4"><h3 class="sub-title">Ogni progetto deve nascere subito</h3><p class="text-kyv-text mt-2 leading-relaxed">Anche se il titolo è provvisorio, crea un record in Progetti. Se non esiste in PROGETTI, gli altri moduli non potranno collegarlo bene.</p></div><div class="manual-card-soft p-4"><h3 class="sub-title">Ogni file audio importante deve essere registrato</h3><p class="text-kyv-text mt-2 leading-relaxed">Carica su Dropbox, salva link in DROPBOX_AUDIO_FILES, calcola hash sul file locale corrispondente, registra invio in INVII_AUDIO.</p></div><div class="manual-card-soft p-4"><h3 class="sub-title">Ogni contratto deve avere un link Drive</h3><p class="text-kyv-text mt-2 leading-relaxed">Salva il PDF o screenshot in Drive, poi registra link in Documenti &amp; Contratti e nel progetto.</p></div><div class="manual-card-soft p-4"><h3 class="sub-title">Ogni sessione deve produrre una traccia</h3><p class="text-kyv-text mt-2 leading-relaxed">Data, presenti, ruoli, contributi, note, versioni audio, prossima azione.</p></div><div class="manual-card-soft p-4"><h3 class="sub-title">Ogni invio deve avere un seguito</h3><p class="text-kyv-text mt-2 leading-relaxed">Se mandi un file e nessuno risponde, l’Assistente deve poterlo segnalare. Registra invio e conferma.</p></div><div class="manual-card-soft p-4"><h3 class="sub-title">Ogni brano vicino alla release deve passare da Protezione</h3><p class="text-kyv-text mt-2 leading-relaxed">Prima di uscire: contratto, quote, SIAE, IMAIE, ISRC, master, hash, fattura/pagamento.</p></div><div class="manual-card-soft p-4"><h3 class="sub-title">Ogni spesa deve essere categorizzata</h3><p class="text-kyv-text mt-2 leading-relaxed">Importa da estratto conto o aggiungi manualmente, poi correggi Categoria se automatica non basta.</p></div><div class="manual-card-soft p-4"><h3 class="sub-title">Ogni dato mancante deve diventare una richiesta</h3><p class="text-kyv-text mt-2 leading-relaxed">Usa Schede dati per chiedere a manager/label/amministrazione dati SIAE, IMAIE o fattura.</p></div></div><div class="callout warning mt-6"><b>Evoluzioni possibili:</b> primary key reale su PROGETTI.ID; tabella sessioni dedicata; promemoria automatici per invii senza risposta; modelli PDF per split sheet, recap sessione, consegna master e richieste dati; automazioni Gmail/WhatsApp Business se in futuro vorrai invio più integrato.</div></section>
+</div></div>
+<section class="doc-section" id="appendice-v295">
+  <h2 class="section-title">Appendice v2.9.5 — Follow-up, azioni di oggi e spese collegate</h2>
+  <div class="manual-card">
+    <h3 class="sub-title">Che cosa cambia nella v2.9.5</h3>
+    <p>La v2.9.5 trasforma l'Assistente Produzione in un modulo più operativo. La nuova sezione <strong>Azioni di oggi</strong> evidenzia i progetti che richiedono un intervento: follow-up scaduti, invii senza risposta, brani con dati mancanti, trattative aperte, SIAE/IMAIE incompleti, fatture o pagamenti da chiudere.</p>
+    <p>Il menu è stato alleggerito: il contenuto lungo della guida vive in <code>kyv-help.js</code>, mentre <code>menu.js</code> gestisce solo navigazione e popup. È stato aggiunto anche <code>kyv-auth.js</code> per preparare una protezione login più seria senza bloccare subito l'app.</p>
+  </div>
+  <div class="manual-grid">
+    <div class="manual-card"><h3 class="sub-title">Passaggi consigliati</h3><ol><li>Apri <strong>Assistente Produzione</strong>.</li><li>Leggi <strong>Azioni di oggi</strong>.</li><li>Clicca <strong>Pianifica</strong> sul brano da seguire.</li><li>Imposta data, priorità, esito e nota follow-up.</li><li>Se serve, copia la SQL follow-up e attivala in Supabase.</li><li>Dopo ogni risposta aggiorna il follow-up o apri Scheda Progetto.</li></ol></div>
+    <div class="manual-card"><h3 class="sub-title">Bottoni nuovi</h3><ul><li><strong>Copia azioni</strong>: copia la lista delle azioni prioritarie.</li><li><strong>SQL follow-up</strong>: copia la migration v2.9.5.</li><li><strong>Pianifica</strong>: apre il popup follow-up del progetto.</li><li><strong>Salva follow-up</strong>: salva in PROGETTI se possibile, altrimenti in DOCUMENTI_PROGETTO.</li><li><strong>Copia messaggio</strong>: copia un recap operativo pronto da incollare.</li></ul></div>
+  </div>
+  <div class="manual-card"><h3 class="sub-title">Supabase opzionale</h3><p>Il file <code>SUPABASE_MIGRATION_V2_9_5_FOLLOWUP.sql</code> aggiunge campi follow-up a <code>PROGETTI</code> e <code>ID_PROGETTO</code> a <code>Spese Extra</code>. L'app funziona anche senza SQL, ma con la SQL i dati diventano più ordinati e direttamente interrogabili.</p></div>
+</section>
+
+
+<section class="manual-section">
+  <h2>Stazione Ascolto MP3</h2>
+  <p><strong>Funzione:</strong> player interno per ascoltare demo, master, mix, provini e reference partendo da Supabase/Dropbox, Drive o file locali temporanei.</p>
+  <p><strong>Utilità:</strong> permette a KYV di fare ascolti ordinati, copiare feedback, aprire la scheda progetto e registrare note di ascolto in <code>DOCUMENTI_PROGETTO</code>.</p>
+  <ul>
+    <li><strong>Archivio:</strong> carica brani da <code>DROPBOX_AUDIO_FILES</code> e <code>CONSEGNE_MASTER</code>.</li>
+    <li><strong>Drive:</strong> usa lo stesso Apps Script di Google Drive per cercare MP3.</li>
+    <li><strong>Locale:</strong> carica file dal dispositivo senza salvarli online.</li>
+    <li><strong>Play / Prev / Next / Shuffle:</strong> controllano la playlist.</li>
+    <li><strong>Copia feedback:</strong> prepara un testo con note, brano e link.</li>
+    <li><strong>Registra ascolto:</strong> salva una nota collegata al progetto.</li>
+  </ul>
+</section>
+
+
+<section class="bg-kyv-card border border-kyv-border rounded-2xl p-6 my-6">
+  <h2 class="text-2xl font-extrabold text-white mb-3">v2.9.9 — Studio Editor compatto e Backup locale</h2>
+  <p class="text-kyv-text text-sm leading-relaxed mb-4">Lo Studio Editor ora usa colonne compatte per rendere leggibili anche le tabelle più larghe. Il bottone <strong class="text-white">Compatta/Larga</strong> alterna controllo rapido e vista estesa. In Import/Export è stato aggiunto il modulo <strong class="text-white">Backup & Ripristino locale database</strong>: permette di scaricare un JSON completo sul PC e di ripristinare selettivamente le tabelle senza cancellare dati esistenti.</p>
+  <ul class="text-sm text-kyv-text list-disc pl-5 space-y-1">
+    <li><strong class="text-white">Backup DB su PC</strong>: crea una copia locale delle tabelle Supabase.</li>
+    <li><strong class="text-white">Scegli backup da PC</strong>: carica un JSON di backup e mostra anteprima.</li>
+    <li><strong class="text-white">Ripristina selezionate</strong>: reinserisce solo le tabelle spuntate.</li>
+    <li><strong class="text-white">Salta duplicati</strong>: evita inserimenti già presenti quando possibile.</li>
+    <li><strong class="text-white">Mantieni ID originali</strong>: conserva relazioni tra record quando ripristini su database vuoto o coerente.</li>
+  </ul>
+</section>
+
+</main>
+<section id="guida-popup" class="guide-section manual-card p-5 md:p-7">
+  <div class="mini-label mb-2">Guida contestuale</div>
+  <h2 class="section-title mb-4">Manuale & Guida dentro ogni pagina</h2>
+  <div class="grid lg:grid-cols-2 gap-5">
+    <div class="manual-card-soft p-5">
+      <h3 class="sub-title mb-3">Che cosa è cambiato nella v2.9.5</h3>
+      <p class="text-kyv-text leading-relaxed">Il pulsante <b class="text-white">Manuale & Guida</b> non mostra più una nota generica. Ora apre una guida contestuale ampia: funzione della pagina, passaggi da fare, cosa si potrebbe fare, bottoni, dati coinvolti e obiettivo operativo.</p>
+      <p class="text-kyv-text leading-relaxed mt-3">La parte PWA è stata ridotta a una sola nota generale: il resto dello spazio è dedicato al lavoro reale di produzione, documentazione, invii, diritti e fatturazione.</p>
+    </div>
+    <div class="manual-card-soft p-5">
+      <h3 class="sub-title mb-3">Come usarlo</h3>
+      <ol class="text-kyv-text leading-relaxed space-y-2 list-decimal list-inside">
+        <li>Apri una pagina, per esempio Assistente, Scheda Progetto o Dropbox.</li>
+        <li>Clicca <b class="text-white">Manuale & Guida</b> nel menu laterale.</li>
+        <li>Leggi prima <b class="text-white">Funzione</b> e <b class="text-white">Quando usarla</b>.</li>
+        <li>Segui i <b class="text-white">Passaggi consigliati</b> in ordine.</li>
+        <li>Controlla la tabella <b class="text-white">Bottoni</b> prima di cliccare azioni che salvano dati.</li>
+        <li>Se serve una spiegazione ancora più lunga, clicca <b class="text-white">Apri manuale completo</b>.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+<script>document.addEventListener('DOMContentLoaded',()=>{ if(window.lucide) lucide.createIcons(); });</script></body></html>
+<!-- v2.10.5: Piano Fiscale semplice con diritti d'autore/correlati al 60% e aliquota INPS manuale -->

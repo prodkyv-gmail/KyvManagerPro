@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Archivio Audio Dropbox</title>
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="kpapjm7sybfs8ze"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-audio-project.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', text: '#94a3b8' } } } } }
+    </script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <style>
+        body { background:#0f111a; color:#f8fafc; }
+        .kyv-input { width:100%; background:#0f111a; border:1px solid #232838; color:#fff; padding:.78rem .9rem; border-radius:.75rem; outline:none; transition:.18s ease; }
+        .kyv-input:focus { border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,.18); }
+        .tab-btn { border:1px solid #232838; background:#151923; color:#94a3b8; }
+        .tab-btn.active { background:rgba(59,130,246,.16); border-color:rgba(59,130,246,.45); color:#bfdbfe; }
+        .audio-card { transition:transform .16s ease, border-color .16s ease, background .16s ease; }
+        .audio-card:hover { transform:translateY(-1px); border-color:rgba(59,130,246,.45); background:#111827; }
+        .mini-label { font-size:10px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em; }
+        .hash-box { word-break:break-all; }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar relative z-10">
+            <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-6 border-b border-kyv-border/50 pb-6">
+                <div class="flex items-start">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-200 text-[10px] font-black uppercase tracking-[0.18em] mb-3"><i data-lucide="cloud" class="w-3.5 h-3.5"></i> Dropbox + Supabase</div>
+                        <h2 class="text-2xl sm:text-3xl font-black tracking-tight">Archivio Audio & <span class="text-blue-400">Invii Dropbox</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm max-w-5xl">Dropbox conserva il file audio. Supabase conserva link, hash, progetto, versione, storico invii, canale, destinatario e conferme. L’invio resta manuale/assistito: copia messaggio, WhatsApp o mail.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="showTab('archive')" id="tab-archive" class="tab-btn active px-4 py-2 rounded-xl text-xs font-black"><i data-lucide="archive" class="w-4 h-4 inline mr-2"></i>Archivio file</button>
+                    <button onclick="showTab('send')" id="tab-send" class="tab-btn px-4 py-2 rounded-xl text-xs font-black"><i data-lucide="send" class="w-4 h-4 inline mr-2"></i>Invii audio</button>
+                    <button onclick="showTab('history')" id="tab-history" class="tab-btn px-4 py-2 rounded-xl text-xs font-black"><i data-lucide="history" class="w-4 h-4 inline mr-2"></i>Storico</button>
+                </div>
+            </header>
+
+            <div id="migration-warning" class="hidden mb-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100">
+                <div class="flex items-start gap-3"><i data-lucide="database-zap" class="w-5 h-5 mt-0.5 text-amber-300"></i><div><h3 class="font-black text-white">Tabelle v2.6 non trovate</h3><p class="text-sm mt-1">Prima di usare il nuovo archivio audio, esegui <strong>SUPABASE_MIGRATION_V2_6.sql</strong> nel SQL Editor di Supabase. Fino ad allora la pagina non può salvare lo storico strutturato.</p></div></div>
+            </div>
+
+            <div id="section-archive" class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-5">
+                <aside class="space-y-5">
+                    <div class="kyv-panel p-5 border-blue-500/20 bg-blue-500/[0.04]">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="file-plus-2" class="w-5 h-5 mr-2 text-blue-300"></i>Registra file audio</h3>
+                        <p class="text-xs text-kyv-text mt-2 leading-relaxed">Scegli un file già caricato su Dropbox o incolla il link. Poi seleziona lo stesso file locale per calcolare l’hash SHA-256.</p>
+                        <button type="button" onclick="openDropboxChooser()" class="mt-4 w-full py-3 bg-[#0061FF] hover:bg-[#0052cc] text-white font-black rounded-xl text-sm transition-colors flex items-center justify-center shadow-lg shadow-blue-500/20 border border-blue-500/50"><i data-lucide="folder-search" class="w-5 h-5 mr-2"></i>Pesca file da Dropbox</button>
+                    </div>
+
+                    <form id="audio-form" class="kyv-panel p-5 space-y-4">
+                        <div><label class="mini-label">Collega a progetto</label><select id="audio-project" class="kyv-input" onchange="fillProjectMeta()"><option value="">Nessun progetto collegato</option></select></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="mini-label">Artista</label><input id="audio-artist" class="kyv-input" placeholder="Artista"></div>
+                            <div><label class="mini-label">Titolo</label><input id="audio-title" class="kyv-input" placeholder="Titolo brano"></div>
+                        </div>
+                        <div><label class="mini-label">Nome file</label><input id="audio-file-name" class="kyv-input" placeholder="KYV_ARTISTA_TITOLO_MASTER_v01.wav"></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="mini-label">Tipo file</label><select id="audio-type" class="kyv-input"><option>Demo ascolto</option><option>Master</option><option>Stems</option><option>Mix</option><option>Provino / topline</option><option>Sessione ZIP</option><option>Altro</option></select></div>
+                            <div><label class="mini-label">Versione</label><input id="audio-version" class="kyv-input" placeholder="v01 / v02 / final"></div>
+                        </div>
+                        <div><label class="mini-label">Link Dropbox</label><input id="audio-link" type="url" required class="kyv-input text-blue-200" placeholder="https://www.dropbox.com/..."></div>
+                        <div class="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4 space-y-3">
+                            <label class="mini-label text-emerald-300">Impronta digitale master / file</label>
+                            <input type="file" id="audio-local-file" accept="audio/*,.zip,.rar" class="w-full text-xs text-kyv-text file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600/20 file:text-emerald-300 hover:file:bg-emerald-600/30 cursor-pointer" onchange="handleLocalFile(event)">
+                            <input id="audio-hash" readonly class="kyv-input text-[10px] font-mono text-emerald-300 hash-box" placeholder="Hash SHA-256 calcolato dal file locale">
+                            <p class="text-[10px] text-kyv-text leading-relaxed">L’hash viene calcolato nel browser. Il file audio non viene caricato su Supabase: su Supabase si salva solo impronta, link e metadati.</p>
+                        </div>
+                        <div><label class="mini-label">Note</label><textarea id="audio-note" rows="3" class="kyv-input" placeholder="Es. pre-master senza limiter, versione approvata, stems per label..."></textarea></div>
+                        <label class="flex items-center gap-2 text-xs text-kyv-text"><input id="audio-legacy" type="checkbox" class="accent-blue-500" checked> Salva anche copia compatibile in CONSEGNE_MASTER</label>
+                        <button id="audio-save" type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl text-sm transition-colors flex items-center justify-center"><i data-lucide="database" class="w-4 h-4 mr-2"></i>Salva file in Supabase</button>
+                    </form>
+                </aside>
+
+                <div class="kyv-panel p-4 sm:p-5 min-h-[520px]">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+                        <div><h3 class="text-lg font-black text-white flex items-center"><i data-lucide="list-music" class="w-5 h-5 mr-2 text-blue-300"></i>File audio registrati</h3><p id="audio-count" class="text-xs text-kyv-text mt-1">0 file in archivio.</p></div>
+                        <div class="relative w-full lg:w-96"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-kyv-text"></i><input id="audio-search" class="kyv-input pl-9" placeholder="Cerca artista, titolo, file, link..." oninput="renderAudioFiles()"></div>
+                    </div>
+                    <div id="audio-grid" class="grid grid-cols-1 2xl:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+
+            <div id="section-send" class="hidden grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-5">
+                <aside class="space-y-5">
+                    <form id="send-form" class="kyv-panel p-5 space-y-4 border-indigo-500/20 bg-indigo-500/[0.04]">
+                        <h3 class="text-lg font-black text-white flex items-center"><i data-lucide="send" class="w-5 h-5 mr-2 text-indigo-300"></i>Prepara invio</h3>
+                        <p class="text-xs text-kyv-text leading-relaxed">Seleziona uno o più file dall’archivio. Poi registra l’evento di invio in Supabase e apri WhatsApp/mail o copia il testo.</p>
+                        <div><label class="mini-label">Destinatario descrittivo</label><input id="send-recipient" class="kyv-input" placeholder="Es. Arturo, A&R Universal, artista, manager..."></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="mini-label">Tipo destinatario</label><select id="send-recipient-type" class="kyv-input"><option>Artista</option><option>Manager</option><option>Label</option><option>Editore</option><option>Altro produttore</option><option>Autore</option><option>Altro</option></select></div>
+                            <div><label class="mini-label">Canale</label><select id="send-channel" class="kyv-input"><option>WhatsApp</option><option>Email</option><option>Telegram</option><option>iMessage</option><option>DM / altro</option></select></div>
+                        </div>
+                        <div><label class="mini-label">Contesto</label><select id="send-context" class="kyv-input"><option>Ascolto demo</option><option>Consegna master</option><option>Stems / sessione</option><option>Revisione mix</option><option>Invio a label / editore</option><option>Approvazione finale</option></select></div>
+                        <label class="flex items-center gap-2 text-xs text-kyv-text"><input id="send-confirm" type="checkbox" class="accent-indigo-500" checked> Chiedi conferma ricezione/download/ascolto</label>
+                        <p id="send-selected-count" class="text-[10px] text-indigo-200 font-black uppercase tracking-wider">0 file selezionati</p>
+                        <textarea id="send-message-preview" rows="10" class="kyv-input text-xs leading-relaxed" placeholder="Qui compare il messaggio generato..."></textarea>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button type="button" onclick="generateSendMessage(true)" class="px-4 py-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 text-indigo-100 font-black text-xs"><i data-lucide="wand-sparkles" class="w-4 h-4 inline mr-2"></i>Genera testo</button>
+                            <button type="button" onclick="registerAndCopySend()" class="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs"><i data-lucide="save" class="w-4 h-4 inline mr-2"></i>Registra e copia</button>
+                            <button type="button" onclick="openWhatsAppSend()" class="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="message-circle" class="w-4 h-4 inline mr-2"></i>Apri WhatsApp</button>
+                            <button type="button" onclick="openEmailSend()" class="px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-black text-xs"><i data-lucide="mail" class="w-4 h-4 inline mr-2"></i>Apri Email</button>
+                        </div>
+                    </form>
+                    <div class="kyv-panel p-5 border-amber-500/20 bg-amber-500/[0.04]"><h3 class="font-black text-white flex items-center"><i data-lucide="info" class="w-5 h-5 mr-2 text-amber-300"></i>Importante</h3><p class="text-xs text-kyv-text mt-2 leading-relaxed">Il gestionale non spedisce automaticamente file o mail: registra l’invio e ti prepara il messaggio. L’invio vero avviene sul canale che scegli tu.</p></div>
+                </aside>
+                <div class="kyv-panel p-4 sm:p-5 min-h-[520px]"><h3 class="text-lg font-black text-white flex items-center mb-4"><i data-lucide="check-square" class="w-5 h-5 mr-2 text-indigo-300"></i>Seleziona file da inviare</h3><div id="send-file-list" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div></div>
+            </div>
+
+            <div id="section-history" class="hidden grid grid-cols-1 xl:grid-cols-[1fr_390px] gap-5">
+                <div class="kyv-panel p-4 sm:p-5 min-h-[520px]"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4"><h3 class="text-lg font-black text-white flex items-center"><i data-lucide="history" class="w-5 h-5 mr-2 text-slate-300"></i>Storico invii salvati</h3><button onclick="fetchAll()" class="px-4 py-2 rounded-xl border border-kyv-border bg-kyv-card hover:bg-kyv-border text-white font-bold text-xs"><i data-lucide="refresh-cw" class="w-4 h-4 inline mr-2"></i>Ricarica</button></div><div id="history-list" class="space-y-3"></div></div>
+                <aside class="kyv-panel p-5 h-fit"><h3 class="font-black text-white flex items-center"><i data-lucide="badge-check" class="w-5 h-5 mr-2 text-emerald-300"></i>Conferma ricezione</h3><p class="text-xs text-kyv-text mt-2 leading-relaxed">Quando ricevi un “ok ricevuto/ascoltato”, salva screenshot o PDF su Drive e incolla il link nello storico invio.</p><div class="mt-4 space-y-3"><input id="confirm-id" class="kyv-input" placeholder="ID invio"><input id="confirm-drive" class="kyv-input" placeholder="Link prova Drive / screenshot"><textarea id="confirm-note" rows="3" class="kyv-input" placeholder="Es. Confermato via WhatsApp il 25/06"></textarea><button onclick="saveConfirmation()" class="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="check" class="w-4 h-4 inline mr-2"></i>Salva conferma</button></div></aside>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        if (typeof loadKyvSidebar === 'undefined') { window.toggleMobileMenu = () => {}; window.loadKyvSidebar = () => {}; }
+        loadKyvSidebar('dropbox');
+        let supabaseClient, projects = [], audioFiles = [], invii = [], selectedAudioIds = new Set(), newTablesAvailable = true;
+        const H = v => KYV.safeHtml(v || '');
+        const has = v => v !== null && v !== undefined && String(v).trim() !== '';
+        const j = v => JSON.stringify(String(v ?? ''));
+        const todayIso = () => new Date().toISOString().slice(0,10);
+        const audioById = id => audioFiles.find(f => String(f.ID_FILE) === String(id));
+        const projectById = id => projects.find(p => String(p.ID) === String(id));
+
+        function showTab(name){
+            ['archive','send','history'].forEach(k => { document.getElementById(`section-${k}`).classList.toggle('hidden', k !== name); document.getElementById(`tab-${k}`).classList.toggle('active', k === name); });
+            if (name === 'send') renderSendFiles();
+            if (name === 'history') renderHistory();
+            if(window.lucide) lucide.createIcons();
+        }
+
+        async function calculateSHA256(file){ const buf = await file.arrayBuffer(); const hashBuffer = await crypto.subtle.digest('SHA-256', buf); return Array.from(new Uint8Array(hashBuffer)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+        async function handleLocalFile(event){ const file = event.target.files?.[0]; if(!file) return; document.getElementById('audio-file-name').value ||= file.name; const hInput = document.getElementById('audio-hash'); hInput.value='Calcolo hash in corso...'; try{ hInput.value = await calculateSHA256(file); KYV.showToast('Impronta SHA-256 calcolata.', 'success'); }catch(err){ console.error(err); hInput.value=''; KYV.showToast('Errore calcolo hash.', 'error'); } }
+
+        window.openDropboxChooser = function(){
+            const tag = document.getElementById('dropboxjs');
+            if (!tag || tag.getAttribute('data-app-key') === 'INSERISCI_QUI_LA_TUA_APP_KEY') { KYV.showToast('Inserisci la Dropbox App Key nel codice.', 'error'); return; }
+            if (!window.Dropbox) { KYV.showToast('Dropbox Chooser non disponibile.', 'error'); return; }
+            Dropbox.choose({
+                success(files){ const file = files[0]; if(!file) return; document.getElementById('audio-file-name').value = file.name || ''; document.getElementById('audio-link').value = file.link || ''; const clean = String(file.name || '').replace(/\.[^/.]+$/, ''); document.getElementById('audio-title').value ||= clean; KYV.showToast('Link pescato da Dropbox. Ora seleziona il file locale per l’hash, se vuoi.', 'success'); },
+                cancel(){}, linkType:'preview', multiselect:false, extensions:['audio']
+            });
+        }
+
+        function projectOptionLabel(p){ return [p.ARTISTA,p.TITOLO].filter(Boolean).join(' - ') || ('Progetto #' + p.ID); }
+        function sortedProjects(){ return [...projects].sort((a,b)=>String(projectOptionLabel(a)).localeCompare(String(projectOptionLabel(b)), 'it', {sensitivity:'base', numeric:true})); }
+        function fillProjectOptions(){ const sel = document.getElementById('audio-project'); sel.innerHTML = '<option value="">Nessun progetto collegato</option>' + sortedProjects().map(p => `<option value="${H(p.ID)}">${H(projectOptionLabel(p))}</option>`).join(''); if(window.KYV_SELECTS) window.KYV_SELECTS.refreshSelect(sel); }
+        function fillProjectMeta(){ const p = projectById(document.getElementById('audio-project').value); if(!p) return; document.getElementById('audio-artist').value = p.ARTISTA || ''; document.getElementById('audio-title').value = p.TITOLO || ''; }
+
+        async function fetchProjects(){ const {data,error} = await supabaseClient.from('PROGETTI').select('*').limit(2000); if(error) throw error; projects = (data || []).sort((a,b)=>String(projectOptionLabel(a)).localeCompare(String(projectOptionLabel(b)), 'it', {sensitivity:'base', numeric:true})); fillProjectOptions(); }
+        async function fetchAudioFiles(){
+            try{ const {data,error}= await supabaseClient.from('DROPBOX_AUDIO_FILES').select('*').order('ID_FILE',{ascending:false}).limit(1000); if(error) throw error; audioFiles=data||[]; newTablesAvailable=true; document.getElementById('migration-warning').classList.add('hidden'); }
+            catch(err){ console.warn(err); audioFiles=[]; newTablesAvailable=false; document.getElementById('migration-warning').classList.remove('hidden'); }
+        }
+        async function fetchInvii(){ if(!newTablesAvailable){ invii=[]; return; } try{ const {data,error}=await supabaseClient.from('INVII_AUDIO').select('*').order('ID_INVIO',{ascending:false}).limit(500); if(error) throw error; invii=data||[]; }catch(err){ console.warn(err); invii=[]; } }
+        async function fetchAll(){ await fetchProjects(); await fetchAudioFiles(); await fetchInvii(); renderAudioFiles(); renderSendFiles(); renderHistory(); if(window.lucide) lucide.createIcons(); }
+
+        document.getElementById('audio-form').addEventListener('submit', async e => {
+            e.preventDefault(); if(!newTablesAvailable){ KYV.showToast('Crea prima le tabelle v2.6 in Supabase.', 'error'); return; }
+            const projectId = document.getElementById('audio-project').value || null;
+            const p = projectById(projectId);
+            const link = document.getElementById('audio-link').value.trim();
+            const hash = document.getElementById('audio-hash').value.trim();
+            if(!link){ KYV.showToast('Inserisci o pesca un link Dropbox.', 'error'); return; }
+            if(audioFiles.some(f => String(f.Link_Dropbox||'') === link || (hash && String(f.Hash_SHA256||'') === hash))){ if(!confirm('Sembra già presente un file con stesso link o hash. Vuoi salvarlo comunque?')) return; }
+            const payload = {
+                ID_PROGETTO: projectId ? Number(projectId) : null,
+                Progetto: [document.getElementById('audio-artist').value.trim(), document.getElementById('audio-title').value.trim()].filter(Boolean).join(' - ') || document.getElementById('audio-file-name').value.trim() || null,
+                Artista: document.getElementById('audio-artist').value.trim() || null,
+                Titolo: document.getElementById('audio-title').value.trim() || null,
+                Tipo_File: document.getElementById('audio-type').value || null,
+                Versione: document.getElementById('audio-version').value.trim() || null,
+                Nome_File: document.getElementById('audio-file-name').value.trim() || null,
+                Link_Dropbox: link,
+                Hash_SHA256: hash && !hash.toLowerCase().includes('calcolo') ? hash : null,
+                Data_Caricamento: todayIso(),
+                Data_Consegna: todayIso(),
+                Note: document.getElementById('audio-note').value.trim() || null
+            };
+            const btn = document.getElementById('audio-save'); btn.disabled = true; btn.innerHTML='<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Salvo...';
+            try{
+                const {error} = await supabaseClient.from('DROPBOX_AUDIO_FILES').insert([payload]); if(error) throw error;
+                if(document.getElementById('audio-legacy').checked){ await supabaseClient.from('CONSEGNE_MASTER').insert([{ Data_Inserimento: todayIso(), Progetto: payload.Progetto || payload.Nome_File || 'File audio', Cliente: payload.Artista || p?.MANAGEMENT || null, Link_Dropbox: payload.Link_Dropbox, Hash_File: payload.Hash_SHA256 }]); }
+                KYV.showToast('File audio salvato in Supabase.', 'success'); e.target.reset(); await fetchAll();
+            }catch(err){ console.error(err); KYV.showToast('Errore salvataggio: ' + (err.message || ''), 'error'); }
+            finally{ btn.disabled=false; btn.innerHTML='<i data-lucide="database" class="w-4 h-4 mr-2"></i>Salva file in Supabase'; if(window.lucide) lucide.createIcons(); }
+        });
+
+        function audioFiltered(){ const q = KYV.normalize(document.getElementById('audio-search')?.value || ''); return audioFiles.filter(f => !q || KYV.normalize([f.Artista,f.Titolo,f.Progetto,f.Tipo_File,f.Versione,f.Nome_File,f.Link_Dropbox,f.Hash_SHA256].join(' ')).includes(q)); }
+        function audioProjectAction(f, idx){
+            if(!window.KYV_AUDIO_PROJECT) return '';
+            return KYV_AUDIO_PROJECT.buttonHtml({ ...f, link:f.Link_Dropbox, fileName:f.Nome_File, title:f.Titolo || f.Progetto || f.Nome_File, source:'Archivio Audio Dropbox' }, projects, `createProjectFromAudioFile(${j(f.ID_FILE)})`, `copyText(${j(f.Link_Dropbox || '')})`);
+        }
+        async function createProjectFromAudioFile(id){
+            const f = audioById(id);
+            if(!f || !window.KYV_AUDIO_PROJECT) return;
+            try{
+                const item = { ...f, link:f.Link_Dropbox, fileName:f.Nome_File, title:f.Titolo || f.Progetto || f.Nome_File, source:'Archivio Audio Dropbox' };
+                const created = await KYV_AUDIO_PROJECT.createFromItem(item, { db:supabaseClient, projects });
+                if(!created || !created.ID) return;
+                try{
+                    await supabaseClient.from('DROPBOX_AUDIO_FILES').update({
+                        ID_PROGETTO: Number(created.ID),
+                        Progetto: [created.ARTISTA, created.TITOLO].filter(Boolean).join(' - ') || created.TITOLO || `Progetto #${created.ID}`,
+                        Artista: created.ARTISTA || f.Artista || null,
+                        Titolo: created.TITOLO || f.Titolo || null
+                    }).eq('ID_FILE', f.ID_FILE);
+                }catch(updateErr){ console.warn('Audio creato ma collegamento non aggiornato', updateErr); }
+                await fetchAll();
+            }catch(err){
+                console.error(err);
+                KYV.showToast('Errore creazione progetto: ' + (err.message || ''), 'error');
+            }
+        }
+        function audioCard(f, selectable=false){ const id=String(f.ID_FILE); const checked=selectedAudioIds.has(id) ? 'checked' : ''; return `<article class="audio-card rounded-2xl border border-kyv-border bg-kyv-bg p-4">
+            <div class="flex items-start gap-3"><label class="${selectable?'':'hidden'} mt-1"><input type="checkbox" class="accent-indigo-500 w-4 h-4" ${checked} onchange="toggleAudioSelection(${j(id)}, this.checked)"></label><div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0"><i data-lucide="music" class="w-5 h-5 text-blue-300"></i></div><div class="min-w-0 flex-1"><h4 class="font-black text-white truncate">${H(f.Titolo || f.Progetto || f.Nome_File || 'File audio')}</h4><p class="text-sm text-blue-200 font-bold truncate">${H(f.Artista || 'Artista non indicato')}</p><p class="text-[10px] text-kyv-text mt-1 uppercase tracking-wider">#${H(f.ID_FILE)} · ${H(f.Tipo_File || '-')} · ${H(f.Versione || '-')}</p></div></div>
+            <div class="mt-3 flex flex-wrap gap-2 text-[11px]">${f.Nome_File?`<span class="kyv-chip">${H(f.Nome_File)}</span>`:''}${f.ID_PROGETTO?`<span class="kyv-chip">Progetto #${H(f.ID_PROGETTO)}</span>`:''}</div>
+            ${f.Hash_SHA256?`<div class="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2 text-[9px] text-emerald-200 font-mono hash-box cursor-pointer" onclick="copyText(${j(f.Hash_SHA256)})">${H(f.Hash_SHA256)}</div>`:''}
+            <div class="mt-4 flex flex-wrap gap-2"><a href="${H(f.Link_Dropbox)}" target="_blank" class="px-3 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-100 text-xs font-bold"><i data-lucide="external-link" class="w-3.5 h-3.5 inline mr-1"></i>Apri</a><button onclick="copyText(${j(f.Link_Dropbox)})" class="px-3 py-2 rounded-lg bg-kyv-card hover:bg-kyv-border border border-kyv-border text-white text-xs font-bold"><i data-lucide="copy" class="w-3.5 h-3.5 inline mr-1"></i>Link</button>${audioProjectAction(f, 0)}${f.Hash_SHA256?`<button onclick="generateCertificatePDF(${j(id)})" class="px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-100 text-xs font-bold"><i data-lucide="award" class="w-3.5 h-3.5 inline mr-1"></i>PDF</button>`:''}</div>
+        </article>`; }
+        function renderAudioFiles(){ const rows=audioFiltered(); KYV.setText('audio-count', `${audioFiles.length} file in archivio Supabase.`); document.getElementById('audio-grid').innerHTML = !newTablesAvailable ? '<div class="p-8 rounded-2xl border border-amber-500/25 bg-amber-500/10 text-amber-100">Esegui prima la migrazione SQL v2.6.</div>' : (rows.length ? rows.map(f=>audioCard(f,false)).join('') : '<div class="p-8 rounded-2xl border border-dashed border-kyv-border text-center text-kyv-text">Nessun file audio registrato.</div>'); if(window.lucide) lucide.createIcons(); }
+        function renderSendFiles(){ updateSelectedCount(); document.getElementById('send-file-list').innerHTML = audioFiles.length ? audioFiles.map(f=>audioCard(f,true)).join('') : '<div class="p-8 rounded-2xl border border-dashed border-kyv-border text-center text-kyv-text">Registra prima almeno un file audio.</div>'; if(window.lucide) lucide.createIcons(); }
+        function toggleAudioSelection(id, checked){ if(checked) selectedAudioIds.add(String(id)); else selectedAudioIds.delete(String(id)); updateSelectedCount(); generateSendMessage(false); }
+        function selectedFiles(){ return [...selectedAudioIds].map(audioById).filter(Boolean); }
+        function updateSelectedCount(){ const el=document.getElementById('send-selected-count'); if(el) el.textContent = selectedAudioIds.size === 1 ? '1 file selezionato' : `${selectedAudioIds.size} file selezionati`; }
+
+        function generateSendMessage(showToast=false){ const files=selectedFiles(); if(!files.length){ if(showToast) KYV.showToast('Seleziona almeno un file.', 'warning'); return ''; } const recipient=document.getElementById('send-recipient').value.trim(); const context=document.getElementById('send-context').value; const ask=document.getElementById('send-confirm').checked; const lines=[]; lines.push('Ciao' + (recipient ? ` ${recipient}` : '') + ','); lines.push(''); lines.push(`ti mando ${files.length===1?'il file':'i file'} per ${context.toLowerCase()}:`); lines.push(''); files.forEach((f,i)=>{ lines.push(`${i+1}. ${[f.Artista,f.Titolo].filter(Boolean).join(' - ') || f.Progetto || f.Nome_File || 'File audio'}`); if(f.Tipo_File || f.Versione) lines.push(`Tipo/versione: ${[f.Tipo_File,f.Versione].filter(Boolean).join(' · ')}`); if(f.Nome_File) lines.push(`File: ${f.Nome_File}`); lines.push(`Link Dropbox: ${f.Link_Dropbox}`); if(f.Hash_SHA256) lines.push(`Hash SHA-256: ${f.Hash_SHA256}`); lines.push(''); }); lines.push(ask ? 'Mi confermi per favore ricezione/download e, quando riesci, anche ascolto o feedback?' : 'Resto disponibile per eventuali dubbi o revisioni.'); const msg=lines.join('\n').trim(); document.getElementById('send-message-preview').value = msg; if(showToast) KYV.showToast('Messaggio generato.', 'success'); return msg; }
+        async function copyText(text){ try{ await navigator.clipboard.writeText(String(text||'')); KYV.showToast('Copiato negli appunti.', 'success'); } catch(e){ const ta=document.createElement('textarea'); ta.value=String(text||''); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); KYV.showToast('Copiato negli appunti.', 'success'); } }
+        async function registerSend(status='Preparato'){ if(!newTablesAvailable){ KYV.showToast('Crea prima le tabelle v2.6.', 'error'); return null; } const files=selectedFiles(); if(!files.length){ KYV.showToast('Seleziona almeno un file.', 'warning'); return null; } const message=generateSendMessage(false); const rows=files.map(f=>({ ID_FILE:f.ID_FILE, ID_PROGETTO:f.ID_PROGETTO || null, Destinatario:document.getElementById('send-recipient').value.trim() || null, Tipo_Destinatario:document.getElementById('send-recipient-type').value, Canale:document.getElementById('send-channel').value, Contesto:document.getElementById('send-context').value, Messaggio:message, Stato:status })); const {error}=await supabaseClient.from('INVII_AUDIO').insert(rows); if(error) throw error; await fetchInvii(); renderHistory(); return message; }
+        async function registerAndCopySend(){ try{ const msg=await registerSend('Preparato / copiato'); if(msg){ await copyText(msg); KYV.showToast('Invio registrato e messaggio copiato.', 'success'); } }catch(err){ console.error(err); KYV.showToast('Errore registrazione invio.', 'error'); } }
+        async function openWhatsAppSend(){ try{ const msg = await registerSend('Aperto WhatsApp'); if(!msg) return; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); } catch(err){ console.error(err); KYV.showToast('Errore apertura WhatsApp.', 'error'); } }
+        async function openEmailSend(){ try{ const msg = await registerSend('Aperta email'); if(!msg) return; const subject='Invio file audio'; window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`; } catch(err){ console.error(err); KYV.showToast('Errore apertura email.', 'error'); } }
+
+        function renderHistory(){ const list=document.getElementById('history-list'); if(!list) return; if(!newTablesAvailable){ list.innerHTML='<div class="p-6 rounded-2xl border border-amber-500/25 bg-amber-500/10 text-amber-100">Esegui la migrazione SQL v2.6 per usare lo storico invii.</div>'; return; } if(!invii.length){ list.innerHTML='<div class="p-8 text-center text-kyv-text border border-dashed border-kyv-border rounded-2xl">Nessun invio registrato.</div>'; return; } list.innerHTML = invii.map(row=>{ const f=audioById(row.ID_FILE) || {}; const d=row.Data_Invio ? new Date(row.Data_Invio).toLocaleString('it-IT') : '-'; return `<article class="rounded-2xl border border-kyv-border bg-kyv-bg p-4"><div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3"><div><p class="text-[10px] text-kyv-text uppercase tracking-wider font-black">Invio #${H(row.ID_INVIO)} · ${H(row.Stato || '-')} · ${H(row.Canale || '-')}</p><h4 class="font-black text-white mt-1">${H([f.Artista,f.Titolo].filter(Boolean).join(' - ') || f.Progetto || 'File audio')}</h4><p class="text-sm text-indigo-200 font-bold mt-1">${H(row.Destinatario || 'Destinatario non indicato')}</p><p class="text-xs text-kyv-text mt-1">${H(row.Contesto || '-')} · ${H(d)}</p></div><button onclick="copyText(${j(row.Messaggio || '')})" class="px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-100 text-xs font-bold">Copia messaggio</button></div>${row.Conferma_Ricezione?`<div class="mt-3 p-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-100 text-xs"><strong>Conferma:</strong> ${H(row.Conferma_Ricezione)} ${row.Link_Prova_Drive?` · <a href="${H(row.Link_Prova_Drive)}" target="_blank" class="underline">Prova Drive</a>`:''}</div>`:''}</article>`; }).join(''); if(window.lucide) lucide.createIcons(); }
+        async function saveConfirmation(){ const id=document.getElementById('confirm-id').value.trim(); if(!id){ KYV.showToast('Inserisci ID invio.', 'warning'); return; } const payload={ Conferma_Ricezione:document.getElementById('confirm-note').value.trim() || 'Conferma ricevuta', Link_Prova_Drive:document.getElementById('confirm-drive').value.trim() || null, Data_Conferma:new Date().toISOString(), Stato:'Confermato' }; try{ const {error}=await supabaseClient.from('INVII_AUDIO').update(payload).eq('ID_INVIO', id); if(error) throw error; KYV.showToast('Conferma salvata.', 'success'); document.getElementById('confirm-id').value=''; document.getElementById('confirm-drive').value=''; document.getElementById('confirm-note').value=''; await fetchInvii(); renderHistory(); }catch(err){ console.error(err); KYV.showToast('Errore salvataggio conferma.', 'error'); } }
+
+        function generateCertificatePDF(id){ const f=audioById(id); if(!f || !f.Hash_SHA256){ KYV.showToast('Hash mancante.', 'warning'); return; } const {jsPDF}=window.jspdf; const doc=new jsPDF('p','mm','a4'); const w=doc.internal.pageSize.getWidth(); doc.setFillColor(15,17,26); doc.rect(0,0,w,45,'F'); doc.setTextColor(255,255,255); doc.setFontSize(24); doc.setFont('helvetica','bold'); doc.text('KYV Studio',15,20); doc.setTextColor(148,163,184); doc.setFontSize(10); doc.text('CERTIFICATO TECNICO DI CONSEGNA E IMPRONTA SHA-256',15,30); doc.setTextColor(0,0,0); let y=60; doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.text('Dettagli file audio',15,y); y+=10; doc.setFont('helvetica','normal'); doc.setFontSize(10); [[ 'Progetto', f.Progetto || '-' ],['Artista', f.Artista || '-' ],['Titolo', f.Titolo || '-' ],['Tipo/versione', [f.Tipo_File,f.Versione].filter(Boolean).join(' · ') || '-' ],['Nome file', f.Nome_File || '-' ],['Link Dropbox', f.Link_Dropbox || '-' ],['Data consegna', f.Data_Consegna || '-' ]].forEach(([k,v])=>{ doc.text(`${k}: ${v}`,15,y); y+=7; }); y+=8; doc.setFillColor(240,240,240); doc.rect(15,y,w-30,30,'F'); doc.setFont('helvetica','bold'); doc.text('Hash SHA-256:',20,y+10); doc.setFont('courier','normal'); doc.setFontSize(8); doc.text(f.Hash_SHA256,20,y+20); y+=48; doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text('Documento tecnico interno: l’hash identifica il contenuto esatto del file. Non sostituisce firma digitale, PEC o marca temporale qualificata.',15,y,{maxWidth:w-30}); doc.save(`Certificato_${String(f.Titolo||f.Nome_File||f.ID_FILE).replace(/[^a-z0-9]+/gi,'_')}.pdf`); }
+
+        document.addEventListener('DOMContentLoaded', async () => { supabaseClient = KYV.createSupabaseClient(); if(window.lucide) lucide.createIcons(); await fetchAll(); });
+    </script>
+</body>
+</html>

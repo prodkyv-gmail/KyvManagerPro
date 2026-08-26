@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Rubrica Clienti</title>
+    
+    <!-- PWA Setup (Assicurati di avere manifest.json e le icone nella stessa cartella) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f111a">
+    
+    <!-- Tailwind CSS -->
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Lucide Icons -->
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- FILE ESTERNI -->
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } }
+        }
+    </script>
+        <link rel="stylesheet" href="kyv-responsive.css">
+<style>
+        body { background-color: #0f111a; color: #f8fafc; }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #232838; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #333a50; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        
+        .kyv-input { width: 100%; background-color: #0f111a; border: 1px solid #232838; color: white; padding: 0.6rem 0.8rem; border-radius: 0.5rem; outline: none; transition: border-color 0.15s ease-in-out; font-size: 0.875rem; }
+        .kyv-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+        .kyv-input:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+
+    <!-- CONTENITORE SIDEBAR -->
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+
+    <!-- MAIN AREA -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        <!-- Effetto luce di sfondo per il modulo CRM -->
+        <div class="absolute top-0 right-1/4 transform translate-x-1/2 w-[600px] h-[600px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar relative z-10 flex flex-col">
+            <header class="flex flex-col sm:flex-row justify-between sm:items-end gap-4 mb-6 shrink-0 border-b border-kyv-border/50 pb-6">
+                <div class="flex items-center">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3 transition-colors" onclick="toggleMobileMenu()">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Rubrica <span class="text-indigo-400">CRM</span></h2>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm">Gestione anagrafiche Artisti, Etichette, Editori e Dati di Fatturazione.</p>
+                        <div class="flex flex-wrap items-center gap-2 mt-3">
+                            <span id="crm-count" class="kyv-chip">0 contatti</span>
+                            <span class="kyv-chip"><i data-lucide="mouse-pointer-click" class="w-3 h-3"></i>Clicca una scheda per modificarla</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-64">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-kyv-text"></i>
+                        <input type="text" id="crm-search" placeholder="Cerca nome, email o P.IVA..." class="w-full bg-kyv-card border border-kyv-border rounded-lg pl-9 pr-4 py-2.5 text-sm text-white focus:border-indigo-500 outline-none transition-colors shadow-sm" oninput="applyCrmSearch()">
+                    </div>
+                    <button onclick="openClienteModal()" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center shadow-lg shadow-indigo-500/20 whitespace-nowrap">
+                        <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Nuovo Contatto
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 w-full" id="crm-container">
+                <div id="loading-spinner" class="flex flex-col items-center justify-center h-64 text-indigo-400">
+                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin mb-4"></i>
+                    <p class="font-bold tracking-widest text-xs uppercase">Caricamento Rubrica...</p>
+                </div>
+                
+                <!-- Qui verranno iniettate le cards dei clienti -->
+                <div id="clienti-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 hidden pb-10">
+                </div>
+                
+                <div id="no-results" class="hidden flex-col items-center justify-center h-64 text-kyv-text opacity-60">
+                    <i data-lucide="users" class="w-16 h-16 mb-4 opacity-50"></i>
+                    <p class="text-lg font-medium">Nessun contatto trovato.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-cliente" aria-hidden="true" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-kyv-card border border-kyv-border rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform scale-95 transition-transform duration-300 mx-4 max-h-[90vh] flex flex-col" id="modal-cliente-content">
+            
+            <div class="px-6 py-4 border-b border-kyv-border flex justify-between items-center bg-kyv-bg/80 shrink-0">
+                <h3 class="text-lg font-bold text-white flex items-center" id="modal-title">
+                    <i data-lucide="user-circle" class="w-5 h-5 mr-2 text-indigo-400"></i> Dettagli Contatto
+                </h3>
+                <button type="button" onclick="closeModal()" class="text-kyv-text hover:text-white transition-colors bg-transparent border-0">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="form-cliente" class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+                <input type="hidden" id="c-id">
+                
+                <!-- Anagrafica Base -->
+                <div>
+                    <h4 class="text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-3 flex items-center border-b border-kyv-border pb-1">
+                        <i data-lucide="info" class="w-3 h-3 mr-1"></i> Anagrafica
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold text-kyv-text mb-1">Nome Completo / Denominazione *</label>
+                            <input type="text" id="c-nome" required class="kyv-input font-medium text-white" placeholder="Es. Mario Rossi o Sony Music SRL">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-kyv-text mb-1">Tipologia Contatto</label>
+                            <select id="c-tipo" class="kyv-input appearance-none cursor-pointer">
+                                <option value="Artista">Artista / Band</option>
+                                <option value="Etichetta">Etichetta Discografica</option>
+                                <option value="Management">Management / Agenzia</option>
+                                <option value="Fornitore">Fornitore / Session Man</option>
+                                <option value="Altro">Altro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-3 flex items-center border-b border-kyv-border pb-1">
+                        <i data-lucide="at-sign" class="w-3 h-3 mr-1"></i> Recapiti
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-kyv-text mb-1">Email</label>
+                            <input type="email" id="c-email" class="kyv-input" placeholder="email@dominio.it">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-kyv-text mb-1">Telefono / Cellulare</label>
+                            <input type="tel" id="c-tel" class="kyv-input" placeholder="+39 333...">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-3 flex items-center border-b border-kyv-border pb-1">
+                        <i data-lucide="receipt" class="w-3 h-3 mr-1"></i> Fatturazione & Amministrazione
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-kyv-text mb-1">Partita IVA / Codice Fiscale</label>
+                            <input type="text" id="c-piva" class="kyv-input font-mono uppercase" placeholder="IT0123456789">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-kyv-text mb-1">Codice Destinatario (SDI) / PEC</label>
+                            <input type="text" id="c-sdi" class="kyv-input font-mono uppercase" placeholder="A45SG21 o pec@pec.it">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold text-kyv-text mb-1">Indirizzo di Fatturazione / Residenza</label>
+                            <input type="text" id="c-indirizzo" class="kyv-input" placeholder="Via Roma 1, 80100 Napoli (NA)">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold text-kyv-text mb-1">Note Aggiuntive</label>
+                            <textarea id="c-note" class="kyv-input resize-none h-20" placeholder="Percentuali personalizzate, dettagli accordi..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pt-4 flex justify-between items-center border-t border-kyv-border mt-6">
+                    <button type="button" id="btn-delete" onclick="deleteCurrentCliente()" class="px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-500/10 rounded-lg transition-colors hidden flex items-center">
+                        <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Elimina
+                    </button>
+                    <div class="flex space-x-3 ml-auto">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-kyv-text hover:text-white transition-colors">Annulla</button>
+                        <button type="submit" id="btn-salva" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors flex items-center shadow-lg shadow-indigo-500/20">
+                            <i data-lucide="save" class="w-4 h-4 mr-2"></i> Salva Contatto
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-delete" aria-hidden="true" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-kyv-card border border-red-900/50 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 mx-4" id="modal-delete-content">
+            <div class="p-6 flex items-start">
+                <div class="bg-red-500/20 text-red-500 p-3 rounded-full mr-4 shrink-0"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-1">Sei sicuro?</h3>
+                    <p class="text-kyv-text text-sm mb-4">Stai per eliminare questo contatto. L'azione non può essere annullata.</p>
+                </div>
+            </div>
+            <div class="bg-[#0d0f16] px-6 py-4 flex justify-end space-x-3 border-t border-kyv-border">
+                <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-sm font-medium text-kyv-text hover:text-white transition-colors">Annulla</button>
+                <button id="btn-confirm-delete" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-red-500/20">Elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" aria-live="polite" class="fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-20 opacity-0 z-[70] pointer-events-none flex items-center">
+        <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 mr-2"></i>
+        <span id="toast-message" class="font-medium text-sm">Messaggio</span>
+    </div>
+
+    <script>
+        // Inizializza il Menu
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4"><p class="text-rose-400 text-xs">Fallback Menu</p></aside>`;};}
+        loadKyvSidebar('clienti');
+
+        const fallbackUrl = 'https://sfclxyexipbgiohpwlnl.supabase.co';
+        const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY';
+        let supabaseClient;
+        let clientiGlobali = [];
+        let currentDeleteId = null;
+
+        function showToast(msg, isError = false) { return (window.KYV_TOAST ? KYV_TOAST.show(msg, isError ? 'error' : 'success') : KYV.showToast(msg, isError ? 'error' : 'success')); }
+
+        // --- FETCH DATI CLIENTI ---
+        async function fetchClienti() {
+            const grid = document.getElementById('clienti-grid');
+            const spinner = document.getElementById('loading-spinner');
+            const noRes = document.getElementById('no-results');
+            
+            grid.classList.add('hidden');
+            noRes.classList.add('hidden');
+            spinner.classList.remove('hidden');
+
+            try {
+                // CHIAMATA A SUPABASE (Assicurati di aver creato la tabella CLIENTI come spiegato)
+                const { data, error } = await supabaseClient
+                    .from('CLIENTI')
+                    .select('*')
+                    .order('Nome_Denominazione', { ascending: true });
+                
+                if (error) throw error;
+                
+                clientiGlobali = data || [];
+                renderCards(clientiGlobali);
+                
+            } catch (err) {
+                console.error("Errore Fetch Clienti:", err);
+                spinner.classList.add('hidden');
+                noRes.classList.remove('hidden');
+                noRes.innerHTML = `<i data-lucide="server-crash" class="w-16 h-16 mb-4 text-red-500 opacity-50"></i><p class="text-lg font-medium text-red-400">Errore: Assicurati di aver creato la tabella CLIENTI su Supabase.</p>`;
+                if(window.lucide) lucide.createIcons({root: noRes});
+            }
+        }
+
+        // --- RENDER CARDS (GRAFICA) ---
+        function renderCards(data) {
+            const grid = document.getElementById('clienti-grid');
+            const spinner = document.getElementById('loading-spinner');
+            const noRes = document.getElementById('no-results');
+            
+            spinner.classList.add('hidden');
+            const count = document.getElementById('crm-count');
+            if (count) count.textContent = `${data.length} ${data.length === 1 ? 'contatto' : 'contatti'}`;
+            
+            if (data.length === 0) {
+                grid.classList.add('hidden');
+                noRes.classList.remove('hidden');
+                return;
+            }
+            
+            noRes.classList.add('hidden');
+            grid.classList.remove('hidden');
+            
+            let html = '';
+            data.forEach(c => {
+                // Badge Colore in base alla Tipologia
+                let badgeColor = 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+                let iconName = 'user';
+                const tipo = c.Tipologia ? c.Tipologia.toLowerCase() : '';
+                
+                if (tipo.includes('artista') || tipo.includes('band')) { badgeColor = 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30'; iconName = 'mic-2'; }
+                else if (tipo.includes('etichetta')) { badgeColor = 'bg-blue-500/20 text-blue-400 border-blue-500/30'; iconName = 'disc'; }
+                else if (tipo.includes('management')) { badgeColor = 'bg-amber-500/20 text-amber-400 border-amber-500/30'; iconName = 'briefcase'; }
+                else if (tipo.includes('fornitore')) { badgeColor = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'; iconName = 'truck'; }
+
+                const esc = KYV.safeHtml;
+                const idCliente = esc(c.ID_CLIENTE);
+                const nomeCliente = esc(c.Nome_Denominazione || 'Senza Nome');
+                const tipoCliente = esc(c.Tipologia || 'Altro');
+                const emailCliente = esc(c.Email || '');
+                const telCliente = esc(c.Telefono || '');
+                const pivaInfo = c.Partita_IVA ? `<p class="text-[10px] text-kyv-text font-mono mt-2 pt-2 border-t border-kyv-border/50 truncate"><span class="opacity-50">P.IVA:</span> ${esc(c.Partita_IVA)}</p>` : '';
+                
+                html += `
+                <article role="button" tabindex="0" aria-label="Modifica ${nomeCliente}" onclick="openClienteModal('${idCliente}')" onkeydown="if ((event.key === 'Enter' || event.key === ' ') && event.target === this) { event.preventDefault(); openClienteModal('${idCliente}'); }" class="kyv-interactive-card bg-kyv-card border border-kyv-border hover:border-indigo-500/40 rounded-xl p-5 flex flex-col transition-all hover:shadow-lg group relative cursor-pointer">
+                    <div class="flex items-start mb-4">
+                        <div class="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center mr-3 shrink-0">
+                            <i data-lucide="${iconName}" class="w-5 h-5 text-indigo-400"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-white text-base truncate leading-tight mb-1" title="${nomeCliente}">${nomeCliente}</h3>
+                            <span class="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${badgeColor}">${tipoCliente}</span>
+                        </div>
+                        <i data-lucide="pencil" class="w-4 h-4 text-kyv-text group-hover:text-indigo-300 transition-colors shrink-0" aria-hidden="true"></i>
+                    </div>
+                    
+                    <div class="space-y-2 flex-1 mt-2">
+                        ${c.Email ? `<a href="mailto:${emailCliente}" onclick="event.stopPropagation()" class="flex items-center text-xs text-kyv-text hover:text-indigo-300 transition-colors truncate"><i data-lucide="mail" class="w-3.5 h-3.5 mr-2 shrink-0 opacity-70"></i> ${emailCliente}</a>` : `<div class="flex items-center text-xs text-kyv-text/30"><i data-lucide="mail" class="w-3.5 h-3.5 mr-2 shrink-0"></i> Nessuna email</div>`}
+                        
+                        ${c.Telefono ? `<a href="tel:${telCliente}" onclick="event.stopPropagation()" class="flex items-center text-xs text-kyv-text hover:text-emerald-400 transition-colors truncate"><i data-lucide="phone" class="w-3.5 h-3.5 mr-2 shrink-0 opacity-70"></i> ${telCliente}</a>` : `<div class="flex items-center text-xs text-kyv-text/30"><i data-lucide="phone" class="w-3.5 h-3.5 mr-2 shrink-0"></i> Nessun telefono</div>`}
+                    </div>
+                    
+                    ${pivaInfo}
+                </article>`;
+            });
+            
+            grid.innerHTML = html;
+            if(window.lucide) lucide.createIcons({root: grid});
+        }
+
+        // --- MOTORE DI RICERCA ---
+        window.applyCrmSearch = function() {
+            const term = document.getElementById('crm-search').value.toLowerCase();
+            if (!term) { renderCards(clientiGlobali); return; }
+            
+            const filtered = clientiGlobali.filter(c => {
+                const searchStr = `${c.Nome_Denominazione} ${c.Email} ${c.Partita_IVA} ${c.Tipologia}`.toLowerCase();
+                return searchStr.includes(term);
+            });
+            renderCards(filtered);
+        }
+
+        // --- GESTIONE MODALE (APERTURA E COMPILAZIONE) ---
+        window.openClienteModal = function(id = null) {
+            const modal = document.getElementById('modal-cliente');
+            const form = document.getElementById('form-cliente');
+            const title = document.getElementById('modal-title');
+            const btnDelete = document.getElementById('btn-delete');
+            
+            form.reset();
+            document.getElementById('c-id').value = '';
+            
+            if (id) {
+                // MODIFICA
+                title.innerHTML = `<i data-lucide="edit" class="w-5 h-5 mr-2 text-indigo-400"></i> Modifica Contatto`;
+                btnDelete.classList.remove('hidden');
+                
+                const cliente = clientiGlobali.find(c => String(c.ID_CLIENTE) === String(id));
+                if (cliente) {
+                    document.getElementById('c-id').value = cliente.ID_CLIENTE;
+                    document.getElementById('c-nome').value = cliente.Nome_Denominazione || '';
+                    document.getElementById('c-tipo').value = cliente.Tipologia || 'Artista';
+                    document.getElementById('c-email').value = cliente.Email || '';
+                    document.getElementById('c-tel').value = cliente.Telefono || '';
+                    document.getElementById('c-piva').value = cliente.Partita_IVA || '';
+                    document.getElementById('c-sdi').value = cliente.Codice_SDI || '';
+                    document.getElementById('c-indirizzo').value = cliente.Indirizzo || '';
+                    document.getElementById('c-note').value = cliente.Note || '';
+                }
+            } else {
+                // NUOVO
+                title.innerHTML = `<i data-lucide="user-plus" class="w-5 h-5 mr-2 text-indigo-400"></i> Nuovo Contatto`;
+                btnDelete.classList.add('hidden');
+            }
+            
+            if(window.lucide) lucide.createIcons({root: title});
+            modal.classList.remove('hidden');
+            setTimeout(() => { 
+                modal.classList.remove('opacity-0'); 
+                document.getElementById('modal-cliente-content').classList.remove('scale-95'); 
+            }, 10);
+        }
+
+        window.closeModal = function() {
+            const modal = document.getElementById('modal-cliente');
+            modal.classList.add('opacity-0');
+            document.getElementById('modal-cliente-content').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        // --- SALVATAGGIO DATI (INSERT / UPDATE) ---
+        document.getElementById('form-cliente').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salva');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Salvataggio...';
+            btn.disabled = true;
+            if(window.lucide) lucide.createIcons({root: btn.parentElement});
+            
+            const id = document.getElementById('c-id').value;
+            const payload = {
+                Nome_Denominazione: document.getElementById('c-nome').value.trim() || null,
+                Tipologia: document.getElementById('c-tipo').value || null,
+                Email: document.getElementById('c-email').value.trim() || null,
+                Telefono: document.getElementById('c-tel').value.trim() || null,
+                Partita_IVA: document.getElementById('c-piva').value.trim().toUpperCase() || null,
+                Codice_SDI: document.getElementById('c-sdi').value.trim().toUpperCase() || null,
+                Indirizzo: document.getElementById('c-indirizzo').value.trim() || null,
+                Note: document.getElementById('c-note').value.trim() || null
+            };
+
+            try {
+                if (id) {
+                    // Aggiornamento
+                    const { error } = await supabaseClient.from('CLIENTI').update(payload).eq('ID_CLIENTE', id);
+                    if (error) throw error;
+                    showToast("Contatto aggiornato con successo!");
+                } else {
+                    // Inserimento
+                    const { error } = await supabaseClient.from('CLIENTI').insert([payload]);
+                    if (error) throw error;
+                    showToast("Nuovo contatto aggiunto in rubrica!");
+                }
+                
+                closeModal();
+                fetchClienti(); // Ricarica la griglia
+                
+            } catch (err) {
+                console.error(err);
+                showToast("Errore di salvataggio: " + (err.message || ""), true);
+            } finally {
+                btn.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i> Salva Contatto';
+                btn.disabled = false;
+                if(window.lucide) lucide.createIcons({root: btn.parentElement});
+            }
+        });
+
+        // --- ELIMINAZIONE ---
+        window.deleteCurrentCliente = function() {
+            currentDeleteId = document.getElementById('c-id').value;
+            if (!currentDeleteId) return;
+            const modal = document.getElementById('modal-delete');
+            modal.classList.remove('hidden');
+            setTimeout(() => { 
+                modal.classList.remove('opacity-0'); 
+                document.getElementById('modal-delete-content').classList.remove('scale-95'); 
+            }, 10);
+        }
+        
+        window.closeDeleteModal = function() {
+            const modal = document.getElementById('modal-delete');
+            modal.classList.add('opacity-0');
+            document.getElementById('modal-delete-content').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); currentDeleteId = null; }, 300);
+        }
+        
+        document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+            if (!currentDeleteId) return;
+            try {
+                const { error } = await supabaseClient.from('CLIENTI').delete().eq('ID_CLIENTE', currentDeleteId);
+                if (error) throw error;
+                showToast("Contatto eliminato.");
+                closeDeleteModal();
+                closeModal(); // Chiude anche il form sottostante
+                fetchClienti();
+            } catch (err) {
+                console.error(err);
+                showToast("Errore durante l'eliminazione.", true);
+            }
+        });
+
+        // INIZIALIZZAZIONE ALL'AVVIO DELLA PAGINA
+        document.addEventListener('DOMContentLoaded', () => {
+            supabaseClient = KYV.createSupabaseClient();
+            if(window.lucide) lucide.createIcons();
+            fetchClienti();
+        });
+    </script>
+</body>
+</html>

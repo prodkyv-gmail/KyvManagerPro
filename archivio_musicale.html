@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Archivio Musicale</title>
+    <script>(function(){const w=console.warn;console.warn=function(){if(String(arguments[0]||'').includes('cdn.tailwindcss.com should not be used in production'))return;return w.apply(console,arguments)}})();</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="kpapjm7sybfs8ze"></script>
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-audio-project.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{kyv:{bg:'#0f111a',card:'#151923',border:'#232838',text:'#94a3b8'}}}}}</script>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <link rel="stylesheet" href="kyv-theme.css">
+    <style>
+        body{background:#0f111a;color:#f8fafc}.kyv-input{width:100%;background:#0f111a;border:1px solid #232838;color:#fff;padding:.72rem .9rem;border-radius:.8rem;outline:none}.kyv-input:focus{border-color:#818cf8;box-shadow:0 0 0 2px rgba(99,102,241,.15)}
+        .archive-row{display:grid;grid-template-columns:auto minmax(220px,1.6fr) minmax(130px,.7fr) minmax(210px,1fr) auto;gap:1rem;align-items:center}.status-dot{width:.6rem;height:.6rem;border-radius:999px;display:inline-block}.archive-row[data-status="existing"]{opacity:.72}.archive-row.is-selected{border-color:rgba(99,102,241,.65);background:rgba(99,102,241,.08)}
+        @media(max-width:1023px){.archive-row{grid-template-columns:auto minmax(0,1fr)}.archive-row>[data-wide]{grid-column:2}.archive-row>[data-actions]{grid-column:1/-1}}
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        <section class="flex-1 overflow-y-auto p-4 sm:p-8 kyv-page-pad custom-scrollbar">
+            <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 mb-6">
+                <div class="flex items-start gap-3"><button class="md:hidden text-kyv-text hover:text-white mt-1" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button><div><p class="text-[10px] uppercase tracking-[.24em] text-indigo-300 font-black">Ricerca su richiesta</p><h1 class="text-3xl sm:text-4xl font-black mt-1">Archivio <span class="text-indigo-400">Musicale</span></h1><p class="text-kyv-text mt-2 max-w-4xl leading-relaxed">Trova audio su Google Drive o Dropbox, confrontali con ciò che è già registrato e scegli soltanto i file da collegare o trasformare in progetto.</p></div></div>
+                <a href="assistente.html" class="px-4 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-indigo-100 font-black text-xs"><i data-lucide="route" class="w-4 h-4 inline mr-2"></i>Percorso brano</a>
+            </header>
+
+            <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+                <article class="kyv-card p-5"><div class="flex items-start gap-3"><div class="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0"><i data-lucide="hard-drive-search" class="w-5 h-5 text-emerald-300"></i></div><div class="flex-1"><h2 class="text-lg font-black text-white">Google Drive</h2><p class="text-xs text-kyv-text mt-1">Scansiona ora uno o tutti i Drive configurati. Nessun controllo parte automaticamente.</p></div></div><div class="grid sm:grid-cols-[1fr_auto] gap-3 mt-4"><select id="drive-account" class="kyv-input"><option value="all">Tutti i Drive configurati</option></select><button id="drive-scan" class="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="search" class="w-4 h-4 inline mr-2"></i>Cerca audio</button></div><p id="drive-message" class="text-xs text-kyv-text mt-3">In attesa di una ricerca.</p></article>
+                <article class="kyv-card p-5"><div class="flex items-start gap-3"><div class="w-11 h-11 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0"><i data-lucide="cloud-search" class="w-5 h-5 text-blue-300"></i></div><div class="flex-1"><h2 class="text-lg font-black text-white">Dropbox</h2><p class="text-xs text-kyv-text mt-1">Apre Dropbox e permette di scegliere più file audio. Il confronto avviene appena torni in KYV.</p></div></div><button id="dropbox-pick" class="mt-4 w-full px-4 py-3 rounded-xl bg-[#0061FF] hover:bg-[#0052cc] text-white font-black text-xs"><i data-lucide="folder-search" class="w-4 h-4 inline mr-2"></i>Scegli file da Dropbox</button><p id="dropbox-message" class="text-xs text-kyv-text mt-3">Nessun file scelto in questa ricerca.</p></article>
+            </section>
+
+            <section id="reference-status" class="hidden kyv-card p-4 mb-5" role="status" aria-live="polite"></section>
+
+            <section id="summary" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5"></section>
+
+            <section class="kyv-card p-4 mb-4 sticky top-0 z-20 backdrop-blur-xl bg-[#151923]/95">
+                <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-center"><div class="relative"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-kyv-text"></i><input id="result-search" class="kyv-input pl-10" placeholder="Cerca file, artista, progetto o cartella..."></div><select id="status-filter" class="kyv-input md:w-56"><option value="all">Tutti gli stati</option><option value="existing">Già inseriti</option><option value="version">Nuove versioni</option><option value="review">Da verificare</option><option value="new">Nuovi brani</option></select><button id="select-visible" class="px-4 py-3 rounded-xl border border-kyv-border text-white font-black text-xs">Seleziona inseribili</button></div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3 pt-3 border-t border-kyv-border"><p id="visible-count" class="text-xs text-kyv-text">Nessun risultato.</p><div class="flex gap-2"><button id="clear-results" class="px-4 py-2.5 rounded-xl border border-kyv-border text-kyv-text font-black text-xs">Pulisci risultati</button><button id="process-selected" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs disabled:opacity-40" disabled><i data-lucide="folder-input" class="w-4 h-4 inline mr-2"></i>Inserisci selezionati <span id="selected-count">0</span></button></div></div>
+            </section>
+
+            <section id="result-list" class="space-y-3 pb-12"><div class="kyv-card p-12 text-center text-kyv-text border-dashed"><i data-lucide="audio-lines" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>Avvia una ricerca Drive oppure scegli file da Dropbox.</div></section>
+        </section>
+    </main>
+
+<script>
+const db=KYV.createSupabaseClient();
+const state={
+    projects:[],dropboxArchive:[],driveArchive:[],unifiedArchive:[],results:[],selected:new Set(),
+    filter:'all',query:'',referenceReady:false,unifiedMode:'loading',referenceError:''
+};
+const H=v=>KYV.safeHtml(v??'');
+const N=v=>KYV.normalize(v??'');
+const audioDoc=d=>/audio[_ -]?drive|versione audio/i.test(String(d.Tipo_Documento||''));
+const projectLabel=p=>[p?.ARTISTA,p?.TITOLO].filter(Boolean).join(' - ')||p?.TITOLO||`Progetto #${p?.ID}`;
+const itemName=i=>String(i.name||i.fileName||i.filename||i.Nome_File||i.title||'File audio');
+const itemLink=i=>String(i.link||i.url||i.webViewLink||i.webContentLink||i.Link_Dropbox||'');
+const itemHash=i=>String(i.content_hash||i.Hash_SHA256||i.contentHash||i.hash||'');
+const itemRevision=i=>String(i.rev||i.revision||i.versionId||i.modifiedTime||i.updated||i.date||'');
+const itemProvider=i=>window.KYV_AUDIO_PROJECT?.sourceKind(i)||String(i.source||'other').toLowerCase();
+const itemProviderId=i=>window.KYV_AUDIO_PROJECT?.providerId(i)||String(i.id||i.fileId||i.providerId||'');
+const driveId=value=>{const raw=String(value||'');let m=raw.match(/\/d\/([^/]+)/);if(m)return m[1];m=raw.match(/[?&]id=([^&]+)/);return m?decodeURIComponent(m[1]):''};
+
+function identityFromNote(note){
+    const m=String(note||'').match(/Origine ID:\s*((?:Drive|Dropbox|File):[^\s]+)/i);
+    return m?m[1]:'';
+}
+function identityParts(identity){
+    const m=String(identity||'').match(/^(Drive|Dropbox|File):(.+)$/i);
+    return m?{provider:m[1].toLowerCase()==='file'?'other':m[1].toLowerCase(),providerId:m[2]}:{provider:'',providerId:''};
+}
+function itemIdentity(item){
+    if(window.KYV_AUDIO_PROJECT)return KYV_AUDIO_PROJECT.providerIdentity(item);
+    return item.id?`${item.source==='dropbox'?'Dropbox':'Drive'}:${item.id}`:'';
+}
+function resultKey(item){
+    return itemIdentity(item)||`${item.source}:${itemLink(item)||itemName(item)}:${itemRevision(item)}`;
+}
+function sameRevision(a,b){
+    const left=String(a||''),right=String(b||'');
+    return !!left&&!!right&&(left===right||left.slice(0,10)===right.slice(0,10));
+}
+function existingRows(){
+    const unified=state.unifiedArchive.map(r=>({
+        source:String(r.PROVIDER||''),providerId:String(r.PROVIDER_ID||''),revision:String(r.REVISIONE_PROVIDER||''),
+        identity:r.PROVIDER_ID?`${r.PROVIDER==='dropbox'?'Dropbox':r.PROVIDER==='drive'?'Drive':'File'}:${r.PROVIDER_ID}`:'',
+        link:r.LINK_FILE||'',name:r.NOME_FILE||r.TITOLO||'',hash:r.CONTENT_HASH||'',projectId:r.ID_PROGETTO||'',
+        date:r.DATA_FILE||r.updated_at||r.created_at||'',unified:true
+    }));
+    const dropbox=state.dropboxArchive.map(r=>{
+        const identity=identityFromNote(r.Note),parts=identityParts(identity);
+        const revision=(String(r.Note||'').match(/Revisione Dropbox:\s*([^\s]+)/i)||[])[1]||'';
+        return {source:'dropbox',providerId:parts.providerId,revision,identity,link:r.Link_Dropbox||'',name:r.Nome_File||r.Titolo||'',hash:r.Hash_SHA256||'',projectId:r.ID_PROGETTO||'',date:r.Data_Caricamento||'',unified:false};
+    });
+    const drive=state.driveArchive.map(r=>{
+        const identity=identityFromNote(r.Note)||(`Drive:${driveId(r.Link_Drive)}`),parts=identityParts(identity);
+        return {source:'drive',providerId:parts.providerId,revision:String(r.Data_Documento||''),identity,link:r.Link_Drive||'',name:r.Titolo_Documento||'',hash:'',projectId:r.ID_PROGETTO||'',date:r.Data_Documento||'',unified:false};
+    });
+    return [...unified,...dropbox,...drive];
+}
+function existingResult(row,reason='Stesso identificativo, revisione, link o impronta già archiviato'){
+    return {status:'existing',label:'Già inserito',tone:'emerald',projectId:String(row.projectId||''),reason};
+}
+function classify(item){
+    const rows=existingRows(),provider=itemProvider(item),providerId=itemProviderId(item),revision=itemRevision(item);
+    const link=itemLink(item),hash=itemHash(item),name=N(itemName(item));
+    const providerRows=providerId?rows.filter(r=>r.providerId&&r.providerId===providerId&&(!r.source||r.source===provider)):[];
+    if(providerRows.length){
+        const exactRevision=providerRows.find(r=>sameRevision(r.revision,revision));
+        if(exactRevision)return existingResult(exactRevision,'Stesso file e stessa revisione già archiviati');
+        if(revision&&providerRows.some(r=>r.revision)){
+            const latest=providerRows[0];
+            return {status:'review',label:'Nuova revisione',tone:'amber',projectId:String(latest.projectId||''),reason:'Lo stesso file cloud esiste, ma la revisione è cambiata: controlla prima di aggiungerla'};
+        }
+        const sameProviderFile=providerRows.find(r=>(link&&r.link===link)||(hash&&r.hash===hash))||providerRows[0];
+        const modified=String(item.modifiedTime||item.updated||'').slice(0,10),archived=String(sameProviderFile.date||'').slice(0,10);
+        if(provider==='drive'&&modified&&archived&&modified>archived){
+            return {status:'review',label:'Da verificare',tone:'amber',projectId:String(sameProviderFile.projectId||''),reason:'Stesso file Drive, modificato dopo l’archiviazione'};
+        }
+        return existingResult(sameProviderFile);
+    }
+    const exact=rows.find(r=>(link&&r.link===link)||(hash&&r.hash===hash));
+    if(exact)return existingResult(exact);
+    const sameName=rows.find(r=>name&&N(r.name)===name);
+    const suggested=window.KYV_AUDIO_PROJECT?.matchProjectForItem(item,state.projects)||null;
+    if(sameName)return {status:'review',label:'Da verificare',tone:'amber',projectId:String(sameName.projectId||suggested?.ID||''),reason:'Esiste già un file con lo stesso nome'};
+    if(suggested)return {status:'version',label:'Nuova versione',tone:'violet',projectId:String(suggested.ID),reason:`Possibile corrispondenza con ${projectLabel(suggested)}`};
+    return {status:'new',label:'Nuovo brano',tone:'sky',projectId:'',reason:'Nessuna corrispondenza trovata'};
+}
+function addResults(items){
+    if(!state.referenceReady){KYV.showToast('Confronto archivi non disponibile: ricerca bloccata per evitare duplicati.','error');return}
+    const map=new Map(state.results.map(r=>[r.key,r]));
+    (items||[]).filter(i=>window.KYV_AUDIO_PROJECT?.isAudioItem(i)).forEach(item=>{
+        const key=resultKey(item),previous=map.get(key),classification=classify(item);
+        map.set(key,{key,item,...classification,projectId:previous?.projectId||classification.projectId});
+    });
+    state.results=[...map.values()];
+    renderAll();
+}
+function isMissingUnifiedTable(error){
+    const code=String(error?.code||'').toUpperCase(),message=String(error?.message||'').toLowerCase();
+    return code==='42P01'||code==='PGRST205'||(message.includes('audio_versioni')&&(message.includes('schema cache')||message.includes('does not exist')||message.includes('not find')));
+}
+function setControlsDisabled(disabled){
+    ['drive-account','drive-scan','dropbox-pick','select-visible'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=disabled});
+    renderSelection();
+}
+function setReferenceStatus(kind,message){
+    const box=document.getElementById('reference-status');
+    const styles={ok:'border-emerald-500/25 bg-emerald-500/10 text-emerald-100',warning:'border-amber-500/25 bg-amber-500/10 text-amber-100',error:'border-rose-500/30 bg-rose-500/10 text-rose-100'};
+    const icons={ok:'shield-check',warning:'triangle-alert',error:'shield-x'};
+    box.className=`kyv-card p-4 mb-5 ${styles[kind]}`;
+    box.innerHTML=`<div class="flex items-start gap-3"><i data-lucide="${icons[kind]}" class="w-5 h-5 mt-0.5 shrink-0"></i><div><p class="font-black text-sm">${kind==='ok'?'Controllo duplicati v2.23 attivo':kind==='warning'?'Modalità compatibilità':'Confronto archivi bloccato'}</p><p class="text-xs mt-1 leading-relaxed opacity-90">${H(message)}</p></div></div>`;
+    lucide.createIcons();
+}
+async function readRequiredTable(table){
+    const {data,error}=await db.from(table).select('*').limit(2500);
+    if(error)throw new Error(`${table}: ${error.message||'lettura non riuscita'}`);
+    return data||[];
+}
+async function loadReferenceData({silent=false}={}){
+    state.referenceReady=false;state.referenceError='';setControlsDisabled(true);
+    try{
+        const [projects,audio,docs]=await Promise.all([
+            readRequiredTable('PROGETTI'),readRequiredTable('DROPBOX_AUDIO_FILES'),readRequiredTable('DOCUMENTI_PROGETTO')
+        ]);
+        const {data:unified,error:unifiedError}=await db.from('AUDIO_VERSIONI').select('*').limit(5000);
+        if(unifiedError&&!isMissingUnifiedTable(unifiedError))throw new Error(`AUDIO_VERSIONI: ${unifiedError.message||'lettura non riuscita'}`);
+        state.projects=projects.sort((a,b)=>projectLabel(a).localeCompare(projectLabel(b),'it',{numeric:true}));
+        state.dropboxArchive=audio;
+        state.driveArchive=docs.filter(audioDoc);
+        state.unifiedArchive=unifiedError?[]:(unified||[]);
+        state.unifiedMode=unifiedError?'legacy':'v2.23';
+        state.referenceReady=true;
+        if(state.unifiedMode==='v2.23')setReferenceStatus('ok',`${state.unifiedArchive.length} versioni nell’archivio unificato. Progetto e versione vengono salvati insieme oppure non vengono salvati.`);
+        else setReferenceStatus('warning','La migrazione v2.23 non risulta installata. Il confronto usa gli archivi precedenti; la creazione simultanea di nuovo progetto e versione resta bloccata per sicurezza.');
+        setControlsDisabled(false);
+        return true;
+    }catch(error){
+        console.error('Caricamento archivi di confronto',error);
+        state.referenceError=error.message||String(error);
+        setReferenceStatus('error',`Non posso verificare i duplicati: ${state.referenceError}. Ricerca e inserimenti sono disattivati finché il collegamento non torna disponibile.`);
+        if(!silent)KYV.showToast('Archivi di confronto non disponibili. Nessun inserimento consentito.','error');
+        setControlsDisabled(true);
+        return false;
+    }
+}
+function projectOptions(selected=''){
+    return `<option value="">Crea o scegli durante l'inserimento</option>`+state.projects.map(p=>`<option value="${H(p.ID)}" ${String(p.ID)===String(selected)?'selected':''}>${H(projectLabel(p))} · #${H(p.ID)}</option>`).join('');
+}
+function statusBadge(r){
+    const cls={emerald:'border-emerald-500/25 bg-emerald-500/10 text-emerald-100',violet:'border-violet-500/25 bg-violet-500/10 text-violet-100',amber:'border-amber-500/25 bg-amber-500/10 text-amber-100',sky:'border-sky-500/25 bg-sky-500/10 text-sky-100'}[r.tone];
+    return `<span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border ${cls} text-xs font-black"><span class="status-dot bg-${r.tone}-400"></span>${H(r.label)}</span>`;
+}
+function filtered(){
+    return state.results.filter(r=>(state.filter==='all'||r.status===state.filter)&&(!state.query||N([itemName(r.item),r.item.folder,r.item.driveLabel,r.reason,projectLabel(state.projects.find(p=>String(p.ID)===String(r.projectId)))].join(' ')).includes(N(state.query))));
+}
+function renderSummary(){
+    const counts={all:state.results.length,existing:0,version:0,review:0,new:0};state.results.forEach(r=>counts[r.status]++);
+    const cfg=[['all','Trovati','white'],['existing','Già inseriti','emerald'],['version','Nuove versioni','violet'],['review','Da verificare','amber'],['new','Nuovi brani','sky']];
+    document.getElementById('summary').innerHTML=cfg.map(([k,l,c])=>`<button data-summary="${k}" class="kyv-card p-4 text-left hover:border-${c}-500/40"><p class="text-[10px] uppercase text-kyv-text font-black">${l}</p><p class="text-2xl font-black text-${c}-200 mt-1">${counts[k]}</p></button>`).join('');
+}
+function renderResults(){
+    const rows=filtered();document.getElementById('visible-count').textContent=`${rows.length} file visibili su ${state.results.length}.`;
+    const box=document.getElementById('result-list');
+    if(!rows.length){box.innerHTML='<div class="kyv-card p-12 text-center text-kyv-text border-dashed"><i data-lucide="search-x" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>Nessun file con questi filtri.</div>';lucide.createIcons();return}
+    box.innerHTML=rows.map(r=>{
+        const i=r.item,existing=r.status==='existing',selected=state.selected.has(r.key),p=state.projects.find(x=>String(x.ID)===String(r.projectId));
+        return `<article class="archive-row kyv-card p-4 ${selected?'is-selected':''}" data-key="${H(r.key)}" data-status="${r.status}"><input data-action="select" type="checkbox" class="w-5 h-5 accent-indigo-500" ${selected?'checked':''} ${existing||!state.referenceReady?'disabled':''} aria-label="Seleziona ${H(itemName(i))}"><div class="min-w-0"><div class="flex items-center gap-2"><span class="text-[10px] uppercase tracking-wider font-black ${i.source==='dropbox'?'text-blue-300':'text-emerald-300'}">${i.source==='dropbox'?'Dropbox':'Google Drive'}</span>${i.driveLabel?`<span class="text-[10px] text-kyv-text">${H(i.driveLabel)}</span>`:''}</div><h3 class="font-black text-white mt-1 truncate">${H(itemName(i))}</h3><p class="text-[11px] text-kyv-text mt-1 truncate">${H([i.folder,i.size,i.updated||i.date].filter(Boolean).join(' · '))}</p></div><div>${statusBadge(r)}<p class="text-[11px] text-kyv-text mt-2 leading-relaxed">${H(r.reason)}</p></div><div data-wide>${existing?`<p class="text-xs text-emerald-200 font-bold">${p?H(projectLabel(p)):'Archivio audio'}</p>`:`<label class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Progetto da collegare</label><select data-action="project" class="kyv-input mt-1 text-xs">${projectOptions(r.projectId)}</select>`}</div><div data-actions class="flex gap-2 justify-end">${itemLink(i)?`<a href="${H(itemLink(i))}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg border border-kyv-border text-white text-xs font-black">Apri</a>`:''}${existing&&r.projectId?`<a href="scheda_progetto.html?id=${encodeURIComponent(r.projectId)}" class="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-100 text-xs font-black">Progetto</a>`:`<button data-action="manage" ${!state.referenceReady?'disabled':''} class="px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-100 text-xs font-black disabled:opacity-40">${r.projectId?'Collega':'Gestisci'}</button>`}</div></article>`;
+    }).join('');
+    lucide.createIcons();
+}
+function renderSelection(){
+    const count=state.selected.size;
+    document.getElementById('selected-count').textContent=count;
+    document.getElementById('process-selected').disabled=!state.referenceReady||!count;
+}
+function renderAll(){
+    state.results=state.results.map(r=>{const classification=classify(r.item);return {...r,...classification,projectId:r.projectId||classification.projectId}});
+    renderSummary();renderResults();renderSelection();
+}
+async function scanDrive(){
+    if(!state.referenceReady){KYV.showToast('Ricerca bloccata: prima devo caricare gli archivi di confronto.','error');return}
+    const btn=document.getElementById('drive-scan');btn.disabled=true;btn.innerHTML='<i data-lucide="loader-2" class="w-4 h-4 inline mr-2 animate-spin"></i>Ricerca...';
+    try{
+        const out=await KYV_DRIVE.listFiles({accountId:document.getElementById('drive-account').value||'all',audioOnly:true,pages:10});
+        addResults(out.files||[]);
+        document.getElementById('drive-message').textContent=`${(out.files||[]).length} file audio trovati.${out.errors?.length?' Alcuni Drive non hanno risposto: i loro dati non sono inclusi.':''}`;
+        if(out.errors?.length)KYV.showToast(out.errors.join(' · '),'warning');
+    }catch(err){
+        console.error(err);KYV.showToast(err.message||'Errore ricerca Drive.','error');document.getElementById('drive-message').textContent='Ricerca non riuscita: controlla la configurazione Drive.';
+    }finally{
+        btn.disabled=!state.referenceReady;btn.innerHTML='<i data-lucide="search" class="w-4 h-4 inline mr-2"></i>Cerca audio';lucide.createIcons();
+    }
+}
+function pickDropbox(){
+    if(!state.referenceReady){KYV.showToast('Ricerca bloccata: prima devo caricare gli archivi di confronto.','error');return}
+    const tag=document.getElementById('dropboxjs');if(!tag||!window.Dropbox){KYV.showToast('Dropbox Chooser non disponibile.','error');return}
+    Dropbox.choose({success(files){const items=Array.from(files||[]).map(f=>({...f,source:'dropbox',fileName:f.name,title:f.name,date:new Date().toISOString()}));addResults(items);document.getElementById('dropbox-message').textContent=`${items.length} file scelti e confrontati.`},cancel(){},linkType:'preview',multiselect:true,folderselect:false,extensions:['audio']});
+}
+async function manageRow(r){
+    if(!state.referenceReady){KYV.showToast('Inserimento bloccato: confronto archivi non disponibile.','error');return {ok:false}}
+    let project;
+    try{
+        project=r.projectId?await KYV_AUDIO_PROJECT.linkToProject(r.item,r.projectId,{db,projects:state.projects}):await KYV_AUDIO_PROJECT.createFromItem(r.item,{db,projects:state.projects});
+    }catch(err){
+        console.error(err);KYV.showToast(err.message||'Inserimento non riuscito.','error');return {ok:false,error:err};
+    }
+    if(!project)return {ok:false,cancelled:true};
+    const verified=await loadReferenceData({silent:true});
+    if(!verified){
+        KYV.showToast('Salvataggio completato, ma non posso ricaricare gli archivi: verifica prima di continuare.','warning');
+        return {ok:true,verified:false};
+    }
+    state.selected.delete(r.key);renderAll();
+    return {ok:true,verified:true};
+}
+async function processSelected(){
+    const keys=[...state.selected];if(!keys.length||!state.referenceReady)return;
+    if(!confirm(`Vuoi gestire ${keys.length} file selezionati? I file con progetto scelto saranno collegati; per gli altri KYV ti chiederà come procedere.`))return;
+    const btn=document.getElementById('process-selected');btn.disabled=true;
+    let completed=0,failed=0,cancelled=0;
+    for(const key of keys){
+        const r=state.results.find(x=>x.key===key);if(!r||r.status==='existing')continue;
+        const result=await manageRow(r);
+        if(result.ok)completed++;else if(result.cancelled)cancelled++;else failed++;
+        if(!state.referenceReady)break;
+    }
+    renderSelection();
+    if(completed||failed)KYV.showToast(`${completed} completati${failed?`, ${failed} non riusciti`:''}${cancelled?`, ${cancelled} annullati`:''}.`,failed?'warning':'success');
+}
+
+document.addEventListener('DOMContentLoaded',async()=>{
+    loadKyvSidebar('archivio');
+    document.getElementById('drive-account').innerHTML=KYV_DRIVE?.optionHtml?.('all',true)||'<option value="all">Tutti i Drive</option>';
+    await loadReferenceData();renderAll();lucide.createIcons();
+});
+document.getElementById('drive-scan').addEventListener('click',scanDrive);
+document.getElementById('dropbox-pick').addEventListener('click',pickDropbox);
+document.getElementById('result-search').addEventListener('input',e=>{state.query=e.target.value;renderResults()});
+document.getElementById('status-filter').addEventListener('change',e=>{state.filter=e.target.value;renderResults()});
+document.getElementById('process-selected').addEventListener('click',processSelected);
+document.getElementById('clear-results').addEventListener('click',()=>{state.results=[];state.selected.clear();renderAll()});
+document.getElementById('select-visible').addEventListener('click',()=>{if(!state.referenceReady)return;filtered().filter(r=>r.status!=='existing').forEach(r=>state.selected.add(r.key));renderResults();renderSelection()});
+document.getElementById('summary').addEventListener('click',e=>{const b=e.target.closest('[data-summary]');if(!b)return;state.filter=b.dataset.summary;document.getElementById('status-filter').value=state.filter;renderResults()});
+document.getElementById('result-list').addEventListener('change',e=>{const row=e.target.closest('[data-key]');if(!row)return;const r=state.results.find(x=>x.key===row.dataset.key);if(!r)return;if(e.target.dataset.action==='select'){e.target.checked?state.selected.add(r.key):state.selected.delete(r.key);renderSelection();row.classList.toggle('is-selected',e.target.checked)}if(e.target.dataset.action==='project')r.projectId=e.target.value});
+document.getElementById('result-list').addEventListener('click',e=>{const b=e.target.closest('[data-action="manage"]');if(!b)return;const row=b.closest('[data-key]');const r=state.results.find(x=>x.key===row.dataset.key);if(r)manageRow(r)});
+</script>
+</body>
+</html>

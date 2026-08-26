@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Studio Editor Master</title>
+    
+    <!-- Librerie -->
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Script KVY -->
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-schema.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }, 
+                    colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } 
+                } 
+            } 
+        }
+    </script>
+        <link rel="stylesheet" href="kyv-responsive.css">
+<style> 
+        body { background-color: #0f111a; color: #f8fafc; } 
+        ::-webkit-scrollbar { width: 8px; height: 8px; } 
+        ::-webkit-scrollbar-track { background: transparent; } 
+        ::-webkit-scrollbar-thumb { background: #232838; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+        
+        .kyv-input {
+            width: 100%; background-color: #0f111a; border: 1px solid #232838; 
+            color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; outline: none;
+            transition: border-color 0.15s ease-in-out;
+        }
+        .kyv-input:focus-visible { border-color: #6366f1; box-shadow: 0 0 0 2px #0f111a, 0 0 0 4px #6366f1; }
+        .editable-cell { cursor: pointer; transition: background-color 0.2s, outline 0.2s; }
+        .editable-cell:hover { background-color: rgba(99, 102, 241, 0.1); }
+        .editable-cell:focus, .editable-cell:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; background-color: rgba(99, 102, 241, 0.2); color: white; }
+        .saving { background-color: rgba(245, 158, 11, 0.2) !important; color: #fcd34d; }
+        .saved { background-color: rgba(16, 185, 129, 0.2) !important; color: #6ee7b7; transition: background-color 1s, color 1s; }
+        [data-action] { cursor: pointer; }
+
+        /* Stili per ordinamento colonne */
+        th[data-sort] { cursor: pointer; user-select: none; }
+        th[data-sort]:hover { background-color: rgba(99, 102, 241, 0.1); }
+        .sort-icon { opacity: 0.3; transition: opacity 0.2s; margin-left: 4px; display: inline-block; vertical-align: middle; }
+        .sort-active-asc .sort-icon { opacity: 1; color: #34d399; transform: rotate(180deg); }
+        .sort-active-desc .sort-icon { opacity: 1; color: #f87171; }
+        /* Nuove Scrollbar Allargate e Chiare */
+        ::-webkit-scrollbar { width: 16px; height: 16px; } 
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; } 
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 8px; border: 4px solid #0f111a; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .custom-scrollbar { scrollbar-width: auto; scrollbar-color: #4b5563 rgba(255, 255, 255, 0.02); }
+        .custom-scrollbar::-webkit-scrollbar { width: 16px; height: 16px; }
+
+
+        /* v2.9.9 - Studio Editor: colonne compatte e leggibili */
+        body.editor-compact #editor-table-element {
+            table-layout: fixed;
+            min-width: 100%;
+            width: max-content;
+        }
+        body.editor-compact #editor-table-element th,
+        body.editor-compact #editor-table-element td {
+            padding: 0.32rem 0.45rem !important;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        body.editor-compact #editor-table-element th { max-width: 120px; }
+        body.editor-compact #editor-table-element .kyv-col-id { width: 72px; max-width: 72px; }
+        body.editor-compact #editor-table-element .kyv-col-date { width: 105px; max-width: 105px; }
+        body.editor-compact #editor-table-element .kyv-col-money { width: 92px; max-width: 92px; text-align: right; }
+        body.editor-compact #editor-table-element .kyv-col-title { width: 180px; max-width: 180px; }
+        body.editor-compact #editor-table-element .kyv-col-person { width: 150px; max-width: 150px; }
+        body.editor-compact #editor-table-element .kyv-col-status { width: 115px; max-width: 115px; }
+        body.editor-compact #editor-table-element .kyv-col-link { width: 190px; max-width: 190px; }
+        body.editor-compact #editor-table-element .kyv-col-long { width: 220px; max-width: 220px; }
+        body.editor-compact #editor-table-element .kyv-actions-col { width: 72px; max-width: 72px; min-width: 72px; }
+        body.editor-compact #editor-table-element .editable-cell:focus,
+        body.editor-compact #editor-table-element .editable-cell:focus-visible {
+            max-width: 420px !important;
+            min-width: 220px;
+            white-space: normal;
+            overflow: visible;
+            position: relative;
+            z-index: 30;
+            box-shadow: 0 12px 30px rgba(0,0,0,.45);
+        }
+        body.editor-comfort #editor-table-element th,
+        body.editor-comfort #editor-table-element td {
+            padding: 0.75rem 1rem !important;
+            max-width: none;
+        }
+        .density-btn-active {
+            background: rgba(99,102,241,.22) !important;
+            border-color: rgba(129,140,248,.75) !important;
+            color: white !important;
+        }
+    
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm editor-compact">
+
+    <!-- Contenitore Sidebar -->
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        
+        <!-- Header Fisso -->
+        <header class="pt-8 px-4 md:px-8 pb-4 shrink-0 bg-[#0f111a]">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3 transition-colors" onclick="toggleMobileMenu()">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center">
+                            Studio Editor <span class="ml-3 text-[10px] px-2 py-1 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded font-semibold uppercase tracking-wider hidden sm:inline-block">Read-Write</span>
+                        </h2>
+                        <p class="text-kyv-text mt-1 text-xs md:text-sm">Modifica In-Line. Clicca sulle intestazioni per ordinare.</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- BARRA CONTROLLI STICKY (Flexbox anti-accavallamento e permanentemente visibile) -->
+        <div class="px-4 md:px-8 pb-4 flex flex-col lg:flex-row gap-4 shrink-0 items-start lg:items-center justify-between border-b border-kyv-border/50 sticky top-0 z-40 bg-[#0f111a]/95 backdrop-blur-md shadow-md">
+            
+            <!-- CONTENITORE TABS -->
+            <div class="flex-1 min-w-0 w-full overflow-x-auto pb-2 custom-scrollbar">
+                <div class="flex space-x-2 w-max" id="editor-tabs">
+                    <button data-action="load-table" data-table="PROGETTI" id="tab-PROGETTI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-indigo-600 text-white transition-all shadow-lg shadow-indigo-500/20 border border-indigo-500">Progetti</button>
+                    <button data-action="load-table" data-table="CLIENTI" id="tab-CLIENTI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Clienti</button>
+                    <button data-action="load-table" data-table="FATTURE" id="tab-FATTURE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Fatture</button>
+                    <button data-action="load-table" data-table="CONSEGNE_MASTER" id="tab-CONSEGNE_MASTER" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Consegne</button>
+                    <button data-action="load-table" data-table="Spese Extra" id="tab-Spese Extra" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Spese Extra</button>
+                    <button data-action="load-table" data-table="PIANI_FISCALI" id="tab-PIANI_FISCALI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Piani Fiscali</button>
+                    <button data-action="load-table" data-table="EXPORT SIAE VERTICALE" id="tab-EXPORT SIAE VERTICALE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">SIAE Verticale</button>
+                    <button data-action="load-table" data-table="EXPORT SIAE" id="tab-EXPORT SIAE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">SIAE Orizz.</button>
+                    <button data-action="load-table" data-table="ESTRATTO SIAE" id="tab-ESTRATTO SIAE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Estratto SIAE</button>
+                    <!-- NUOVO TAB: ESTRATTO IMAIE -->
+
+                    <button data-action="load-table" data-table="AUDIO_VERSIONI" id="tab-AUDIO_VERSIONI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Versioni Audio</button>
+                    <button data-action="load-table" data-table="DROPBOX_AUDIO_FILES" id="tab-DROPBOX_AUDIO_FILES" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Audio Dropbox</button>
+                    <button data-action="load-table" data-table="INVII_AUDIO" id="tab-INVII_AUDIO" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Invii Audio</button>
+                    <button data-action="load-table" data-table="DOCUMENTI_PROGETTO" id="tab-DOCUMENTI_PROGETTO" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Documenti</button>
+                    <button data-action="load-table" data-table="ESTRATTO_IMAIE" id="tab-ESTRATTO_IMAIE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all flex items-center">
+                        <i data-lucide="music-2" class="w-3 h-3 mr-1"></i> Nuovo IMAIE
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTENITORE RICERCA E AZIONI -->
+            <div class="flex space-x-3 w-full lg:w-auto shrink-0">
+                <div class="relative flex-1 sm:w-64">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-kyv-text"></i>
+                    <input type="text" id="editor-search" placeholder="Ricerca in tabella..." class="w-full bg-kyv-card border border-kyv-border rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors shadow-sm" oninput="debounceFilterEditorTable()">
+                </div>
+                <button data-action="clear-search" class="px-3 py-2 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-kyv-text hover:text-white rounded-lg transition-colors flex items-center text-sm shadow-sm" aria-label="Cancella filtro" title="Cancella filtro">
+                    <i data-lucide="search-x" class="w-4 h-4"></i>
+                </button>
+                <button data-action="export-csv" class="px-3 py-2 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg transition-colors flex items-center text-sm shadow-sm whitespace-nowrap">
+                    <i data-lucide="download" class="w-4 h-4 sm:mr-2 text-kyv-text"></i> <span class="hidden sm:inline">Esporta</span>
+                </button>
+                <button data-action="toggle-density" id="density-toggle" class="px-3 py-2 bg-kyv-card border border-indigo-500/60 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm whitespace-nowrap density-btn-active" title="Alterna colonne compatte e visualizzazione larga">
+                    <i data-lucide="columns-3" class="w-4 h-4 sm:mr-2 text-indigo-300"></i> <span class="hidden sm:inline" id="density-label">Compatta</span>
+                </button>
+                <button data-action="add-record" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm whitespace-nowrap">
+                    <i data-lucide="plus" class="w-4 h-4 sm:mr-2"></i> <span class="hidden sm:inline">Aggiungi</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="editor-view-status" class="px-4 md:px-8 py-2 border-b border-kyv-border/40 bg-[#11141d] text-[11px] text-kyv-text shrink-0" aria-live="polite">Caricamento dati...</div>
+
+        <!-- TABELLA DATI -->
+        <div class="flex-1 overflow-auto bg-kyv-bg relative custom-scrollbar">
+            <table class="w-full text-left text-xs whitespace-nowrap border-collapse border-b border-kyv-border/30" id="editor-table-element" data-kyv-native-sort="1" data-kyv-native-filter="1">
+                <thead class="bg-[#0f111a] sticky top-0 z-10 text-kyv-text uppercase tracking-wider text-[10px]" id="editor-thead"></thead>
+                <tbody class="divide-y divide-kyv-border/30" id="editor-tbody">
+                    <tr><td class="p-8 text-center text-kyv-text"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i> Caricamento tabella in corso...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- MODAL GENERICA (INSERT & UPDATE) -->
+    <div id="modal-dynamic" aria-hidden="true" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-kyv-card border border-kyv-border rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden transform scale-95 transition-transform duration-300 mx-4 max-h-[90vh] flex flex-col" id="modal-dynamic-content">
+            <div class="px-6 py-4 border-b border-kyv-border flex justify-between items-center bg-kyv-bg/50 shrink-0">
+                <h3 class="text-lg font-bold text-white flex items-center" id="dynamic-modal-title"><i data-lucide="database" class="w-5 h-5 mr-2 text-indigo-400"></i> Gestione Record</h3>
+                <button data-action="close-modal" data-target="modal-dynamic" class="text-kyv-text hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-dynamic" class="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <!-- I <datalist> per gli autocompletamenti verranno inseriti qui -->
+                <div id="dynamic-form-fields" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                
+                <div class="pt-6 flex justify-end space-x-3 mt-6 border-t border-kyv-border/50">
+                    <button type="button" data-action="close-modal" data-target="modal-dynamic" class="px-4 py-2 text-sm font-medium text-kyv-text hover:text-white transition-colors">Annulla</button>
+                    <button type="submit" id="btn-dynamic-salva" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors flex items-center shadow-lg shadow-indigo-500/20"><i data-lucide="save" class="w-4 h-4 mr-2"></i> Salva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL ELIMINAZIONE -->
+    <div id="modal-delete" aria-hidden="true" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-kyv-card border border-red-900/50 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 mx-4" id="modal-delete-content">
+            <div class="p-6 flex items-start">
+                <div class="bg-red-500/20 text-red-500 p-3 rounded-full mr-4 shrink-0"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-1">Conferma Eliminazione</h3>
+                    <p class="text-kyv-text text-sm mb-4">Sei sicuro di voler eliminare questo record? L'azione non può essere annullata.</p>
+                </div>
+            </div>
+            <div class="bg-[#0d0f16] px-6 py-4 flex justify-end space-x-3 border-t border-kyv-border">
+                <button data-action="close-modal" data-target="modal-delete" class="px-4 py-2 text-sm font-medium text-kyv-text hover:text-white transition-colors">Annulla</button>
+                <button id="btn-confirm-delete" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-red-500/20">Elimina Record</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" aria-live="polite" class="fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-20 opacity-0 z-50 pointer-events-none flex items-center">
+        <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 mr-2"></i>
+        <span id="toast-message" class="font-medium text-sm">Messaggio</span>
+    </div>
+
+    <script>
+        // Fallback e Gestione Sidebar
+        if(typeof loadKyvSidebar === 'undefined') {
+            window.toggleMobileMenu=()=>{}; 
+            window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4"><p class="text-rose-400 text-xs">Fallback Menu</p></aside>`;};
+        }
+        loadKyvSidebar('editor');
+
+        const fallbackUrl = 'https://sfclxyexipbgiohpwlnl.supabase.co';
+        const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY';
+        
+        let supabaseClient;
+        const DOM = { editorThead: document.getElementById('editor-thead'), editorTbody: document.getElementById('editor-tbody') };
+        
+        // Identificativi e colonne: ora derivati da kyv-schema.js, generato dal markdown Supabase.
+        const tablePKs = window.KYV_DB?.PRIMARY_KEYS || { 
+            'PROGETTI': 'ID',
+            'CLIENTI': 'ID_CLIENTE',
+            'FATTURE': 'ID_FT',
+            'Spese Extra': 'ID_SPESE',
+            'EXPORT SIAE VERTICALE': 'ID_SIAVERT',
+            'EXPORT SIAE': 'Cod. Opera',
+            'ESTRATTO SIAE': 'ID_ECSIAE',
+            'CONSEGNE_MASTER': 'ID_CONSEGNA',
+            'PIANI_FISCALI': 'id',
+            'ESTRATTO_IMAIE': 'id',
+            'AUDIO_VERSIONI': 'ID_VERSIONE',
+            'DROPBOX_AUDIO_FILES': 'ID_FILE',
+            'INVII_AUDIO': 'ID_INVIO',
+            'DOCUMENTI_PROGETTO': 'ID_DOCUMENTO'
+        };
+
+        const tableColumnsFallback = Object.fromEntries(
+            Object.entries(window.KYV_DB?.SCHEMAS || {}).map(([tableName]) => [
+                tableName,
+                window.KYV_DB.getColumns(tableName).map(col => col.id)
+            ])
+        );
+
+        function showToast(msg, isError = false) { return (window.KYV_TOAST ? KYV_TOAST.show(msg, isError ? 'error' : 'success') : KYV.showToast(msg, isError ? 'error' : 'success')); }
+
+        let currentEditorTable = 'PROGETTI', currentEditorData = [], currentEditingRowId = null;
+        const readOnlyTables = new Set(['AUDIO_VERSIONI']);
+        let currentSortColumn = null, currentSortDesc = false;
+        
+        // Array per Datalist (Autocompletamento)
+        let globalProjectsList = []; 
+        let globalInvoicesList = [];
+
+        async function loadEditorTable(tableName) {
+            currentEditorTable = tableName; 
+            currentSortColumn = null; // Reset sort
+            const addButton = document.querySelector('[data-action="add-record"]');
+            const readOnly = readOnlyTables.has(tableName);
+            if(addButton){
+                addButton.disabled = readOnly;
+                addButton.classList.toggle('opacity-40', readOnly);
+                addButton.title = readOnly ? 'Archivio gestito dal flusso audio: sola lettura nello Studio Editor.' : 'Aggiungi record';
+            }
+            
+            // UI Update per i Tabs
+            document.querySelectorAll('#editor-tabs button').forEach(btn => btn.className = 'px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all');
+            const activeTab = document.getElementById('tab-' + tableName); 
+            if(activeTab) activeTab.className = 'px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-indigo-600 text-white transition-all shadow-lg shadow-indigo-500/20 border border-indigo-500';
+            
+            DOM.editorThead.innerHTML = ''; 
+            DOM.editorTbody.innerHTML = '<tr><td class="p-8 text-center text-kyv-text"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i> Lettura dal Database...</td></tr>'; 
+            if(window.lucide) lucide.createIcons({ root: DOM.editorTbody });
+
+            try { 
+                const querySelection = '*';
+                
+                // Fetch data
+                const { data, error } = await supabaseClient.from(tableName).select(querySelection).limit(1000); 
+                if (error) throw error; 
+                
+                let processedData = data;
+                
+                // Hide system columns per SIAE specific tables
+                if (tableName === 'EXPORT SIAE VERTICALE') {
+                    const colsToHide = ['Cod. Opera', 'Codice ISWC', 'Posiz. SIAE', 'Codice IPI', 'Società DEM'];
+                    processedData = data.map(row => { let newRow = { ...row }; colsToHide.forEach(c => delete newRow[c]); return newRow; });
+                } 
+                else if (tableName === 'EXPORT SIAE') {
+                    const colsToHide = ['Codice ISWC', 'Posiz. SIAE', 'Codice IPI'];
+                    processedData = data.map(row => {
+                        let newRow = {}; let stopAdding = false;
+                        for (let key in row) {
+                            if (colsToHide.includes(key)) continue;
+                            if (!stopAdding) { newRow[key] = row[key]; }
+                            if (key === 'Società DRM_13') { stopAdding = true; }
+                        }
+                        return newRow;
+                    });
+                }
+
+                currentEditorData = processedData; 
+                const searchInput = document.getElementById('editor-search');
+                if (searchInput) searchInput.value = '';
+                
+                refreshEditorView(); 
+            } catch (error) { 
+                DOM.editorTbody.innerHTML = `<tr><td class="p-8 text-center text-red-400">Errore comunicazione Database: ${error.message}</td></tr>`; 
+            }
+        }
+
+        function parseForSort(val) {
+            if (val === null || val === undefined || String(val).trim() === '') return { empty: true, type: 'empty', value: '' };
+            if (typeof val === 'number') return { empty: false, type: 'number', value: val };
+            const str = String(val).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+                const time = new Date(str).getTime();
+                if (!Number.isNaN(time)) return { empty: false, type: 'number', value: time };
+            }
+            const numeric = KYV.parseNumber(str);
+            if (/^-?[\d.,\s€]+$/.test(str) && Number.isFinite(numeric)) return { empty: false, type: 'number', value: numeric };
+            return { empty: false, type: 'text', value: str.toLowerCase() };
+        }
+
+        function getEditorViewData() {
+            const searchTxt = KYV.normalize(document.getElementById('editor-search')?.value || '');
+            let rows = currentEditorData.filter(row => !searchTxt || Object.values(row).some(value => value !== null && KYV.normalize(String(value)).includes(searchTxt)));
+            if (currentSortColumn) {
+                rows = rows.map((row, index) => ({ row, index })).sort((left, right) => {
+                    const a = parseForSort(left.row[currentSortColumn]);
+                    const b = parseForSort(right.row[currentSortColumn]);
+                    if (a.empty !== b.empty) return a.empty ? 1 : -1;
+                    let comparison = 0;
+                    if (a.type === 'number' && b.type === 'number') comparison = a.value - b.value;
+                    else comparison = String(a.value).localeCompare(String(b.value), 'it', { numeric: true, sensitivity: 'base' });
+                    if (comparison === 0) comparison = left.index - right.index;
+                    return currentSortDesc ? -comparison : comparison;
+                }).map(item => item.row);
+            }
+            return rows;
+        }
+
+        function updateEditorViewStatus(visibleCount) {
+            const status = document.getElementById('editor-view-status');
+            if (!status) return;
+            const search = document.getElementById('editor-search')?.value.trim();
+            const sort = currentSortColumn ? ` · Ordinamento: ${currentSortColumn} (${currentSortDesc ? 'decrescente' : 'crescente'})` : '';
+            const filter = search ? ` · Filtro: “${search}”` : '';
+            status.textContent = `${visibleCount} righe visualizzate su ${currentEditorData.length}${filter}${sort}`;
+        }
+
+        function refreshEditorView() {
+            const rows = getEditorViewData();
+            renderEditorTable(rows);
+            updateEditorViewStatus(rows.length);
+        }
+
+        window.sortTable = function(colName) {
+            if (currentSortColumn === colName) currentSortDesc = !currentSortDesc;
+            else { currentSortColumn = colName; currentSortDesc = false; }
+            refreshEditorView();
+        }
+
+        window.debounceFilterEditorTable = function() {
+            clearTimeout(window.debounceTimer);
+            window.debounceTimer = setTimeout(refreshEditorView, 180);
+        }
+
+
+        function getEditorColumnClass(key) {
+            const raw = String(key || '');
+            const k = raw.toLowerCase();
+            const type = window.KYV_DB?.getType(currentEditorTable, raw) || '';
+            if (raw === (tablePKs[currentEditorTable] || 'id') || /^id(_|$)/i.test(raw) || k === 'id' || k.includes('cod. opera')) return 'kyv-col-id';
+            if (window.KYV_DB?.isDateType(type) || k.includes('data') || k.includes('date')) return 'kyv-col-date';
+            if (window.KYV_DB?.isNumericType(type) || ['fee','roy','importo','prezzo','totale','pagamento','quota'].some(x => k.includes(x))) return 'kyv-col-money';
+            if (['titolo','progetto','opera','descrizione'].some(x => k.includes(x))) return 'kyv-col-title';
+            if (['artista','autore','manager','management','label','cliente','denominazione','cognome','nome'].some(x => k.includes(x))) return 'kyv-col-person';
+            if (['stato','sviluppo','pagata','tipo'].some(x => k.includes(x))) return 'kyv-col-status';
+            if (['link','url','drive','dropbox','contratto'].some(x => k.includes(x))) return 'kyv-col-link';
+            if (['note','messaggio','conferma','testo','contesto'].some(x => k.includes(x))) return 'kyv-col-long';
+            return '';
+        }
+
+        function setEditorDensity(mode = 'compact') {
+            const body = document.body;
+            const compact = mode !== 'comfort';
+            body.classList.toggle('editor-compact', compact);
+            body.classList.toggle('editor-comfort', !compact);
+            const label = document.getElementById('density-label');
+            const btn = document.getElementById('density-toggle');
+            if (label) label.textContent = compact ? 'Compatta' : 'Larga';
+            if (btn) {
+                btn.classList.toggle('density-btn-active', compact);
+                btn.title = compact ? 'Colonne compatte attive. Clicca per vista larga.' : 'Vista larga attiva. Clicca per compattare le colonne.';
+            }
+            try { localStorage.setItem('kyv-editor-density', compact ? 'compact' : 'comfort'); } catch (_) {}
+        }
+
+        function renderEditorTable(dataArray) {
+            const sourceRow = dataArray?.[0] || currentEditorData?.[0];
+            if(!sourceRow) { const message=readOnlyTables.has(currentEditorTable)?'Nessuna versione presente. Usa Archivio Musicale per collegare i file.':'Nessun dato. Usa il pulsante "Aggiungi" per creare un record.'; DOM.editorThead.innerHTML = ''; DOM.editorTbody.innerHTML = `<tr><td class="p-8 text-center text-kyv-text">${message}</td></tr>`; return; }
+
+            const keys = Object.keys(sourceRow); 
+            const pk = tablePKs[currentEditorTable] || 'id'; // default fallback a 'id'
+            
+            const isProgetti = currentEditorTable === 'PROGETTI'; 
+            const isFatture = currentEditorTable === 'FATTURE';
+            const isReadOnly = readOnlyTables.has(currentEditorTable);
+            const thPad = 'px-2 py-2 text-[10px]'; 
+            const tdPad = 'px-2 py-1.5'; 
+            const textSize = 'text-[10.5px]';
+            
+            let trHead = ['<tr>']; 
+            keys.forEach(k => {
+                let sortClass = ''; let iconHtml = '<i data-lucide="arrow-down" class="w-3 h-3 sort-icon"></i>';
+                if (currentSortColumn === k) sortClass = currentSortDesc ? 'sort-active-desc' : 'sort-active-asc';
+                const colClass = getEditorColumnClass(k);
+                trHead.push(`<th class="${thPad} ${colClass} font-semibold border-b border-kyv-border/60 transition-colors ${sortClass}" data-sort="${KYV.safeHtml(k)}" title="${KYV.safeHtml(k)} · clicca per ordinare"><div class="flex items-center group/th cursor-pointer min-w-0"><span class="truncate">${KYV.safeHtml(k)}</span> ${iconHtml}</div></th>`);
+            }); 
+            trHead.push(`<th class="${thPad} kyv-actions-col font-semibold border-b border-kyv-border/60 text-center sticky right-0 bg-kyv-card/90">Azioni</th></tr>`); 
+            DOM.editorThead.innerHTML = trHead.join('');
+            
+            let htmlBody = [];
+            dataArray.forEach(row => {
+                htmlBody.push(`<tr class="hover:bg-kyv-border/30 transition-colors group ${textSize}">`);
+                keys.forEach(key => {
+                    let val = row[key] !== null ? row[key] : ''; 
+                    const colClass = getEditorColumnClass(key);
+                    let isForeignKey = key === 'IDFT' || key === 'ID_PROGETTO' || key === 'Progetto_Collegato'; 
+                    
+                    let cellStyle = '';
+                    if (isProgetti) cellStyle = 'max-w-[150px] truncate';
+                    if (isFatture && key === 'Descrizione') cellStyle = 'max-w-[120px] truncate';
+
+                    if (isForeignKey && val !== '') {
+                        let targetTable = key === 'IDFT' ? 'FATTURE' : 'PROGETTI'; 
+                        htmlBody.push(`<td class="${tdPad} ${colClass} border-r border-kyv-border/20 font-mono bg-kyv-card/20 select-none cursor-pointer hover:bg-indigo-500/10 transition-colors group/ref" data-action="open-ref" data-table="${KYV.safeHtml(targetTable)}" data-id="${KYV.safeHtml(val)}" title="Apri record collegato"><span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-1 rounded text-[10px] whitespace-nowrap group-hover/ref:bg-indigo-500/40"><i data-lucide="external-link" class="w-3 h-3 inline mr-1"></i>Ref: ${KYV.safeHtml(val)}</span></td>`);
+                    } else if (isReadOnly || key === pk || key === 'created_at') { 
+                        htmlBody.push(`<td class="${tdPad} ${colClass} border-r border-kyv-border/20 font-mono text-kyv-text/60 bg-kyv-card/20 select-none">${KYV.safeHtml(val)}</td>`);
+                    } else { 
+                        htmlBody.push(`<td class="${tdPad} ${colClass} ${cellStyle} border-r border-transparent group-hover:border-kyv-border/50 outline-none editable-cell transition-all cursor-text" contenteditable="true" data-original="${KYV.safeHtml(val)}" data-id="${KYV.safeHtml(row[pk])}" data-col="${KYV.safeHtml(key)}" title="${KYV.safeHtml(val)}">${KYV.safeHtml(val)}</td>`); 
+                    }
+                });
+                htmlBody.push(isReadOnly
+                    ? `<td class="${tdPad} kyv-actions-col text-center sticky right-0 bg-[#0d0f16]/90 border-l border-kyv-border/20 text-emerald-300" title="Gestito da Archivio Musicale"><i data-lucide="shield-check" class="w-4 h-4 inline"></i></td></tr>`
+                    : `<td class="${tdPad} kyv-actions-col text-center sticky right-0 bg-[#0d0f16]/90 group-hover:bg-[#12151e] transition-colors border-l border-kyv-border/20 whitespace-nowrap"><button data-action="edit-record" data-id="${KYV.safeHtml(row[pk])}" class="text-kyv-text hover:text-indigo-400 p-1 rounded transition-colors mr-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button data-action="delete-record" data-id="${KYV.safeHtml(row[pk])}" class="text-kyv-text hover:text-red-500 p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`);
+            });
+            DOM.editorTbody.innerHTML = htmlBody.length
+                ? htmlBody.join('')
+                : `<tr><td colspan="${keys.length + 1}" class="p-8 text-center text-kyv-text"><i data-lucide="search-x" class="w-6 h-6 mx-auto mb-2 text-slate-500"></i>Nessun record corrisponde al filtro. Cancella o modifica la ricerca.</td></tr>`;
+            if(window.lucide) lucide.createIcons({ root: document.getElementById('editor-table-element') });
+        }
+
+        function openDynamicModal(rowId = null) {
+            currentEditingRowId = rowId; const modal = document.getElementById('modal-dynamic');
+            document.getElementById('dynamic-modal-title').innerHTML = rowId ? `<i data-lucide="edit" class="w-5 h-5 mr-2 text-indigo-400"></i> Modifica (${currentEditorTable})` : `<i data-lucide="plus-circle" class="w-5 h-5 mr-2 text-indigo-400"></i> Nuovo (${currentEditorTable})`;
+            
+            const pk = tablePKs[currentEditorTable] || 'id'; 
+            let keys = currentEditorData.length > 0 ? Object.keys(currentEditorData[0]) : (tableColumnsFallback[currentEditorTable] || []); 
+            keys = keys.filter(k => k !== pk && k !== 'created_at' && k !== '_RowNumber');
+            let rowData = rowId ? currentEditorData.find(r => r[pk] == rowId) : null; 
+            
+            let datalistHtml = '';
+            if (globalProjectsList.length > 0) {
+                datalistHtml += `<datalist id="projects-list">`;
+                [...globalProjectsList].sort((a,b)=>String((a.ARTISTA||'')+' '+(a.TITOLO||'')).localeCompare(String((b.ARTISTA||'')+' '+(b.TITOLO||'')), 'it', {numeric:true, sensitivity:'base'})).forEach(p => { datalistHtml += `<option value="${KYV.safeHtml(p.ID)}">${KYV.safeHtml([p.ARTISTA, p.TITOLO].filter(Boolean).join(' - ') || p.TITOLO || 'Senza Titolo')}</option>`; });
+                datalistHtml += `</datalist>`;
+            }
+            if (globalInvoicesList.length > 0) {
+                datalistHtml += `<datalist id="invoices-list">`;
+                globalInvoicesList.forEach(f => { datalistHtml += `<option value="${KYV.safeHtml(f.ID_FT)}">Fattura N° ${KYV.safeHtml(f.Numero || '-')} - ${KYV.safeHtml(f.Denominazione || '')}</option>`; });
+                datalistHtml += `</datalist>`;
+            }
+
+            let html = '';
+            keys.forEach(key => { 
+                let val = rowData && rowData[key] !== null ? String(rowData[key]) : ''; 
+                let isDate = key.toLowerCase().includes('data') || key.toLowerCase().includes('date'); 
+                let inputType = isDate ? 'date' : 'text'; 
+                let extraStyle = isDate ? 'style="color-scheme: dark;"' : '';
+                let extraAttr = ''; let placeholder = "Inserisci..."; let extraClass = '';
+
+                if (key === 'ID_PROGETTO' || key === 'Progetto_Collegato') { extraAttr = 'list="projects-list" autocomplete="off"'; placeholder = "Cerca il titolo del progetto..."; }
+                if (key.toUpperCase() === 'IDFT' || key.toUpperCase() === 'ID_FT') { extraAttr = 'list="invoices-list" autocomplete="off"'; placeholder = "Cerca per numero o nome..."; extraClass = 'auto-fill-invoice'; }
+
+                if (isDate && val && val.length >= 10) { val = val.substring(0, 10); } val = val.replace(/"/g, '&quot;'); 
+                html += `<div><label class="block text-xs font-semibold text-kyv-text mb-1 uppercase tracking-wide truncate">${KYV.safeHtml(key)}</label><input type="${inputType}" data-key="${KYV.safeHtml(key)}" class="kyv-input dyn-input ${extraClass}" value="${KYV.safeHtml(val)}" placeholder="${KYV.safeHtml(placeholder)}" ${extraAttr} ${extraStyle}></div>`; 
+            });
+            
+            const formRoot = document.getElementById('dynamic-form-fields');
+            formRoot.innerHTML = html + datalistHtml;
+            if(window.KYV_FIELD_MEMORY) KYV_FIELD_MEMORY.attachDynamicInputs(formRoot, currentEditorTable);
+            modal.classList.remove('hidden'); 
+            setTimeout(() => { modal.classList.remove('opacity-0'); document.getElementById('modal-dynamic-content').classList.remove('scale-95'); if(window.lucide) lucide.createIcons({root: modal}); }, 10);
+        }
+
+        // Auto-fill trigger per fatture
+        document.getElementById('form-dynamic').addEventListener('input', (e) => {
+            if (e.target.classList.contains('auto-fill-invoice')) {
+                const selectedId = e.target.value; const invoice = globalInvoicesList.find(f => String(f.ID_FT) === String(selectedId));
+                if (invoice) {
+                    const inputs = document.getElementById('form-dynamic').querySelectorAll('.dyn-input');
+                    inputs.forEach(inp => {
+                        const k = inp.dataset.key.toUpperCase();
+                        if (k === 'FT' && !inp.value) inp.value = invoice.Numero || '';
+                        if ((k === 'DATAFATTURA' || k === 'DATA_FATTURA') && !inp.value && invoice.Data) inp.value = invoice.Data.substring(0, 10);
+                        if (k === 'IMPORTO' && !inp.value) inp.value = invoice.PrezzoTotale || invoice.PrezzoUnitario || '';
+                    });
+                    showToast("Dati fattura precompilati!");
+                }
+            }
+        });
+
+        document.getElementById('form-dynamic').addEventListener('submit', async (e) => {
+            e.preventDefault(); const btn = document.getElementById('btn-dynamic-salva'); btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>...'; btn.disabled = true;
+            let payload = {}; 
+            
+            document.querySelectorAll('.dyn-input').forEach(inp => {
+                let val = inp.value.trim(); const colKey = inp.dataset.key;
+                if (val === '') { payload[colKey] = null; }
+                else {
+                    const colType = window.KYV_DB?.getType(currentEditorTable, colKey) || 'text';
+                    if (window.KYV_DB?.isNumericType(colType)) val = KYV.toDbNumber(val);
+                    else if (window.KYV_DB?.isDateType(colType)) val = KYV.toDbDate(val);
+                    payload[colKey] = val;
+                }
+            });
+
+            try {
+                const pk = tablePKs[currentEditorTable] || 'id';
+                if (currentEditingRowId) { const { error } = await supabaseClient.from(currentEditorTable).update(payload).eq(pk, currentEditingRowId); if(error) throw error; showToast("Aggiornato!"); } 
+                else { const { error } = await supabaseClient.from(currentEditorTable).insert([payload]); if(error) throw error; showToast("Inserito!"); }
+                
+                document.getElementById('modal-dynamic').classList.add('opacity-0'); document.getElementById('modal-dynamic-content').classList.add('scale-95'); setTimeout(() => document.getElementById('modal-dynamic').classList.add('hidden'), 300);
+                loadEditorTable(currentEditorTable);
+            } catch (err) { 
+                console.error(err); showToast("Errore di formato dati", true); 
+            } finally { 
+                btn.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i> Salva'; btn.disabled = false; if(window.lucide) lucide.createIcons({root: btn.parentElement}); 
+            }
+        });
+
+        // Delegazione Eventi Globale
+        DOM.editorThead.addEventListener('click', (e) => {
+            const header = e.target.closest('th[data-sort]');
+            if (!header || e.target.closest('.kyv-col-resizer')) return;
+            sortTable(header.dataset.sort);
+        });
+
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-action]'); if (!btn) return; const action = btn.dataset.action;
+            if (action === 'load-table') loadEditorTable(btn.dataset.table); 
+            else if (action === 'clear-search') {
+                const input = document.getElementById('editor-search');
+                if (input) input.value = '';
+                refreshEditorView();
+                input?.focus();
+            }
+            else if (action === 'toggle-density') setEditorDensity(document.body.classList.contains('editor-compact') ? 'comfort' : 'compact');
+            else if (action === 'add-record') openDynamicModal(); 
+            else if (action === 'edit-record') openDynamicModal(btn.dataset.id);
+            else if (action === 'delete-record') { window.idToDelete = btn.dataset.id; const modal = document.getElementById('modal-delete'); modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); document.getElementById('modal-delete-content').classList.remove('scale-95'); }, 10); }
+            else if (action === 'close-modal') { const modal = document.getElementById(btn.dataset.target); modal.classList.add('opacity-0'); modal.querySelector('div').classList.add('scale-95'); setTimeout(() => modal.classList.add('hidden'), 300); }
+            else if (action === 'open-ref' || action === 'open-ref-stop') {
+                if (action === 'open-ref-stop') e.stopPropagation(); 
+                currentEditorTable = btn.dataset.table;
+                const pk = tablePKs[currentEditorTable] || 'id';
+                try { const { data, error } = await supabaseClient.from(currentEditorTable).select('*').eq(pk, btn.dataset.id).single(); if (error) throw error; currentEditorData = [data]; openDynamicModal(btn.dataset.id); } catch(err) { showToast("Errore apertura ref.", true); }
+            }
+            else if (action === 'export-csv') {
+                if(!currentEditorData || currentEditorData.length === 0) return; const keys = Object.keys(currentEditorData[0]); let csv = keys.join(',') + '\n'; currentEditorData.forEach(row => csv += keys.map(k => `"${String(row[k] !== null ? row[k] : '').replace(/"/g, '""')}"`).join(',') + '\n');
+                const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `${currentEditorTable}_Export.csv`; link.click(); showToast("Export CSV avviato");
+            }
+        });
+
+        // Conferma eliminazione
+        document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+            const pk = tablePKs[currentEditorTable] || 'id';
+            try {
+                const { error } = await supabaseClient.from(currentEditorTable).delete().eq(pk, window.idToDelete);
+                if (error) throw error;
+                showToast("Record eliminato.");
+                document.getElementById('modal-delete').classList.add('opacity-0'); document.getElementById('modal-delete-content').classList.add('scale-95'); setTimeout(() => document.getElementById('modal-delete').classList.add('hidden'), 300);
+                loadEditorTable(currentEditorTable);
+            } catch (err) { showToast("Errore eliminazione.", true); }
+        });
+
+        // Modifica in linea con salvataggio automatico (onblur)
+        DOM.editorTbody.addEventListener('focusin', (e) => { if (e.target.classList.contains('editable-cell')) e.target.dataset.before = e.target.innerText; });
+        DOM.editorTbody.addEventListener('focusout', async (e) => {
+            if (!e.target.classList.contains('editable-cell')) return; const cell = e.target; const newVal = cell.innerText.trim(); const oldVal = cell.dataset.before ? cell.dataset.before.trim() : ''; if (newVal === oldVal) return;
+            cell.classList.add('animate-pulse', 'text-amber-300');
+            const tableAtEdit = currentEditorTable;
+            const pk = tablePKs[tableAtEdit] || 'id';
+            const rowId = cell.dataset.id;
+            const column = cell.dataset.col;
+            try {
+                let payload = {}; let finalVal = newVal === '' ? null : newVal;
+                const colType = window.KYV_DB?.getType(tableAtEdit, column) || 'text';
+                if (finalVal !== null && window.KYV_DB?.isNumericType(colType)) finalVal = KYV.toDbNumber(finalVal);
+                if (finalVal !== null && window.KYV_DB?.isDateType(colType)) finalVal = KYV.toDbDate(finalVal);
+                payload[column] = finalVal; 
+                 
+                const { error } = await supabaseClient.from(tableAtEdit).update(payload).eq(pk, rowId); 
+                if (error) throw error;
+
+                if (currentEditorTable === tableAtEdit) {
+                    const localRow = currentEditorData.find(row => String(row[pk]) === String(rowId));
+                    if (localRow) localRow[column] = finalVal;
+                    refreshEditorView();
+                }
+                showToast("Aggiornato");
+            } catch (err) { 
+                cell.innerText = oldVal; cell.classList.remove('animate-pulse'); showToast("Errore salvataggio inline", true); 
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const supaUrl = typeof KYV_CONFIG !== 'undefined' ? KYV_CONFIG.SUPABASE_URL : fallbackUrl;
+            const supaKey = typeof KYV_CONFIG !== 'undefined' ? KYV_CONFIG.SUPABASE_KEY : fallbackKey;
+            supabaseClient = KYV.createSupabaseClient();
+            
+            if(window.lucide) lucide.createIcons();
+            setEditorDensity(localStorage.getItem('kyv-editor-density') || 'compact');
+            
+            // Popolamento liste in background
+            supabaseClient.from('PROGETTI').select('ID, TITOLO, ARTISTA').then(({data}) => { if (data) globalProjectsList = data; });
+            supabaseClient.from('FATTURE').select('ID_FT, Numero, Denominazione, Data, PrezzoTotale, PrezzoUnitario').then(({data}) => { if (data) globalInvoicesList = data; });
+
+            loadEditorTable('PROGETTI');
+        });
+    </script>
+</body>
+</html>

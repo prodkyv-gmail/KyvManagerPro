@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Import / Export / Backup DB</title>
+    
+    <!-- Librerie Esterne -->
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Libreria SheetJS per leggere i file Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- Config e Menu -->
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-schema.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }, 
+                    colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } 
+                } 
+            } 
+        }
+    </script>
+        <link rel="stylesheet" href="kyv-responsive.css">
+<style> 
+        body { background-color: #0f111a; color: #f8fafc; } 
+        ::-webkit-scrollbar { width: 8px; height: 8px; } 
+        ::-webkit-scrollbar-track { background: transparent; } 
+        ::-webkit-scrollbar-thumb { background: #232838; border-radius: 4px; }
+        .drag-active { border-color: #6366f1 !important; background-color: rgba(99, 102, 241, 0.1) !important; }
+        /* Nuove Scrollbar Allargate e Chiare */
+        ::-webkit-scrollbar { width: 16px; height: 16px; } 
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; } 
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 8px; border: 4px solid #0f111a; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .custom-scrollbar { scrollbar-width: auto; scrollbar-color: #4b5563 rgba(255, 255, 255, 0.02); }
+        .custom-scrollbar::-webkit-scrollbar { width: 16px; height: 16px; }
+
+
+        .backup-card {
+            background: linear-gradient(135deg, rgba(21,25,35,.98), rgba(15,17,26,.98));
+            border: 1px solid rgba(35,40,56,.95);
+        }
+        .backup-mini {
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+        .restore-table-row { border-bottom: 1px solid rgba(35,40,56,.65); }
+        .restore-table-row:last-child { border-bottom: 0; }
+        .backup-progress-bar {
+            width: 100%; height: 8px; border-radius: 999px; overflow: hidden;
+            background: rgba(15,17,26,.9); border: 1px solid rgba(35,40,56,.9);
+        }
+        .backup-progress-bar > div { height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #22c55e); transition: width .2s ease; }
+
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+
+    <!-- Contenitore Sidebar -->
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
+        <header class="pt-8 px-4 md:px-8 pb-4 border-b border-kyv-border/50 shrink-0 bg-[#0f111a] z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center">
+                            Import <span class="text-purple-400 ml-2">Universale DB</span>
+                        </h2>
+                        <p class="text-kyv-text mt-1 text-xs md:text-sm">Importa file Excel/CSV, esporta backup locale del database e ripristina dati dal PC in modo controllato.</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-auto bg-kyv-bg p-4 md:p-8 space-y-6">
+            
+            <!-- CONTROLLI: Scelta Tabella Bersaglio -->
+            <div class="bg-kyv-card border border-kyv-border rounded-xl p-6 shadow-lg">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                    <i data-lucide="database" class="w-5 h-5 mr-2 text-sky-400"></i> 1. Scegli la Tabella di Destinazione
+                </h3>
+                <div class="max-w-md">
+                    <label class="block text-xs font-semibold text-kyv-text mb-2 uppercase">Tabella Bersaglio</label>
+                    <select id="target-table" onchange="handleTableChange()" class="w-full bg-[#0f111a] border border-kyv-border text-white rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors font-medium">
+                        <option value="CLIENTI">Rubrica CRM (CLIENTI)</option>
+                        <option value="PROGETTI">Progetti Musicali (PROGETTI)</option>
+                        <option value="FATTURE">Fatture & Contabilità (FATTURE)</option>
+                        <option value="CONSEGNE_MASTER">Certificati Dropbox (CONSEGNE_MASTER)</option>
+                        <option value="ESTRATTO SIAE">Estratto SIAE (ESTRATTO SIAE)</option>
+                        <option value="EXPORT SIAE">Export SIAE (EXPORT SIAE)</option>
+                        <option value="EXPORT SIAE VERTICALE">Export SIAE Verticale (EXPORT SIAE VERTICALE)</option>
+                        <option value="ESTRATTO_IMAIE">Estratto Nuovo IMAIE (ESTRATTO_IMAIE)</option>
+                        <option value="PIANI_FISCALI">Piani Fiscali (PIANI_FISCALI)</option>
+                        <option value="Spese Extra">Spese Extra (Spese Extra)</option>
+                    </select>
+                    <button onclick="downloadTemplateCsv()" class="mt-3 px-4 py-2 bg-kyv-bg border border-kyv-border hover:border-purple-500 text-white rounded-lg transition-colors text-xs font-bold flex items-center">
+                        <i data-lucide="file-down" class="w-4 h-4 mr-2 text-purple-400"></i> Scarica template CSV della tabella
+                    </button>
+                    <label class="mt-4 flex items-start gap-3 text-xs text-kyv-text bg-[#0f111a] border border-kyv-border rounded-lg p-3 cursor-pointer select-none">
+                        <input id="skip-duplicates" type="checkbox" checked class="mt-0.5 accent-purple-500">
+                        <span>
+                            <strong class="text-white">Salta record già presenti</strong><br>
+                            <span id="duplicate-hint">Il controllo doppioni cambia in base alla tabella scelta.</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- DRAG & DROP ZONE -->
+            <div id="dropzone" class="border-2 border-dashed border-kyv-border rounded-2xl p-12 text-center transition-all duration-300 bg-kyv-card/50 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500/50 hover:bg-purple-500/5">
+                <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileSelect(event)">
+                <i data-lucide="file-spreadsheet" class="w-16 h-16 text-purple-400 mb-4 opacity-80"></i>
+                <h3 class="text-xl font-bold text-white mb-2">Trascina qui il tuo file Excel</h3>
+                <p class="text-kyv-text text-sm mb-6">Formati supportati: .xlsx, .xls, .csv</p>
+                <button onclick="document.getElementById('file-upload').click()" class="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg shadow-lg shadow-purple-500/30 transition-all flex items-center">
+                    <i data-lucide="search" class="w-4 h-4 mr-2"></i> Sfoglia nel PC
+                </button>
+            </div>
+
+            <!-- BACKUP & RIPRISTINO LOCALE DATABASE -->
+            <section class="backup-card rounded-2xl p-6 shadow-lg space-y-5">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center">
+                            <i data-lucide="hard-drive-download" class="w-5 h-5 mr-2 text-emerald-400"></i> Backup & Ripristino locale database
+                        </h3>
+                        <p class="backup-mini mt-1 max-w-3xl">Scarica sul PC una copia JSON delle tabelle Supabase oppure ripristina dati da un backup locale. Il ripristino è non distruttivo: non cancella dati esistenti e, di default, salta i duplicati.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="downloadLocalDbBackup()" id="btn-backup-db" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors text-xs font-bold flex items-center shadow-lg shadow-emerald-500/20">
+                            <i data-lucide="download-cloud" class="w-4 h-4 mr-2"></i> Backup DB su PC
+                        </button>
+                        <button onclick="document.getElementById('restore-file').click()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-xs font-bold flex items-center shadow-lg shadow-indigo-500/20">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 mr-2"></i> Scegli backup da PC
+                        </button>
+                        <input type="file" id="restore-file" accept=".json,application/json" class="hidden" onchange="handleRestoreBackupFile(event)">
+                    </div>
+                </div>
+
+                <div id="backup-progress" class="hidden space-y-2">
+                    <div class="flex justify-between text-[11px] text-kyv-text"><span id="backup-progress-label">Operazione in corso...</span><span id="backup-progress-count">0%</span></div>
+                    <div class="backup-progress-bar"><div id="backup-progress-fill"></div></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
+                    <div class="bg-[#0f111a] border border-kyv-border rounded-xl p-4">
+                        <div class="font-bold text-white mb-2 flex items-center"><i data-lucide="shield-check" class="w-4 h-4 mr-2 text-emerald-400"></i>Backup locale</div>
+                        <p class="backup-mini">Crea un file tipo <strong>kyv-db-backup-2026-06-30.json</strong> con metadata, schema logico e righe delle tabelle. È utile prima di import pesanti, modifiche massive o migrazioni.</p>
+                    </div>
+                    <div class="bg-[#0f111a] border border-kyv-border rounded-xl p-4">
+                        <div class="font-bold text-white mb-2 flex items-center"><i data-lucide="refresh-cw" class="w-4 h-4 mr-2 text-sky-400"></i>Ripristino controllato</div>
+                        <p class="backup-mini">Legge il JSON dal PC, mostra le tabelle trovate e ti fa scegliere cosa reinserire. Il sistema prova a saltare record già presenti tramite ID, chiavi naturali e confronto completo.</p>
+                    </div>
+                    <div class="bg-[#0f111a] border border-kyv-border rounded-xl p-4">
+                        <div class="font-bold text-white mb-2 flex items-center"><i data-lucide="alert-triangle" class="w-4 h-4 mr-2 text-amber-400"></i>Metodo consigliato</div>
+                        <p class="backup-mini">Fai sempre un backup prima di importare. Per ripristini su database già popolato lascia attivi “salta duplicati” e “mantieni ID backup” solo se vuoi preservare collegamenti tra tabelle.</p>
+                    </div>
+                </div>
+
+                <div id="restore-preview" class="hidden bg-[#0f111a] border border-kyv-border rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-kyv-border flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                        <div>
+                            <h4 class="font-bold text-white flex items-center"><i data-lucide="database-backup" class="w-4 h-4 mr-2 text-indigo-400"></i>Anteprima backup caricato</h4>
+                            <p id="restore-summary" class="backup-mini mt-1">Nessun backup caricato.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-3 items-center">
+                            <label class="flex items-center gap-2 backup-mini cursor-pointer"><input id="restore-skip-duplicates" type="checkbox" checked class="accent-indigo-500"> Salta duplicati</label>
+                            <label class="flex items-center gap-2 backup-mini cursor-pointer"><input id="restore-keep-ids" type="checkbox" checked class="accent-indigo-500"> Mantieni ID originali</label>
+                            <label class="flex items-center gap-2 backup-mini cursor-pointer"><input id="restore-auto-safety-backup" type="checkbox" checked class="accent-emerald-500"> Backup sicurezza prima</label>
+                            <button onclick="simulateLocalRestore()" id="btn-simulate-restore" class="px-4 py-2 bg-sky-700 hover:bg-sky-600 text-white rounded-lg transition-colors text-xs font-bold flex items-center">
+                                <i data-lucide="shield-check" class="w-4 h-4 mr-2"></i> Verifica
+                            </button>
+                            <button onclick="restoreLocalBackup()" id="btn-restore-db" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors text-xs font-bold flex items-center">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i> Ripristina selezionate
+                            </button>
+                        </div>
+                    </div>
+                    <div id="restore-tables" class="max-h-72 overflow-auto custom-scrollbar"></div>
+                    <div id="restore-safety-report" class="hidden border-t border-kyv-border p-4 backup-mini whitespace-pre-wrap"></div>
+                </div>
+            </section>
+
+            <!-- AREA DI MAPPATURA (Inizialmente Nascosta) -->
+            <div id="mapping-area" class="hidden space-y-4">
+                <div class="flex items-center justify-between bg-kyv-card p-4 rounded-xl border border-kyv-border">
+                    <div class="flex items-center">
+                        <i data-lucide="git-merge" class="w-6 h-6 text-emerald-400 mr-3"></i>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">2. Mappatura Colonne</h3>
+                            <p class="text-xs text-kyv-text">Abbina le colonne del tuo Excel ai campi della tabella scelta.</p>
+                        </div>
+                    </div>
+                    <button onclick="executeImport()" id="import-btn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg shadow-emerald-500/30 transition-all flex items-center">
+                        <i data-lucide="arrow-down-to-line" class="w-4 h-4 mr-2"></i> Importa nel DB
+                    </button>
+                </div>
+
+                <div class="bg-kyv-card border border-kyv-border rounded-xl overflow-x-auto shadow-lg">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr id="mapping-headers" class="bg-[#0f111a] border-b border-kyv-border">
+                                <!-- I select di mappatura appariranno qui -->
+                            </tr>
+                            <tr id="excel-headers" class="bg-[#0f111a]/50 border-b border-kyv-border text-kyv-text text-xs uppercase tracking-wider">
+                                <!-- Le intestazioni originali dell'Excel appariranno qui -->
+                            </tr>
+                        </thead>
+                        <tbody id="preview-body" class="divide-y divide-kyv-border/50 text-sm">
+                            <!-- Le righe di anteprima dell'Excel appariranno qui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Fallback di Sicurezza se config.js non viene caricato
+        const fallbackUrl = 'https://sfclxyexipbgiohpwlnl.supabase.co';
+        const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY';
+        
+        const supaUrl = typeof KYV_CONFIG !== 'undefined' ? KYV_CONFIG.SUPABASE_URL : fallbackUrl;
+        const supaKey = typeof KYV_CONFIG !== 'undefined' ? KYV_CONFIG.SUPABASE_KEY : fallbackKey;
+        const supabaseClient = KYV.createSupabaseClient();
+
+        // --- SCHEMI DEL DATABASE KYV STUDIO ---
+        // Allineati al markdown Supabase in kyv-schema.js.
+        const DB_SCHEMAS = Object.fromEntries(
+            (window.KYV_DB?.TABLES || []).map(tableName => [
+                tableName,
+                window.KYV_DB.getColumns(tableName).map(col => ({
+                    id: col.id,
+                    label: `${col.id} · ${col.type}`,
+                    type: col.type,
+                    primary: col.primary,
+                    identity: col.identity
+                }))
+            ])
+        );
+
+        // Chiavi naturali usate per evitare import duplicati.
+        // Ogni gruppo è una possibile identità del record: basta che uno combaci per saltare la riga.
+        const DEDUPE_RULES = {
+            'CLIENTI': [ ['Email'], ['Partita_IVA'], ['Nome_Denominazione'] ],
+            'PROGETTI': [ ['Codice_ISRC'], ['TITOLO', 'ARTISTA'], ['TITOLO', 'Nome_Vero_Artista'] ],
+            'FATTURE': [ ['ID_FT'], ['Numero', 'Data'], ['ProgressivoInvio'] ],
+            'CONSEGNE_MASTER': [ ['Hash_File'], ['Link_Dropbox'], ['Progetto', 'Cliente', 'Data_Inserimento'] ],
+            'Spese Extra': [ ['Data', 'Descrizione', 'Importo'] ],
+            'ESTRATTO SIAE': [ ['DATA', 'OPERAZIONE', 'IMPORTO'] ],
+            'EXPORT SIAE': [ ['Cod. Opera'], ['Codice ISWC', 'Titolo'] ],
+            'EXPORT SIAE VERTICALE': [ ['Cod. Opera', 'Codice IPI', 'Qualifica'], ['Codice ISWC', 'Cognome / Denominazione', 'Qualifica'] ],
+            'ESTRATTO_IMAIE': [ ['COD_OPERA'], ['TITOLO_OPERA', 'INTERPRETE', 'DATA_PUBBL'] ],
+            'PIANI_FISCALI': [ ['Anno'] ],
+            'DROPBOX_AUDIO_FILES': [ ['ID_FILE'], ['Hash_SHA256'], ['Link_Dropbox'] ],
+            'INVII_AUDIO': [ ['ID_INVIO'], ['ID_FILE', 'Data_Invio', 'Destinatario'] ],
+            'DOCUMENTI_PROGETTO': [ ['ID_DOCUMENTO'], ['ID_PROGETTO', 'Tipo_Documento', 'Titolo_Documento', 'Link_Drive'] ]
+        };
+
+        function populateTargetTables() {
+            const select = document.getElementById('target-table');
+            if (!select || !window.KYV_DB) return;
+            const current = select.value;
+            select.innerHTML = window.KYV_DB.TABLES
+                .map(tableName => `<option value="${KYV.safeHtml(tableName)}">${KYV.safeHtml(window.KYV_DB.TABLE_LABELS[tableName] || tableName)} (${KYV.safeHtml(tableName)})</option>`)
+                .join('');
+            if (current && window.KYV_DB.TABLES.includes(current)) select.value = current;
+        }
+
+        function normalizeValueForDb(tableName, columnName, value) {
+            if (value === undefined || value === null || value === '') return null;
+            const type = window.KYV_DB?.getType(tableName, columnName) || 'text';
+            let val = String(value).trim();
+            if (!val) return null;
+            if (window.KYV_DB?.isDateType(type)) return KYV.toDbDate(val);
+            if (window.KYV_DB?.isNumericType(type)) return KYV.toDbNumber(val);
+            return val;
+        }
+
+        function updateDuplicateHint() {
+            const tableName = document.getElementById('target-table')?.value;
+            const hint = document.getElementById('duplicate-hint');
+            if (!hint) return;
+            const rules = DEDUPE_RULES[tableName] || [];
+            if (!rules.length) {
+                hint.textContent = 'Per questa tabella non è definita una chiave doppioni: verranno controllati solo i doppioni identici dentro al file.';
+                return;
+            }
+            hint.textContent = 'Doppioni controllati su: ' + rules.map(group => group.join(' + ')).join(' oppure ') + '.';
+        }
+
+        // --- BACKUP & RIPRISTINO LOCALE DATABASE ---
+        // v2.11.14: backup/ripristino con verifica preventiva, snapshot di sicurezza e protezione ID.
+        // Non usa mai update/upsert: il restore è solo INSERT e salta sempre collisioni di chiave primaria.
+        let loadedLocalBackup = null;
+
+        function backupTablesList() {
+            const base = window.KYV_DB?.TABLES || Object.keys(DB_SCHEMAS || {});
+            return [...new Set(base)].filter(Boolean);
+        }
+
+        function setBackupProgress(percent, label = 'Operazione in corso...') {
+            const box = document.getElementById('backup-progress');
+            const fill = document.getElementById('backup-progress-fill');
+            const labelEl = document.getElementById('backup-progress-label');
+            const countEl = document.getElementById('backup-progress-count');
+            const value = Math.max(0, Math.min(100, Math.round(percent || 0)));
+            if (box) box.classList.remove('hidden');
+            if (fill) fill.style.width = value + '%';
+            if (labelEl) labelEl.textContent = label;
+            if (countEl) countEl.textContent = value + '%';
+        }
+
+        function hideBackupProgress(delay = 700) {
+            setTimeout(() => {
+                const box = document.getElementById('backup-progress');
+                if (box) box.classList.add('hidden');
+                const fill = document.getElementById('backup-progress-fill');
+                if (fill) fill.style.width = '0%';
+            }, delay);
+        }
+
+        async function fetchAllRows(tableName, pageSize = 1000) {
+            const rows = [];
+            for (let from = 0; ; from += pageSize) {
+                const to = from + pageSize - 1;
+                const { data, error } = await supabaseClient.from(tableName).select('*').range(from, to);
+                if (error) throw error;
+                rows.push(...(data || []));
+                if (!data || data.length < pageSize) break;
+            }
+            return rows;
+        }
+
+        function backupFileName() {
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            return `kyv-db-backup-${stamp}.json`;
+        }
+
+        async function downloadLocalDbBackup() {
+            const btn = document.getElementById('btn-backup-db');
+            const old = btn?.innerHTML;
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Backup...'; }
+            if (window.lucide && btn) lucide.createIcons({ root: btn });
+
+            const tables = backupTablesList();
+            const backup = {
+                meta: {
+                    app: 'KyvManagerPro',
+                    version: '2.11.14',
+                    created_at: new Date().toISOString(),
+                    source: location.href,
+                    tables_count: tables.length
+                },
+                schema: DB_SCHEMAS,
+                tables: {},
+                errors: {}
+            };
+
+            try {
+                for (let i = 0; i < tables.length; i++) {
+                    const tableName = tables[i];
+                    setBackupProgress((i / Math.max(tables.length, 1)) * 100, `Backup tabella ${tableName}...`);
+                    try {
+                        backup.tables[tableName] = await fetchAllRows(tableName);
+                    } catch (err) {
+                        console.warn('Backup tabella saltato:', tableName, err);
+                        backup.tables[tableName] = [];
+                        backup.errors[tableName] = err.message || String(err);
+                    }
+                }
+                backup.meta.rows_count = Object.values(backup.tables).reduce((sum, rows) => sum + (Array.isArray(rows) ? rows.length : 0), 0);
+                setBackupProgress(100, `Backup completato: ${backup.meta.rows_count} righe.`);
+                KYV.downloadTextFile(backupFileName(), JSON.stringify(backup, null, 2), 'application/json;charset=utf-8');
+                const errorCount = Object.keys(backup.errors).length;
+                alert(`✅ Backup creato: ${backup.meta.rows_count} righe in ${tables.length} tabelle.${errorCount ? `\n\n⚠️ Tabelle saltate o non leggibili: ${errorCount}. Dettagli nel file backup.errors.` : ''}`);
+            } catch (err) {
+                console.error('Backup fallito:', err);
+                alert('❌ Backup non riuscito: ' + (err.message || String(err)));
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = old; }
+                if (window.lucide) lucide.createIcons();
+                hideBackupProgress();
+            }
+        }
+
+        function normalizeBackupTables(json) {
+            if (!json || typeof json !== 'object') throw new Error('Backup JSON non valido.');
+            if (json.tables && typeof json.tables === 'object') return json;
+
+            // Compatibilità con vecchi export: { "PROGETTI": [...], "FATTURE": [...] }
+            const tables = {};
+            Object.entries(json).forEach(([key, value]) => {
+                if (Array.isArray(value)) tables[key] = value;
+            });
+            if (!Object.keys(tables).length) throw new Error('Il file non contiene tabelle ripristinabili.');
+            return { meta: { app: 'KyvManagerPro', version: 'legacy/unknown', created_at: null }, tables, schema: {}, errors: {} };
+        }
+
+        function handleRestoreBackupFile(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const parsedBackup = JSON.parse(reader.result);
+                    const validation = window.KYV_DATA_GUARD?.validateBackupObject ? KYV_DATA_GUARD.validateBackupObject(parsedBackup) : { ok: true, errors: [] };
+                    if (!validation.ok) throw new Error(validation.errors.join(' '));
+                    loadedLocalBackup = normalizeBackupTables(parsedBackup);
+                    renderRestorePreview(file.name);
+                    renderRestoreSafetyReport(`Backup validato: ${(validation.validTables || Object.keys(loadedLocalBackup.tables || {})).length} tabelle ripristinabili. Premi “Verifica” prima del ripristino.`, 'info');
+                } catch (err) {
+                    console.error('Backup non leggibile:', err);
+                    loadedLocalBackup = null;
+                    alert('❌ File backup non leggibile: ' + (err.message || String(err)));
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.onerror = () => alert('❌ Errore lettura file backup.');
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function renderRestorePreview(fileName = '') {
+            const box = document.getElementById('restore-preview');
+            const summary = document.getElementById('restore-summary');
+            const list = document.getElementById('restore-tables');
+            if (!loadedLocalBackup || !box || !summary || !list) return;
+            const entries = Object.entries(loadedLocalBackup.tables || {})
+                .filter(([name, rows]) => Array.isArray(rows))
+                .sort(([a], [b]) => a.localeCompare(b, 'it'));
+            const totalRows = entries.reduce((sum, [, rows]) => sum + rows.length, 0);
+            summary.textContent = `${fileName || 'Backup caricato'} · ${entries.length} tabelle · ${totalRows} righe · creato: ${loadedLocalBackup.meta?.created_at || '-'}`;
+            list.innerHTML = entries.map(([name, rows]) => `
+                <label class="restore-table-row flex items-center justify-between gap-4 p-3 cursor-pointer hover:bg-white/5">
+                    <span class="min-w-0">
+                        <span class="block text-white font-bold truncate">${KYV.safeHtml(name)}</span>
+                        <span class="block backup-mini">${rows.length} righe</span>
+                    </span>
+                    <input type="checkbox" data-restore-table="${KYV.safeHtml(name)}" checked class="accent-indigo-500 w-4 h-4">
+                </label>`).join('') || '<div class="p-6 text-amber-200">Nessuna tabella valida nel backup.</div>';
+            box.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons({ root: box });
+        }
+
+
+        function selectedRestoreTables() {
+            return [...document.querySelectorAll('[data-restore-table]:checked')].map(cb => cb.dataset.restoreTable).filter(Boolean);
+        }
+
+        function restoreOptions() {
+            return {
+                keepIds: !!document.getElementById('restore-keep-ids')?.checked,
+                skipDuplicates: !!document.getElementById('restore-skip-duplicates')?.checked,
+                autoSafetyBackup: !!document.getElementById('restore-auto-safety-backup')?.checked
+            };
+        }
+
+        function renderRestoreSafetyReport(text, type = 'info') {
+            const box = document.getElementById('restore-safety-report');
+            if (!box) return;
+            box.classList.remove('hidden');
+            box.className = 'border-t border-kyv-border p-4 backup-mini whitespace-pre-wrap ' + (type === 'error' ? 'text-rose-200' : type === 'warn' ? 'text-amber-200' : 'text-emerald-200');
+            box.textContent = text;
+        }
+
+        async function downloadSafetySnapshotForTables(tableNames, reason = 'pre-restore') {
+            if (!tableNames.length) return null;
+            const snapshot = {
+                meta: (window.KYV_DATA_GUARD?.buildBackupMeta ? KYV_DATA_GUARD.buildBackupMeta({ type: 'safety_snapshot', reason, tables_count: tableNames.length }) : {
+                    app: 'KyvManagerPro', type: 'safety_snapshot', reason, created_at: new Date().toISOString(), tables_count: tableNames.length
+                }),
+                schema: DB_SCHEMAS,
+                tables: {},
+                errors: {}
+            };
+            for (let i = 0; i < tableNames.length; i++) {
+                const tableName = tableNames[i];
+                setBackupProgress((i / Math.max(tableNames.length, 1)) * 100, `Backup sicurezza ${tableName}...`);
+                try { snapshot.tables[tableName] = await fetchAllRows(tableName); }
+                catch (err) {
+                    snapshot.tables[tableName] = [];
+                    snapshot.errors[tableName] = err.message || String(err);
+                }
+            }
+            snapshot.meta.rows_count = Object.values(snapshot.tables).reduce((sum, rows) => sum + (Array.isArray(rows) ? rows.length : 0), 0);
+            const stamp = (window.KYV_DATA_GUARD?.backupStamp ? KYV_DATA_GUARD.backupStamp() : new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19));
+            KYV.downloadTextFile(`kyv-safety-snapshot-${reason}-${stamp}.json`, JSON.stringify(snapshot, null, 2), 'application/json;charset=utf-8');
+            return snapshot;
+        }
+
+        async function filterPrimaryKeyCollisions(tableName, rows) {
+            const pk = window.KYV_DB?.PRIMARY_KEYS?.[tableName] || (DB_SCHEMAS[tableName] || []).find(c => c.primary)?.id;
+            if (!pk) return { insertable: rows, skipped: [] };
+            const withPk = rows.filter(row => row[pk] !== undefined && row[pk] !== null && String(row[pk]).trim() !== '');
+            if (!withPk.length) return { insertable: rows, skipped: [] };
+            let existingIds = new Set();
+            try {
+                if (window.KYV_DATA_GUARD?.fetchExistingPrimaryValues) existingIds = await KYV_DATA_GUARD.fetchExistingPrimaryValues(supabaseClient, tableName, pk);
+                else {
+                    const existing = await fetchAllRows(tableName);
+                    existingIds = new Set(existing.map(row => String(row?.[pk] ?? '').trim()).filter(Boolean));
+                }
+            } catch (err) {
+                console.warn('Controllo collisioni ID non disponibile per', tableName, err);
+                throw new Error(`Controllo sicurezza ID fallito su ${tableName}: ${err.message || String(err)}`);
+            }
+            const insertable = [];
+            const skipped = [];
+            rows.forEach((row, index) => {
+                const id = String(row?.[pk] ?? '').trim();
+                if (id && existingIds.has(id)) skipped.push({ row, index, reason: `ID già presente (${pk}=${id})` });
+                else insertable.push(row);
+            });
+            return { insertable, skipped, pk };
+        }
+
+        async function buildRestorePlan(tableNames, options = restoreOptions()) {
+            const plan = { tables: {}, totals: { source: 0, afterSanitize: 0, insertable: 0, skippedFile: 0, skippedDb: 0, skippedPk: 0, errors: 0 }, errors: [] };
+            for (let t = 0; t < tableNames.length; t++) {
+                const tableName = tableNames[t];
+                setBackupProgress((t / Math.max(tableNames.length, 1)) * 100, `Verifica ${tableName}...`);
+                const sourceRows = loadedLocalBackup.tables?.[tableName] || [];
+                let rows = sourceRows
+                    .map(row => sanitizeRestoreRow(tableName, row, options.keepIds))
+                    .filter(row => Object.keys(row).length > 0);
+                const info = { source: sourceRows.length, afterSanitize: rows.length, insertable: 0, skippedFile: 0, skippedDb: 0, skippedPk: 0, rows: [], errors: [] };
+
+                const fileDedupe = dedupeWithinFile(tableName, rows);
+                rows = fileDedupe.unique;
+                info.skippedFile += fileDedupe.skipped.length;
+
+                // Collisione di chiave primaria: viene SEMPRE saltata, anche se “Salta duplicati” è disattivato.
+                // È la protezione che evita insert con ID già usati o apparenti sovrascritture.
+                try {
+                    const pkFilter = await filterPrimaryKeyCollisions(tableName, rows);
+                    rows = pkFilter.insertable;
+                    info.skippedPk += pkFilter.skipped.length;
+                } catch (err) {
+                    info.errors.push(err.message || String(err));
+                    plan.errors.push(`${tableName}: ${err.message || String(err)}`);
+                }
+
+                if (options.skipDuplicates && rows.length) {
+                    try {
+                        const dbDedupe = await filterRowsAlreadyInDatabase(tableName, rows);
+                        rows = dbDedupe.insertable;
+                        info.skippedDb += dbDedupe.skipped.length;
+                    } catch (err) {
+                        console.warn('Deduplica DB saltata per', tableName, err);
+                        info.errors.push(`Deduplica DB saltata: ${err.message || String(err)}`);
+                    }
+                }
+
+                info.rows = rows;
+                info.insertable = rows.length;
+                plan.tables[tableName] = info;
+                plan.totals.source += info.source;
+                plan.totals.afterSanitize += info.afterSanitize;
+                plan.totals.insertable += info.insertable;
+                plan.totals.skippedFile += info.skippedFile;
+                plan.totals.skippedDb += info.skippedDb;
+                plan.totals.skippedPk += info.skippedPk;
+                plan.totals.errors += info.errors.length;
+            }
+            return plan;
+        }
+
+        function restorePlanText(plan, title = 'Verifica ripristino') {
+            const lines = [
+                `${title}`,
+                `Righe nel backup: ${plan.totals.source}`,
+                `Righe valide dopo pulizia: ${plan.totals.afterSanitize}`,
+                `Righe inseribili: ${plan.totals.insertable}`,
+                `Doppioni nel file saltati: ${plan.totals.skippedFile}`,
+                `ID già presenti saltati sempre: ${plan.totals.skippedPk}`,
+                `Doppioni già nel DB saltati: ${plan.totals.skippedDb}`,
+                plan.totals.errors ? `Avvisi/errori: ${plan.totals.errors}` : 'Avvisi/errori: 0',
+                '',
+                'Dettaglio tabelle:'
+            ];
+            Object.entries(plan.tables).forEach(([tableName, info]) => {
+                lines.push(`- ${tableName}: inseribili ${info.insertable}/${info.source}, file ${info.skippedFile}, ID ${info.skippedPk}, DB ${info.skippedDb}${info.errors.length ? `, avvisi ${info.errors.length}` : ''}`);
+            });
+            if (plan.errors.length) lines.push('', 'Errori sicurezza:', ...plan.errors.map(e => `- ${e}`));
+            return lines.join('\n');
+        }
+
+        async function simulateLocalRestore() {
+            if (!loadedLocalBackup) { alert('Carica prima un file backup.'); return; }
+            const selected = selectedRestoreTables();
+            if (!selected.length) { alert('Seleziona almeno una tabella da verificare.'); return; }
+            const btn = document.getElementById('btn-simulate-restore');
+            const old = btn?.innerHTML;
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Verifica...'; }
+            if (window.lucide && btn) lucide.createIcons({ root: btn });
+            try {
+                const plan = await buildRestorePlan(selected, restoreOptions());
+                setBackupProgress(100, `Verifica completata: ${plan.totals.insertable} righe inseribili.`);
+                renderRestoreSafetyReport(restorePlanText(plan), plan.totals.errors || plan.errors.length ? 'warn' : 'info');
+                if (window.KYV_DATA_GUARD?.log) KYV_DATA_GUARD.log('info', 'restore_simulation', { selected, totals: plan.totals, errors: plan.errors });
+            } catch (err) {
+                console.error('Verifica ripristino fallita:', err);
+                renderRestoreSafetyReport('❌ Verifica fallita: ' + (err.message || String(err)), 'error');
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = old; }
+                if (window.lucide) lucide.createIcons();
+                hideBackupProgress(1200);
+            }
+        }
+
+        async function insertRowsWithFallback(tableName, rows, report) {
+            for (let i = 0; i < rows.length; i += 100) {
+                const chunk = rows.slice(i, i + 100);
+                const { error } = await supabaseClient.from(tableName).insert(chunk);
+                if (!error) {
+                    report.inserted += chunk.length;
+                    continue;
+                }
+                console.warn('Chunk insert fallito, provo riga per riga:', tableName, error);
+                for (const row of chunk) {
+                    const { error: rowError } = await supabaseClient.from(tableName).insert([row]);
+                    if (rowError) report.errors.push({ table: tableName, error: rowError.message || rowError.details || String(rowError), row });
+                    else report.inserted += 1;
+                }
+            }
+        }
+
+        function sanitizeRestoreRow(tableName, row, keepIds) {
+            const columns = DB_SCHEMAS[tableName] || [];
+            const known = new Set(columns.map(c => c.id));
+            const identity = new Set(columns.filter(c => c.identity || c.primary).map(c => c.id));
+            const out = {};
+            Object.entries(row || {}).forEach(([key, value]) => {
+                if (known.size && !known.has(key)) return;
+                if (!keepIds && identity.has(key)) return;
+                if (value === undefined) return;
+                out[key] = value;
+            });
+            return out;
+        }
+
+        async function restoreLocalBackup() {
+            if (!loadedLocalBackup) { alert('Carica prima un file backup.'); return; }
+            const selected = selectedRestoreTables();
+            if (!selected.length) { alert('Seleziona almeno una tabella da ripristinare.'); return; }
+            const options = restoreOptions();
+            if (!confirm(`Ripristinare ${selected.length} tabelle selezionate? Il ripristino è solo INSERT, non cancella e non aggiorna dati esistenti. Gli ID già presenti saranno sempre saltati.`)) return;
+
+            const btn = document.getElementById('btn-restore-db');
+            const old = btn?.innerHTML;
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Ripristino...'; }
+            if (window.lucide && btn) lucide.createIcons({ root: btn });
+
+            const report = { inserted: 0, skippedFile: 0, skippedDb: 0, skippedPk: 0, errors: [], safetyBackupRows: 0 };
+
+            try {
+                if (options.autoSafetyBackup) {
+                    const snapshot = await downloadSafetySnapshotForTables(selected, 'pre-restore');
+                    report.safetyBackupRows = snapshot?.meta?.rows_count || 0;
+                }
+
+                const plan = await buildRestorePlan(selected, options);
+                report.skippedFile = plan.totals.skippedFile;
+                report.skippedDb = plan.totals.skippedDb;
+                report.skippedPk = plan.totals.skippedPk;
+                report.errors.push(...plan.errors.map(error => ({ table: 'verifica', error })));
+
+                for (let t = 0; t < selected.length; t++) {
+                    const tableName = selected[t];
+                    const rows = plan.tables?.[tableName]?.rows || [];
+                    setBackupProgress((t / Math.max(selected.length, 1)) * 100, `Ripristino ${tableName}...`);
+                    await insertRowsWithFallback(tableName, rows, report);
+                }
+
+                setBackupProgress(100, `Ripristino completato: ${report.inserted} righe.`);
+                const restoreReport = {
+                    meta: (window.KYV_DATA_GUARD?.buildBackupMeta ? KYV_DATA_GUARD.buildBackupMeta({ type: 'restore_report', selected_tables: selected }) : { app:'KyvManagerPro', type:'restore_report', created_at:new Date().toISOString(), selected_tables:selected }),
+                    options,
+                    planTotals: plan.totals,
+                    report
+                };
+                const stamp = (window.KYV_DATA_GUARD?.backupStamp ? KYV_DATA_GUARD.backupStamp() : new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19));
+                KYV.downloadTextFile(`kyv-restore-report-${stamp}.json`, JSON.stringify(restoreReport, null, 2), 'application/json;charset=utf-8');
+                const text = `✅ Ripristino completato.\n\nRighe inserite: ${report.inserted}\nID già presenti saltati: ${report.skippedPk}\nDoppioni nel file saltati: ${report.skippedFile}\nGià presenti nel DB saltati: ${report.skippedDb}\nErrori riga: ${report.errors.length}\nBackup sicurezza prima del restore: ${options.autoSafetyBackup ? `${report.safetyBackupRows} righe salvate` : 'non richiesto'}\n\nÈ stato scaricato anche un report JSON del ripristino.`;
+                renderRestoreSafetyReport(text, report.errors.length ? 'warn' : 'info');
+                alert(text);
+                if (window.KYV_DATA_GUARD?.log) KYV_DATA_GUARD.log(report.errors.length ? 'warn' : 'info', 'restore_completed', { selected, report, planTotals: plan.totals });
+            } catch (err) {
+                console.error('Ripristino fallito:', err);
+                const msg = '❌ Ripristino non riuscito: ' + (err.message || String(err));
+                renderRestoreSafetyReport(msg, 'error');
+                if (window.KYV_DATA_GUARD?.log) KYV_DATA_GUARD.log('error', 'restore_failed', { selected, error: err.message || String(err) });
+                alert(msg);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = old; }
+                if (window.lucide) lucide.createIcons();
+                hideBackupProgress();
+            }
+        }
+
+        function csvEscape(value, delimiter = ';') {
+            const raw = String(value ?? '');
+            const escaped = raw.replaceAll('"', '""');
+            return (escaped.includes('"') || escaped.includes('\n') || escaped.includes('\r') || escaped.includes(delimiter))
+                ? `"${escaped}"`
+                : escaped;
+        }
+
+        function downloadTemplateCsv() {
+            const targetTable = document.getElementById('target-table').value;
+            const cols = (DB_SCHEMAS[targetTable] || [])
+                .filter(c => !c.identity)
+                .map(c => c.id);
+            if (!cols.length) return alert('Schema non disponibile per questa tabella.');
+
+            // Excel in italiano apre correttamente CSV con separatore ; e riga sep=;.
+            const csv = '\uFEFFsep=;\n' + cols.map(c => csvEscape(c, ';')).join(';') + '\n';
+            KYV.downloadTextFile(`${targetTable.replaceAll(' ', '_')}_template.csv`, csv, 'text/csv;charset=utf-8');
+        }
+
+        let rawExcelData = []; 
+        let excelColumns = []; 
+
+        // Gestione Menu Sidebar
+        if(typeof loadKyvSidebar !== 'undefined') {
+            loadKyvSidebar('importexport');
+        } else {
+            document.getElementById('kyv-sidebar-container').innerHTML = '<div class="p-4">Fallback Menu</div>';
+        }
+
+        populateTargetTables();
+        updateDuplicateHint();
+        if(window.lucide) lucide.createIcons();
+
+        // --- GESTIONE DRAG & DROP ---
+        const dropzone = document.getElementById('dropzone');
+        
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag-active'); });
+        dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('drag-active'); });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault(); dropzone.classList.remove('drag-active');
+            if (e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFileSelect(e) {
+            if (e.target.files.length) processFile(e.target.files[0]);
+        }
+
+        // --- LETTURA DEL FILE EXCEL / CSV ---
+        function countDelimiterOutsideQuotes(line, delimiter) {
+            let count = 0;
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') i++;
+                    else inQuotes = !inQuotes;
+                } else if (!inQuotes && ch === delimiter) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        function detectCsvDelimiter(text) {
+            const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim()).slice(0, 8);
+            const sepLine = lines.find(l => /^sep\s*=\s*[,;\t]/i.test(l.trim()));
+            if (sepLine) return sepLine.trim().replace(/^sep\s*=\s*/i, '')[0] === '\\' ? '\t' : sepLine.trim().slice(-1);
+
+            const candidates = [';', ',', '\t'];
+            const scores = Object.fromEntries(candidates.map(d => [d, 0]));
+            lines.forEach(line => candidates.forEach(d => { scores[d] += countDelimiterOutsideQuotes(line, d); }));
+            return candidates.sort((a, b) => scores[b] - scores[a])[0] || ';';
+        }
+
+        function splitDelimitedLine(line, delimiter) {
+            const cells = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+                    else inQuotes = !inQuotes;
+                } else if (!inQuotes && ch === delimiter) {
+                    cells.push(current);
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            cells.push(current);
+            return cells.map(cell => cell.trim());
+        }
+
+        function splitDelimitedText(text, delimiter) {
+            const rows = [];
+            let current = '';
+            let inQuotes = false;
+            const raw = String(text || '').replace(/^\uFEFF/, '');
+
+            for (let i = 0; i < raw.length; i++) {
+                const ch = raw[i];
+                if (ch === '"') {
+                    current += ch;
+                    if (inQuotes && raw[i + 1] === '"') { current += raw[i + 1]; i++; }
+                    else inQuotes = !inQuotes;
+                } else if (!inQuotes && (ch === '\n' || ch === '\r')) {
+                    if (ch === '\r' && raw[i + 1] === '\n') i++;
+                    if (current.trim()) rows.push(splitDelimitedLine(current, delimiter));
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            if (current.trim()) rows.push(splitDelimitedLine(current, delimiter));
+            return rows;
+        }
+
+        function makeUniqueHeaders(headers) {
+            const seen = {};
+            return headers.map((header, index) => {
+                let base = String(header || `Colonna_${index + 1}`).trim();
+                if (!base) base = `Colonna_${index + 1}`;
+                const normalized = KYV.normalize(base) || `colonna${index + 1}`;
+                seen[normalized] = (seen[normalized] || 0) + 1;
+                return seen[normalized] === 1 ? base : `${base}_${seen[normalized]}`;
+            });
+        }
+
+        function rowsToObjects(matrix) {
+            if (!matrix.length) return [];
+            if (/^sep\s*=\s*[,;\t]/i.test(String(matrix[0][0] || '').trim())) matrix = matrix.slice(1);
+            if (!matrix.length) return [];
+            const headers = makeUniqueHeaders(matrix[0]);
+            return matrix.slice(1).map(row => {
+                const obj = {};
+                headers.forEach((header, index) => { obj[header] = row[index] ?? ''; });
+                return obj;
+            }).filter(row => Object.values(row).some(v => String(v ?? '').trim() !== ''));
+        }
+
+        function parseCsvText(text) {
+            const delimiter = detectCsvDelimiter(text);
+            const matrix = splitDelimitedText(text, delimiter);
+            const rows = rowsToObjects(matrix);
+            return repairSingleColumnRows(rows);
+        }
+
+        function repairSingleColumnRows(rows) {
+            if (!rows.length) return rows;
+            const keys = Object.keys(rows[0] || {});
+            if (keys.length !== 1) return rows;
+
+            const singleHeader = keys[0];
+            const sampleValue = rows.find(r => String(r[singleHeader] ?? '').includes(';') || String(r[singleHeader] ?? '').includes(',') || String(r[singleHeader] ?? '').includes('\t'))?.[singleHeader] || '';
+            const sample = `${singleHeader}\n${sampleValue}`;
+            const delimiter = detectCsvDelimiter(sample);
+
+            if (countDelimiterOutsideQuotes(singleHeader, delimiter) < 1) return rows;
+            const headers = makeUniqueHeaders(splitDelimitedLine(singleHeader, delimiter));
+            if (headers.length < 2) return rows;
+
+            return rows.map(row => {
+                const cells = splitDelimitedLine(String(row[singleHeader] ?? ''), delimiter);
+                const obj = {};
+                headers.forEach((header, index) => { obj[header] = cells[index] ?? ''; });
+                return obj;
+            }).filter(row => Object.values(row).some(v => String(v ?? '').trim() !== ''));
+        }
+
+        function setLoadedData(rows, fileName = '') {
+            rawExcelData = repairSingleColumnRows(rows || []);
+            if (rawExcelData.length > 0) {
+                excelColumns = Object.keys(rawExcelData[0]);
+                renderMappingInterface();
+                document.getElementById('mapping-area').classList.remove('hidden');
+                alert(`✅ File caricato con successo! Trovate ${rawExcelData.length} righe e ${excelColumns.length} colonne.${fileName ? '\nFile: ' + fileName : ''}`);
+            } else {
+                alert("⚠️ Il file sembra vuoto o non formattato correttamente.");
+            }
+        }
+
+        function processFile(file) {
+            const isCsv = /\.csv$/i.test(file.name || '');
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    if (isCsv) {
+                        setLoadedData(parseCsvText(e.target.result), file.name);
+                        return;
+                    }
+
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { raw: false, defval: '' });
+                    setLoadedData(rows, file.name);
+                } catch (err) {
+                    console.error('Errore lettura file:', err);
+                    alert('❌ Errore durante la lettura del file: ' + err.message);
+                }
+            };
+
+            if (isCsv) reader.readAsText(file, 'UTF-8');
+            else reader.readAsArrayBuffer(file);
+        }
+
+        // --- LOGICA DI MAPPATURA DINAMICA ---
+        function handleTableChange() { updateDuplicateHint(); if (rawExcelData.length > 0) renderMappingInterface(); }
+
+        function renderMappingInterface() {
+            const targetTable = document.getElementById('target-table').value;
+            const availableDbFields = DB_SCHEMAS[targetTable] || [];
+
+            const mappingRow = document.getElementById('mapping-headers');
+            const excelHeaderRow = document.getElementById('excel-headers');
+            const previewBody = document.getElementById('preview-body');
+
+            mappingRow.innerHTML = ''; excelHeaderRow.innerHTML = ''; previewBody.innerHTML = '';
+
+            excelColumns.forEach((colName, index) => {
+                excelHeaderRow.innerHTML += `<th class="px-4 py-3 font-medium">${KYV.safeHtml(colName)}</th>`;
+
+                let selectHTML = `<select id="map-col-${index}" class="w-full min-w-[150px] bg-kyv-card border border-kyv-border text-white text-xs rounded p-2 focus:border-emerald-500 focus:outline-none">
+                                    <option value="IGNORE">-- Ignora Colonna --</option>`;
+                
+                availableDbFields.forEach(field => {
+                    const bestMatch = window.KYV_DB?.findBestField(targetTable, colName);
+                    const isMatch = bestMatch === field.id ? 'selected' : '';
+                    selectHTML += `<option value="${KYV.safeHtml(field.id)}" ${isMatch}>${KYV.safeHtml(field.label)}</option>`;
+                });
+                
+                // Forza Custom
+                selectHTML += `<option value="${KYV.safeHtml(colName)}">[Forza] Usa nome colonna Excel</option>`;
+                selectHTML += `</select>`;
+                
+                mappingRow.innerHTML += `<th class="px-4 py-3 bg-[#0d0f16] border-r border-kyv-border last:border-0">${selectHTML}</th>`;
+            });
+
+            // Preview di 5 righe
+            const previewData = rawExcelData.slice(0, 5);
+            previewData.forEach(row => {
+                let tr = '<tr>';
+                excelColumns.forEach(col => {
+                    let val = row[col];
+                    if (val === undefined || val === null) val = '-';
+                    if (typeof val === 'string' && val.length > 30) val = val.substring(0, 30) + '...';
+                    tr += `<td class="px-4 py-3 border-r border-kyv-border/50 last:border-0 text-kyv-text truncate max-w-[200px]">${KYV.safeHtml(val)}</td>`;
+                });
+                tr += '</tr>';
+                previewBody.innerHTML += tr;
+            });
+        }
+
+        function normalizeDuplicatePart(value) {
+            const raw = String(value ?? '').trim();
+            if (!raw) return '';
+            return KYV.normalize(raw);
+        }
+
+        function getDuplicateRuleGroups(tableName) {
+            return DEDUPE_RULES[tableName] || [];
+        }
+
+        function getCandidateDuplicateKeys(tableName, row) {
+            const groups = getDuplicateRuleGroups(tableName);
+            const keys = [];
+            const pk = window.KYV_DB?.PRIMARY_KEYS?.[tableName];
+            if (pk && row[pk] !== undefined && row[pk] !== null && String(row[pk]).trim() !== '') {
+                keys.push(`${tableName}::PK::${pk}::${normalizeDuplicatePart(row[pk])}`);
+            }
+            groups.forEach(group => {
+                if (group.every(col => row[col] !== undefined && row[col] !== null && String(row[col]).trim() !== '')) {
+                    keys.push(`${tableName}::${group.join('+')}::${group.map(col => normalizeDuplicatePart(row[col])).join('|')}`);
+                }
+            });
+            return keys;
+        }
+
+        function getMappedFallbackKey(tableName, row) {
+            const parts = Object.keys(row)
+                .sort()
+                .filter(col => row[col] !== null && row[col] !== undefined && String(row[col]).trim() !== '')
+                .map(col => `${col}:${normalizeDuplicatePart(row[col])}`);
+            return parts.length ? `${tableName}::FULL::${parts.join('|')}` : '';
+        }
+
+        function dedupeWithinFile(tableName, rows) {
+            const seen = new Set();
+            const unique = [];
+            const skipped = [];
+
+            rows.forEach((row, index) => {
+                const keys = getCandidateDuplicateKeys(tableName, row);
+                const fallbackKey = getMappedFallbackKey(tableName, row);
+                const candidates = keys.length ? keys : [fallbackKey];
+                const duplicateKey = candidates.find(k => k && seen.has(k));
+
+                if (duplicateKey) {
+                    skipped.push({ row, index, reason: 'Duplicato nel file' });
+                } else {
+                    candidates.filter(Boolean).forEach(k => seen.add(k));
+                    unique.push(row);
+                }
+            });
+
+            return { unique, skipped };
+        }
+
+        async function fetchAllExistingRowsForDedupe(tableName) {
+            const groups = getDuplicateRuleGroups(tableName);
+            const pk = window.KYV_DB?.PRIMARY_KEYS?.[tableName];
+            if (!groups.length && !pk) return [];
+
+            const allRows = [];
+            const pageSize = 1000;
+            for (let from = 0; ; from += pageSize) {
+                const to = from + pageSize - 1;
+                const { data, error } = await supabaseClient
+                    .from(tableName)
+                    .select('*')
+                    .range(from, to);
+
+                if (error) {
+                    console.warn('Deduplica non disponibile per questa tabella:', error);
+                    throw new Error(`Controllo doppioni fallito su ${tableName}: ${error.message || error.details}`);
+                }
+                allRows.push(...(data || []));
+                if (!data || data.length < pageSize) break;
+            }
+            return allRows;
+        }
+
+        async function filterRowsAlreadyInDatabase(tableName, rows) {
+            const existingRows = await fetchAllExistingRowsForDedupe(tableName);
+            const existingKeys = new Set();
+            existingRows.forEach(row => getCandidateDuplicateKeys(tableName, row).forEach(k => existingKeys.add(k)));
+
+            const insertable = [];
+            const skipped = [];
+            rows.forEach((row, index) => {
+                const keys = getCandidateDuplicateKeys(tableName, row);
+                if (keys.length && keys.some(k => existingKeys.has(k))) {
+                    skipped.push({ row, index, reason: 'Già presente nel database' });
+                } else {
+                    insertable.push(row);
+                }
+            });
+            return { insertable, skipped, checkedExisting: existingRows.length };
+        }
+
+        // --- IMPORTAZIONE CORAZZATA IN SUPABASE ---
+        async function executeImport() {
+            const btn = document.getElementById('import-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Importazione in corso...`;
+            btn.disabled = true;
+            if(window.lucide) lucide.createIcons({root: btn});
+
+            const targetTable = document.getElementById('target-table').value;
+            const mappingRules = {}; 
+            let atLeastOneMapped = false;
+
+            // 1. Costruiamo la mappa delle regole
+            excelColumns.forEach((colName, index) => {
+                const selectedDbField = document.getElementById(`map-col-${index}`).value;
+                if (selectedDbField !== 'IGNORE') {
+                    mappingRules[colName] = selectedDbField;
+                    atLeastOneMapped = true;
+                }
+            });
+
+            if (!atLeastOneMapped) {
+                alert("⚠️ Devi mappare almeno una colonna per poter importare i dati!");
+                btn.innerHTML = originalText; btn.disabled = false; if(window.lucide) lucide.createIcons();
+                return;
+            }
+
+            // 2. Costruiamo il Payload Pulito per Supabase
+            let cleanPayload = [];
+
+            for (let i = 0; i < rawExcelData.length; i++) {
+                let row = rawExcelData[i];
+                let newDbRow = {};
+                let hasData = false; // Flag per saltare le righe completamente vuote
+
+                for (const excelCol in row) {
+                    // Se la colonna dell'excel è stata mappata...
+                    if (mappingRules[excelCol]) {
+                        let val = row[excelCol];
+                        let targetKey = mappingRules[excelCol];
+
+                        // Pulisce e controlla il valore
+                        if (val !== undefined && val !== null && val !== "") {
+                            hasData = true;
+                            
+                            // Conversione coerente con il tipo reale della colonna Supabase.
+                            val = normalizeValueForDb(targetTable, targetKey, val);
+                            if (val !== null && val !== undefined && val !== '') {
+                                newDbRow[targetKey] = val;
+                            }
+                        }
+                    }
+                }
+                
+                // Se la riga ha almeno un campo valido compilato, aggiungila all'array
+                if (hasData && Object.keys(newDbRow).length > 0) {
+                    cleanPayload.push(newDbRow);
+                }
+            }
+
+            // Se l'array è vuoto, c'è un problema nel file
+            if (cleanPayload.length === 0) {
+                alert("⚠️ Errore: Nessun dato valido trovato da importare (o tutte le righe sono vuote).");
+                btn.innerHTML = originalText; btn.disabled = false; if(window.lucide) lucide.createIcons();
+                return;
+            }
+
+            try {
+            // 3. Deduplica opzionale: prima dentro al file, poi contro il database.
+            let skippedInFile = [];
+            let skippedInDb = [];
+            let checkedExisting = 0;
+
+            const fileDedupe = dedupeWithinFile(targetTable, cleanPayload);
+            cleanPayload = fileDedupe.unique;
+            skippedInFile = fileDedupe.skipped;
+
+            if (document.getElementById('skip-duplicates')?.checked) {
+                const dbDedupe = await filterRowsAlreadyInDatabase(targetTable, cleanPayload);
+                cleanPayload = dbDedupe.insertable;
+                skippedInDb = dbDedupe.skipped;
+                checkedExisting = dbDedupe.checkedExisting;
+            }
+
+            if (cleanPayload.length === 0) {
+                alert(`⚠️ Nessun nuovo record da importare.
+
+Doppioni nel file saltati: ${skippedInFile.length}
+Già presenti nel database saltati: ${skippedInDb.length}${checkedExisting ? `
+Record esistenti controllati: ${checkedExisting}` : ''}`);
+                btn.innerHTML = originalText; btn.disabled = false; if(window.lucide) lucide.createIcons();
+                return;
+            }
+
+            // 4. Invio Definitivo a Supabase
+                // Suddividere l'inserimento in blocchi (chunks) per evitare timeout o blocchi API
+                const chunkSize = 200; // Invia 200 righe per volta
+                
+                for (let i = 0; i < cleanPayload.length; i += chunkSize) {
+                    const chunk = cleanPayload.slice(i, i + chunkSize);
+                    
+                    const { error } = await supabaseClient
+                        .from(targetTable)
+                        .insert(chunk);
+
+                    if (error) {
+                        console.error("Errore Chunk " + i + ": ", error);
+                        // Estraiamo il messaggio reale del database
+                        throw new Error(`Inserimento bloccato alla riga ${i}. Messaggio Database: ${error.message || error.details}`);
+                    }
+                }
+
+                alert(`✅ SUCCESSO! ${cleanPayload.length} nuovi record importati nella tabella ${targetTable}.
+
+Doppioni nel file saltati: ${skippedInFile.length}
+Già presenti nel database saltati: ${skippedInDb.length}${checkedExisting ? `
+Record esistenti controllati: ${checkedExisting}` : ''}`);
+                
+                // Reset Interfaccia
+                document.getElementById('mapping-area').classList.add('hidden');
+                rawExcelData = [];
+                document.getElementById('file-upload').value = '';
+
+            } catch (err) {
+                console.error("Errore importazione finale:", err);
+                alert("❌ ERRORE GRAVE DURANTE L'IMPORTAZIONE:\n" + err.message + "\n\nVerifica su Supabase che i Nomi delle Colonne (Lettere Maiuscole, Trattini) siano esattamente identici a quelli scelti nel menu a tendina.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                if(window.lucide) lucide.createIcons();
+            }
+        }
+    </script>
+</body>
+</html>
