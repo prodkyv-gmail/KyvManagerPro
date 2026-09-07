@@ -2,8 +2,8 @@
 
 const KYV_CONFIG = {
     // Chiavi Supabase
-    SUPABASE_URL: 'https://sfclxyexipbgiohpwlnl.supabase.co',
-    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY',
+    SUPABASE_URL: 'https://vppqnolgxtegtxznmgqb.supabase.co',
+    SUPABASE_KEY: 'sb_publishable_BTAf2Cy5EYKgyb_uXdRvaA_iEawerhl',
     
     // URL Google Apps Script storico (fallback, usato anche da Calendar)
     GOOGLE_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwcYC4WNK3_fHPp6yvbJiqJUp_MWGKuL0fy6GNz0iAX5H7oGWjnvR2Vqj5wPdtxTpfoWw/exec',
