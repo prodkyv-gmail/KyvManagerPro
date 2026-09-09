@@ -1,6 +1,6 @@
 {
   "name": "kyv-manager-pro",
-  "version": "2.25.0",
+  "version": "2.26.0",
   "private": true,
   "description": "KYV Studio Manager Pro - static PWA",
   "scripts": {

@@ -253,12 +253,6 @@
     </main>
 
     <script>
-        // Fallback di Sicurezza se config.js non viene caricato
-        const fallbackUrl = 'https://sfclxyexipbgiohpwlnl.supabase.co';
-        const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY';
-        
-        const supaUrl = typeof KYV_CONFIG !== 'undefined' ? KYV_CONFIG.SUPABASE_URL : fallbackUrl;
-        const supaKey = typeof KYV_CONFIG !== 'undefined' ? KYV_CONFIG.SUPABASE_KEY : fallbackKey;
         const supabaseClient = KYV.createSupabaseClient();
 
         // --- SCHEMI DEL DATABASE KYV STUDIO ---

@@ -1,5 +1,5 @@
 // kyv-auth.js - Protezione centralizzata per KyvManagerPro
-// v2.25: usa lo stesso client Supabase dell'app e rende private tutte le pagine operative.
+// v2.26: usa esclusivamente il client Supabase condiviso dell'app.
 (function(){
     let client = null;
     let warned = false;
@@ -9,10 +9,6 @@
         return (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
     }
 
-    function isSupabaseLoaded(){
-        return !!(window.supabase && typeof window.supabase.createClient === 'function');
-    }
-
     function getClient(options={}){
         if (client) return client;
         if (window.KYV_SUPABASE_CLIENT) {
@@ -20,32 +16,16 @@
             return client;
         }
 
-        if (!isSupabaseLoaded()) {
+        if (!window.KYV || typeof window.KYV.createSupabaseClient !== 'function') {
             if (options.log && !warned) {
-                console.info('[KYV_AUTH] Supabase JS non ancora pronto.');
+                console.info('[KYV_AUTH] Client KYV non ancora pronto.');
                 warned = true;
             }
             return null;
         }
 
-        if (window.KYV && typeof KYV.createSupabaseClient === 'function') {
-            try {
-                client = KYV.createSupabaseClient();
-                return client;
-            } catch (e) {
-                if (options.log) console.warn('[KYV_AUTH] Supabase non disponibile', e);
-                return null;
-            }
-        }
-
-        if (!window.KYV_CONFIG) return null;
         try {
-            client = window.supabase.createClient(
-                window.KYV_CONFIG.SUPABASE_URL,
-                window.KYV_CONFIG.SUPABASE_KEY,
-                { auth: { storageKey: 'kyv-manager-auth-token' } }
-            );
-            window.KYV_SUPABASE_CLIENT = client;
+            client = KYV.createSupabaseClient();
             return client;
         } catch (e) {
             if (options.log) console.warn('[KYV_AUTH] Supabase non disponibile', e);

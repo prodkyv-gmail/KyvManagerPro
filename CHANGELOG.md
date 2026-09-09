@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.26.0 - Centro operativo
+
+- Integrati nella coda della Panoramica i follow-up presenti in `PROGETTI`, usando `Prossimo_Followup`, `Priorita_Followup`, `Ultimo_Sollecito`, `Esito_Ascolto` e `Note_Followup`.
+- Aggiunti filtro Follow-up, ordinamento per scadenza e priorità, collegamento diretto alla Scheda Progetto e riepilogo dedicato nello Stato operativo.
+- Rimossi URL e chiavi Supabase legacy dalle pagine: il browser usa unicamente `KYV.createSupabaseClient()` e `KYV_CONFIG`, mantenendo sessione e JWT necessari alle policy RLS.
+- Nessuna modifica allo schema Supabase e nessuna nuova migrazione.
+
 ## v2.25.0 - Stabilizzazione tecnica
 
 - Uniformato il login al client Supabase centrale `KYV.createSupabaseClient()`.
