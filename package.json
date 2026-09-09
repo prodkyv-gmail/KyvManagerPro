@@ -1,0 +1,11 @@
+{
+  "name": "kyv-manager-pro",
+  "version": "2.25.0",
+  "private": true,
+  "description": "KYV Studio Manager Pro - static PWA",
+  "scripts": {
+    "check:js": "node tools/check-js-syntax.js",
+    "check:assets": "node tools/check-local-assets.js",
+    "check": "npm run check:js && npm run check:assets"
+  }
+}
