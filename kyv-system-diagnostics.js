@@ -37,9 +37,9 @@
   async function checkSupabase(){
     const item = { group:'Database', title:'Supabase', ok:false, message:'Controllo non eseguito.' };
     try{
-      if(!window.supabase) throw new Error('Libreria Supabase JS non caricata.');
       if(!window.KYV_CONFIG?.SUPABASE_URL || !window.KYV_CONFIG?.SUPABASE_KEY) throw new Error('Config Supabase assente.');
-      const db = window.KYV?.createSupabaseClient ? window.KYV.createSupabaseClient() : window.supabase.createClient(KYV_CONFIG.SUPABASE_URL, KYV_CONFIG.SUPABASE_KEY);
+      if(!window.KYV?.createSupabaseClient) throw new Error('Client KYV non caricato.');
+      const db = window.KYV.createSupabaseClient();
       const { error, count } = await db.from('PROGETTI').select('*', { count:'exact', head:true });
       if(error) throw error;
       item.ok = true;

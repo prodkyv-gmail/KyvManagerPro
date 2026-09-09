@@ -103,8 +103,6 @@
         if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback Menu</aside>`;};}
         loadKyvSidebar('correlazione');
 
-        const fallbackUrl = 'https://sfclxyexipbgiohpwlnl.supabase.co';
-        const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY';
         const supabaseClient = KYV.createSupabaseClient();
 
         const fmtEuro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });

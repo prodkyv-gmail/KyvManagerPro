@@ -1,4 +1,10 @@
-# KyvManagerPro v2.24 — Percorso guidato e azioni dirette
+# KyvManagerPro v2.26 — Centro operativo
+
+## v2.26 — Follow-up nella Panoramica
+
+La Panoramica include ora i follow-up dei progetti nella coda delle attività: il filtro dedicato mostra scadenza, priorità, ultimo sollecito, esito di ascolto e note, ordinati per urgenza. Ogni riga apre direttamente la Scheda Progetto e il radar operativo riassume quanti follow-up sono presenti e quanti richiedono attenzione immediata.
+
+Tutte le pagine usano il client condiviso `KYV.createSupabaseClient()` e la sola configurazione `KYV_CONFIG`; sono stati rimossi gli URL e le chiavi legacy rimasti nel codice. La release non modifica lo schema Supabase e mantiene la sessione autenticata necessaria alla RLS esistente.
 
 ## v2.24 — Un’unica prossima azione per ogni brano
 

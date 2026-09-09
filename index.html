@@ -133,12 +133,13 @@
                     <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4">
                         <div>
                             <h3 class="kyv-section-title text-white flex items-center"><i data-lucide="list-todo" class="w-5 h-5 text-indigo-300 mr-2"></i>Attività da chiudere</h3>
-                            <p class="text-xs text-kyv-text mt-1">Una sola lista ordinata per urgenza, ricavata dai dati già presenti.</p>
+                            <p class="text-xs text-kyv-text mt-1">Una sola lista ordinata per urgenza, inclusi i follow-up dei progetti.</p>
                         </div>
                         <span id="activity-count" class="kyv-chip">0 attività</span>
                     </div>
                     <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2 mb-3" aria-label="Filtra attività">
                         <button class="activity-filter active" data-activity-filter="all" onclick="setActivityFilter('all')">Tutte</button>
+                        <button class="activity-filter" data-activity-filter="followup" onclick="setActivityFilter('followup')">Follow-up</button>
                         <button class="activity-filter" data-activity-filter="sessioni" onclick="setActivityFilter('sessioni')">Sessioni</button>
                         <button class="activity-filter" data-activity-filter="fatture" onclick="setActivityFilter('fatture')">Fatture</button>
                         <button class="activity-filter" data-activity-filter="documenti" onclick="setActivityFilter('documenti')">Documenti</button>
@@ -150,7 +151,7 @@
                     <div class="flex items-center justify-between gap-3 mb-4">
                         <div>
                             <h3 class="kyv-section-title text-white flex items-center"><i data-lucide="radio-tower" class="w-5 h-5 text-cyan-300 mr-2"></i>Stato operativo</h3>
-                            <p class="text-xs text-kyv-text mt-1">I quattro segnali principali.</p>
+                            <p class="text-xs text-kyv-text mt-1">I cinque segnali principali.</p>
                         </div>
                     </div>
                     <div id="ops-radar" class="grid grid-cols-2 gap-3"></div>
@@ -204,8 +205,6 @@
         
         loadKyvSidebar('dashboard');
 
-        const fallbackUrl = 'https://sfclxyexipbgiohpwlnl.supabase.co';
-        const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmY2x4eWV4aXBiZ2lvaHB3bG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTIwMDUsImV4cCI6MjA5NjY4ODAwNX0.6HJpyQGJBh4Gxyk4gcG6svm_b066XUvoyNk2UI8EHaY';
         let supabaseClient;
 
         const fmtEuro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
@@ -307,21 +306,25 @@
                 list.innerHTML = '<div class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-6 text-center text-sm text-emerald-100 font-bold"><i data-lucide="check-circle-2" class="w-6 h-6 mx-auto mb-2"></i>Nessuna attività nel filtro selezionato.</div>';
             } else {
                 const visuals = {
+                    followup: { icon: 'message-circle-clock', box: 'border-rose-500/25 bg-rose-500/10 text-rose-200', label: 'Follow-up' },
                     sessioni: { icon: 'calendar-clock', box: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200', label: 'Sessioni' },
                     fatture: { icon: 'receipt', box: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200', label: 'Fatture' },
                     documenti: { icon: 'folder-lock', box: 'border-sky-500/25 bg-sky-500/10 text-sky-200', label: 'Documenti' },
                     protezione: { icon: 'shield-alert', box: 'border-amber-500/25 bg-amber-500/10 text-amber-200', label: 'Protezione' }
                 };
                 list.innerHTML = rows.map(item => {
-                    const view = visuals[item.type];
+                    const view = visuals[item.type] || visuals.sessioni;
+                    const badge = item.badge || (item.priority >= 95 ? 'Urgente' : item.priority >= 78 ? 'Priorità' : '');
                     const urgency = item.priority >= 95
-                        ? '<span class="rounded-full border border-rose-500/25 bg-rose-500/10 text-rose-100 px-2 py-1 text-[9px] font-black uppercase">Urgente</span>'
+                        ? `<span class="rounded-full border border-rose-500/25 bg-rose-500/10 text-rose-100 px-2 py-1 text-[9px] font-black uppercase">${safe(badge)}</span>`
                         : item.priority >= 78
-                            ? '<span class="rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-100 px-2 py-1 text-[9px] font-black uppercase">Priorità</span>'
-                            : '';
+                            ? `<span class="rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-100 px-2 py-1 text-[9px] font-black uppercase">${safe(badge)}</span>`
+                            : badge
+                                ? `<span class="rounded-full border border-cyan-500/25 bg-cyan-500/10 text-cyan-100 px-2 py-1 text-[9px] font-black uppercase">${safe(badge)}</span>`
+                                : '';
                     return `<a href="${item.href}" class="kyv-activity-row">
                         <span class="w-10 h-10 rounded-xl border ${view.box} flex items-center justify-center"><i data-lucide="${view.icon}" class="w-4 h-4"></i></span>
-                        <span class="min-w-0"><span class="flex flex-wrap items-center gap-2"><span class="text-[9px] uppercase tracking-wider font-black text-kyv-text">${view.label}</span>${urgency}</span><strong class="block text-sm text-white truncate mt-1">${safe(item.title)}</strong><span class="block text-xs text-kyv-text truncate mt-1">${safe(item.subtitle)}</span></span>
+                        <span class="min-w-0"><span class="flex flex-wrap items-center gap-2"><span class="text-[9px] uppercase tracking-wider font-black text-kyv-text">${view.label}</span>${urgency}</span><strong class="block text-sm text-white truncate mt-1">${safe(item.title)}</strong><span class="block text-xs text-kyv-text truncate mt-1">${safe(item.subtitle)}</span>${item.meta ? `<span class="block text-[11px] text-slate-400 truncate mt-1" title="${safe(item.meta)}">${safe(item.meta)}</span>` : ''}</span>
                         <i data-lucide="arrow-up-right" class="w-4 h-4 text-kyv-text"></i>
                     </a>`;
                 }).join('');
@@ -347,7 +350,59 @@
             const hasAudio = (p) => audioData.some(a => String(a.ID_PROGETTO || '') === String(p.ID));
             const activities = [];
 
+            const followupFields = ['Prossimo_Followup', 'Priorita_Followup', 'Ultimo_Sollecito', 'Esito_Ascolto', 'Note_Followup'];
+            const hasFollowup = (p) => followupFields.some(field => hasValue(p[field]));
+            const followupPriority = (p, nextDelta) => {
+                let score = 65;
+                if (nextDelta !== null) {
+                    if (nextDelta < 0) score = 130 + Math.min(Math.abs(nextDelta), 20);
+                    else if (nextDelta === 0) score = 128;
+                    else if (nextDelta <= 3) score = 112;
+                    else if (nextDelta <= 7) score = 100;
+                    else if (nextDelta <= 30) score = 82;
+                    else score = 68;
+                } else {
+                    const daysFromSolicit = days(p.Ultimo_Sollecito);
+                    if (daysFromSolicit !== null && daysFromSolicit <= -10) score = 96 + Math.min(Math.abs(daysFromSolicit) - 10, 14);
+                }
+                const namedPriority = String(p.Priorita_Followup || '').toLowerCase();
+                if (namedPriority.includes('urgente')) score += 25;
+                else if (namedPriority.includes('alta')) score += 12;
+                else if (namedPriority.includes('media')) score += 4;
+                else if (namedPriority.includes('bassa')) score -= 5;
+                if (/in attesa|nessuna risposta|da sollecitare/i.test(String(p.Esito_Ascolto || ''))) score += 8;
+                return score;
+            };
+            const followupBadge = (nextDelta) => {
+                if (nextDelta === null) return 'Da pianificare';
+                if (nextDelta < 0) return `Scaduto da ${Math.abs(nextDelta)}g`;
+                if (nextDelta === 0) return 'Oggi';
+                return `Tra ${nextDelta}g`;
+            };
+
             (projData || []).forEach(p => {
+                if (hasFollowup(p) && hasValue(p.ID)) {
+                    const nextDelta = days(p.Prossimo_Followup);
+                    const namedPriority = p.Priorita_Followup || 'Non indicata';
+                    const followupMeta = [
+                        hasValue(p.Prossimo_Followup) ? `Prossimo: ${fmtDate(p.Prossimo_Followup)}` : 'Prossimo: da pianificare',
+                        `Priorità: ${namedPriority}`,
+                        hasValue(p.Ultimo_Sollecito) ? `Ultimo sollecito: ${fmtDate(p.Ultimo_Sollecito)}` : null,
+                        hasValue(p.Esito_Ascolto) ? `Esito: ${p.Esito_Ascolto}` : null,
+                        hasValue(p.Note_Followup) ? `Note: ${p.Note_Followup}` : null
+                    ].filter(Boolean).join(' · ');
+                    activities.push({
+                        type: 'followup',
+                        priority: followupPriority(p, nextDelta),
+                        badge: followupBadge(nextDelta),
+                        title: `Follow-up: ${projectLabel(p)}`,
+                        subtitle: hasValue(p.Esito_Ascolto) ? p.Esito_Ascolto : `Priorità ${namedPriority}`,
+                        meta: followupMeta,
+                        href: `scheda_progetto.html?id=${encodeURIComponent(p.ID)}`,
+                        followupDue: nextDelta !== null ? nextDelta <= 0 : /urgente|alta/i.test(String(p.Priorita_Followup || ''))
+                    });
+                }
+
                 const sessionDelta = days(p.Data_Sessione);
                 if (!isDone(p) && sessionDelta !== null && sessionDelta >= -14 && sessionDelta <= 30) {
                     activities.push({
@@ -401,19 +456,25 @@
             const toneMap = {
                 cyan: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-100/80 text-cyan-300',
                 amber: 'border-amber-500/20 bg-amber-500/10 text-amber-100/80 text-amber-300',
-                emerald: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-100/80 text-emerald-300'
+                emerald: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-100/80 text-emerald-300',
+                rose: 'border-rose-500/20 bg-rose-500/10 text-rose-100/80 text-rose-300'
             };
-            const mini = (title, value, subtitle, icon, tone, href) => {
+            const mini = (title, value, subtitle, icon, tone, href, filter = '') => {
                 const parts = (toneMap[tone] || toneMap.cyan).split(' ');
+                const filterAction = filter ? ` onclick="setActivityFilter('${filter}')"` : '';
                 return `
-                <a href="${href}" class="rounded-2xl border ${parts[0]} ${parts[1]} p-4 hover:-translate-y-0.5 transition-transform">
+                <a href="${href}"${filterAction} class="rounded-2xl border ${parts[0]} ${parts[1]} p-4 hover:-translate-y-0.5 transition-transform">
                     <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider font-black ${parts[2]}">${title}</p><i data-lucide="${icon}" class="w-4 h-4 ${parts[3]}"></i></div>
                     <h4 class="text-2xl font-black text-white mt-2">${value}</h4>
                     <p class="text-xs text-kyv-text mt-1">${subtitle}</p>
                 </a>`;
             };
+            const followupActivities = dashboardActivities.filter(item => item.type === 'followup');
+            const dueFollowups = followupActivities.filter(item => item.followupDue);
+            const firstFollowup = followupActivities[0];
             const radar = document.getElementById('ops-radar');
             if (radar) radar.innerHTML = [
+                mini('Follow-up', followupActivities.length, firstFollowup ? `${dueFollowups.length} da fare ora · ${safe(firstFollowup.title.replace(/^Follow-up:\s*/, ''))}` : 'Nessun follow-up pianificato', 'message-circle-clock', 'rose', '#studio-pulse', 'followup'),
                 mini('Sessioni 30g', upcomingSessions.length, upcomingSessions[0] ? `${safe(upcomingSessions[0].ARTISTA || 'Prossima')} · ${fmtDate(upcomingSessions[0].Data_Sessione)}` : 'Nessuna sessione datata', 'mic-2', 'cyan', 'sessioni.html'),
                 mini('Master aperti', masterTodo.length, masterTodo[0] ? `${safe(masterTodo[0].ARTISTA || '')} · ${safe(masterTodo[0].TITOLO || '')}` : 'Nessuna consegna aperta', 'send', 'amber', 'sessioni.html?filter=master'),
                 mini('Uscite 90g', releases.length, releases[0] ? `${safe(releases[0].ARTISTA || 'Prossima')} · ${fmtDate(releases[0].Data_Pubblicazione)}` : 'Nessuna uscita futura', 'rocket', 'emerald', 'sessioni.html?filter=uscite'),
@@ -478,8 +539,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             supabaseClient = KYV.createSupabaseClient();
+            const session = await window.KYV_AUTH?.requireAuth?.();
+            if (!session) return;
             
             Chart.defaults.color = '#94a3b8'; Chart.defaults.font.family = 'Inter';
             function cc(id, type, cfg) { return document.getElementById(id) ? new Chart(document.getElementById(id).getContext('2d'), {type, ...cfg}) : null; }
