@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio - Pipeline & Opportunità</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#10131b">
+    <script>
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="config.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+    <script src="kyv-responsive.js" defer></script>
+    <script src="kyv-pipeline-v228.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <link rel="stylesheet" href="kyv-theme.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } }
+        };
+    </script>
+    <style>
+        body{background:#0f111a;color:#f8fafc}.custom-scrollbar{scrollbar-width:auto;scrollbar-color:#4b5563 rgba(255,255,255,.02)}
+        ::-webkit-scrollbar{width:14px;height:14px}::-webkit-scrollbar-track{background:rgba(255,255,255,.02)}::-webkit-scrollbar-thumb{background:#4b5563;border-radius:8px;border:4px solid #0f111a}::-webkit-scrollbar-thumb:hover{background:#6b7280}
+        .pipeline-toolbar{background:rgba(21,25,35,.88);border:1px solid #232838;border-radius:1rem;padding:1rem}
+        .pipeline-input,.pipeline-select{width:100%;background:#0f111a;border:1px solid #232838;color:#f8fafc;border-radius:.75rem;padding:.7rem .8rem;font-size:.78rem;outline:none}.pipeline-input:focus,.pipeline-select:focus{border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,.12)}
+        .pipeline-metric{display:flex;align-items:center;gap:.7rem;background:rgba(21,25,35,.9);border:1px solid #232838;border-radius:1rem;padding:.9rem 1rem;min-width:0}.pipeline-metric strong{display:block;color:white;font-size:1.25rem;line-height:1;font-weight:900}.pipeline-metric span{display:block;color:#94a3b8;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
+        .pipeline-stage-filter{display:inline-flex;align-items:center;gap:.45rem;border:1px solid #232838;background:#151923;color:#94a3b8;border-radius:999px;padding:.55rem .8rem;font-size:.72rem;font-weight:900;white-space:nowrap;transition:.15s ease}.pipeline-stage-filter span{display:inline-flex;min-width:1.3rem;height:1.3rem;align-items:center;justify-content:center;border-radius:999px;background:rgba(148,163,184,.1);color:#cbd5e1;font-size:.65rem}.pipeline-stage-filter:hover{color:#fff;background:#1d2230}.pipeline-stage-filter.active{background:rgba(99,102,241,.16);border-color:rgba(99,102,241,.4);color:#c7d2fe}
+        .pipeline-board{display:flex;gap:1rem;align-items:flex-start;min-height:540px;padding-bottom:1rem}.pipeline-column{width:300px;min-width:300px;background:rgba(21,25,35,.72);border:1px solid #232838;border-radius:1rem;overflow:hidden}.pipeline-column-head{padding:1rem;border-bottom:1px solid #232838;background:rgba(15,17,26,.7);display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}.pipeline-column-head h3{display:flex;align-items:center;gap:.45rem;color:#fff;font-size:.8rem;font-weight:900}.pipeline-column-head p{font-size:.65rem;color:#64748b;margin-top:.3rem;line-height:1.35}.pipeline-column-head>span{display:inline-flex;align-items:center;justify-content:center;min-width:1.8rem;height:1.8rem;border-radius:999px;background:rgba(99,102,241,.12);color:#c7d2fe;font-size:.7rem;font-weight:900}.pipeline-column-body{padding:.7rem;display:flex;flex-direction:column;gap:.65rem;max-height:calc(100vh - 355px);overflow:auto}
+        .pipeline-card{background:#11151e;border:1px solid rgba(51,65,85,.7);border-radius:.85rem;padding:.85rem;box-shadow:0 8px 30px rgba(0,0,0,.12);transition:.15s ease}.pipeline-card:hover{border-color:rgba(99,102,241,.45);transform:translateY(-1px)}.pipeline-pill{display:inline-flex;align-items:center;border-width:1px;border-radius:999px;padding:.22rem .45rem;font-size:.62rem;font-weight:800}.pipeline-open{display:inline-flex;align-items:center;gap:.35rem;color:#c7d2fe;font-size:.7rem;font-weight:900;border:1px solid rgba(99,102,241,.25);background:rgba(99,102,241,.08);border-radius:.65rem;padding:.48rem .65rem}.pipeline-open:hover{background:rgba(99,102,241,.16);color:white}.pipeline-empty{border:1px dashed #2c3345;border-radius:.8rem;padding:1.3rem;text-align:center;color:#64748b;font-size:.7rem}.pipeline-loading,.pipeline-error{min-width:100%;display:flex;align-items:center;justify-content:center;gap:.7rem;border:1px dashed #2c3345;border-radius:1rem;padding:2rem;color:#94a3b8}.pipeline-error{flex-direction:column;color:#fda4af}
+        @media(max-width:768px){.pipeline-column{width:84vw;min-width:84vw}.pipeline-column-body{max-height:none}.pipeline-board{min-height:0}.pipeline-toolbar{padding:.8rem}}
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-sm">
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar">
+            <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 mb-5">
+                <div class="flex items-start gap-3">
+                    <button class="md:hidden kyv-icon-action mt-1" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1"><p class="kyv-eyebrow">Flusso opportunità</p><span class="kyv-chip text-indigo-200">v2.28</span></div>
+                        <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Pipeline & Opportunità</h2>
+                        <p class="text-kyv-text mt-2 text-xs sm:text-sm max-w-3xl">Una vista unica per capire dove si trova ogni brano, quali pitch sono aperti e cosa richiede attenzione.</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 w-full xl:w-auto">
+                    <a href="progetti.html" class="kyv-primary-action flex-1 xl:flex-none"><i data-lucide="list-music" class="w-4 h-4 mr-2"></i>Vista progetti</a>
+                    <button id="pipeline-refresh" class="kyv-icon-action shrink-0" aria-label="Aggiorna pipeline" title="Aggiorna"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+                </div>
+            </header>
+
+            <div id="pipeline-summary" class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4"></div>
+
+            <section class="pipeline-toolbar mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.35fr_1fr_1fr_1fr_auto] gap-2">
+                    <div class="relative"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-slate-500"></i><input id="pipeline-search" class="pipeline-input pl-9" type="search" placeholder="Titolo, artista, stato, note…"></div>
+                    <select id="pipeline-artist" class="pipeline-select"><option value="">Tutti gli artisti</option></select>
+                    <select id="pipeline-partner" class="pipeline-select"><option value="">Label / management</option></select>
+                    <select id="pipeline-priority" class="pipeline-select">
+                        <option value="all">Tutte le priorità</option>
+                        <option value="followup">Solo con follow-up</option>
+                        <option value="scaduti">Follow-up scaduti</option>
+                        <option value="oggi">Follow-up oggi</option>
+                        <option value="7g">Prossimi 7 giorni</option>
+                        <option value="alta">Priorità alta</option>
+                        <option value="media">Priorità media</option>
+                        <option value="bassa">Priorità bassa</option>
+                    </select>
+                    <button id="pipeline-reset" class="px-3 py-2.5 rounded-xl border border-kyv-border bg-kyv-bg hover:bg-kyv-border text-slate-300 text-xs font-black inline-flex items-center justify-center"><i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i>Reset</button>
+                </div>
+                <div class="mt-3 flex items-center justify-between gap-3">
+                    <div id="pipeline-stage-tabs" class="flex gap-2 overflow-x-auto custom-scrollbar pb-1"></div>
+                    <span id="pipeline-count" class="kyv-chip shrink-0">0 progetti</span>
+                </div>
+            </section>
+
+            <div class="overflow-x-auto custom-scrollbar">
+                <div id="pipeline-board" class="pipeline-board"></div>
+            </div>
+
+            <div class="mt-4 text-[11px] text-slate-500 leading-relaxed max-w-4xl">
+                La fase viene calcolata dai dati già presenti in PROGETTI senza modificare lo stato originale. In questo modo diciture storiche come “MANDATA A…” o “PROVINATA DA…” restano intatte e vengono solo interpretate nella pipeline.
+            </div>
+        </section>
+    </main>
+    <script>
+        if (typeof loadKyvSidebar === 'function') loadKyvSidebar('pipeline');
+        if (window.lucide) lucide.createIcons();
+    </script>
+</body>
+</html>
