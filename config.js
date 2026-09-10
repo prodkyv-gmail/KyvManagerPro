@@ -65,6 +65,17 @@ window.KYV_CONFIG = KYV_CONFIG;
             }
         }
 
+        if (currentPage === 'index.html' || currentPage === '') {
+            const quick = document.querySelector('.kyv-quick-actions');
+            if (quick && !quick.querySelector('a[href="pipeline.html"]')) {
+                const a = document.createElement('a');
+                a.href = 'pipeline.html';
+                a.innerHTML = '<i data-lucide="columns-3" class="w-4 h-4 mr-2 text-fuchsia-300"></i>Pipeline';
+                quick.appendChild(a);
+                if (window.lucide) lucide.createIcons({ root: a });
+            }
+        }
+
         document.documentElement.dataset.kyvVersion = version;
         return Boolean(brandVersion && sidebar.querySelector('a[href="pipeline.html"]'));
     }
