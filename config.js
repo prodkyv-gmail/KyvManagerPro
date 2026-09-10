@@ -1,6 +1,8 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
+    APP_VERSION: '2.28',
+
     // Chiavi Supabase
     SUPABASE_URL: 'https://vppqnolgxtegtxznmgqb.supabase.co',
     SUPABASE_KEY: 'sb_publishable_BTAf2Cy5EYKgyb_uXdRvaA_iEawerhl',
@@ -37,6 +39,57 @@ const KYV_CONFIG = {
 
 // Esponi la config anche ai moduli utility.
 window.KYV_CONFIG = KYV_CONFIG;
+
+// Mantiene visibile la versione corrente in tutta l'app e aggiunge la Pipeline alla navigazione.
+(function mountKyvVersionAndPipelineNav(){
+    const version = KYV_CONFIG.APP_VERSION;
+    const currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    let observer;
+
+    function syncUi(){
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return false;
+
+        const brandVersion = sidebar.querySelector('h1 + p');
+        if (brandVersion) brandVersion.textContent = `Manager Pro ${version}`;
+
+        if (!sidebar.querySelector('a[href="pipeline.html"]')) {
+            const projectsLink = sidebar.querySelector('a[href="progetti.html"]');
+            const projectsItem = projectsLink?.closest('li');
+            if (projectsItem) {
+                const active = currentPage === 'pipeline.html';
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="pipeline.html" class="flex items-center px-3 py-2.5 rounded-xl transition-all text-sm font-bold ${active ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/25 shadow-sm shadow-indigo-500/5' : 'text-kyv-text hover:text-white hover:bg-kyv-border/50 border border-transparent'}"><i data-lucide="columns-3" class="w-4 h-4 mr-3 text-fuchsia-300"></i><span>Pipeline</span><span class="ml-auto text-[9px] font-black text-indigo-300/80">2.28</span></a>`;
+                projectsItem.insertAdjacentElement('afterend', li);
+                if (window.lucide) lucide.createIcons({ root: li });
+            }
+        }
+
+        if (currentPage === 'index.html' || currentPage === '') {
+            const quick = document.querySelector('.kyv-quick-actions');
+            if (quick && !quick.querySelector('a[href="pipeline.html"]')) {
+                const a = document.createElement('a');
+                a.href = 'pipeline.html';
+                a.innerHTML = '<i data-lucide="columns-3" class="w-4 h-4 mr-2 text-fuchsia-300"></i>Pipeline';
+                quick.appendChild(a);
+                if (window.lucide) lucide.createIcons({ root: a });
+            }
+        }
+
+        document.documentElement.dataset.kyvVersion = version;
+        return Boolean(brandVersion && sidebar.querySelector('a[href="pipeline.html"]'));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (syncUi() && observer) observer.disconnect();
+    });
+
+    observer = new MutationObserver(() => {
+        if (syncUi()) observer.disconnect();
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    window.setTimeout(() => observer.disconnect(), 5000);
+})();
 
 // Moduli funzionali caricati solo dove servono.
 (function loadKyvFeatureModules(){
