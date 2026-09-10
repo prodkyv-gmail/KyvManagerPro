@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.28.0 - Pipeline & Opportunità
+
+- Aggiunta la nuova pagina `pipeline.html` con vista kanban dei progetti nelle fasi Idea, Sessione, Inviato, In ascolto, Interessamento, Contratto, Produzione, Master e Uscito.
+- La fase viene calcolata dai campi già presenti in `PROGETTI` senza sovrascrivere `STATO` o `SVILUPPO`, preservando diciture storiche e note operative.
+- Aggiunti filtri per artista, label/management, priorità e follow-up, ricerca testuale e filtro per singola fase.
+- Le card sono ordinate per urgenza e mostrano follow-up scaduti/imminenti, priorità, partner e accesso diretto alla Scheda Progetto.
+- Aggiunto riepilogo con progetti visibili, attivi, follow-up nei prossimi 7 giorni e follow-up scaduti.
+- Inserita la voce **Pipeline** nella navigazione globale e resa visibile in tutta l'app la versione corrente **Manager Pro 2.28**.
+- Aggiornato `package.json` a `2.28.0` e la cache PWA a `kyv-studio-v2-28-pipeline-opportunita`.
+- Nessuna nuova tabella e nessuna migrazione Supabase; la pagina usa il client centrale e resta compatibile con RLS.
+
 ## v2.27.0 - Scheda Progetto evoluta
 
 - Aggiunto il modulo `kyv-project-hub-v227.js`, caricato soltanto nella Scheda Progetto.
