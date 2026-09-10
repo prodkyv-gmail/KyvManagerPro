@@ -1,6 +1,8 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
+    APP_VERSION: '2.28',
+
     // Chiavi Supabase
     SUPABASE_URL: 'https://vppqnolgxtegtxznmgqb.supabase.co',
     SUPABASE_KEY: 'sb_publishable_BTAf2Cy5EYKgyb_uXdRvaA_iEawerhl',
@@ -37,6 +39,36 @@ const KYV_CONFIG = {
 
 // Esponi la config anche ai moduli utility.
 window.KYV_CONFIG = KYV_CONFIG;
+
+// Mantiene visibile la versione corrente in tutta l'app e aggiunge la Pipeline alla navigazione.
+(function mountKyvVersionAndPipelineNav(){
+    const version = KYV_CONFIG.APP_VERSION;
+    const currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+
+    function syncUi(){
+        document.querySelectorAll('p, span, small').forEach(el => {
+            if (/^Manager Pro\s+\d/i.test((el.textContent || '').trim())) {
+                el.textContent = `Manager Pro ${version}`;
+            }
+        });
+
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar || sidebar.querySelector('a[href="pipeline.html"]')) return;
+        const projectsLink = sidebar.querySelector('a[href="progetti.html"]');
+        const projectsItem = projectsLink?.closest('li');
+        if (!projectsItem) return;
+
+        const active = currentPage === 'pipeline.html';
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="pipeline.html" class="flex items-center px-3 py-2.5 rounded-xl transition-all text-sm font-bold ${active ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/25 shadow-sm shadow-indigo-500/5' : 'text-kyv-text hover:text-white hover:bg-kyv-border/50 border border-transparent'}"><i data-lucide="columns-3" class="w-4 h-4 mr-3 text-fuchsia-300"></i><span>Pipeline</span><span class="ml-auto text-[9px] font-black text-indigo-300/80">2.28</span></a>`;
+        projectsItem.insertAdjacentElement('afterend', li);
+        if (window.lucide) lucide.createIcons({ root: li });
+    }
+
+    document.addEventListener('DOMContentLoaded', syncUi);
+    const observer = new MutationObserver(syncUi);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+})();
 
 // Moduli funzionali caricati solo dove servono.
 (function loadKyvFeatureModules(){
