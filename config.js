@@ -37,3 +37,14 @@ const KYV_CONFIG = {
 
 // Esponi la config anche ai moduli utility.
 window.KYV_CONFIG = KYV_CONFIG;
+
+// Moduli funzionali caricati solo dove servono.
+(function loadKyvFeatureModules(){
+    const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    if (page === 'scheda_progetto.html') {
+        const script = document.createElement('script');
+        script.src = 'kyv-project-hub-v227.js';
+        script.async = false;
+        document.head.appendChild(script);
+    }
+})();
