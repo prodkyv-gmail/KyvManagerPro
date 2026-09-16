@@ -295,6 +295,11 @@
     return new Error(`${name}: ${msg}`);
   }
 
+  function isPermanentProxyError(err){
+    const msg = String(err?.message || err || '');
+    return /(?:HTTP\s*)?(?:401|403|404|410)\b|deployment eliminato|URL Apps Script non valido/i.test(msg);
+  }
+
   async function fetchJson(account, action, params={}){
     // Su Vercel usiamo prima il proxy serverless /api/drive-proxy:
     // evita CORS, redirect googleusercontent e blocchi MIME/JSONP del browser.
@@ -302,6 +307,9 @@
       if(cfg().GOOGLE_DRIVE_USE_PROXY !== false){
         try{ return await fetchJsonProxy(account, action, params); }
         catch(proxyErr){
+          // Un deployment assente o non autorizzato fallirebbe anche via JSONP.
+          // Evita quindi 26 secondi di attesa e restituisce subito la diagnosi utile.
+          if(isPermanentProxyError(proxyErr)) throw improveDriveError(account, proxyErr);
           // In locale o se /api non è stato ancora deployato, riprova JSONP.
           logDrive('warn', 'fallback:proxy-to-jsonp', {account, action, transport:'proxy', message:proxyErr.message || String(proxyErr)});
           console.warn('[KYV_DRIVE] Proxy non riuscito, provo JSONP:', proxyErr.message || proxyErr);
