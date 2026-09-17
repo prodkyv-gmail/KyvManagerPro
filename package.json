@@ -8,7 +8,7 @@
     "check:assets": "node tools/check-local-assets.js",
     "check:integrations": "node tools/check-integrations.js",
     "check:proxy": "node tools/test-drive-proxy.js",
-    "check": "npm run check:js && npm run check:assets && npm run check:integrations && npm run check:proxy"
+    "check:intake": "node tools/test-manual-intake.js",
+    "check": "npm run check:js && npm run check:assets && npm run check:integrations && npm run check:proxy && npm run check:intake"
   }
 }
-
