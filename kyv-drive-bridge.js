@@ -155,7 +155,7 @@
     return msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('load failed') || msg.includes('cors') || err instanceof TypeError;
   }
 
-  async function fetchWithTimeout(url, timeoutMs=22000){
+  async function fetchWithTimeout(url, timeoutMs=22000, options={}){
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try{
@@ -165,7 +165,9 @@
         credentials:'omit',
         cache:'no-store',
         redirect:'follow',
-        signal: controller.signal
+        signal: controller.signal,
+        ...options,
+        headers: options.headers || undefined
       });
     }finally{
       clearTimeout(timer);
@@ -214,7 +216,13 @@
   async function fetchJsonProxy(account, action, params={}){
     const url = buildProxyUrl(account, action, params);
     logDrive('info', 'request:start', {account, action, transport:'proxy'});
-    const res = await fetchWithTimeout(url, 34000);
+    const session = window.KYV_AUTH?.getSession ? await window.KYV_AUTH.getSession() : null;
+    const token = session?.access_token;
+    if(!token) throw new Error('Sessione Kyv richiesta o scaduta. Accedi di nuovo.');
+    const res = await fetchWithTimeout(url, 34000, {
+      credentials:'same-origin',
+      headers:{ Authorization:`Bearer ${token}` }
+    });
     const txt = await res.text();
     let data;
     try { data = JSON.parse(txt); }
@@ -431,3 +439,4 @@
     isAudioFile, normalizeFile, playbackUrl, extractDriveId, DEFAULT_SCRIPT_URL
   };
 })();
+
