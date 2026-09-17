@@ -64,7 +64,7 @@ function renderKyvMobileBottomNav(activePage = 'dashboard') {
     const items = [
         { page: 'dashboard', href: 'index.html', label: 'Home', icon: 'layout-dashboard' },
         { page: 'calendar', href: 'kyv_calendar.html', label: 'Agenda', icon: 'calendar-days' },
-        { page: 'assistente', href: 'assistente.html', label: 'Percorso', icon: 'route' },
+        { page: 'nuovo', href: 'acquisisci_audio.html', label: 'Nuovo', icon: 'folder-plus' },
         { page: 'progetti', href: 'progetti.html', label: 'Progetti', icon: 'music' },
         { page: 'clienti', href: 'clienti.html', label: 'Rubrica', icon: 'users' },
     ];
@@ -172,6 +172,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
         quote: ['quote', 'autori'],
         rendiconto: ['rendiconto'],
         calendar: ['calendar'],
+        nuovo: ['nuovo'],
         integrazioni: ['integrazioni', 'dropbox', 'drive'],
         ascolto: ['ascolto'],
         importexport: ['importexport'],
@@ -215,6 +216,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
                     <ul class="space-y-1">
                         ${navItem('dashboard', 'index.html', 'layout-dashboard', 'Oggi')}
                         ${navItem('calendar', 'kyv_calendar.html', 'calendar-days', 'Agenda', 'text-blue-300')}
+                        ${navItem('nuovo', 'acquisisci_audio.html', 'folder-plus', 'Nuovo progetto', 'text-cyan-300')}
                         ${navItem('assistente', 'assistente.html', 'route', 'Percorso brano', 'text-violet-300')}
                         ${navItem('archivio', 'archivio_musicale.html', 'folder-search-2', 'Archivio musicale', 'text-cyan-300')}
                         ${navItem('progetti', 'progetti.html', 'music-2', 'Progetti', 'text-indigo-300')}

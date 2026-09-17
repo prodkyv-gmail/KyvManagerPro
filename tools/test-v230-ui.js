@@ -1,0 +1,12 @@
+const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const menu=read('menu.js'),config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js');
+const agenda=menu.indexOf("kyv_calendar.html', 'calendar-days', 'Agenda");
+const nuovo=menu.indexOf("acquisisci_audio.html', 'folder-plus', 'Nuovo progetto");
+assert.ok(agenda>=0&&nuovo>agenda,'Nuovo progetto deve seguire Agenda');
+assert.match(menu,/page: 'nuovo'.*label: 'Nuovo'/);
+assert.match(intake,/<title>KYV · Nuovo progetto<\/title>/);assert.match(intake,/loadKyvSidebar\('nuovo'\)/);
+assert.match(projects,/openNewProjectChoices/);assert.match(projects,/source=drive/);assert.match(projects,/source=dropbox/);assert.match(projects,/startManualProject/);
+assert.doesNotMatch(archive,/hard-drive-search|cloud-search/);assert.doesNotMatch(archive,/id="drive-scan"/);assert.match(archive,/Nuovo progetto da Drive/);
+assert.match(config,/kyv-listen-link-audit\.js/);assert.match(audit,/\.limit\(LIMIT\)/);assert.doesNotMatch(audit,/fetch\(|method:\s*['"]HEAD/);
+console.log('OK: navigazione, scelte progetto, archivio semplificato e audit link v2.30.');

@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const {inspect}=require('../kyv-link-audit-core.js');
+const drive=inspect('https://drive.google.com/file/d/1c-yp45ABCRRC9nsQIQQPbgMpi3vvuWLg/view');
+assert.equal(drive.status,'conditional');assert.equal(drive.provider,'drive');assert.match(drive.playUrl,/uc\?export=download/);
+const dropbox=inspect('https://www.dropbox.com/scl/fi/abcdef12/demo.mp3?rlkey=xyz&dl=0');
+assert.equal(dropbox.status,'conditional');assert.match(dropbox.playUrl,/raw=1/);
+assert.equal(inspect('https://cdn.example.test/demo.mp3').status,'direct');
+assert.equal(inspect('https://example.test/share/123').status,'external');
+assert.equal(inspect('http://example.test/demo.mp3').status,'invalid');
+assert.equal(inspect('https://www.dropbox.com/scl/fo/folder').status,'invalid');
+console.log('OK: classificazione link sicura senza richieste verso cloud.');

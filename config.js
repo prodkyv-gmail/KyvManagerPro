@@ -1,7 +1,7 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
-    APP_VERSION: '2.28',
+    APP_VERSION: '2.30',
 
     // Chiavi Supabase pubblicabili (nessun service_role nel browser).
     SUPABASE_URL: 'https://vppqnolgxtegtxznmgqb.supabase.co',
@@ -62,10 +62,10 @@ window.KYV_CONFIG = KYV_CONFIG;
         if (brandVersion && brandVersion.textContent !== `Manager Pro ${version}`) brandVersion.textContent = `Manager Pro ${version}`;
 
         if (!sidebar.querySelector('a[href="acquisisci_audio.html"]')) {
-            const archiveLink = sidebar.querySelector('a[href="archivio_musicale.html"]');
-            const anchor = archiveLink?.closest('li');
+            const agendaLink = sidebar.querySelector('a[href="kyv_calendar.html"]');
+            const anchor = agendaLink?.closest('li');
             if(anchor){
-                anchor.insertAdjacentElement('afterend', makeItem('acquisisci_audio.html','Acquisisci audio','link',currentPage==='acquisisci_audio.html','NUOVO'));
+                anchor.insertAdjacentElement('afterend', makeItem('acquisisci_audio.html','Nuovo progetto','folder-plus',currentPage==='acquisisci_audio.html','NUOVO'));
                 if(window.lucide) lucide.createIcons();
             }
         }
@@ -81,7 +81,7 @@ window.KYV_CONFIG = KYV_CONFIG;
             const quick = document.querySelector('.kyv-quick-actions');
             if(quick && !quick.querySelector('a[href="acquisisci_audio.html"]')){
                 const a=document.createElement('a');a.href='acquisisci_audio.html';
-                a.innerHTML='<i data-lucide="link" class="w-4 h-4 mr-2 text-cyan-300"></i>Acquisisci audio';
+                a.innerHTML='<i data-lucide="folder-plus" class="w-4 h-4 mr-2 text-cyan-300"></i>Nuovo progetto';
                 quick.prepend(a);if(window.lucide) lucide.createIcons();
             }
             if(quick && !quick.querySelector('a[href="pipeline.html"]')){
@@ -104,5 +104,9 @@ window.KYV_CONFIG = KYV_CONFIG;
     const page=(window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
     if(page==='scheda_progetto.html'){
         const script=document.createElement('script');script.src='kyv-project-hub-v227.js';script.async=false;document.head.appendChild(script);
+    }
+    if(page==='ascolto.html'){
+        const core=document.createElement('script');core.src='kyv-link-audit-core.js';core.async=false;document.head.appendChild(core);
+        const audit=document.createElement('script');audit.src='kyv-listen-link-audit.js';audit.async=false;document.head.appendChild(audit);
     }
 })();
