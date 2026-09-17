@@ -63,10 +63,10 @@ function renderKyvMobileBottomNav(activePage = 'dashboard') {
 
     const items = [
         { page: 'dashboard', href: 'index.html', label: 'Home', icon: 'layout-dashboard' },
+        { page: 'calendar', href: 'kyv_calendar.html', label: 'Agenda', icon: 'calendar-days' },
         { page: 'assistente', href: 'assistente.html', label: 'Percorso', icon: 'route' },
         { page: 'progetti', href: 'progetti.html', label: 'Progetti', icon: 'music' },
         { page: 'clienti', href: 'clienti.html', label: 'Rubrica', icon: 'users' },
-        { page: 'fatture', href: 'fatture.html', label: 'Fatture', icon: 'receipt' },
     ];
 
     const nav = document.createElement('nav');
@@ -171,7 +171,8 @@ function loadKyvSidebar(activePage = 'dashboard') {
         fisco: ['fisco'],
         quote: ['quote', 'autori'],
         rendiconto: ['rendiconto'],
-        integrazioni: ['integrazioni', 'dropbox', 'drive', 'calendar'],
+        calendar: ['calendar'],
+        integrazioni: ['integrazioni', 'dropbox', 'drive'],
         ascolto: ['ascolto'],
         importexport: ['importexport'],
         guida: ['guida'],
@@ -213,6 +214,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
                     <p class="px-3 text-[10px] font-black text-kyv-text uppercase tracking-wider mb-2">Ogni giorno</p>
                     <ul class="space-y-1">
                         ${navItem('dashboard', 'index.html', 'layout-dashboard', 'Oggi')}
+                        ${navItem('calendar', 'kyv_calendar.html', 'calendar-days', 'Agenda', 'text-blue-300')}
                         ${navItem('assistente', 'assistente.html', 'route', 'Percorso brano', 'text-violet-300')}
                         ${navItem('archivio', 'archivio_musicale.html', 'folder-search-2', 'Archivio musicale', 'text-cyan-300')}
                         ${navItem('progetti', 'progetti.html', 'music-2', 'Progetti', 'text-indigo-300')}

@@ -10,6 +10,19 @@ const KYV_CONFIG = {
     // URL Google Apps Script storico (fallback, usato anche da Calendar)
     GOOGLE_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwcYC4WNK3_fHPp6yvbJiqJUp_MWGKuL0fy6GNz0iAX5H7oGWjnvR2Vqj5wPdtxTpfoWw/exec',
 
+    // Calendar usa l'account esplicito e lo stesso proxy Vercel del modulo Drive.
+    // L'URL resta separato: il deployment deve essere pubblicato da prodkyv@gmail.com.
+    GOOGLE_CALENDAR_ACCOUNT: {
+        id: 'calendar-prodkyv',
+        label: 'Calendar prodkyv@gmail.com',
+        email: 'prodkyv@gmail.com',
+        url: 'https://script.google.com/macros/s/AKfycbwcYC4WNK3_fHPp6yvbJiqJUp_MWGKuL0fy6GNz0iAX5H7oGWjnvR2Vqj5wPdtxTpfoWw/exec'
+    },
+
+    // Chiave pubblica del Dropbox Chooser. Il dominio deve essere autorizzato
+    // nella console Dropbox; nessun token OAuth viene salvato nel browser.
+    DROPBOX_APP_KEY: 'kpapjm7sybfs8ze',
+
     // Google Drive multi-account.
     // IMPORTANTE: il modulo Drive usa prima il proxy Vercel /api/drive-proxy,
     // poi JSONP come fallback, così evita i blocchi CORS del browser.

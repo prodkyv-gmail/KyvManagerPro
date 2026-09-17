@@ -19,6 +19,7 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Config e Menu -->
     <script src="config.js"></script>
@@ -93,6 +94,10 @@
                             <i data-lucide="link" class="w-4 h-4 mr-2 text-kyv-text"></i> Connessione API
                         </h3>
                         <div class="space-y-3">
+                            <div class="rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3 py-2">
+                                <p class="text-[10px] uppercase tracking-wider text-kyv-text font-bold">Account atteso</p>
+                                <p id="calendar-account" class="mt-1 text-xs font-bold text-blue-200">prodkyv@gmail.com</p>
+                            </div>
                             <div class="relative">
                                 <i data-lucide="key" class="w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500/50"></i>
                                 <input type="password" id="script-url" class="kyv-input text-xs font-mono text-blue-300 pl-9 opacity-50 select-none cursor-not-allowed" readonly value="********************************************************" title="Connessione protetta gestita da config.js">
@@ -162,9 +167,14 @@
     <script>
         // Inizializzazione della Sidebar e Fallback
         if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4"><p class="text-rose-400 text-xs">Fallback Menu</p></aside>`;};}
-        loadKyvSidebar('integrazioni');
+        loadKyvSidebar('calendar');
 
-        const fallbackUrl = 'https://script.google.com/macros/s/AKfycbwcYC4WNK3_fHPp6yvbJiqJUp_MWGKuL0fy6GNz0iAX5H7oGWjnvR2Vqj5wPdtxTpfoWw/exec';
+        const calendarAccount = window.KYV_CONFIG?.GOOGLE_CALENDAR_ACCOUNT || {
+            id: 'calendar-prodkyv',
+            label: 'Calendar prodkyv@gmail.com',
+            email: 'prodkyv@gmail.com',
+            url: window.KYV_CONFIG?.GOOGLE_SCRIPT_URL || ''
+        };
 
         const DOM = { 
             btnSync: document.getElementById('btn-sync'), 
@@ -178,12 +188,18 @@
         };
 
         function showToast(msg, isError = false) { return (window.KYV_TOAST ? KYV_TOAST.show(msg, isError ? 'error' : 'success') : KYV.showToast(msg, isError ? 'error' : 'success')); }
+        function H(value){
+            return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+        }
+        async function calendarRequest(action, params = {}){
+            if(!calendarAccount.url) throw new Error(`Calendar ${calendarAccount.email}: URL Apps Script non configurato.`);
+            if(!window.KYV_DRIVE?.fetchJson) throw new Error('Proxy Calendar non disponibile: ricarica la pagina.');
+            return window.KYV_DRIVE.fetchJson(calendarAccount, action, params);
+        }
+        document.getElementById('calendar-account').textContent = calendarAccount.email;
 
         // --- SINCRONIZZA EVENTI DA GOOGLE CALENDAR ---
         DOM.btnSync.addEventListener('click', async () => {
-            const url = typeof KYV_CONFIG !== 'undefined' ? KYV_CONFIG.GOOGLE_SCRIPT_URL : fallbackUrl; 
-            if(!url) return;
-            
             // Animazione caricamento
             DOM.btnSync.disabled = true; 
             DOM.syncIcon.classList.add('animate-spin'); 
@@ -192,8 +208,7 @@
             if(window.lucide) lucide.createIcons({root: DOM.eventsList});
 
             try {
-                const res = await fetch(`${url}?action=getEvents`); 
-                const data = await res.json();
+                const data = await calendarRequest('getEvents');
                 if(data.error) throw new Error(data.error);
 
                 DOM.lastSync.innerHTML = `<span class="text-emerald-400">●</span> ${new Date().toLocaleTimeString('it-IT')}`;
@@ -203,10 +218,11 @@
                 } else {
                     let html = '';
                     data.events.forEach(ev => {
-                        const dt = new Date(ev.date); 
-                        const dayName = dt.toLocaleDateString('it-IT', { weekday: 'short' });
-                        const monthName = dt.toLocaleDateString('it-IT', { month: 'short' }); 
-                        const time = dt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                        const dt = new Date(ev.date);
+                        if(Number.isNaN(dt.getTime())) return;
+                        const dayName = H(dt.toLocaleDateString('it-IT', { weekday: 'short' }));
+                        const monthName = H(dt.toLocaleDateString('it-IT', { month: 'short' }));
+                        const time = H(dt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
                         
                         html += `
                             <div class="bg-kyv-bg border border-kyv-border rounded-xl p-4 flex items-center hover:border-blue-500/40 hover:bg-[#11141f] transition-all group">
@@ -216,7 +232,7 @@
                                     <div class="text-[9px] text-kyv-text uppercase font-semibold">${monthName}</div>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-white text-sm mb-1 truncate group-hover:text-blue-300 transition-colors">${ev.title}</h3>
+                                    <h3 class="font-bold text-white text-sm mb-1 truncate group-hover:text-blue-300 transition-colors">${H(ev.title || 'Senza titolo')}</h3>
                                     <p class="text-[10px] text-kyv-text flex items-center font-mono uppercase tracking-wider"><i data-lucide="clock" class="w-3 h-3 mr-1.5 opacity-70"></i> Ore ${time}</p>
                                 </div>
                             </div>`;
@@ -227,7 +243,8 @@
                 
             } catch(err) { 
                 showToast(err.message || "Errore di connessione.", true); 
-                DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-red-500 opacity-80"><i data-lucide="alert-triangle" class="w-16 h-16 mb-4 opacity-50"></i><p class="font-medium">${err.message}</p></div>`;
+                DOM.lastSync.innerHTML = '<span class="text-rose-400">●</span> Non connesso';
+                DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-red-500 opacity-80 text-center"><i data-lucide="alert-triangle" class="w-16 h-16 mb-4 opacity-50"></i><p class="font-medium">${H(err.message || 'Errore di connessione.')}</p><p class="mt-2 text-xs text-kyv-text">Nessun evento è stato modificato.</p></div>`;
                 if(window.lucide) lucide.createIcons({root: DOM.eventsList});
             } finally { 
                 DOM.btnSync.disabled = false; 
@@ -239,12 +256,12 @@
         // --- CREA NUOVO EVENTO SU GOOGLE CALENDAR ---
         DOM.formNew.addEventListener('submit', async (e) => {
             e.preventDefault(); 
-            const url = typeof KYV_CONFIG !== 'undefined' ? KYV_CONFIG.GOOGLE_SCRIPT_URL : fallbackUrl; 
-            if(!url) return;
-            
             const title = document.getElementById('ev-title').value;
             const date = document.getElementById('ev-date').value;
             const time = document.getElementById('ev-time').value;
+
+            const confirmed = window.confirm(`Confermi la creazione su ${calendarAccount.email}?\n\n${title}\n${date} alle ${time}`);
+            if(!confirmed) return;
 
             // UI Caricamento
             DOM.btnCreate.disabled = true; 
@@ -253,8 +270,12 @@
             if(window.lucide) lucide.createIcons({root: DOM.btnCreate.parentElement});
 
             try {
-                const res = await fetch(`${url}?action=createEvent&title=${encodeURIComponent(title)}&date=${date}&time=${time}`);
-                const data = await res.json(); 
+                const data = await calendarRequest('createEvent', {
+                    title,
+                    date,
+                    time,
+                    clientRequestId: `calendar-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+                });
                 
                 if(data.error) throw new Error(data.error);
                 
