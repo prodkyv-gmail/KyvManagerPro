@@ -1,4 +1,7 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
 const {parseLink,classify} = require('../kyv-manual-intake-core.js');
 const ID = '1c-yp45ABCRRC9nsQIQQPbgMpi3vvuWLg';
 const drive = `https://drive.google.com/file/d/${ID}/view?usp=sharing`;
@@ -21,4 +24,14 @@ result=classify({link:drive,name:'Mare Blu.mp3',title:'Mare Blu',artist:'Anna'},
 assert.equal(result.status,'review');assert.deepEqual(result.candidates.map(p=>p.ID),[1]);
 result=classify({link:drive,name:'Altro.mp3',title:'Altro'},[],[{ID:1,TITOLO:'Mare Blu'}]);
 assert.equal(result.status,'new');
-console.log('OK: parsing link, protezione cartelle, deduplica e suggerimenti verificati.');
+const root=path.resolve(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'acquisisci_audio.html'),'utf8');
+const config=fs.readFileSync(path.join(root,'config.js'),'utf8');
+assert.match(html,/data-auth-required="true"/);
+assert.match(html,/KYV_AUTH\.requireAuth\(\)/);
+assert.match(html,/kyv-manual-intake-core\.js/);
+assert.match(config,/href=['"]?acquisisci_audio\.html|makeItem\('acquisisci_audio\.html'/);
+const scripts=[...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)];
+assert.ok(scripts.length,'Expected an inline workflow script');
+for(const [,code] of scripts) new vm.Script(code,{filename:'acquisisci_audio.html'});
+console.log('OK: parsing, duplicati, auth, nav e sintassi inline dell’importazione manuale.');
