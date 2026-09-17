@@ -109,4 +109,30 @@ window.KYV_CONFIG = KYV_CONFIG;
         const core=document.createElement('script');core.src='kyv-link-audit-core.js';core.async=false;document.head.appendChild(core);
         const audit=document.createElement('script');audit.src='kyv-listen-link-audit.js';audit.async=false;document.head.appendChild(audit);
     }
+    if(page==='acquisisci_audio.html'){
+        // Un vero ingresso manuale anche dalla pagina Nuovo progetto: la scheda
+        // esistente in Progetti non richiede un file né crea archivi paralleli.
+        const enhance=()=>{
+            const first=document.querySelector('main section.intake-card');
+            const actions=first?.querySelector('div.flex');
+            if(actions&&!document.getElementById('kyv-manual-project-entry')){
+                const manual=document.createElement('a');
+                manual.id='kyv-manual-project-entry';
+                manual.href='progetti.html?new=1';
+                manual.className='intake-alt border-indigo-500/50 bg-indigo-500/10 text-indigo-100 font-bold';
+                manual.textContent='Crea progetto senza file';
+                actions.prepend(manual);
+            }
+            const source=new URLSearchParams(window.location.search).get('source');
+            if((source==='drive'||source==='dropbox')&&first&&!document.getElementById('kyv-selected-cloud')){
+                const hint=document.createElement('p');
+                hint.id='kyv-selected-cloud';
+                hint.className='intake-hint mt-3 text-indigo-200';
+                hint.textContent=source==='drive'?'Percorso Google Drive: scegli un solo audio e incolla il collegamento.':'Percorso Dropbox: scegli un solo audio e incolla il collegamento.';
+                first.appendChild(hint);
+            }
+        };
+        if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance,{once:true});
+        else enhance();
+    }
 })();
