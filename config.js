@@ -77,6 +77,13 @@ window.KYV_CONFIG = KYV_CONFIG;
                 if(window.lucide) lucide.createIcons();
             }
         }
+        // Riutilizza l'unica voce Studio Editor già generata da menu.js:
+        // spostarla fisicamente evita duplicati e preserva lo stato attivo.
+        const projectsItem = sidebar.querySelector('a[href="progetti.html"]')?.closest('li');
+        const editorItem = sidebar.querySelector('a[href="editor.html"]')?.closest('li');
+        if (projectsItem && editorItem && editorItem.previousElementSibling !== projectsItem) {
+            projectsItem.insertAdjacentElement('afterend', editorItem);
+        }
         if(currentPage==='index.html' || currentPage===''){
             const quick = document.querySelector('.kyv-quick-actions');
             if(quick && !quick.querySelector('a[href="acquisisci_audio.html"]')){
@@ -91,7 +98,7 @@ window.KYV_CONFIG = KYV_CONFIG;
             }
         }
         document.documentElement.dataset.kyvVersion=version;
-        return Boolean(brandVersion && sidebar.querySelector('a[href="pipeline.html"]') && sidebar.querySelector('a[href="acquisisci_audio.html"]'));
+        return Boolean(brandVersion && sidebar.querySelector('a[href="pipeline.html"]') && sidebar.querySelector('a[href="acquisisci_audio.html"]') && editorItem?.previousElementSibling === projectsItem);
     }
 
     document.addEventListener('DOMContentLoaded',()=>{if(syncUi() && observer)observer.disconnect();});
