@@ -38,6 +38,14 @@ function ensurePastelStyles(){
   link.dataset.kyvPastel='1';
   document.head.appendChild(link);
 }
+function loadActionBridge(){
+  if(document.querySelector('script[data-kyv-action-bridge]'))return;
+  const script=document.createElement('script');
+  script.src='kyv-action-bridge.js';
+  script.async=false;
+  script.dataset.kyvActionBridge='1';
+  document.head.appendChild(script);
+}
 function loadProjectPhase2(){
   if(page!=='scheda_progetto.html'||document.querySelector('script[data-kyv-project-phase2]'))return;
   const script=document.createElement('script');
@@ -189,6 +197,7 @@ function dashboardProducerMode(){
 
 function boot(){
   ensurePastelStyles();
+  loadActionBridge();
   loadProjectPhase2();
   loadProjectsPhase3();
   watchNavigation();
