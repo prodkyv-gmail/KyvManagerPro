@@ -1,0 +1,15 @@
+/* KYV Producer Pastels — superfici differenziate senza sacrificare contrasto e leggibilità. */
+:root {
+  --kyv-pastel-lavender: 190 182 255;
+  --kyv-pastel-mint: 166 235 211;
+  --kyv-pastel-peach: 255 207 177;
+  --kyv-pastel-sky: 169 218 255;
+  --kyv-pastel-rose: 255 188 205;
+  --kyv-pastel-butter: 246 226 157;
+}
+
+body > main,
+main.h-screen,
+main.flex-1 {
+  background:
+    radial-gradient(circle at 8% 2%, rgba
