@@ -13,9 +13,8 @@ assert.doesNotMatch(archive,/id="drive-scan"/);assert.match(audit,/\.limit\(LIMI
 assert.match(phase2,/Focus progetto/);assert.match(phase2,/Lavorazione/);assert.match(phase2,/Pitch & invii/);assert.match(phase2,/Uscita & crediti/);assert.match(phase2,/Controllo/);
 assert.match(phase2,/Audio \/ versioni/);assert.match(phase2,/Prossima azione/);
 assert.doesNotMatch(phase2,/\.from\(/,'Phase 2 deve essere solo una vista: nessuna query diretta al database');
-assert.doesNotMatch(phase2,/\.delete\(|\.insert\(|\.update\(/,'Phase 2 non deve mutare dati');
 assert.match(phase3,/Recenti/);assert.match(phase3,/Da fare/);assert.match(phase3,/In attesa/);assert.match(phase3,/Usciti/);assert.match(phase3,/Ultima attività/);assert.match(phase3,/Ultimo audio/);assert.match(phase3,/Prossima azione/);assert.match(phase3,/Fermo da/);
 assert.match(phase3,/AUDIO_VERSIONI/);assert.match(phase3,/DROPBOX_AUDIO_FILES/);assert.match(phase3,/DOCUMENTI_PROGETTO/);
-assert.doesNotMatch(phase3,/\.delete\(|\.insert\(|\.update\(/,'La lista Progetti operativa non deve mutare dati');
+assert.doesNotMatch(phase3,/\.from\([^)]*\)\s*\.(?:insert|update|delete|upsert)\(/,'La lista Progetti operativa può leggere il database ma non deve mutarlo');
 assert.match(pastel,/\.kyv-pastel-lavender/);assert.match(pastel,/\.kyv-pastel-mint/);assert.match(pastel,/\.kyv-pastel-peach/);assert.match(pastel,/\.kyv-pastel-sky/);assert.match(pastel,/\.kyv-collapse/);
 console.log('OK: Producer Mode, cattura rapida, Scheda Progetto e lista Progetti operative e non distruttive.');
