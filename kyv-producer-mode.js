@@ -30,6 +30,15 @@ const tools=[
   ['guida.html','Manuale','book-open','guida']
 ];
 
+function ensurePastelStyles(){
+  if(document.querySelector('link[data-kyv-pastel]'))return;
+  const link=document.createElement('link');
+  link.rel='stylesheet';
+  link.href='kyv-pastel.css';
+  link.dataset.kyvPastel='1';
+  document.head.appendChild(link);
+}
+
 function currentKey(){
   const map={
     'index.html':'dashboard','':'dashboard','kyv_calendar.html':'calendar','acquisisci_audio.html':'nuovo',
@@ -82,6 +91,50 @@ function watchNavigation(){
   setTimeout(()=>{apply();observer.disconnect();},6000);
 }
 
+function collapseNode(node,{id,title,subtitle,icon='chevron-down',pastel='lavender'}={}){
+  if(!node||document.getElementById(id))return null;
+  const box=document.createElement('details');
+  box.id=id;
+  box.className=`kyv-collapse kyv-pastel-${pastel}`;
+  box.innerHTML=`<summary><span><span class="block text-sm font-black text-white">${title}</span>${subtitle?`<span class="block text-xs text-kyv-text mt-1">${subtitle}</span>`:''}</span><i data-lucide="${icon}" class="kyv-collapse-chevron w-5 h-5 text-kyv-text shrink-0"></i></summary><div class="kyv-collapse-body"></div>`;
+  node.parentNode.insertBefore(box,node);
+  box.querySelector('.kyv-collapse-body').appendChild(node);
+  return box;
+}
+
+function collapseOperationalPanels(){
+  const pulse=document.getElementById('studio-pulse');
+  if(!pulse||document.getElementById('kyv-dashboard-activity-collapse'))return;
+  const parts=[...pulse.children];
+  if(!parts.length)return;
+  const holder=document.createElement('div');
+  holder.id='kyv-dashboard-ops-collapses';
+  holder.className='space-y-3 mb-6';
+  pulse.parentNode.insertBefore(holder,pulse);
+
+  if(parts[0]){
+    holder.appendChild(parts[0]);
+    const activity=collapseNode(parts[0],{
+      id:'kyv-dashboard-activity-collapse',
+      title:'Attività da chiudere',
+      subtitle:'Follow-up, sessioni e cose da completare. Apri solo quando ti serve.',
+      pastel:'mint'
+    });
+    if(activity)holder.appendChild(activity);
+  }
+  if(parts[1]){
+    holder.appendChild(parts[1]);
+    const ops=collapseNode(parts[1],{
+      id:'kyv-dashboard-status-collapse',
+      title:'Stato operativo',
+      subtitle:'I segnali di controllo dello studio restano disponibili ma non occupano la Home.',
+      pastel:'sky'
+    });
+    if(ops)holder.appendChild(ops);
+  }
+  pulse.remove();
+}
+
 function dashboardProducerMode(){
   if(page!=='index.html'&&page!=='')return;
   const header=document.querySelector('main section > header');
@@ -92,8 +145,8 @@ function dashboardProducerMode(){
 
   const start=document.createElement('section');
   start.id='kyv-producer-start';
-  start.className='mb-5 rounded-2xl border border-indigo-500/25 bg-gradient-to-br from-indigo-500/10 to-cyan-500/5 p-5 sm:p-6';
-  start.innerHTML=`<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><p class="text-[10px] font-black uppercase tracking-[.18em] text-cyan-300">Prima registra, poi completa</p><h3 class="text-xl sm:text-2xl font-black text-white mt-1">Hai iniziato qualcosa?</h3><p class="text-xs sm:text-sm text-kyv-text mt-2 max-w-2xl">Basta un titolo provvisorio o un appunto. Artista, file, crediti, fee e tutti gli altri dettagli possono arrivare dopo.</p></div><a href="acquisisci_audio.html" class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black shrink-0"><i data-lucide="circle-plus" class="w-5 h-5 mr-2"></i>Nuovo</a></div>`;
+  start.className='kyv-pastel-lavender mb-5 rounded-2xl border border-indigo-500/25 p-5 sm:p-6';
+  start.innerHTML=`<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><p class="text-[10px] font-black uppercase tracking-[.18em] text-cyan-200">Prima registra, poi completa</p><h3 class="text-xl sm:text-2xl font-black text-white mt-1">Hai iniziato qualcosa?</h3><p class="text-xs sm:text-sm text-kyv-text mt-2 max-w-2xl">Basta un titolo provvisorio o un appunto. Artista, file, crediti, fee e tutti gli altri dettagli possono arrivare dopo.</p></div><a href="acquisisci_audio.html" class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black shrink-0"><i data-lucide="circle-plus" class="w-5 h-5 mr-2"></i>Nuovo</a></div>`;
   header.insertAdjacentElement('afterend',start);
 
   const quick=document.querySelector('.kyv-quick-actions');
@@ -104,8 +157,8 @@ function dashboardProducerMode(){
   const pulse=document.getElementById('studio-pulse');
   const controlBox=document.createElement('details');
   controlBox.id='kyv-dashboard-control';
-  controlBox.className='mb-6 rounded-2xl border border-kyv-border bg-kyv-card overflow-hidden';
-  controlBox.innerHTML='<summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4"><span><span class="block text-sm font-black text-white">Controllo amministrativo</span><span class="block text-xs text-kyv-text mt-1">Fee, fatturato, incassi, uscite e grafici restano qui, ma non interrompono il lavoro creativo.</span></span><i data-lucide="chevron-down" class="w-5 h-5 text-kyv-text"></i></summary><div id="kyv-dashboard-control-body" class="px-4 sm:px-5 pb-5 space-y-5"></div>';
+  controlBox.className='kyv-collapse kyv-pastel-peach mb-6';
+  controlBox.innerHTML='<summary><span><span class="block text-sm font-black text-white">Controllo amministrativo</span><span class="block text-xs text-kyv-text mt-1">Fee, fatturato, incassi, uscite e grafici. Apri quando vuoi controllare il business.</span></span><i data-lucide="chevron-down" class="kyv-collapse-chevron w-5 h-5 text-kyv-text"></i></summary><div id="kyv-dashboard-control-body" class="kyv-collapse-body space-y-5"></div>';
   (pulse||quick||start).insertAdjacentElement('afterend',controlBox);
   const body=controlBox.querySelector('#kyv-dashboard-control-body');
   const candidates=[];
@@ -114,9 +167,15 @@ function dashboardProducerMode(){
   ['chartAndamento','chartTopArtisti'].forEach(id=>{const grid=document.getElementById(id)?.closest('div.grid');if(grid)candidates.push(grid);});
   [...new Set(candidates)].forEach(node=>body.appendChild(node));
   if(!body.children.length)controlBox.remove();
+
+  collapseOperationalPanels();
   if(window.lucide)lucide.createIcons({root:document.body});
 }
 
-function boot(){watchNavigation();dashboardProducerMode();}
+function boot(){
+  ensurePastelStyles();
+  watchNavigation();
+  dashboardProducerMode();
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
