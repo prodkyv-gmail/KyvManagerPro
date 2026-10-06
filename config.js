@@ -70,6 +70,13 @@ window.KYV_CONFIG = KYV_CONFIG;
         document.head.appendChild(script);
     }
     if(page==='ascolto.html'){
+        // Vista producer-first: viene caricata prima della vecchia stazione per evitare
+        // scansioni Drive automatiche all'apertura. Gli strumenti cloud restano manuali.
+        const phase4=document.createElement('script');
+        phase4.src='kyv-listening-phase4.js';
+        phase4.async=false;
+        document.head.appendChild(phase4);
+
         const core=document.createElement('script');
         core.src='kyv-link-audit-core.js';
         core.async=false;
