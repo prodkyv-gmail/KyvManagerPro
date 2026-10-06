@@ -7,7 +7,7 @@ assert.match(producer,/details\('Controllo'/);assert.match(producer,/fatture\.ht
 assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.html','Studio Editor'/);assert.match(producer,/archivio_musicale\.html','Archivio musicale'/);
 assert.match(producer,/kyv-project-phase2\.js/,'La scheda progetto progressiva deve essere caricata dal Producer Mode');
 assert.match(producer,/kyv-projects-phase3\.js/,'La nuova lista Progetti deve essere caricata dal Producer Mode');
-assert.match(producer,/kyv-action-bridge\.js/,'Il bridge Prossima azione → Oggi\/Agenda deve essere caricato dal Producer Mode');
+assert.match(producer,/kyv-action-bridge\.js/,'Il bridge azioni deve essere caricato dal Producer Mode');
 assert.match(intake,/Cattura prima/);assert.match(intake,/id="quick-form"/);assert.match(intake,/Salva e continua dopo/);assert.match(intake,/db\.from\('PROGETTI'\)\.insert/);assert.match(intake,/id="cloud-flow"/);assert.match(intake,/Controlla duplicati/);assert.doesNotMatch(intake,/await loadReferences\(\);status\('Pronto/,'La cattura rapida non deve precaricare gli archivi audio');
 assert.match(projects,/openNewProjectChoices/);assert.match(projects,/source=drive/);assert.match(projects,/source=dropbox/);
 assert.doesNotMatch(archive,/id="drive-scan"/);assert.match(audit,/\.limit\(LIMIT\)/);assert.doesNotMatch(audit,/fetch\(|method:\s*['"]HEAD/);
@@ -17,7 +17,12 @@ assert.doesNotMatch(phase2,/\.from\(/,'Phase 2 deve essere solo una vista: nessu
 assert.match(phase3,/Recenti/);assert.match(phase3,/Da fare/);assert.match(phase3,/In attesa/);assert.match(phase3,/Usciti/);assert.match(phase3,/Ultima attività/);assert.match(phase3,/Ultimo audio/);assert.match(phase3,/Prossima azione/);assert.match(phase3,/Fermo da/);
 assert.match(phase3,/AUDIO_VERSIONI/);assert.match(phase3,/DROPBOX_AUDIO_FILES/);assert.match(phase3,/DOCUMENTI_PROGETTO/);
 assert.doesNotMatch(phase3,/\.from\([^)]*\)\s*\.(?:insert|update|delete|upsert)\(/,'La lista Progetti operativa può leggere il database ma non deve mutarlo');
-assert.match(actionBridge,/Azioni progetto/);assert.match(actionBridge,/data-kyv-action-plan/);assert.match(actionBridge,/projectAction/);assert.match(actionBridge,/kyv_calendar\.html\?/);assert.match(actionBridge,/ev-title/);assert.match(actionBridge,/ev-date/);assert.match(actionBridge,/Azione dal progetto/);
-assert.doesNotMatch(actionBridge,/\.from\([^)]*\)\s*\.(?:insert|update|delete|upsert)\(/,'Il bridge azioni non deve duplicare o mutare dati di progetto');
+assert.match(actionBridge,/Azioni progetto/);assert.match(actionBridge,/Apri progetto/);assert.match(actionBridge,/Pianifica/);assert.match(actionBridge,/Fatto/);
+assert.match(actionBridge,/from\('PROGETTI'\)\.update\(\{SVILUPPO:''\}\)\.eq\('ID'/,'Fatto deve chiudere solo la prossima azione del progetto');
+assert.match(actionBridge,/kyv_calendar\.html\?/,'Pianifica deve usare l’Agenda esistente');
+assert.match(actionBridge,/URLSearchParams/,'Il passaggio di contesto all’Agenda deve usare parametri URL strutturati');
+assert.match(actionBridge,/panel\.id='kyv-today-project-actions'/,'Oggi deve avere un pannello dedicato alle azioni progetto');
+assert.match(actionBridge,/dataset\.activityFilter='project'/,'Il filtro Azioni progetto deve restare disponibile nelle attività a scomparsa');
+assert.doesNotMatch(actionBridge,/\.from\(['"](?:FATTURE|DOCUMENTI_PROGETTO|AUDIO_VERSIONI|DROPBOX_AUDIO_FILES)['"]\)\s*\.update/,'Il bridge non deve modificare aree amministrative o audio');
 assert.match(pastel,/\.kyv-pastel-lavender/);assert.match(pastel,/\.kyv-pastel-mint/);assert.match(pastel,/\.kyv-pastel-peach/);assert.match(pastel,/\.kyv-pastel-sky/);assert.match(pastel,/\.kyv-collapse/);
-console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, lista Progetti e bridge Prossima azione → Oggi/Agenda operativi.');
+console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti e ciclo Prossima azione -> Oggi -> Agenda operativi.');
