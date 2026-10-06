@@ -4,107 +4,75 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>KYV · Nuovo progetto</title>
 <link rel="icon" href="favicon.ico"><link rel="stylesheet" href="kyv-responsive.css"><link rel="stylesheet" href="kyv-theme.css">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-toast.js"></script><script src="kyv-helpers.js"></script><script src="kyv-data-guard.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-manual-intake-core.js"></script>
+<script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-toast.js"></script><script src="kyv-helpers.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-manual-intake-core.js"></script>
 <style>
-body{background:#0f111a;color:#f8fafc;font-family:Inter,system-ui,sans-serif}.intake-card{background:#151923;border:1px solid #303647;border-radius:20px;padding:22px}.intake-field{width:100%;background:#0f111a;color:#fff;border:1px solid #384154;border-radius:11px;padding:12px;outline:none}.intake-field:focus{border-color:#818cf8}.intake-button{background:#4f46e5;color:#fff;font-weight:800;border-radius:11px;padding:12px 18px}.intake-button:disabled{opacity:.4;cursor:not-allowed}.intake-alt{border:1px solid #384154;border-radius:11px;padding:10px 14px;display:inline-flex;align-items:center;gap:6px}.intake-hint{font-size:12px;color:#a5b4c9;line-height:1.6}.intake-label{display:block;font-size:11px;letter-spacing:.04em;color:#a5b4c9;font-weight:800;margin-bottom:6px;text-transform:uppercase}
+body{background:#0f111a;color:#f8fafc;font-family:Inter,system-ui,sans-serif}.capture-card{background:#151923;border:1px solid #303647;border-radius:20px;padding:22px}.capture-field{width:100%;background:#0f111a;color:#fff;border:1px solid #384154;border-radius:12px;padding:13px;outline:none}.capture-field:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}.capture-label{display:block;font-size:10px;letter-spacing:.08em;color:#a5b4c9;font-weight:900;margin-bottom:7px;text-transform:uppercase}.primary{background:#4f46e5;color:#fff;font-weight:900;border-radius:12px;padding:13px 18px}.primary:disabled{opacity:.45}.secondary{border:1px solid #384154;border-radius:12px;padding:11px 14px;display:inline-flex;align-items:center;gap:7px;color:#dbeafe}.hint{font-size:12px;color:#94a3b8;line-height:1.55}details[open] summary .chev{transform:rotate(180deg)}
 </style>
 </head>
 <body data-auth-required="true" class="flex h-screen overflow-hidden antialiased text-sm">
 <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
-<main class="flex-1 overflow-y-auto h-screen p-5 md:p-9"><div class="max-w-4xl mx-auto space-y-5 pb-12">
-<header class="flex flex-col sm:flex-row justify-between gap-4"><div><p class="text-xs font-black uppercase tracking-widest text-indigo-300">Nuovo progetto · flusso rapido</p><h1 class="text-3xl font-black mt-2">Nuovo progetto</h1><p class="text-slate-400 mt-2">Crea manualmente il progetto oppure parti da un singolo file Drive o Dropbox, verifica i duplicati e collegalo al progetto giusto. Nessuna scansione automatica.</p></div><a class="intake-alt self-start" href="progetti.html">Torna ai progetti</a></header>
-<section class="intake-card"><h2 class="text-lg font-black mb-3">1 · Scegli nel tuo archivio</h2><div class="flex flex-wrap gap-3"><a class="intake-alt" target="_blank" rel="noopener noreferrer" href="https://drive.google.com/drive/my-drive">Apri Google Drive ↗</a><a class="intake-alt" target="_blank" rel="noopener noreferrer" href="https://www.dropbox.com/home">Apri Dropbox ↗</a><a class="intake-alt" href="archivio_musicale.html">Selettore Dropbox già esistente</a></div><p class="intake-hint mt-3">Trova manualmente il file, copia il suo link di condivisione e incollalo qui sotto. Non cambiamo i permessi del file nel cloud.</p></section>
-<section class="intake-card"><h2 class="text-lg font-black mb-4">2 · Identifica il file</h2><form id="intake-form" class="space-y-4" novalidate><div><label class="intake-label" for="intake-link">Link Google Drive o Dropbox *</label><input id="intake-link" class="intake-field" type="url" inputmode="url" autocomplete="off" required placeholder="https://drive.google.com/file/d/... oppure https://www.dropbox.com/..."></div><div class="grid sm:grid-cols-2 gap-4"><div><label class="intake-label" for="intake-name">Nome file, estensione inclusa *</label><input id="intake-name" class="intake-field" maxlength="250" required placeholder="Titolo demo v2.mp3"></div><div><label class="intake-label" for="intake-title">Titolo del brano</label><input id="intake-title" class="intake-field" maxlength="250" placeholder="Proposto dal nome; modificabile"></div><div><label class="intake-label" for="intake-artist">Artista, se noto</label><input id="intake-artist" class="intake-field" maxlength="200" placeholder="Non obbligatorio"></div><div><label class="intake-label" for="intake-date">Data originale del file, se nota</label><input id="intake-date" class="intake-field" type="date"></div><div><label class="intake-label" for="intake-type">Tipo di audio</label><select id="intake-type" class="intake-field"><option>Demo</option><option>Produzione</option><option>Voce</option><option>Mix</option><option>Master</option><option>Stems</option><option>Versione audio</option></select></div><div><label class="intake-label" for="intake-version">Versione, se nota</label><input id="intake-version" class="intake-field" maxlength="60" placeholder="v2, rough, final..."></div></div><p class="intake-hint">La data originale non si deduce dal link. Data di acquisizione e data di sessione non verranno confuse con quella del file. Titolo e metadati inseriti qui saranno confermati prima del salvataggio.</p><label class="flex gap-3 items-center text-sm"><input id="intake-audio-confirm" type="checkbox" class="w-5 h-5 accent-indigo-500"> Confermo che il collegamento identifica un file audio, non una cartella.</label><button id="intake-check" class="intake-button" type="submit">Controlla file e progetti</button></form></section>
-<section id="intake-review" class="intake-card hidden" aria-live="polite"><h2 class="text-lg font-black mb-3">3 · Controllo duplicati</h2><p id="intake-outcome" class="text-sm text-slate-200 mb-3"></p><div id="intake-existing" class="hidden mb-4"><a id="intake-existing-link" class="intake-alt" href="#">Apri il progetto già collegato</a></div><div id="intake-save-panel" class="hidden"><label class="intake-label" for="intake-project">Dove collegare questo audio? *</label><select id="intake-project" class="intake-field"></select><p class="intake-hint my-3">I progetti simili sono suggerimenti, non associazioni automatiche. Scegli un progetto esistente oppure crea una nuova scheda con conferma esplicita.</p><button id="intake-save" type="button" class="intake-button" disabled>Conferma e prosegui</button></div></section>
-<section id="intake-status" class="intake-card text-slate-300" role="status" aria-live="polite">Accesso e riferimenti in caricamento. Nessun dato viene modificato durante il controllo.</section>
+<main class="flex-1 overflow-y-auto h-screen p-4 sm:p-6 md:p-9"><div class="max-w-3xl mx-auto space-y-5 pb-20">
+<header class="flex items-start gap-3"><button class="md:hidden mt-1" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button><div><p class="text-[10px] font-black uppercase tracking-[.18em] text-cyan-300">Cattura prima · completa dopo</p><h1 class="text-3xl sm:text-4xl font-black mt-1">Nuovo</h1><p class="text-slate-400 mt-2">Se hai appena iniziato qualcosa, basta un titolo provvisorio o un appunto. Tutto il resto può arrivare con calma.</p></div></header>
+
+<section class="capture-card border-indigo-500/25 bg-indigo-500/[.04]">
+<form id="quick-form" class="space-y-4">
+<div><label class="capture-label" for="quick-title">Cosa hai iniziato? *</label><input id="quick-title" class="capture-field text-base" maxlength="250" required autocomplete="off" placeholder="Es. Sissy – ballad piano / idea ritornello"></div>
+<div class="grid sm:grid-cols-2 gap-4"><div><label class="capture-label" for="quick-artist">Artista · facoltativo</label><input id="quick-artist" class="capture-field" maxlength="200" placeholder="Puoi aggiungerlo dopo"></div><div><label class="capture-label" for="quick-note">Nota veloce · facoltativa</label><input id="quick-note" class="capture-field" maxlength="500" placeholder="Es. ritornello da riscrivere"></div></div>
+<div class="flex flex-col sm:flex-row gap-3 sm:items-center"><button id="quick-save" class="primary" type="submit"><i data-lucide="check" class="w-4 h-4 inline mr-2"></i>Salva e continua dopo</button><span class="hint">Niente fee, crediti, date o altri campi obbligatori adesso.</span></div>
+</form>
+<div id="quick-result" class="hidden mt-4 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-4" role="status" aria-live="polite"></div>
+</section>
+
+<details id="cloud-flow" class="capture-card group">
+<summary class="cursor-pointer list-none flex items-center justify-between gap-4"><div><p class="text-xs font-black text-white">Hai già un file o un link?</p><p class="hint mt-1">Apri solo se vuoi partire da un audio Drive/Dropbox o collegarlo subito a un progetto.</p></div><i data-lucide="chevron-down" class="chev w-5 h-5 text-slate-400 transition-transform"></i></summary>
+<div class="mt-5 pt-5 border-t border-slate-700/70 space-y-5">
+<div class="flex flex-wrap gap-2"><a class="secondary" target="_blank" rel="noopener noreferrer" href="https://drive.google.com/drive/my-drive"><i data-lucide="hard-drive" class="w-4 h-4"></i>Apri Drive</a><a class="secondary" target="_blank" rel="noopener noreferrer" href="https://www.dropbox.com/home"><i data-lucide="cloud" class="w-4 h-4"></i>Apri Dropbox</a></div>
+<form id="intake-form" class="space-y-4" novalidate>
+<div><label class="capture-label" for="intake-link">Link Drive o Dropbox *</label><input id="intake-link" class="capture-field" type="url" inputmode="url" required placeholder="https://drive.google.com/file/d/... oppure https://www.dropbox.com/..."></div>
+<div class="grid sm:grid-cols-2 gap-4"><div><label class="capture-label" for="intake-name">Nome file *</label><input id="intake-name" class="capture-field" maxlength="250" required placeholder="Titolo demo v2.mp3"></div><div><label class="capture-label" for="intake-title">Titolo brano</label><input id="intake-title" class="capture-field" maxlength="250"></div><div><label class="capture-label" for="intake-artist">Artista</label><input id="intake-artist" class="capture-field" maxlength="200"></div><div><label class="capture-label" for="intake-type">Tipo</label><select id="intake-type" class="capture-field"><option>Demo</option><option>Produzione</option><option>Mix</option><option>Master</option><option>Versione audio</option><option>Stems</option></select></div><div><label class="capture-label" for="intake-version">Versione</label><input id="intake-version" class="capture-field" maxlength="60" placeholder="v2, rough, final..."></div><div><label class="capture-label" for="intake-date">Data file · se nota</label><input id="intake-date" class="capture-field" type="date"></div></div>
+<label class="flex gap-3 items-center text-sm"><input id="intake-audio-confirm" type="checkbox" class="w-5 h-5 accent-indigo-500"> Confermo che il link identifica un file audio, non una cartella.</label>
+<button id="intake-check" class="primary" type="submit">Controlla duplicati</button>
+</form>
+<section id="intake-review" class="hidden rounded-xl border border-slate-700 p-4" aria-live="polite"><p id="intake-outcome" class="text-sm mb-3"></p><div id="intake-existing" class="hidden"><a id="intake-existing-link" class="secondary" href="#">Apri progetto già collegato</a></div><div id="intake-save-panel" class="hidden space-y-3"><label class="capture-label" for="intake-project">Collega a</label><select id="intake-project" class="capture-field"></select><button id="intake-save" type="button" class="primary" disabled>Conferma</button></div></section>
+</div>
+</details>
+
+<section id="intake-status" class="text-xs text-slate-500" role="status" aria-live="polite">Pronto per una nuova idea.</section>
 </div></main>
 <script>
 (function(){
 'use strict';
-const $ = id => document.getElementById(id);
-let db = null, projects = [], archive = [], ready = false, reviewed = null, busy = false;
-const status = (message, bad=false) => { $('intake-status').textContent = message; $('intake-status').style.borderColor = bad ? '#f87171' : '#303647'; };
-const projectLabel = p => [p.ARTISTA,p.TITOLO].filter(Boolean).join(' · ') || `Progetto #${p.ID}`;
-const change = () => { reviewed = null; $('intake-review').classList.add('hidden'); $('intake-save').disabled = true; };
-function itemFromForm(){
- const parsed = KYV_MANUAL_INTAKE.parseLink($('intake-link').value);
- const name = $('intake-name').value.trim();
- if(!name) throw new Error('Inserisci il nome del file, estensione compresa.');
- if(!$('intake-audio-confirm').checked) throw new Error('Conferma che il collegamento sia un file audio.');
- const title = $('intake-title').value.trim() || KYV_AUDIO_PROJECT.cleanTitle(name);
- return {source:parsed.provider,id:parsed.providerId,providerId:parsed.providerId,link:parsed.link,url:parsed.link,webViewLink:parsed.provider==='drive'?parsed.link:undefined,name,fileName:name,title,artist:$('intake-artist').value.trim(),type:$('intake-type').value,version:$('intake-version').value.trim(),date:$('intake-date').value||null,mimeType:'audio/unknown'};
+const $=id=>document.getElementById(id);let db=null,projects=[],archive=[],reviewed=null,busy=false;
+const projectLabel=p=>[p.ARTISTA,p.TITOLO].filter(Boolean).join(' · ')||`Progetto #${p.ID}`;
+function status(message,bad=false){$('intake-status').textContent=message;$('intake-status').className=`text-xs ${bad?'text-rose-300':'text-slate-500'}`;}
+async function saveIdea(event){
+ event.preventDefault();if(busy||!db)return;const title=$('quick-title').value.trim();if(!title)return;
+ busy=true;$('quick-save').disabled=true;status('Salvataggio idea…');
+ try{
+  const artist=$('quick-artist').value.trim()||null,note=$('quick-note').value.trim()||null;
+  let response=await db.from('PROGETTI').insert([{TITOLO:title,ARTISTA:artist,NOTE:note,STATO:'IDEA'}]).select('ID,TITOLO,ARTISTA').single();
+  if(response.error)response=await db.from('PROGETTI').insert([{TITOLO:title,ARTISTA:artist,NOTE:note}]).select('ID,TITOLO,ARTISTA').single();
+  if(response.error)throw response.error;
+  const p=response.data;$('quick-result').classList.remove('hidden');$('quick-result').innerHTML='';
+  const text=document.createElement('p');text.className='text-sm text-emerald-100';text.textContent='Salvato. Puoi completare il progetto quando vuoi.';
+  const link=document.createElement('a');link.href=`scheda_progetto.html?id=${encodeURIComponent(p.ID)}`;link.className='secondary mt-3';link.textContent='Apri progetto →';
+  $('quick-result').append(text,link);$('quick-form').reset();status(`Progetto #${p.ID} creato.`);
+ }catch(error){status(`Salvataggio non riuscito: ${error.message||'errore sconosciuto'}.`,true);}
+ finally{busy=false;$('quick-save').disabled=false;}
 }
 async function loadReferences(){
- const responses = await Promise.all([
-   db.from('PROGETTI').select('ID,TITOLO,ARTISTA').limit(2500),
-   db.from('AUDIO_VERSIONI').select('ID_PROGETTO,PROVIDER,PROVIDER_ID,LINK_FILE,NOME_FILE').limit(5000),
-   db.from('DROPBOX_AUDIO_FILES').select('ID_PROGETTO,Link_Dropbox').limit(2500),
-   db.from('DOCUMENTI_PROGETTO').select('ID_PROGETTO,Link_Drive').limit(2500)
- ]);
- for(let i=0;i<responses.length;i++) if(responses[i].error) throw new Error(`Archivio ${i+1} non accessibile: ${responses[i].error.message}`);
- projects = responses[0].data || [];
- archive = [...(responses[1].data||[]),...(responses[2].data||[]),...(responses[3].data||[])];
- ready = true;
+ const responses=await Promise.all([db.from('PROGETTI').select('ID,TITOLO,ARTISTA').limit(2500),db.from('AUDIO_VERSIONI').select('ID_PROGETTO,PROVIDER,PROVIDER_ID,LINK_FILE,NOME_FILE').limit(5000),db.from('DROPBOX_AUDIO_FILES').select('ID_PROGETTO,Link_Dropbox').limit(2500),db.from('DOCUMENTI_PROGETTO').select('ID_PROGETTO,Link_Drive').limit(2500)]);
+ if(responses.some(r=>r.error))throw new Error('Archivio non accessibile con questa sessione.');projects=responses[0].data||[];archive=[...(responses[1].data||[]),...(responses[2].data||[]),...(responses[3].data||[])];
 }
-function option(value,label,selected=false){const o=document.createElement('option');o.value=value;o.textContent=label;o.selected=selected;return o;}
-function renderReview(item,result){
- const box=$('intake-review');box.classList.remove('hidden');
- $('intake-existing').classList.add('hidden');$('intake-save-panel').classList.add('hidden');
- $('intake-outcome').textContent=result.reason;
- if(result.status==='existing'){
-   const id=result.projectId;
-   if(id){$('intake-existing-link').href=`scheda_progetto.html?id=${encodeURIComponent(id)}`;$('intake-existing').classList.remove('hidden');}
-   status('File già registrato: nessuna creazione o modifica eseguita.');return;
- }
- const select=$('intake-project'); select.replaceChildren();
- select.appendChild(option('','Seleziona un progetto oppure crea nuovo...'));
- const suggestions=new Set((result.candidates||[]).map(p=>String(p.ID)));
- [...projects].sort((a,b)=>projectLabel(a).localeCompare(projectLabel(b),'it')).forEach(p=>select.appendChild(option(String(p.ID),`${suggestions.has(String(p.ID))?'★ Possibile corrispondenza · ':''}${projectLabel(p)} · #${p.ID}`)));
- select.appendChild(option('new','+ Crea un nuovo progetto'));
- $('intake-save-panel').classList.remove('hidden');
- $('intake-save').disabled=true;
- status(`${result.candidates?.length||0} possibili corrispondenze. Scegli esplicitamente dove salvare il file.`);
-}
-$('intake-form').addEventListener('input',change);
-$('intake-form').addEventListener('change',change);
+function itemFromForm(){const parsed=KYV_MANUAL_INTAKE.parseLink($('intake-link').value),name=$('intake-name').value.trim();if(!name)throw new Error('Inserisci il nome del file.');if(!$('intake-audio-confirm').checked)throw new Error('Conferma che sia un file audio.');const title=$('intake-title').value.trim()||KYV_AUDIO_PROJECT.cleanTitle(name);return{source:parsed.provider,id:parsed.providerId,providerId:parsed.providerId,link:parsed.link,url:parsed.link,webViewLink:parsed.provider==='drive'?parsed.link:undefined,name,fileName:name,title,artist:$('intake-artist').value.trim(),type:$('intake-type').value,version:$('intake-version').value.trim(),date:$('intake-date').value||null,mimeType:'audio/unknown'};}
+function renderReview(item,result){$('intake-review').classList.remove('hidden');$('intake-existing').classList.add('hidden');$('intake-save-panel').classList.add('hidden');$('intake-outcome').textContent=result.reason;if(result.status==='existing'){if(result.projectId){$('intake-existing-link').href=`scheda_progetto.html?id=${encodeURIComponent(result.projectId)}`;$('intake-existing').classList.remove('hidden');}return;}const select=$('intake-project');select.replaceChildren();select.add(new Option('Scegli progetto…',''));const suggestions=new Set((result.candidates||[]).map(p=>String(p.ID)));[...projects].sort((a,b)=>projectLabel(a).localeCompare(projectLabel(b),'it')).forEach(p=>select.add(new Option(`${suggestions.has(String(p.ID))?'★ ':''}${projectLabel(p)}`,String(p.ID))));select.add(new Option('+ Crea nuovo progetto','new'));$('intake-save-panel').classList.remove('hidden');$('intake-save').disabled=true;}
+$('quick-form').addEventListener('submit',saveIdea);
 $('intake-project').addEventListener('change',()=>{$('intake-save').disabled=!reviewed||!$('intake-project').value||busy;});
-$('intake-form').addEventListener('submit',async event=>{
- event.preventDefault();if(busy)return;busy=true;$('intake-check').disabled=true;status('Controllo gli archivi aggiornati...');
- try{
-  if(!db)throw new Error('Sessione non disponibile. Accedi nuovamente.');
-  const item=itemFromForm();await loadReferences();
-  const result=KYV_MANUAL_INTAKE.classify(item,archive,projects);
-  reviewed={item,result,link:$('intake-link').value,name:$('intake-name').value};renderReview(item,result);
- }catch(error){change();status(error.message||'Controllo non riuscito: non è stato salvato nulla.',true);}
- finally{busy=false;$('intake-check').disabled=!db;}
-});
-$('intake-save').addEventListener('click',async()=>{
- if(!reviewed||busy)return;
- const choice=$('intake-project').value;if(!choice)return;
- busy=true;$('intake-save').disabled=true;status('Ricontrollo i duplicati prima del salvataggio...');
- try{
-  const item=itemFromForm();await loadReferences();const latest=KYV_MANUAL_INTAKE.classify(item,archive,projects);
-  if(latest.status==='existing'){reviewed={item,result:latest};renderReview(item,latest);return;}
-  const project=choice==='new'?null:projects.find(p=>String(p.ID)===choice);
-  if(choice!=='new'&&!project)throw new Error('Il progetto scelto non esiste più. Ripeti il controllo.');
-  if(choice==='new'&&latest.candidates?.length&&!confirm('Esistono progetti simili. Vuoi comunque aprire la creazione di un nuovo progetto?'))return;
-  if(!confirm(project?`Collegare il file al progetto «${projectLabel(project)}»?`:'Aprire la scheda di creazione e collegamento del nuovo progetto?'))return;
-  const saved=project?await KYV_AUDIO_PROJECT.linkToProject(item,project.ID,{db,projects}):await KYV_AUDIO_PROJECT.createFromItem(item,{db,projects});
-  if(!saved){status('Operazione annullata. Nessun nuovo collegamento confermato.');return;}
-  status(`Operazione completata. Progetto #${saved.ID} disponibile: apri la scheda per impostare la prossima azione.`);
-  $('intake-outcome').replaceChildren();const link=document.createElement('a');link.href=`scheda_progetto.html?id=${encodeURIComponent(saved.ID)}`;link.textContent=`Apri progetto #${saved.ID} →`;link.className='intake-alt';$('intake-outcome').appendChild(link);
-  $('intake-save-panel').classList.add('hidden');reviewed=null;
- }catch(error){status(error.message||'Salvataggio non riuscito. Verifica prima di riprovare.',true);reviewed=null;}
- finally{busy=false;$('intake-save').disabled=true;}
-});
-document.addEventListener('DOMContentLoaded',async()=>{
- if(typeof loadKyvSidebar==='function')loadKyvSidebar('nuovo');
- try{const session=await KYV_AUTH.requireAuth();if(!session)return;db=KYV.createSupabaseClient();await loadReferences();status('Pronto. Incolla un link: il controllo avviene solo quando lo richiedi.');}
- catch(error){ready=false;db=null;status(`Archivi non disponibili: ${error.message}. Inserimento bloccato.`,true);$('intake-check').disabled=true;}
-});
+$('intake-form').addEventListener('input',()=>{reviewed=null;$('intake-review').classList.add('hidden');});
+$('intake-form').addEventListener('submit',async event=>{event.preventDefault();if(busy||!db)return;busy=true;$('intake-check').disabled=true;status('Controllo solo ora i riferimenti già registrati…');try{const item=itemFromForm();await loadReferences();const result=KYV_MANUAL_INTAKE.classify(item,archive,projects);reviewed={item,result};renderReview(item,result);status('Controllo completato. Nessun file cloud è stato scansionato.');}catch(error){status(error.message||'Controllo non riuscito.',true);}finally{busy=false;$('intake-check').disabled=false;}});
+$('intake-save').addEventListener('click',async()=>{if(!reviewed||busy)return;const choice=$('intake-project').value;if(!choice)return;busy=true;$('intake-save').disabled=true;try{const item=itemFromForm();await loadReferences();const latest=KYV_MANUAL_INTAKE.classify(item,archive,projects);if(latest.status==='existing'){reviewed={item,result:latest};renderReview(item,latest);return;}const project=choice==='new'?null:projects.find(p=>String(p.ID)===choice);const saved=project?await KYV_AUDIO_PROJECT.linkToProject(item,project.ID,{db,projects}):await KYV_AUDIO_PROJECT.createFromItem(item,{db,projects});if(saved)location.href=`scheda_progetto.html?id=${encodeURIComponent(saved.ID)}`;}catch(error){status(error.message||'Salvataggio non riuscito.',true);}finally{busy=false;}});
+document.addEventListener('DOMContentLoaded',async()=>{if(typeof loadKyvSidebar==='function')loadKyvSidebar('nuovo');const source=new URLSearchParams(location.search).get('source');if(source==='drive'||source==='dropbox')$('cloud-flow').open=true;try{const session=await KYV_AUTH.requireAuth();if(!session)return;db=KYV.createSupabaseClient();status('Pronto. Per un appunto non viene caricato nessun archivio audio.');}catch(error){db=null;status(`Accesso non disponibile: ${error.message}.`,true);$('quick-save').disabled=true;$('intake-check').disabled=true;}if(window.lucide)lucide.createIcons();});
 })();
 </script>
 </body></html>
