@@ -85,6 +85,12 @@ function filterMeta(list){
   else if(activeFilter==='RECENTI')out=out.slice(0,40);
   return out;
 }
+function normalizeFilter(value){
+  const key=upper(value);
+  if(key==='WIP')return 'RECENTI';
+  if(key==='USCITE')return 'USCITI';
+  return FILTERS.some(([candidate])=>candidate===key)?key:activeFilter;
+}
 function injectStyles(){
   if(document.getElementById('kyv-projects-phase3-style'))return;
   const style=document.createElement('style');style.id='kyv-projects-phase3-style';style.textContent=`
@@ -156,7 +162,7 @@ function renderSummary(meta){
   el.innerHTML=`<div class="kyv-project-stat kyv-pastel-mint"><span>Da fare</span><b>${todo}</b></div><div class="kyv-project-stat kyv-pastel-sky"><span>In attesa</span><b>${wait}</b></div><div class="kyv-project-stat kyv-pastel-rose"><span>Fermi da ${STALE_DAYS}+ gg</span><b>${stale}</b></div><div class="kyv-project-stat kyv-pastel-lavender"><span>Usciti</span><b>${done}</b></div>`;
 }
 function applyFilter(nextFilter){
-  if(nextFilter)activeFilter=nextFilter;
+  if(nextFilter)activeFilter=normalizeFilter(nextFilter);
   document.querySelectorAll('[data-kyv-project-filter]').forEach(btn=>{const on=btn.dataset.kyvProjectFilter===activeFilter;btn.classList.toggle('bg-indigo-600',on);btn.classList.toggle('text-white',on);btn.classList.toggle('border-indigo-500',on);btn.classList.toggle('text-kyv-text',!on);});
   const audioMap=latestAudioMap();
   const all=projects.map(row=>projectMeta(row,audioMap));renderSummary(all);
@@ -170,7 +176,7 @@ function applyFilter(nextFilter){
     return `<tr class="kyv-project-row ${stale?'is-stale':tone==='wait'?'is-wait':tone==='done'?'is-done':'is-active'} cursor-pointer border-b border-kyv-border/40" data-kyv-project-id="${H(row.ID)}">
       <td data-label="Progetto" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[220px]"><span class="kyv-project-title block">${H(row.TITOLO||'Senza titolo')}</span><span class="kyv-project-artist block">${H(row.ARTISTA||'Artista non indicato')}</span></td>
       <td data-label="Stato" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[135px]"><span class="kyv-status-chip ${tone}">${H(status)}</span></td>
-      <td data-label="Prossima azione" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[220px]"><span class="kyv-next-action block">${H(action|| (projectDone(row)?'Nessuna: progetto chiuso':'Da decidere'))}</span></td>
+      <td data-label="Prossima azione" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[220px]"><span class="kyv-next-action block">${H(action||(projectDone(row)?'Nessuna: progetto chiuso':'Da decidere'))}</span></td>
       <td data-label="Ultima attività" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[150px]"><span class="block text-white font-bold">${H(activityLabel(activity))}</span>${stale?`<span class="kyv-stale">Fermo da ${staleDays} gg</span>`:'<span class="kyv-project-muted block mt-1">Aggiornato</span>'}</td>
       <td data-label="Ultimo audio" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[190px]">${audioRow?`<span class="kyv-audio-name block">${H(aName)}</span><span class="kyv-project-muted block mt-1">${H(aSource)}</span>${aLink?`<a href="${H(aLink)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="inline-flex mt-1 text-[10px] font-black text-indigo-200 hover:text-white">Apri file ↗</a>`:''}`:'<span class="kyv-project-muted">Nessun audio collegato</span>'}</td>
       <td data-label="Azioni" class="px-4 py-3.5 text-right min-w-[145px]"><div class="flex items-center justify-end gap-2"><a href="scheda_progetto.html?id=${pid}" onclick="event.stopPropagation()" class="kyv-row-primary"><i data-lucide="panel-top-open" class="w-4 h-4"></i>Apri</a><button data-action="open-ref" data-id="${H(row.ID)}" onclick="event.stopPropagation()" class="kyv-row-menu" aria-label="Modifica ${H(row.TITOLO||'progetto')}" title="Modifica"><i data-lucide="pencil" class="w-4 h-4"></i></button></div></td>
