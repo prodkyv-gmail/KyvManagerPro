@@ -70,6 +70,7 @@ function injectStyles(){
   const style=document.createElement('style');
   style.id='kyv-project-phase2-style';
   style.textContent=`
+body.kyv-silent-save #quick-edit-modal{display:none!important}
 #kyv-song-desk{position:relative;overflow:hidden}
 #kyv-song-desk .kyv-desk-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem}
 #kyv-song-desk .kyv-desk-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:.75rem}
@@ -80,8 +81,13 @@ function injectStyles(){
 #kyv-song-desk .kyv-desk-actions{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:auto;padding-top:.9rem}
 #kyv-song-desk .kyv-desk-button{min-height:36px;padding:.48rem .68rem;border:1px solid rgba(255,255,255,.11);border-radius:.7rem;background:rgba(255,255,255,.045);color:#eef2ff;font-size:.68rem;font-weight:850;display:inline-flex;align-items:center;justify-content:center;gap:.35rem}
 #kyv-song-desk .kyv-desk-button:hover{background:rgba(255,255,255,.09)}
+#kyv-song-desk .kyv-desk-button:disabled{opacity:.55;cursor:wait}
 #kyv-song-desk .kyv-desk-label{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;font-weight:900;color:#aab1bf}
 #kyv-song-desk .kyv-desk-status{font-size:.66rem;font-weight:900;color:#dbeafe;border:1px solid rgba(169,218,255,.20);background:rgba(169,218,255,.08);padding:.35rem .55rem;border-radius:999px;white-space:nowrap}
+#kyv-song-desk .kyv-inline-editor{margin-top:.75rem;display:flex;flex-direction:column;gap:.6rem;flex:1}
+#kyv-song-desk .kyv-inline-editor textarea{width:100%;min-height:104px;resize:vertical;border:1px solid rgba(255,255,255,.14);border-radius:.8rem;background:rgba(15,17,26,.72);color:#fff;padding:.75rem;font-size:.78rem;line-height:1.45;outline:none}
+#kyv-song-desk .kyv-inline-editor textarea:focus{border-color:rgba(34,211,238,.6);box-shadow:0 0 0 3px rgba(34,211,238,.08)}
+#kyv-song-desk .kyv-inline-editor .kyv-inline-actions{display:flex;gap:.45rem;justify-content:flex-end;margin-top:auto}
 .kyv-project-progressive{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem}
 .kyv-project-progressive details{border:1px solid rgba(255,255,255,.10);border-radius:.9rem;overflow:hidden}
 .kyv-project-progressive summary{list-style:none;cursor:pointer;padding:.78rem .85rem;display:flex;align-items:center;justify-content:space-between;gap:.7rem}
@@ -96,17 +102,6 @@ function injectStyles(){
 `;
   document.head.appendChild(style);
 }
-function openQuickField(key){
-  if(typeof window.openQuickEdit!=='function')return;
-  window.openQuickEdit();
-  setTimeout(()=>{
-    const input=[...document.querySelectorAll('#quick-edit-fields [data-key]')].find(el=>el.dataset.key===key);
-    if(!input)return;
-    input.focus();
-    input.scrollIntoView({behavior:'smooth',block:'center'});
-    input.animate?.([{outline:'2px solid rgba(34,211,238,0)'},{outline:'2px solid rgba(34,211,238,.75)'},{outline:'2px solid rgba(34,211,238,0)'}],{duration:950});
-  },80);
-}
 function openSection(tab,targetId){
   if(typeof window.setTab==='function')window.setTab(tab);
   setTimeout(()=>{
@@ -114,14 +109,54 @@ function openSection(tab,targetId){
     if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
   },80);
 }
+function waitForExistingSave(saveButton){
+  return new Promise(resolve=>{
+    const started=Date.now();
+    const tick=()=>{
+      if(!saveButton||(!saveButton.disabled&&Date.now()-started>120)){resolve();return;}
+      if(Date.now()-started>7000){resolve();return;}
+      setTimeout(tick,80);
+    };
+    tick();
+  });
+}
+async function saveInlineField(key,value,trigger){
+  if(typeof window.openQuickEdit!=='function')return false;
+  const modal=document.getElementById('quick-edit-modal');
+  const form=document.getElementById('quick-edit-form');
+  if(!modal||!form)return false;
+  if(trigger){trigger.disabled=true;trigger.innerHTML='<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>Salvo...';if(window.lucide)lucide.createIcons({root:trigger});}
+  document.body.classList.add('kyv-silent-save');
+  window.openQuickEdit();
+  const input=[...document.querySelectorAll('#quick-edit-fields [data-key]')].find(el=>el.dataset.key===key);
+  if(!input){document.body.classList.remove('kyv-silent-save');window.closeQuickEdit?.();renderDesk();return false;}
+  input.value=String(value||'');
+  const existingSave=document.getElementById('quick-edit-save');
+  if(typeof form.requestSubmit==='function')form.requestSubmit();
+  else form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+  await waitForExistingSave(existingSave);
+  document.body.classList.remove('kyv-silent-save');
+  if(!modal.classList.contains('hidden'))window.closeQuickEdit?.();
+  renderDesk();
+  return true;
+}
+function startInlineEdit(card,key,value,placeholder){
+  if(!card)return;
+  const original=card.innerHTML;
+  const title=key==='NOTE'?'Note rapide':'Prossima azione';
+  const icon=key==='NOTE'?'notebook-pen':'move-right';
+  card.innerHTML=`<h3><i data-lucide="${icon}" class="w-4 h-4"></i>${title}</h3><div class="kyv-inline-editor"><textarea data-kyv-inline-input placeholder="${h(placeholder)}">${h(value||'')}</textarea><div class="kyv-inline-actions"><button type="button" class="kyv-desk-button" data-kyv-cancel>Annulla</button><button type="button" class="kyv-desk-button" data-kyv-save><i data-lucide="save" class="w-3.5 h-3.5"></i>Salva</button></div></div>`;
+  const area=card.querySelector('[data-kyv-inline-input]');
+  const save=card.querySelector('[data-kyv-save]');
+  card.querySelector('[data-kyv-cancel]')?.addEventListener('click',()=>{card.innerHTML=original;wireDesk(card.closest('#kyv-song-desk'));if(window.lucide)lucide.createIcons({root:card});});
+  save?.addEventListener('click',()=>saveInlineField(key,area?.value||'',save));
+  area?.addEventListener('keydown',event=>{if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){event.preventDefault();save?.click();}});
+  if(window.lucide)lucide.createIcons({root:card});
+  setTimeout(()=>area?.focus(),0);
+}
 function progressiveCounts(view){
   const matches=view?.matches||{}, prot=view?.prot||{};
-  return {
-    work:(matches.audio||[]).length,
-    pitch:(matches.invii||[]).length,
-    release:(matches.docs||[]).length,
-    control:(prot.missing||[]).length
-  };
+  return {work:(matches.audio||[]).length,pitch:(matches.invii||[]).length,release:(matches.docs||[]).length,control:(prot.missing||[]).length};
 }
 function buildProgressive(view){
   const counts=progressiveCounts(view);
@@ -141,9 +176,14 @@ function buildProgressive(view){
   return nav;
 }
 function wireDesk(desk){
+  if(!desk)return;
   desk.querySelector('[data-kyv-action="versions"]')?.addEventListener('click',()=>openSection('produzione','tab-audio'));
-  desk.querySelector('[data-kyv-action="notes"]')?.addEventListener('click',()=>openQuickField('NOTE'));
-  desk.querySelector('[data-kyv-action="next"]')?.addEventListener('click',()=>openQuickField('SVILUPPO'));
+  desk.querySelector('[data-kyv-action="notes"]')?.addEventListener('click',()=>{
+    const view=currentView();startInlineEdit(desk.querySelector('[data-kyv-desk="notes"]'),'NOTE',view?.p?.NOTE||'','Scrivi una nota sul progetto...');
+  });
+  desk.querySelector('[data-kyv-action="next"]')?.addEventListener('click',()=>{
+    const view=currentView();startInlineEdit(desk.querySelector('[data-kyv-desk="next"]'),'SVILUPPO',view?.p?.SVILUPPO||'','Qual è la prossima cosa da fare?');
+  });
 }
 function renderDesk(){
   const view=currentView();
@@ -187,13 +227,13 @@ function renderDesk(){
         <h3><i data-lucide="notebook-pen" class="w-4 h-4 text-emerald-200"></i>Note rapide</h3>
         <p class="kyv-desk-main">${h(has(p.NOTE)?'Note del progetto':'Ancora vuoto')}</p>
         <p class="kyv-desk-copy">${h(note)}</p>
-        <div class="kyv-desk-actions"><button class="kyv-desk-button" type="button" data-kyv-action="notes"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Modifica note</button></div>
+        <div class="kyv-desk-actions"><button class="kyv-desk-button" type="button" data-kyv-action="notes"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Scrivi qui</button></div>
       </article>
       <article class="kyv-desk-card kyv-pastel-peach" data-kyv-desk="next">
         <h3><i data-lucide="move-right" class="w-4 h-4 text-orange-200"></i>Prossima azione</h3>
         <p class="kyv-desk-label mt-3">${h(nextLabel)}</p>
         <p class="kyv-desk-main">${h(next)}</p>
-        <div class="kyv-desk-actions"><button class="kyv-desk-button" type="button" data-kyv-action="next"><i data-lucide="square-pen" class="w-3.5 h-3.5"></i>Modifica azione</button></div>
+        <div class="kyv-desk-actions"><button class="kyv-desk-button" type="button" data-kyv-action="next"><i data-lucide="square-pen" class="w-3.5 h-3.5"></i>Scrivi qui</button></div>
       </article>
     </div>`;
   wireDesk(desk);
