@@ -1,11 +1,12 @@
 const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),pastel=read('kyv-pastel.css');
+const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),pastel=read('kyv-pastel.css');
 assert.match(config,/kyv-producer-mode\.js/,'Producer Mode deve essere caricato globalmente');
 assert.match(producer,/\['index\.html','Oggi'/);assert.match(producer,/\['kyv_calendar\.html','Agenda'/);assert.match(producer,/\['acquisisci_audio\.html','Nuovo'/);assert.match(producer,/\['progetti\.html','Progetti'/);assert.match(producer,/\['ascolto\.html','Ascolto'/);
 assert.match(producer,/details\('Controllo'/);assert.match(producer,/fatture\.html','Fatture e incassi'/);assert.match(producer,/rendiconto\.html','Rendiconto SIAE'/);
 assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.html','Studio Editor'/);assert.match(producer,/archivio_musicale\.html','Archivio musicale'/);
 assert.match(producer,/kyv-project-phase2\.js/,'La scheda progetto progressiva deve essere caricata dal Producer Mode');
+assert.match(producer,/kyv-projects-phase3\.js/,'La nuova lista Progetti deve essere caricata dal Producer Mode');
 assert.match(intake,/Cattura prima/);assert.match(intake,/id="quick-form"/);assert.match(intake,/Salva e continua dopo/);assert.match(intake,/db\.from\('PROGETTI'\)\.insert/);assert.match(intake,/id="cloud-flow"/);assert.match(intake,/Controlla duplicati/);assert.doesNotMatch(intake,/await loadReferences\(\);status\('Pronto/,'La cattura rapida non deve precaricare gli archivi audio');
 assert.match(projects,/openNewProjectChoices/);assert.match(projects,/source=drive/);assert.match(projects,/source=dropbox/);
 assert.doesNotMatch(archive,/id="drive-scan"/);assert.match(audit,/\.limit\(LIMIT\)/);assert.doesNotMatch(audit,/fetch\(|method:\s*['"]HEAD/);
@@ -13,5 +14,8 @@ assert.match(phase2,/Focus progetto/);assert.match(phase2,/Lavorazione/);assert.
 assert.match(phase2,/Audio \/ versioni/);assert.match(phase2,/Prossima azione/);
 assert.doesNotMatch(phase2,/\.from\(/,'Phase 2 deve essere solo una vista: nessuna query diretta al database');
 assert.doesNotMatch(phase2,/\.delete\(|\.insert\(|\.update\(/,'Phase 2 non deve mutare dati');
+assert.match(phase3,/Recenti/);assert.match(phase3,/Da fare/);assert.match(phase3,/In attesa/);assert.match(phase3,/Usciti/);assert.match(phase3,/Ultima attività/);assert.match(phase3,/Ultimo audio/);assert.match(phase3,/Prossima azione/);assert.match(phase3,/Fermo da/);
+assert.match(phase3,/AUDIO_VERSIONI/);assert.match(phase3,/DROPBOX_AUDIO_FILES/);assert.match(phase3,/DOCUMENTI_PROGETTO/);
+assert.doesNotMatch(phase3,/\.delete\(|\.insert\(|\.update\(/,'La lista Progetti operativa non deve mutare dati');
 assert.match(pastel,/\.kyv-pastel-lavender/);assert.match(pastel,/\.kyv-pastel-mint/);assert.match(pastel,/\.kyv-pastel-peach/);assert.match(pastel,/\.kyv-pastel-sky/);assert.match(pastel,/\.kyv-collapse/);
-console.log('OK: Producer Mode, cattura rapida, pannelli pastello e Scheda Progetto progressiva non distruttiva.');
+console.log('OK: Producer Mode, cattura rapida, Scheda Progetto e lista Progetti operative e non distruttive.');
