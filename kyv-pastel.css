@@ -1,15 +1,100 @@
-/* KYV Producer Pastels — superfici differenziate senza sacrificare contrasto e leggibilità. */
+/* KYV Producer Pastels — superfici differenziate senza sacrificare contrasto. */
 :root {
-  --kyv-pastel-lavender: 190 182 255;
-  --kyv-pastel-mint: 166 235 211;
-  --kyv-pastel-peach: 255 207 177;
-  --kyv-pastel-sky: 169 218 255;
-  --kyv-pastel-rose: 255 188 205;
-  --kyv-pastel-butter: 246 226 157;
+  --kyv-pastel-lavender: 190,182,255;
+  --kyv-pastel-mint: 166,235,211;
+  --kyv-pastel-peach: 255,207,177;
+  --kyv-pastel-sky: 169,218,255;
+  --kyv-pastel-rose: 255,188,205;
+  --kyv-pastel-butter: 246,226,157;
 }
 
-body > main,
-main.h-screen,
-main.flex-1 {
+body > main, main.h-screen, main.flex-1 {
   background:
-    radial-gradient(circle at 8% 2%, rgba
+    radial-gradient(circle at 8% 2%, rgba(var(--kyv-pastel-lavender),.18), transparent 28rem),
+    radial-gradient(circle at 92% 8%, rgba(var(--kyv-pastel-mint),.13), transparent 30rem),
+    radial-gradient(circle at 70% 85%, rgba(var(--kyv-pastel-peach),.10), transparent 34rem),
+    #10131b !important;
+}
+
+/* Pastelli alternati su schede e pannelli principali in tutta l'app. */
+main .kyv-panel,
+main .kyv-card,
+main .kyv-soft-panel,
+main .intake-card,
+main .bg-kyv-card {
+  position: relative;
+  overflow: hidden;
+}
+main .kyv-panel:nth-of-type(6n+1), main .kyv-card:nth-of-type(6n+1), main .intake-card:nth-of-type(6n+1) {
+  background: linear-gradient(145deg, rgba(var(--kyv-pastel-lavender),.16), rgba(23,27,37,.95)) !important;
+}
+main .kyv-panel:nth-of-type(6n+2), main .kyv-card:nth-of-type(6n+2), main .intake-card:nth-of-type(6n+2) {
+  background: linear-gradient(145deg, rgba(var(--kyv-pastel-mint),.14), rgba(23,27,37,.95)) !important;
+}
+main .kyv-panel:nth-of-type(6n+3), main .kyv-card:nth-of-type(6n+3), main .intake-card:nth-of-type(6n+3) {
+  background: linear-gradient(145deg, rgba(var(--kyv-pastel-peach),.14), rgba(23,27,37,.95)) !important;
+}
+main .kyv-panel:nth-of-type(6n+4), main .kyv-card:nth-of-type(6n+4), main .intake-card:nth-of-type(6n+4) {
+  background: linear-gradient(145deg, rgba(var(--kyv-pastel-sky),.14), rgba(23,27,37,.95)) !important;
+}
+main .kyv-panel:nth-of-type(6n+5), main .kyv-card:nth-of-type(6n+5), main .intake-card:nth-of-type(6n+5) {
+  background: linear-gradient(145deg, rgba(var(--kyv-pastel-rose),.13), rgba(23,27,37,.95)) !important;
+}
+main .kyv-panel:nth-of-type(6n), main .kyv-card:nth-of-type(6n), main .intake-card:nth-of-type(6n) {
+  background: linear-gradient(145deg, rgba(var(--kyv-pastel-butter),.12), rgba(23,27,37,.95)) !important;
+}
+
+/* Elementi che il Producer Mode marca esplicitamente. */
+.kyv-pastel-lavender { background: linear-gradient(135deg, rgba(var(--kyv-pastel-lavender),.20), rgba(28,30,43,.96)) !important; }
+.kyv-pastel-mint { background: linear-gradient(135deg, rgba(var(--kyv-pastel-mint),.18), rgba(25,32,36,.96)) !important; }
+.kyv-pastel-peach { background: linear-gradient(135deg, rgba(var(--kyv-pastel-peach),.18), rgba(35,29,31,.96)) !important; }
+.kyv-pastel-sky { background: linear-gradient(135deg, rgba(var(--kyv-pastel-sky),.18), rgba(25,31,39,.96)) !important; }
+.kyv-pastel-rose { background: linear-gradient(135deg, rgba(var(--kyv-pastel-rose),.17), rgba(35,27,34,.96)) !important; }
+.kyv-pastel-butter { background: linear-gradient(135deg, rgba(var(--kyv-pastel-butter),.15), rgba(34,32,26,.96)) !important; }
+
+.kyv-collapse {
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(0,0,0,.16);
+}
+.kyv-collapse > summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  min-height:58px;
+  padding:.9rem 1rem;
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+}
+.kyv-collapse > summary::-webkit-details-marker { display:none; }
+.kyv-collapse > summary .kyv-collapse-chevron { transition:transform .18s ease; }
+.kyv-collapse[open] > summary .kyv-collapse-chevron { transform:rotate(180deg); }
+.kyv-collapse-body { padding:0 1rem 1rem; }
+
+/* Azioni rapide: quattro colori, stessa gerarchia. */
+.kyv-quick-actions a:nth-child(6n+1) { background:rgba(var(--kyv-pastel-lavender),.12) !important; border-color:rgba(var(--kyv-pastel-lavender),.24) !important; }
+.kyv-quick-actions a:nth-child(6n+2) { background:rgba(var(--kyv-pastel-mint),.11) !important; border-color:rgba(var(--kyv-pastel-mint),.22) !important; }
+.kyv-quick-actions a:nth-child(6n+3) { background:rgba(var(--kyv-pastel-peach),.11) !important; border-color:rgba(var(--kyv-pastel-peach),.22) !important; }
+.kyv-quick-actions a:nth-child(6n+4) { background:rgba(var(--kyv-pastel-sky),.11) !important; border-color:rgba(var(--kyv-pastel-sky),.22) !important; }
+.kyv-quick-actions a:nth-child(6n+5) { background:rgba(var(--kyv-pastel-rose),.10) !important; border-color:rgba(var(--kyv-pastel-rose),.20) !important; }
+.kyv-quick-actions a:nth-child(6n) { background:rgba(var(--kyv-pastel-butter),.10) !important; border-color:rgba(var(--kyv-pastel-butter),.20) !important; }
+
+/* Tabelle e liste: leggero alternarsi cromatico senza ridurre la leggibilità. */
+main tbody tr:nth-child(4n+1) { background:rgba(var(--kyv-pastel-lavender),.025); }
+main tbody tr:nth-child(4n+2) { background:rgba(var(--kyv-pastel-mint),.022); }
+main tbody tr:nth-child(4n+3) { background:rgba(var(--kyv-pastel-peach),.020); }
+main tbody tr:nth-child(4n) { background:rgba(var(--kyv-pastel-sky),.020); }
+
+@media (max-width: 767px) {
+  body > main, main.h-screen, main.flex-1 {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(var(--kyv-pastel-lavender),.15), transparent 20rem),
+      radial-gradient(circle at 100% 30%, rgba(var(--kyv-pastel-mint),.10), transparent 22rem),
+      #10131b !important;
+  }
+  .kyv-collapse > summary { min-height:54px; padding:.8rem .9rem; }
+  .kyv-collapse-body { padding:0 .8rem .8rem; }
+}
