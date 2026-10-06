@@ -38,7 +38,14 @@ function ensurePastelStyles(){
   link.dataset.kyvPastel='1';
   document.head.appendChild(link);
 }
-
+function loadProjectPhase2(){
+  if(page!=='scheda_progetto.html'||document.querySelector('script[data-kyv-project-phase2]'))return;
+  const script=document.createElement('script');
+  script.src='kyv-project-phase2.js';
+  script.async=false;
+  script.dataset.kyvProjectPhase2='1';
+  document.head.appendChild(script);
+}
 function currentKey(){
   const map={
     'index.html':'dashboard','':'dashboard','kyv_calendar.html':'calendar','acquisisci_audio.html':'nuovo',
@@ -174,6 +181,7 @@ function dashboardProducerMode(){
 
 function boot(){
   ensurePastelStyles();
+  loadProjectPhase2();
   watchNavigation();
   dashboardProducerMode();
 }
