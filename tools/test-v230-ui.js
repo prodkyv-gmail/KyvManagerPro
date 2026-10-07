@@ -1,11 +1,12 @@
 const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),pastel=read('kyv-pastel.css');
+const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),todayPriority=read('kyv-today-priority.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),pastel=read('kyv-pastel.css');
 assert.match(config,/kyv-producer-mode\.js/,'Producer Mode deve essere caricato globalmente');
 assert.match(config,/kyv-listening-phase4\.js/,'La vista Ascolto producer-first deve essere caricata prima della stazione legacy');
 assert.match(config,/kyv-agenda-phase5\.js/,'La vista Agenda producer-first deve essere caricata sul calendario');
 assert.match(config,/kyv-workflow-nav\.js/,'La navigazione trasversale deve essere caricata globalmente');
 assert.match(config,/kyv-pitch-followup\.js/,'Pitch & Follow-up deve essere attivo su Scheda progetto e Agenda');
+assert.match(config,/kyv-today-priority\.js/,'La Home deve caricare il cockpit leggero delle priorità');
 assert.match(producer,/\['index\.html','Oggi'/);assert.match(producer,/\['kyv_calendar\.html','Agenda'/);assert.match(producer,/\['acquisisci_audio\.html','Nuovo'/);assert.match(producer,/\['progetti\.html','Progetti'/);assert.match(producer,/\['ascolto\.html','Ascolto'/);
 assert.match(producer,/details\('Controllo'/);assert.match(producer,/fatture\.html','Fatture e incassi'/);assert.match(producer,/rendiconto\.html','Rendiconto SIAE'/);
 assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.html','Studio Editor'/);assert.match(producer,/archivio_musicale\.html','Archivio musicale'/);
@@ -28,6 +29,10 @@ assert.match(actionBridge,/URLSearchParams/,'Il passaggio di contesto all’Agen
 assert.match(actionBridge,/panel\.id='kyv-today-project-actions'/,'Oggi deve avere un pannello dedicato alle azioni progetto');
 assert.match(actionBridge,/dataset\.activityFilter='project'/,'Il filtro Azioni progetto deve restare disponibile nelle attività a scomparsa');
 assert.doesNotMatch(actionBridge,/\.from\(['"](?:FATTURE|DOCUMENTI_PROGETTO|AUDIO_VERSIONI|DROPBOX_AUDIO_FILES)['"]\)\s*\.update/,'Il bridge non deve modificare aree amministrative o audio');
+assert.match(todayPriority,/Priorità di oggi/,'Oggi deve mostrare una sintesi unica delle priorità');
+assert.match(todayPriority,/follow-up dovuti/);assert.match(todayPriority,/progetti fermi/);assert.match(todayPriority,/azioni aperte/);assert.match(todayPriority,/sessioni\/scadenze visibili/);
+assert.match(todayPriority,/PROGETTI/);assert.match(todayPriority,/INVII_AUDIO/);assert.match(todayPriority,/STALE_DAYS=14/);assert.match(todayPriority,/FOLLOWUP_DAYS=5/);
+assert.doesNotMatch(todayPriority,/\.from\([^)]*\)\s*\.(?:insert|update|delete|upsert)\(/,'Oggi deve restare un cockpit in sola lettura: la gestione avviene nelle pagine specialistiche');
 assert.match(listening,/Artista → Progetto → Versioni/,'Ascolto deve seguire il percorso artista-progetto-versioni');
 assert.match(listening,/AUDIO_VERSIONI/);assert.match(listening,/DROPBOX_AUDIO_FILES/);assert.match(listening,/CONSEGNE_MASTER/);
 assert.match(listening,/Strumenti avanzati/,'Drive, Dropbox diretto e Locale devono essere secondari');
@@ -59,4 +64,4 @@ assert.match(pitch,/kyv-pitch-agenda/,'I solleciti devono comparire nell’Agend
 assert.match(pitch,/data-kind="followup"/,'Un sollecito deve potersi pianificare come Follow-up');
 assert.doesNotMatch(pitch,/\.from\(['"](?:FATTURE|DOCUMENTI_PROGETTO|AUDIO_VERSIONI|CONSEGNE_MASTER)['"]\)\s*\.(?:insert|update|delete|upsert)/,'Pitch & Follow-up non deve modificare fatture, documenti o versioni audio');
 assert.match(pastel,/\.kyv-pastel-lavender/);assert.match(pastel,/\.kyv-pastel-mint/);assert.match(pastel,/\.kyv-pastel-peach/);assert.match(pastel,/\.kyv-pastel-sky/);assert.match(pastel,/\.kyv-collapse/);
-console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti, Oggi, Agenda, Ascolto, percorso trasversale e Pitch & Follow-up operativi.');
+console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti, Oggi leggero, Agenda, Ascolto, percorso trasversale e Pitch & Follow-up operativi.');
