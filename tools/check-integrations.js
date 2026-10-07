@@ -32,7 +32,11 @@ assert(menu.match(/kyv_calendar\.html/g)?.length >= 2, 'Agenda deve comparire ne
 assert(dashboard.includes('href="kyv_calendar.html"'), 'Oggi deve offrire accesso rapido ad Agenda');
 assert(config.includes("email: 'prodkyv@gmail.com'"), 'Deve essere dichiarato l’account Google richiesto');
 assert(config.includes("DROPBOX_APP_KEY: 'kpapjm7sybfs8ze'"), 'La chiave pubblica Dropbox deve essere centralizzata');
-assert(bridge.includes('isPermanentProxyError'), 'Il proxy deve evitare fallback inutili su errori permanenti');
+assert(
+  bridge.includes("if(!isLocalDev()) throw improveDriveError(account, proxyErr)") &&
+  bridge.includes("fallback:proxy-to-jsonp"),
+  'In produzione il proxy deve essere autorevole e il fallback JSONP limitato allo sviluppo locale'
+);
 assert(bridge.includes('Authorization:`Bearer ${token}`'), 'Il bridge deve inviare la sessione al proxy');
 assert(proxy.includes('/auth/v1/user') && proxy.includes('Sessione richiesta o scaduta'), 'Il proxy deve verificare la sessione Supabase');
 assert(proxy.includes('DEFAULT_ALLOWED_TARGETS') && proxy.includes('KYV_APPS_SCRIPT_PROXY_SECRET'), 'Il proxy deve limitare i target e supportare un segreto solo server-side');
