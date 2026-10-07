@@ -11,6 +11,7 @@
     "check:intake": "node tools/test-manual-intake.js",
     "check:links": "node tools/test-link-audit.js",
     "check:v230": "node tools/test-v230-ui.js",
-    "check": "npm run check:js && npm run check:assets && npm run check:integrations && npm run check:proxy && npm run check:intake && npm run check:links && npm run check:v230"
+    "check:loading": "node tools/test-supabase-loading.js",
+    "check": "npm run check:js && npm run check:assets && npm run check:integrations && npm run check:proxy && npm run check:intake && npm run check:links && npm run check:v230 && npm run check:loading"
   }
 }
