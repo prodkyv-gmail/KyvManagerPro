@@ -63,13 +63,20 @@ window.KYV_CONFIG = KYV_CONFIG;
 
 (function loadKyvFeatureModules(){
     const page=(window.location.pathname.split('/').pop()||'index.html').toLowerCase();
+    const producerViews=['progetti.html','scheda_progetto.html','ascolto.html','kyv_calendar.html','index.html',''];
 
-    if(['progetti.html','scheda_progetto.html','ascolto.html','kyv_calendar.html','index.html',''].includes(page)){
+    if(producerViews.includes(page)){
         const invoices=document.createElement('script');
         invoices.src='kyv-project-invoices.js';
         invoices.async=false;
         invoices.dataset.kyvProjectInvoices='1';
         document.head.appendChild(invoices);
+
+        const layoutPolish=document.createElement('script');
+        layoutPolish.src='kyv-layout-polish.js';
+        layoutPolish.async=false;
+        layoutPolish.dataset.kyvLayoutPolish='1';
+        document.head.appendChild(layoutPolish);
     }
 
     if(window.KYV_SAFE_PROJECTS_PAGE&&page==='progetti.html')return;
@@ -124,6 +131,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         interestToRelease.src='kyv-interest-to-release.js';
         interestToRelease.async=false;
         document.head.appendChild(interestToRelease);
+
+        const financeSummary=document.createElement('script');
+        financeSummary.src='kyv-project-finance-summary.js';
+        financeSummary.async=false;
+        financeSummary.dataset.kyvProjectFinanceSummary='1';
+        document.head.appendChild(financeSummary);
     }
 
     if(page==='kyv_calendar.html'){
