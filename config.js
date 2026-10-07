@@ -40,6 +40,11 @@ window.KYV_CONFIG = KYV_CONFIG;
 
 // Sincronizza solo la versione visuale: la struttura del menu è gestita da Producer Mode.
 (function syncKyvVersion(){
+    // La pagina Progetti safe è intenzionalmente isolata da observer globali.
+    if(window.KYV_SAFE_PROJECTS_PAGE){
+        document.documentElement.dataset.kyvVersion=KYV_CONFIG.APP_VERSION;
+        return;
+    }
     let observer;
     function sync(){
         const brand=document.querySelector('#sidebar h1 + p');
@@ -56,6 +61,10 @@ window.KYV_CONFIG = KYV_CONFIG;
 
 (function loadKyvFeatureModules(){
     const page=(window.location.pathname.split('/').pop()||'index.html').toLowerCase();
+
+    // Safe Projects usa una sola query/renderer e non deve caricare moduli che
+    // osservano o riscrivono il DOM della pagina.
+    if(window.KYV_SAFE_PROJECTS_PAGE&&page==='progetti.html')return;
 
     // Progetti deve registrare il renderer producer-first mentre il documento è ancora
     // in parsing. Caricarlo solo dal Producer Mode al DOMContentLoaded lasciava una race
