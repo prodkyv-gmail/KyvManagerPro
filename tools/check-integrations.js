@@ -15,6 +15,8 @@ const projects = read('progetti.html');
 const projectSheetPage = read('scheda_progetto.html');
 const audioProjects = read('kyv-audio-project.js');
 const projectInvoices = read('kyv-project-invoices.js');
+const financeSummary = read('kyv-project-finance-summary.js');
+const layoutPolish = read('kyv-layout-polish.js');
 const recordEditor = read('kyv-record-editor.js');
 const proxy = read('api/drive-proxy.js');
 const htmlFiles = fs.readdirSync(root).filter(file => file.endsWith('.html'));
@@ -58,5 +60,12 @@ assert(projectInvoices.includes("tab=amministrazione") && projectInvoices.includ
 assert(projectInvoices.includes('Registra fattura') && projectInvoices.includes('Da incassare') && projectInvoices.includes('Incassata'), 'Lo stato fattura deve essere visibile nel flusso producer');
 assert(recordEditor.includes("FATTURE:") && recordEditor.includes("'ID_PROGETTO'"), 'L’editor condiviso deve continuare a collegare la fattura al progetto senza nuove tabelle');
 assert(!projectInvoices.match(/\.from\(['"][^'"]+['"]\)\s*\.insert/), 'Il modulo fatture progetto deve delegare la scrittura all’editor condiviso');
+
+assert(config.includes("financeSummary.src='kyv-project-finance-summary.js'"), 'La Scheda progetto deve caricare il riepilogo fattura/pagamento');
+assert(financeSummary.includes('Fattura emessa') && financeSummary.includes('Pagamento') && financeSummary.includes('Residuo da incassare'), 'Il riepilogo economico deve rendere visibili fattura e stato incasso nella parte alta della Scheda');
+assert(financeSummary.includes(".eq('ID_PROGETTO',pid)") && financeSummary.includes("select('ID,IDFT,FT')"), 'Il riepilogo economico deve usare ID_PROGETTO con fallback legacy');
+assert(config.includes("layoutPolish.src='kyv-layout-polish.js'"), 'Le viste producer devono caricare il modulo di leggibilità/scroll');
+assert(layoutPolish.includes('#kyv-listen-versions') && layoutPolish.includes('#kyv-agenda-actions') && layoutPolish.includes('#tab-admin table'), 'Il layout polish deve coprire Ascolto, Agenda e tabelle amministrative');
+assert(layoutPolish.includes('overflow-y:auto') && layoutPolish.includes('overflow-x:auto'), 'I contenitori dati estesi devono avere scroll verticale/orizzontale esplicito dove serve');
 
 console.log('Controlli integrazioni: OK');
