@@ -98,8 +98,86 @@
         if (!window.supabase) throw new Error('Supabase JS non è stato caricato.');
         const cfg = window.KYV_CONFIG || {};
         if (!cfg.SUPABASE_URL || !cfg.SUPABASE_KEY) throw new Error('KYV_CONFIG mancante: controlla config.js.');
+
+        const nativeFetch = window.fetch.bind(window);
+        let sessionSyncPromise = null;
+        const restBase = `${String(cfg.SUPABASE_URL).replace(/\/$/, '')}/rest/v1/`;
+
+        function requestInfo(input, init) {
+            const url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input || ''));
+            const method = String((init && init.method) || (typeof Request !== 'undefined' && input instanceof Request ? input.method : 'GET') || 'GET').toUpperCase();
+            return { url, method, isRest: url.startsWith(restBase) };
+        }
+
+        async function currentSession() {
+            const shared = window.KYV_SUPABASE_CLIENT;
+            if (!shared || !shared.auth || typeof shared.auth.getSession !== 'function') return null;
+            if (!sessionSyncPromise) {
+                sessionSyncPromise = shared.auth.getSession()
+                    .then(({ data, error }) => {
+                        if (error) throw error;
+                        return data && data.session ? data.session : null;
+                    })
+                    .finally(() => { sessionSyncPromise = null; });
+            }
+            return sessionSyncPromise;
+        }
+
+        function withAccessToken(input, init, accessToken) {
+            if (!accessToken) return { input, init };
+            const baseHeaders = (init && init.headers) || (typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined);
+            const headers = new Headers(baseHeaders || {});
+            headers.set('Authorization', `Bearer ${accessToken}`);
+            if (typeof Request !== 'undefined' && input instanceof Request) {
+                return { input: new Request(input, { headers }), init: undefined };
+            }
+            return { input, init: { ...(init || {}), headers } };
+        }
+
+        async function kyvSupabaseFetch(input, init) {
+            const info = requestInfo(input, init);
+            let request = { input, init };
+
+            // Prima di interrogare il Data API, getSession riallinea/aggiorna il JWT se necessario.
+            // In questo modo le viste che partono insieme non usano un token appena scaduto.
+            if (info.isRest) {
+                try {
+                    const session = await currentSession();
+                    request = withAccessToken(input, init, session && session.access_token);
+                } catch (error) {
+                    console.warn('[KYV] Sessione Supabase non riallineata prima della richiesta.', error);
+                }
+            }
+
+            let response = await nativeFetch(request.input, request.init);
+
+            // PGRST303 è l'errore osservato durante il cambio JWT. Per le sole letture GET,
+            // riallineiamo la sessione e riproviamo una volta. Altri 401 restano visibili.
+            if (info.isRest && info.method === 'GET' && response.status === 401) {
+                let body = '';
+                try { body = await response.clone().text(); } catch (_) {}
+                if (/PGRST303/i.test(body)) {
+                    await new Promise(resolve => setTimeout(resolve, 160));
+                    try {
+                        const session = await currentSession();
+                        const retry = withAccessToken(input, init, session && session.access_token);
+                        response = await nativeFetch(retry.input, retry.init);
+                    } catch (error) {
+                        console.warn('[KYV] Retry Supabase PGRST303 non riuscito.', error);
+                    }
+                }
+            }
+            return response;
+        }
+
         window.KYV_SUPABASE_CLIENT = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_KEY, {
-            auth: { storageKey: 'kyv-manager-auth-token' }
+            auth: {
+                storageKey: 'kyv-manager-auth-token',
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true
+            },
+            global: { fetch: kyvSupabaseFetch }
         });
         return window.KYV_SUPABASE_CLIENT;
     }
