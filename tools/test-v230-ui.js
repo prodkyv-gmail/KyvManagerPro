@@ -67,6 +67,7 @@ assert.match(pitch,/FOLLOWUP_DAYS=5/,'Un pitch fermo deve diventare sollecito do
 assert.match(pitch,/In attesa/);assert.match(pitch,/Da sollecitare/);assert.match(pitch,/Da revisionare/);assert.match(pitch,/Interessato/);assert.match(pitch,/Chiuso \/ non interessato/);
 assert.match(pitch,/from\('AUDIO_VERSIONI'\)\.select/,'Ogni invio deve poter indicare la versione esatta');
 assert.match(pitch,/Versione inviata:/,'La versione scelta deve restare nello storico senza richiedere nuove colonne');
+assert.match(pitch,/kyv:pitch-updated/,'Gli aggiornamenti invio devono propagarsi subito alla Scheda 2.0');assert.match(projectSheet,/kyv:pitch-updated/);
 assert.match(pitch,/from\('INVII_AUDIO'\)\.insert/,'La scheda deve poter registrare un nuovo invio usando la tabella esistente');
 assert.match(pitch,/from\('INVII_AUDIO'\)\.update/,'Gli stati del pitch devono aggiornare la riga esistente');
 assert.match(pitch,/Conferma_Ricezione/,'Il feedback deve riusare il campo di conferma già esistente');

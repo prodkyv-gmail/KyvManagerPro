@@ -115,6 +115,6 @@ function render(){
   if(window.lucide)lucide.createIcons({root:document.getElementById('project-view')});return true;
 }
 function schedule(){clearTimeout(timer);timer=setTimeout(render,70);}
-function boot(){injectStyles();render();const root=document.getElementById('project-view')||document.documentElement;observer=new MutationObserver(schedule);observer.observe(root,{childList:true,subtree:true});window.addEventListener('beforeunload',()=>observer?.disconnect(),{once:true});}
+function boot(){injectStyles();render();const root=document.getElementById('project-view')||document.documentElement;observer=new MutationObserver(schedule);observer.observe(root,{childList:true,subtree:true});window.addEventListener('kyv:pitch-updated',schedule);window.addEventListener('beforeunload',()=>observer?.disconnect(),{once:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

@@ -181,13 +181,20 @@ function setPitchStatus(id,status,button){return updatePitch(id,{Stato:status,Da
 function markFollowup(id,button){return updatePitch(id,{Stato:'In attesa',Data_Conferma:new Date().toISOString()},button,'Sollecito registrato: riparte il conteggio.');}
 function saveFeedback(id,note,button){const clean=text(note);if(!clean){toast('Scrivi la revisione richiesta.','warning');return;}return updatePitch(id,{Stato:'Da revisionare',Conferma_Ricezione:`Feedback: ${clean}`,Data_Conferma:new Date().toISOString()},button,'Revisione salvata.');}
 
+function syncProjectView(projectId){
+  try{
+    if(typeof state!=='undefined'&&String(state?.currentView?.p?.ID)===String(projectId))state.currentView.matches.invii=[...pitchRows];
+  }catch(_){}
+  window.dispatchEvent(new CustomEvent('kyv:pitch-updated',{detail:{projectId}}));
+}
+
 async function refreshProject(projectId,force=false){
   projectId=text(projectId);if(!projectId||projectLoading)return;
   const panel=document.getElementById('kyv-pitch-followup-project');
   if(!force&&projectId===lastProjectId&&panel){renderProjectPanel(projectId);return;}
   if(!force&&projectId===lastProjectId&&!panel&&pitchRows.length>=0){renderProjectPanel(projectId);return;}
   projectLoading=true;
-  try{const result=await loadProjectRows(projectId);pitchRows=result.rows;projectVersions=result.files;lastProjectId=projectId;renderProjectPanel(projectId);}catch(error){console.warn('KYV Pitch: caricamento progetto non disponibile',error);}finally{projectLoading=false;}
+  try{const result=await loadProjectRows(projectId);pitchRows=result.rows;projectVersions=result.files;lastProjectId=projectId;syncProjectView(projectId);renderProjectPanel(projectId);}catch(error){console.warn('KYV Pitch: caricamento progetto non disponibile',error);}finally{projectLoading=false;}
 }
 function watchProjectPage(){
   injectStyles();
