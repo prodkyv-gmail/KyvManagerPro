@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-31-hardening-20261007b';
+const CACHE_NAME = 'kyv-studio-v2-31-hardening-20261007c';
 const APP_SHELL = [
     './',
     './index.html',
@@ -19,7 +19,7 @@ const APP_SHELL = [
 
 function hardenHtml(html) {
     let out = html;
-    out = out.replaceAll('data-lucide="message-circle-clock"', 'data-lucide="message-square-clock"');
+    out = out.replaceAll('data-lucide="message-circle-clock"', 'data-lucide="message-square-text"');
     if (!out.includes('kyv-hardening-overrides.js')) {
         out = out.replace('</head>', '    <script src="./kyv-hardening-overrides.js" defer></script>\n</head>');
     }
