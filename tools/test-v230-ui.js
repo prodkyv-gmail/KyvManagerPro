@@ -1,12 +1,13 @@
 const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),todayPriority=read('kyv-today-priority.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),pastel=read('kyv-pastel.css');
+const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),todayPriority=read('kyv-today-priority.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),releaseDesk=read('kyv-release-desk.js'),pastel=read('kyv-pastel.css');
 assert.match(config,/kyv-producer-mode\.js/,'Producer Mode deve essere caricato globalmente');
 assert.match(config,/kyv-listening-phase4\.js/,'La vista Ascolto producer-first deve essere caricata prima della stazione legacy');
 assert.match(config,/kyv-agenda-phase5\.js/,'La vista Agenda producer-first deve essere caricata sul calendario');
 assert.match(config,/kyv-workflow-nav\.js/,'La navigazione trasversale deve essere caricata globalmente');
 assert.match(config,/kyv-pitch-followup\.js/,'Pitch & Follow-up deve essere attivo su Scheda progetto e Agenda');
 assert.match(config,/kyv-today-priority\.js/,'La Home deve caricare il cockpit leggero delle priorità');
+assert.match(config,/kyv-release-desk\.js/,'La Scheda progetto deve caricare il Release Desk essenziale');
 assert.match(producer,/\['index\.html','Oggi'/);assert.match(producer,/\['kyv_calendar\.html','Agenda'/);assert.match(producer,/\['acquisisci_audio\.html','Nuovo'/);assert.match(producer,/\['progetti\.html','Progetti'/);assert.match(producer,/\['ascolto\.html','Ascolto'/);
 assert.match(producer,/details\('Controllo'/);assert.match(producer,/fatture\.html','Fatture e incassi'/);assert.match(producer,/rendiconto\.html','Rendiconto SIAE'/);
 assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.html','Studio Editor'/);assert.match(producer,/archivio_musicale\.html','Archivio musicale'/);
@@ -63,5 +64,12 @@ assert.match(pitch,/Conferma_Ricezione/,'Il feedback deve riusare il campo di co
 assert.match(pitch,/kyv-pitch-agenda/,'I solleciti devono comparire nell’Agenda');
 assert.match(pitch,/data-kind="followup"/,'Un sollecito deve potersi pianificare come Follow-up');
 assert.doesNotMatch(pitch,/\.from\(['"](?:FATTURE|DOCUMENTI_PROGETTO|AUDIO_VERSIONI|CONSEGNE_MASTER)['"]\)\s*\.(?:insert|update|delete|upsert)/,'Pitch & Follow-up non deve modificare fatture, documenti o versioni audio');
+assert.match(releaseDesk,/Release Desk/,'La Scheda progetto deve avere un Release Desk immediato');
+assert.match(releaseDesk,/Uscita & crediti/);assert.match(releaseDesk,/Completa mancanti/);assert.match(releaseDesk,/Vedi tutti i controlli release/);
+assert.match(releaseDesk,/Data_Pubblicazione/);assert.match(releaseDesk,/Data_Consegna_Master/);assert.match(releaseDesk,/Codice_ISRC/);assert.match(releaseDesk,/AUTORI/);assert.match(releaseDesk,/Quota_Musica_Kyv/);assert.match(releaseDesk,/Produttore_Fonografico/);assert.match(releaseDesk,/Ruolo_IMAIE_Kyv/);
+assert.match(releaseDesk,/Pronto/);assert.match(releaseDesk,/Da confermare/);assert.match(releaseDesk,/Mancante/);
+assert.match(releaseDesk,/openCompactEdit/,'Il Release Desk deve riusare l’editor esistente mostrando solo i campi utili');
+assert.match(releaseDesk,/classList\.toggle\('hidden'/,'L’editor Release deve nascondere i campi non necessari');
+assert.doesNotMatch(releaseDesk,/\.from\(/,'Il Release Desk deve usare state.currentView senza interrogare direttamente il database');
 assert.match(pastel,/\.kyv-pastel-lavender/);assert.match(pastel,/\.kyv-pastel-mint/);assert.match(pastel,/\.kyv-pastel-peach/);assert.match(pastel,/\.kyv-pastel-sky/);assert.match(pastel,/\.kyv-collapse/);
-console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti, Oggi leggero, Agenda, Ascolto, percorso trasversale e Pitch & Follow-up operativi.');
+console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti, Oggi leggero, Agenda, Ascolto, percorso trasversale, Pitch & Follow-up e Release Desk operativi.');
