@@ -1,8 +1,9 @@
 const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),listening=read('kyv-listening-phase4.js'),pastel=read('kyv-pastel.css');
+const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),pastel=read('kyv-pastel.css');
 assert.match(config,/kyv-producer-mode\.js/,'Producer Mode deve essere caricato globalmente');
 assert.match(config,/kyv-listening-phase4\.js/,'La vista Ascolto producer-first deve essere caricata prima della stazione legacy');
+assert.match(config,/kyv-agenda-phase5\.js/,'La vista Agenda producer-first deve essere caricata sul calendario');
 assert.match(producer,/\['index\.html','Oggi'/);assert.match(producer,/\['kyv_calendar\.html','Agenda'/);assert.match(producer,/\['acquisisci_audio\.html','Nuovo'/);assert.match(producer,/\['progetti\.html','Progetti'/);assert.match(producer,/\['ascolto\.html','Ascolto'/);
 assert.match(producer,/details\('Controllo'/);assert.match(producer,/fatture\.html','Fatture e incassi'/);assert.match(producer,/rendiconto\.html','Rendiconto SIAE'/);
 assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.html','Studio Editor'/);assert.match(producer,/archivio_musicale\.html','Archivio musicale'/);
@@ -32,5 +33,12 @@ assert.match(listening,/Scheda progetto/);assert.match(listening,/Aggiungi versi
 assert.match(listening,/installLegacyScanGuard/,'La scansione radio legacy deve essere neutralizzata all’avvio');
 assert.doesNotMatch(listening,/KYV_DRIVE\.listFiles|fetchDriveTracks\s*\(/,'La vista principale Ascolto non deve scandire Drive');
 assert.doesNotMatch(listening,/\.from\([^)]*\)\s*\.(?:insert|update|delete|upsert)\(/,'La nuova vista Ascolto deve essere di sola lettura');
+assert.match(agenda,/Agenda <span class="text-violet-300">di produzione/,'L’Agenda deve presentarsi come strumento di produzione');
+assert.match(agenda,/Da pianificare/);assert.match(agenda,/Sessione/);assert.match(agenda,/Follow-up/);assert.match(agenda,/Scadenza/);assert.match(agenda,/Filtra calendario/);
+assert.match(agenda,/from\('PROGETTI'\)\.select/,'L’Agenda deve leggere le prossime azioni dai progetti');
+assert.match(agenda,/from\('PROGETTI'\)\.update\(\{SVILUPPO:''\}\)\.eq\('ID'/,'Fatto in Agenda deve chiudere solo la prossima azione');
+assert.match(agenda,/Pianifica attività/);assert.match(agenda,/Aggiungi in Agenda/);assert.match(agenda,/Sincronizzazione Calendar/);
+assert.doesNotMatch(agenda,/\.from\(['"](?:FATTURE|DOCUMENTI_PROGETTO|AUDIO_VERSIONI|DROPBOX_AUDIO_FILES|CONSEGNE_MASTER)['"]\)\s*\.(?:insert|update|delete|upsert)/,'L’Agenda non deve modificare aree amministrative o audio');
+assert.doesNotMatch(agenda,/KYV_DRIVE\.listFiles|DROPBOX_AUDIO_FILES|AUDIO_VERSIONI/,'L’Agenda non deve scandire archivi audio o Drive');
 assert.match(pastel,/\.kyv-pastel-lavender/);assert.match(pastel,/\.kyv-pastel-mint/);assert.match(pastel,/\.kyv-pastel-peach/);assert.match(pastel,/\.kyv-pastel-sky/);assert.match(pastel,/\.kyv-collapse/);
-console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti, Oggi/Agenda e Ascolto producer-first operativi.');
+console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti, Oggi, Agenda e Ascolto producer-first operativi.');
