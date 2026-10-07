@@ -57,6 +57,17 @@ window.KYV_CONFIG = KYV_CONFIG;
 (function loadKyvFeatureModules(){
     const page=(window.location.pathname.split('/').pop()||'index.html').toLowerCase();
 
+    // Progetti deve registrare il renderer producer-first mentre il documento è ancora
+    // in parsing. Caricarlo solo dal Producer Mode al DOMContentLoaded lasciava una race
+    // con il vecchio fetchUscite() inline di progetti.html.
+    if(page==='progetti.html'&&!document.querySelector('script[data-kyv-projects-phase3]')){
+        const projects=document.createElement('script');
+        projects.src='kyv-projects-phase3.js';
+        projects.async=false;
+        projects.dataset.kyvProjectsPhase3='1';
+        document.head.appendChild(projects);
+    }
+
     // Interfaccia semplificata Produttore: Oggi / Agenda / Nuovo / Progetti / Ascolto.
     const producer=document.createElement('script');
     producer.src='kyv-producer-mode.js';
