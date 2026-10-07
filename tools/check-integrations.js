@@ -30,8 +30,7 @@ assert(proxy.includes('DEFAULT_ALLOWED_TARGETS') && proxy.includes('KYV_APPS_SCR
 assert(!proxy.includes("Access-Control-Allow-Origin', '*'"), 'Il proxy non deve esporre CORS wildcard');
 assert(dropbox.includes('ensureDropboxChooser'), 'Dropbox deve caricare il Chooser con diagnostica');
 assert(dropbox.includes('Puoi comunque incollare il link Dropbox'), 'Dropbox deve mantenere il fallback manuale');
-assert(projects.includes('Nuovo progetto'), 'La creazione progetto deve restare accessibile');
+assert(projects.includes('acquisisci_audio.html') && projects.includes('openNewProjectChoices'), 'La creazione progetto deve restare accessibile');
 assert(audioProjects.includes('insertProjectSafely') && audioProjects.includes('Crea progetto e collega'), 'La creazione progetto contestuale deve restare disponibile');
 
 console.log('Controlli integrazioni: OK');
-
