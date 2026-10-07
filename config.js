@@ -106,6 +106,11 @@ window.KYV_CONFIG = KYV_CONFIG;
         releaseDesk.src='kyv-release-desk.js';
         releaseDesk.async=false;
         document.head.appendChild(releaseDesk);
+
+        const versionToPitch=document.createElement('script');
+        versionToPitch.src='kyv-version-to-pitch.js';
+        versionToPitch.async=false;
+        document.head.appendChild(versionToPitch);
     }
 
     if(page==='kyv_calendar.html'){
@@ -125,6 +130,11 @@ window.KYV_CONFIG = KYV_CONFIG;
         phase4.src='kyv-listening-phase4.js';
         phase4.async=false;
         document.head.appendChild(phase4);
+
+        const versionToPitch=document.createElement('script');
+        versionToPitch.src='kyv-version-to-pitch.js';
+        versionToPitch.async=false;
+        document.head.appendChild(versionToPitch);
 
         const core=document.createElement('script');
         core.src='kyv-link-audit-core.js';
