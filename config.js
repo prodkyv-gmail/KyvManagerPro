@@ -63,6 +63,13 @@ window.KYV_CONFIG = KYV_CONFIG;
     producer.async=false;
     document.head.appendChild(producer);
 
+    // Percorso trasversale Scheda / Ascolto / Agenda / Oggi. Il modulo si auto-disattiva
+    // sulle pagine non coinvolte e mantiene il progetto corrente tra le viste.
+    const workflowNav=document.createElement('script');
+    workflowNav.src='kyv-workflow-nav.js';
+    workflowNav.async=false;
+    document.head.appendChild(workflowNav);
+
     if(page==='scheda_progetto.html'){
         const script=document.createElement('script');
         script.src='kyv-project-hub-v227.js';
