@@ -3,6 +3,9 @@
 'use strict';
 if((location.pathname.split('/').pop()||'').toLowerCase()!=='progetti.html')return;
 
+window.KYV_PROJECTS_PHASE3_ACTIVE=true;
+window.KYV_PROJECTS_PHASE3_PENDING=false;
+
 const FILTERS=[
   ['RECENTI','Recenti'],
   ['DA_FARE','Da fare'],
@@ -136,21 +139,44 @@ function mountChrome(){
   if(window.lucide)lucide.createIcons({root:document.body});
 }
 async function safeRows(table,limit){
-  try{const {data,error}=await db.from(table).select('*').limit(limit);if(error)return[];return data||[];}catch(_){return[];}
+  try{const {data,error}=await db.from(table).select('*').limit(limit);if(error){console.warn(`[KYV Projects] ${table} non disponibile`,error);return[];}return data||[];}catch(error){console.warn(`[KYV Projects] ${table} non disponibile`,error);return[];}
+}
+function renderMinimalProjects(error){
+  console.error('[KYV Projects] Rendering avanzato non riuscito, uso fallback minimale.',error);
+  const body=document.getElementById('tbody-uscite');if(!body)return;
+  const rows=[...projects].sort((a,b)=>Number(b.ID||0)-Number(a.ID||0)).slice(0,40);
+  const count=document.getElementById('project-count');if(count)count.textContent=`${projects.length} ${projects.length===1?'progetto':'progetti'}`;
+  if(!rows.length){body.innerHTML='<tr><td colspan="6" class="p-10 text-center text-kyv-text">Nessun progetto disponibile.</td></tr>';return;}
+  body.innerHTML=rows.map(row=>`<tr class="kyv-project-row cursor-pointer border-b border-kyv-border/40" data-kyv-project-id="${H(row.ID)}"><td data-label="Progetto" class="px-4 py-3.5 min-w-[220px]"><span class="kyv-project-title block">${H(row.TITOLO||'Senza titolo')}</span><span class="kyv-project-artist block">${H(row.ARTISTA||'Artista non indicato')}</span></td><td data-label="Stato" class="px-4 py-3.5"><span class="kyv-status-chip">${H(row.STATO||row.SVILUPPO||'Stato non indicato')}</span></td><td data-label="Prossima azione" class="px-4 py-3.5"><span class="kyv-next-action">${H(nextAction(row)||'Da decidere')}</span></td><td data-label="Ultima attività" class="px-4 py-3.5"><span class="kyv-project-muted">Dati progetto caricati</span></td><td data-label="Ultimo audio" class="px-4 py-3.5"><span class="kyv-project-muted">Caricamento dettagli non disponibile</span></td><td data-label="Azioni" class="px-4 py-3.5 text-right"><a href="scheda_progetto.html?id=${encodeURIComponent(String(row.ID))}" class="kyv-row-primary"><i data-lucide="panel-top-open" class="w-4 h-4"></i>Apri</a></td></tr>`).join('');
+  body.querySelectorAll('[data-kyv-project-id]').forEach(row=>row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;location.href=`scheda_progetto.html?id=${encodeURIComponent(row.dataset.kyvProjectId)}`;}));
+  if(window.lucide)lucide.createIcons({root:body});
+}
+function renderProjects(){
+  try{applyFilter(activeFilter);}
+  catch(error){renderMinimalProjects(error);}
 }
 async function load(){
   if(loading)return;loading=true;
   const body=document.getElementById('tbody-uscite');if(body)body.innerHTML='<tr><td colspan="6" class="p-8 text-center text-kyv-text"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-400"></i>Carico i progetti…</td></tr>';
   try{
-    const [p,a,d,docs]=await Promise.all([
-      db.from('PROGETTI').select('*').order('ID',{ascending:false}).limit(500),
+    // I progetti sono il dato essenziale: li mostriamo appena arrivano, senza aspettare audio/documenti.
+    const p=await db.from('PROGETTI').select('*').order('ID',{ascending:false}).limit(500);
+    if(p.error)throw p.error;
+    projects=p.data||[];
+    audioRows=[];
+    const search=document.getElementById('uscite-search');if(search)search.value='';
+    renderProjects();
+
+    // Gli archivi secondari arricchiscono la vista ma non possono più bloccare la lista Progetti.
+    const [a,d,docs]=await Promise.all([
       safeRows('AUDIO_VERSIONI',5000),safeRows('DROPBOX_AUDIO_FILES',2500),safeRows('DOCUMENTI_PROGETTO',2500)
     ]);
-    if(p.error)throw p.error;
-    projects=p.data||[];audioRows=[...a,...d,...docs];
-    const search=document.getElementById('uscite-search');if(search)search.value='';
-    applyFilter(activeFilter);
-  }catch(error){if(body)body.innerHTML=`<tr><td colspan="6" class="p-8 text-center text-rose-300">Impossibile caricare i progetti: ${H(error.message||'errore sconosciuto')}</td></tr>`;}
+    audioRows=[...a,...d,...docs];
+    renderProjects();
+  }catch(error){
+    console.error('[KYV Projects] Caricamento PROGETTI non riuscito',error);
+    if(body)body.innerHTML=`<tr><td colspan="6" class="p-8 text-center text-rose-300">Impossibile caricare i progetti: ${H(error.message||'errore sconosciuto')}</td></tr>`;
+  }
   finally{loading=false;if(window.lucide)lucide.createIcons({root:document.body});}
 }
 function renderSummary(meta){
@@ -185,9 +211,12 @@ function applyFilter(nextFilter){
   body.querySelectorAll('[data-kyv-project-id]').forEach(row=>row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;location.href=`scheda_progetto.html?id=${encodeURIComponent(row.dataset.kyvProjectId)}`;}));
   if(window.lucide)lucide.createIcons({root:body});
 }
-function boot(){
+async function boot(){
   injectStyles();mountChrome();db=window.KYV?.createSupabaseClient?.();if(!db)return;
   window.fetchUscite=load;window.applyUsciteFilters=applyFilter;
+  const authRequired=window.KYV_AUTH?.authRequired?.()!==false;
+  const session=await window.KYV_AUTH?.requireAuth?.();
+  if(authRequired&&!session)return;
   load();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,0),{once:true});else setTimeout(boot,0);
