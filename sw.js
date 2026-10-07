@@ -1,10 +1,11 @@
-const CACHE_NAME = 'kyv-studio-v2-31-calendar-loopfix-20261007';
+const CACHE_NAME = 'kyv-studio-v2-31-calendar-freeze-phase5-20261007';
 const APP_SHELL = [
     './',
     './index.html',
     './progetti.html',
     './scheda_progetto.html',
     './ascolto.html',
+    './kyv_calendar.html',
     './manifest.json',
     './kyv-theme.css',
     './kyv-responsive.css',
@@ -13,14 +14,20 @@ const APP_SHELL = [
     './kyv-auth.js',
     './menu.js',
     './kyv-hardening-overrides.js',
+    './kyv-calendar-safety.js',
     './icon-192.png',
     './icon-512.png'
 ];
 
 function hardenHtml(html, pathname = '') {
     let out = html.replaceAll('data-lucide="message-circle-clock"', 'data-lucide="message-square-text"');
-    if (pathname.toLowerCase().endsWith('/scheda_progetto.html') && !out.includes('kyv-hardening-overrides.js')) {
+    const path = pathname.toLowerCase();
+    if (path.endsWith('/scheda_progetto.html') && !out.includes('kyv-hardening-overrides.js')) {
         out = out.replace('</head>', '    <script src="./kyv-hardening-overrides.js" defer></script>\n</head>');
+    }
+    if (path.endsWith('/kyv_calendar.html') && !out.includes('kyv-calendar-safety.js')) {
+        // Non defer: deve installare il guard MutationObserver prima dei moduli deferred dell'Agenda.
+        out = out.replace('</head>', '    <script src="./kyv-calendar-safety.js"></script>\n</head>');
     }
     return out;
 }
