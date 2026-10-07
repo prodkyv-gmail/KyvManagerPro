@@ -1,6 +1,9 @@
-/* KYV runtime hardening overrides — non distruttivo, nessuna nuova tabella. */
+/* KYV runtime hardening overrides — solo Scheda Progetto, senza observer globali. */
 (function () {
   'use strict';
+
+  const page = (location.pathname.split('/').pop() || '').toLowerCase();
+  if (page !== 'scheda_progetto.html') return;
 
   const FOLLOWUP_DAYS = 5;
   const STATUS_ONLY = /^(bozza|demo|registrazione|registrato|registrata|mix|mixaggio|master|mastering|completato|completata|finito|finita|uscita|pubblicato|pubblicata|chiuso|chiusa)$/i;
@@ -93,10 +96,6 @@
     };
   }
 
-  function fixIcons(root = document) {
-    root.querySelectorAll?.('[data-lucide="message-circle-clock"]').forEach(el => el.setAttribute('data-lucide', 'message-square-text'));
-  }
-
   function fixChecklist(current) {
     const panel = document.getElementById('tab-checklist');
     if (!panel) return;
@@ -128,26 +127,15 @@
     fixChecklist(current);
   }
 
-  function apply() {
-    fixIcons();
-    applyProjectAction();
-    if (window.lucide) {
-      try { lucide.createIcons(); } catch (_) {}
-    }
+  function schedule() {
+    window.clearTimeout(schedule.timer);
+    schedule.timer = window.setTimeout(applyProjectAction, 40);
   }
 
-  let timer = null;
-  const schedule = () => {
-    clearTimeout(timer);
-    timer = setTimeout(apply, 40);
-  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule, { once: true });
+  else schedule();
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply, { once: true });
-  else apply();
-
-  const observer = new MutationObserver(schedule);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener('kyv:project-v2-ready', schedule);
   window.addEventListener('kyv:pitch-updated', schedule);
-  window.KYV_HARDENING = { apply, concreteAction };
+  window.KYV_HARDENING = { apply: applyProjectAction, concreteAction };
 })();
