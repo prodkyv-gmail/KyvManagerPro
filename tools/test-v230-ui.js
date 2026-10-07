@@ -1,10 +1,11 @@
 const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pastel=read('kyv-pastel.css');
+const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),pastel=read('kyv-pastel.css');
 assert.match(config,/kyv-producer-mode\.js/,'Producer Mode deve essere caricato globalmente');
 assert.match(config,/kyv-listening-phase4\.js/,'La vista Ascolto producer-first deve essere caricata prima della stazione legacy');
 assert.match(config,/kyv-agenda-phase5\.js/,'La vista Agenda producer-first deve essere caricata sul calendario');
 assert.match(config,/kyv-workflow-nav\.js/,'La navigazione trasversale deve essere caricata globalmente');
+assert.match(config,/kyv-pitch-followup\.js/,'Pitch & Follow-up deve essere attivo su Scheda progetto e Agenda');
 assert.match(producer,/\['index\.html','Oggi'/);assert.match(producer,/\['kyv_calendar\.html','Agenda'/);assert.match(producer,/\['acquisisci_audio\.html','Nuovo'/);assert.match(producer,/\['progetti\.html','Progetti'/);assert.match(producer,/\['ascolto\.html','Ascolto'/);
 assert.match(producer,/details\('Controllo'/);assert.match(producer,/fatture\.html','Fatture e incassi'/);assert.match(producer,/rendiconto\.html','Rendiconto SIAE'/);
 assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.html','Studio Editor'/);assert.match(producer,/archivio_musicale\.html','Archivio musicale'/);
@@ -49,5 +50,13 @@ assert.match(workflowNav,/kyv-listen-projects \[data-project\]/,'Ascolto deve ri
 assert.match(workflowNav,/kyv-agenda-actions \[data-project-id\]/,'Agenda deve evidenziare l’azione del progetto contestuale');
 assert.match(workflowNav,/data-kyv-project-action/,'Oggi deve evidenziare l’azione del progetto contestuale');
 assert.doesNotMatch(workflowNav,/\.from\(/,'La navigazione trasversale non deve interrogare o modificare il database');
+assert.match(pitch,/FOLLOWUP_DAYS=5/,'Un pitch fermo deve diventare sollecito dopo 5 giorni');
+assert.match(pitch,/In attesa/);assert.match(pitch,/Da sollecitare/);assert.match(pitch,/Feedback/);assert.match(pitch,/Confermato/);assert.match(pitch,/No/);
+assert.match(pitch,/from\('INVII_AUDIO'\)\.insert/,'La scheda deve poter registrare un nuovo invio usando la tabella esistente');
+assert.match(pitch,/from\('INVII_AUDIO'\)\.update/,'Gli stati del pitch devono aggiornare la riga esistente');
+assert.match(pitch,/Conferma_Ricezione/,'Il feedback deve riusare il campo di conferma già esistente');
+assert.match(pitch,/kyv-pitch-agenda/,'I solleciti devono comparire nell’Agenda');
+assert.match(pitch,/data-kind="followup"/,'Un sollecito deve potersi pianificare come Follow-up');
+assert.doesNotMatch(pitch,/\.from\(['"](?:FATTURE|DOCUMENTI_PROGETTO|AUDIO_VERSIONI|CONSEGNE_MASTER)['"]\)\s*\.(?:insert|update|delete|upsert)/,'Pitch & Follow-up non deve modificare fatture, documenti o versioni audio');
 assert.match(pastel,/\.kyv-pastel-lavender/);assert.match(pastel,/\.kyv-pastel-mint/);assert.match(pastel,/\.kyv-pastel-peach/);assert.match(pastel,/\.kyv-pastel-sky/);assert.match(pastel,/\.kyv-collapse/);
-console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti, Oggi, Agenda, Ascolto e percorso trasversale operativi.');
+console.log('OK: Producer Mode, cattura rapida, Scheda Progetto, Progetti, Oggi, Agenda, Ascolto, percorso trasversale e Pitch & Follow-up operativi.');
