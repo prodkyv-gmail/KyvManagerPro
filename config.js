@@ -89,6 +89,13 @@ window.KYV_CONFIG = KYV_CONFIG;
         pitch.src='kyv-pitch-followup.js';
         pitch.async=false;
         document.head.appendChild(pitch);
+
+        // Release Desk essenziale: legge state.currentView e mostra solo cosa è pronto
+        // o cosa manca per uscita e crediti, senza nuove tabelle o query proprie.
+        const releaseDesk=document.createElement('script');
+        releaseDesk.src='kyv-release-desk.js';
+        releaseDesk.async=false;
+        document.head.appendChild(releaseDesk);
     }
     if(page==='kyv_calendar.html'){
         // Agenda producer-first: aggiunge vista operativa, categorie e filtri sopra
