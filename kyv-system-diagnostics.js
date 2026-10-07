@@ -76,18 +76,28 @@
     return item;
   }
   async function checkProxy(){
-    const item = { group:'API', title:'Proxy Vercel Drive', ok:false, message:'Controllo proxy non eseguito.' };
+    const item = { group:'API', title:'Proxy Vercel Drive', ok:false, warn:false, message:'Controllo proxy non eseguito.' };
     try{
+      if(!window.KYV?.createSupabaseClient) throw new Error('Client KYV non caricato.');
+      const db = window.KYV.createSupabaseClient();
+      const { data, error } = await db.auth.getSession();
+      if(error) throw error;
+      const token = data?.session?.access_token;
+      if(!token) throw new Error('Sessione Supabase assente o scaduta.');
+
       const url = new URL((window.KYV_CONFIG?.GOOGLE_DRIVE_PROXY_URL || '/api/drive-proxy'), window.location.origin);
       url.searchParams.set('diagnostic', '1');
-      const res = await fetch(url.toString(), { cache:'no-store' });
-      let text = await res.text();
-      let data = null;
-      try{ data = JSON.parse(text); }catch(e){}
-      item.ok = res.ok || res.status === 400;
-      item.warn = res.status === 400;
-      item.message = item.ok ? 'Endpoint proxy presente su Vercel.' : `Proxy non raggiungibile: HTTP ${res.status}.`;
-      item.details = [data?.message || data?.error || text.slice(0, 140) || `HTTP ${res.status}`];
+      const res = await fetch(url.toString(), {
+        cache:'no-store',
+        headers:{ Authorization:`Bearer ${token}` }
+      });
+      const text = await res.text();
+      let payload = null;
+      try{ payload = JSON.parse(text); }catch(e){}
+      item.ok = res.ok && payload?.ok === true;
+      item.warn = false;
+      item.message = item.ok ? 'Proxy Vercel Drive disponibile e autenticato.' : `Proxy non raggiungibile: HTTP ${res.status}.`;
+      item.details = [payload?.message || payload?.error || text.slice(0, 140) || `HTTP ${res.status}`];
     }catch(err){
       item.ok = false; item.message = 'Proxy Vercel non raggiungibile.'; item.details = [safeMsg(err)];
     }
