@@ -69,6 +69,14 @@ window.KYV_CONFIG = KYV_CONFIG;
         script.async=false;
         document.head.appendChild(script);
     }
+    if(page==='kyv_calendar.html'){
+        // Agenda producer-first: aggiunge vista operativa, categorie e filtri sopra
+        // il Calendar esistente senza cambiare il backend né cancellare eventi.
+        const phase5=document.createElement('script');
+        phase5.src='kyv-agenda-phase5.js';
+        phase5.async=false;
+        document.head.appendChild(phase5);
+    }
     if(page==='ascolto.html'){
         // Vista producer-first: viene caricata prima della vecchia stazione per evitare
         // scansioni Drive automatiche all'apertura. Gli strumenti cloud restano manuali.
