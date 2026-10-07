@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-28-pipeline-opportunita';
+const CACHE_NAME = 'kyv-studio-v2-30-safe-projects-20261007';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
