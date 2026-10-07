@@ -64,6 +64,14 @@ window.KYV_CONFIG = KYV_CONFIG;
 (function loadKyvFeatureModules(){
     const page=(window.location.pathname.split('/').pop()||'index.html').toLowerCase();
 
+    if(['progetti.html','scheda_progetto.html','ascolto.html','kyv_calendar.html','index.html',''].includes(page)){
+        const invoices=document.createElement('script');
+        invoices.src='kyv-project-invoices.js';
+        invoices.async=false;
+        invoices.dataset.kyvProjectInvoices='1';
+        document.head.appendChild(invoices);
+    }
+
     if(window.KYV_SAFE_PROJECTS_PAGE&&page==='progetti.html')return;
 
     if(page==='progetti.html'&&!document.querySelector('script[data-kyv-projects-phase3]')){
