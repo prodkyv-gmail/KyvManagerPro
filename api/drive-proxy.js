@@ -1,11 +1,13 @@
-// api/drive-proxy.js - Proxy serverless Vercel per Google Apps Script Drive
+// api/drive-proxy.js - Proxy serverless Vercel per Google Apps Script Drive/Calendar
 // Evita i blocchi CORS del browser chiamando Apps Script dal server Vercel.
 
 const DEFAULT_SUPABASE_URL = 'https://vppqnolgxtegtxznmgqb.supabase.co';
 const DEFAULT_SUPABASE_KEY = 'sb_publishable_BTAf2Cy5EYKgyb_uXdRvaA_iEawerhl';
+
+// Allowlist stretta: Drive attuale + nuovo deployment Calendar.
 const DEFAULT_ALLOWED_TARGETS = new Set([
   'https://script.google.com/macros/s/AKfycbw4S8LZ-LLDewzv3uAEJkLaEjGTfFD1XRJppV0Oy1pOkmK_3exDpp0j_Bw6jmSGjeU0UA/exec',
-  'https://script.google.com/macros/s/AKfycbwcYC4WNK3_fHPp6yvbJiqJUp_MWGKuL0fy6GNz0iAX5H7oGWjnvR2Vqj5wPdtxTpfoWw/exec'
+  'https://script.google.com/macros/s/AKfycbxJAwkYrKZk-qVkyvHEfc3T53LpS4rQMSAjJAvRHklnBmzXx5x-D2EWsbVXsNnnYL7Xrg/exec'
 ]);
 
 function setCors(req, res) {
@@ -82,14 +84,12 @@ module.exports = async function handler(req, res) {
 
   const query = req.query || {};
 
-  // Diagnostica autenticata: verifica funzione Vercel + sessione senza contattare Apps Script.
-  // Il test operativo Drive resta KYV_DRIVE.ping(), che prova invece il connettore reale.
   if (String(query.diagnostic || '') === '1') {
     return sendJson(req, res, 200, {
       ok:true,
-      proxy:'drive',
+      proxy:'drive-calendar',
       authenticated:true,
-      message:'Proxy Vercel Drive disponibile e sessione valida.'
+      message:'Proxy Vercel Google disponibile e sessione valida.'
     });
   }
 
@@ -97,7 +97,7 @@ module.exports = async function handler(req, res) {
 
   if (!target) return sendJson(req, res, 400, { ok:false, error:'Parametro target mancante.' });
   if (!isAllowedTarget(target)) {
-    return sendJson(req, res, 400, { ok:false, error:'Connettore Google non autorizzato.' });
+    return sendJson(req, res, 400, { ok:false, error:'Connettore Google non autorizzato.', target });
   }
 
   const upstream = new URL(target);
@@ -107,7 +107,7 @@ module.exports = async function handler(req, res) {
     if (Array.isArray(value)) value.forEach(v => upstream.searchParams.append(key, String(v)));
     else if (value !== undefined && value !== null && String(value) !== '') upstream.searchParams.set(key, String(value));
   }
-  upstream.searchParams.set('_proxy', 'kyv-v2-11-6');
+  upstream.searchParams.set('_proxy', 'kyv-v2-32');
   if (process.env.KYV_APPS_SCRIPT_PROXY_SECRET) {
     upstream.searchParams.set('proxySecret', process.env.KYV_APPS_SCRIPT_PROXY_SECRET);
   }
@@ -144,7 +144,7 @@ module.exports = async function handler(req, res) {
     } catch (err) {
       return sendJson(req, res, 502, {
         ok:false,
-        error:'Risposta Apps Script non JSON. Probabile pagina di autorizzazione/login o codice non aggiornato.',
+        error:'Risposta Apps Script non JSON. Probabile pagina di autorizzazione/login oppure doGet non restituisce JSON.',
         finalUrl: response.url,
         sample
       });
@@ -155,7 +155,7 @@ module.exports = async function handler(req, res) {
     clearTimeout(timer);
     return sendJson(req, res, 504, {
       ok:false,
-      error:`Proxy Drive: ${err && err.name === 'AbortError' ? 'timeout chiamando Apps Script' : (err.message || String(err))}`
+      error:`Proxy Google: ${err && err.name === 'AbortError' ? 'timeout chiamando Apps Script' : (err.message || String(err))}`
     });
   }
 };

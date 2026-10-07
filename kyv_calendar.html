@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" href="./favicon.ico">
     <title>KYV Studio - Calendar Module</title>
-    
+
     <script>
-        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
         (function(){
             const originalWarn = console.warn;
             console.warn = function(){
@@ -20,8 +19,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Config e Menu -->
+
     <script src="config.js"></script>
     <script src="kyv-drive-bridge.js"></script>
     <script src="kyv-core.js"></script>
@@ -32,129 +30,129 @@
     <script src="kyv-help.js"></script>
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
-<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-responsive.js" defer></script>
     <script src="kyv-searchable-select.js" defer></script>
     <script src="kyv-field-memory.js" defer></script>
     <script src="kyv-link-viewer.js" defer></script>
     <script src="kyv-table-tools.js" defer></script>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', text: '#94a3b8' } } } } }
     </script>
-        <link rel="stylesheet" href="kyv-responsive.css">
-<style>
+    <link rel="stylesheet" href="kyv-responsive.css">
+    <style>
         body { background-color: #0f111a; color: #f8fafc; }
-        .kyv-input { width: 100%; background-color: #0f111a; border: 1px solid #232838; color: white; padding: 0.75rem 1rem; border-radius: 0.5rem; outline: none; transition: all 0.2s ease; }
+        .kyv-input { width: 100%; min-width: 0; background-color: #0f111a; border: 1px solid #232838; color: white; padding: 0.75rem 1rem; border-radius: 0.5rem; outline: none; transition: all 0.2s ease; }
         .kyv-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #232838; border-radius: 3px; }
-        /* Nuove Scrollbar Allargate e Chiare */
-        ::-webkit-scrollbar { width: 16px; height: 16px; } 
-        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; } 
+        ::-webkit-scrollbar { width: 16px; height: 16px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; }
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 8px; border: 4px solid #0f111a; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         .custom-scrollbar { scrollbar-width: auto; scrollbar-color: #4b5563 rgba(255, 255, 255, 0.02); }
         .custom-scrollbar::-webkit-scrollbar { width: 16px; height: 16px; }
+
+        /* Agenda responsive: niente pannelli compressi o contenuti spostati fuori area. */
+        .kyv-calendar-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:1.5rem; min-width:0; }
+        .kyv-calendar-sidebar, .kyv-calendar-main, .kyv-calendar-card { min-width:0; width:100%; }
+        .kyv-calendar-card { overflow:visible; }
+        #form-new-event, #form-new-event > *, #form-new-event input, #form-new-event button { min-width:0; max-width:100%; }
+        #events-list { min-width:0; }
+        #events-list h3 { overflow-wrap:anywhere; }
+        @media (min-width:1536px) {
+            .kyv-calendar-layout { grid-template-columns:minmax(360px,420px) minmax(0,1fr); align-items:start; }
+        }
     </style>
     <link rel="stylesheet" href="kyv-theme.css">
 </head>
 <body class="flex h-screen overflow-hidden antialiased text-sm">
-    
-    <!-- CONTENITORE SIDEBAR -->
     <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
-        <!-- Effetto luce di sfondo -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full min-w-0 bg-kyv-bg">
         <div class="absolute top-0 right-1/4 transform translate-x-1/2 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none"></div>
 
-        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 custom-scrollbar relative z-10 flex flex-col">
-            <header class="flex flex-col sm:flex-row justify-between sm:items-end gap-4 mb-6 shrink-0 border-b border-kyv-border/50 pb-6">
-                <div class="flex items-center">
-                    <button class="md:hidden text-kyv-text hover:text-white mr-3 transition-colors" onclick="toggleMobileMenu()">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-6 lg:p-8 pt-8 custom-scrollbar relative z-10 flex flex-col min-w-0">
+            <header class="flex flex-col sm:flex-row justify-between sm:items-end gap-4 mb-6 shrink-0 border-b border-kyv-border/50 pb-6 min-w-0">
+                <div class="flex items-center min-w-0">
+                    <button class="md:hidden text-kyv-text hover:text-white mr-3 transition-colors shrink-0" onclick="toggleMobileMenu()">
                         <i data-lucide="menu" class="w-6 h-6"></i>
                     </button>
-                    <div>
+                    <div class="min-w-0">
                         <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Google <span class="text-blue-500">Calendar</span></h2>
                         <p class="text-kyv-text mt-1 text-xs sm:text-sm">Gestione sessioni e sincronizzazione appuntamenti in studio.</p>
                     </div>
                 </div>
             </header>
 
-            <div class="flex flex-col lg:flex-row gap-6 h-full min-h-0">
-                
-                <!-- PANNELLO SINISTRO: Connessione e Creazione -->
-                <div class="w-full lg:w-1/3 xl:w-1/4 shrink-0 flex flex-col gap-6">
-                    
-                    <!-- Box Connessione -->
-                    <div class="bg-kyv-card border border-kyv-border rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+            <div class="kyv-calendar-layout w-full min-h-0">
+                <div class="kyv-calendar-sidebar flex flex-col gap-6">
+                    <div class="kyv-calendar-card bg-kyv-card border border-kyv-border rounded-2xl p-4 sm:p-6 shadow-xl relative group">
                         <h3 class="font-bold text-white mb-4 flex items-center text-sm">
                             <i data-lucide="link" class="w-4 h-4 mr-2 text-kyv-text"></i> Connessione API
                         </h3>
-                        <div class="space-y-3">
-                            <div class="rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3 py-2">
+                        <div class="space-y-3 min-w-0">
+                            <div class="rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3 py-2 min-w-0">
                                 <p class="text-[10px] uppercase tracking-wider text-kyv-text font-bold">Account atteso</p>
-                                <p id="calendar-account" class="mt-1 text-xs font-bold text-blue-200">prodkyv@gmail.com</p>
+                                <p id="calendar-account" class="mt-1 text-xs font-bold text-blue-200 break-all">prodkyv@gmail.com</p>
                             </div>
-                            <div class="relative">
+                            <div class="relative min-w-0">
                                 <i data-lucide="key" class="w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500/50"></i>
                                 <input type="password" id="script-url" class="kyv-input text-xs font-mono text-blue-300 pl-9 opacity-50 select-none cursor-not-allowed" readonly value="********************************************************" title="Connessione protetta gestita da config.js">
                             </div>
-                            <button id="btn-sync" class="w-full py-2.5 bg-kyv-border hover:bg-blue-600 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center border border-kyv-border hover:border-blue-500">
-                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-2" id="sync-icon"></i> <span id="sync-text">Sincronizza Ora</span>
+                            <button id="btn-sync" class="w-full min-w-0 py-2.5 bg-kyv-border hover:bg-blue-600 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center border border-kyv-border hover:border-blue-500">
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-2 shrink-0" id="sync-icon"></i> <span id="sync-text">Sincronizza Ora</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Box Creazione Evento -->
-                    <div class="bg-kyv-card border border-emerald-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                    <div class="kyv-calendar-card bg-kyv-card border border-emerald-500/20 rounded-2xl p-4 sm:p-6 shadow-xl relative">
                         <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
                         <h3 class="font-bold text-white mb-5 flex items-center text-lg relative z-10">
                             <i data-lucide="plus-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> Crea Sessione
                         </h3>
-                        
-                        <form id="form-new-event" class="space-y-4 relative z-10">
-                            <div>
+
+                        <form id="form-new-event" class="space-y-4 relative z-10 w-full min-w-0">
+                            <div class="w-full min-w-0">
                                 <label class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Titolo Evento</label>
                                 <input type="text" id="ev-title" required placeholder="Es. Registrazione Voci" class="kyv-input bg-[#0f111a] text-sm">
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
+                            <div class="grid grid-cols-1 gap-3 w-full min-w-0">
+                                <div class="min-w-0">
                                     <label class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Data</label>
                                     <input type="date" id="ev-date" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme: dark;">
                                 </div>
-                                <div>
+                                <div class="min-w-0">
                                     <label class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Ora (Inizio)</label>
                                     <input type="time" id="ev-time" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme: dark;">
                                 </div>
                             </div>
-                            <button type="submit" id="btn-create" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-500 mt-2">
-                                <i data-lucide="calendar-plus" class="w-4 h-4 mr-2" id="create-icon"></i> Crea su Calendar
+                            <button type="submit" id="btn-create" class="w-full min-w-0 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-500 mt-2">
+                                <i data-lucide="calendar-plus" class="w-4 h-4 mr-2 shrink-0" id="create-icon"></i> Crea su Calendar
                             </button>
                         </form>
                     </div>
-
                 </div>
 
-                <!-- PANNELLO DESTRO: Lista Appuntamenti -->
-                <div class="w-full lg:w-2/3 xl:w-3/4 bg-kyv-card border border-kyv-border rounded-2xl flex flex-col shadow-xl overflow-hidden min-h-[400px]">
-                    <div class="p-5 border-b border-kyv-border flex justify-between items-center shrink-0 bg-kyv-bg/30">
-                        <h2 class="font-bold text-white flex items-center text-lg">
-                            <i data-lucide="calendar-days" class="w-5 h-5 mr-3 text-blue-400"></i> Prossimi Appuntamenti
+                <div class="kyv-calendar-main bg-kyv-card border border-kyv-border rounded-2xl flex flex-col shadow-xl overflow-hidden min-h-[400px] lg:min-h-[520px]">
+                    <div class="p-4 sm:p-5 border-b border-kyv-border flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 shrink-0 bg-kyv-bg/30 min-w-0">
+                        <h2 class="font-bold text-white flex items-center text-lg min-w-0">
+                            <i data-lucide="calendar-days" class="w-5 h-5 mr-3 text-blue-400 shrink-0"></i> Calendario
                         </h2>
-                        <span class="text-[10px] font-mono bg-[#0f111a] border border-kyv-border px-2.5 py-1 rounded-md text-kyv-text" id="last-sync">In attesa...</span>
+                        <span class="text-[10px] font-mono bg-[#0f111a] border border-kyv-border px-2.5 py-1 rounded-md text-kyv-text self-start sm:self-auto" id="last-sync">Pronto</span>
                     </div>
-                    
-                    <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar" id="events-list">
-                        <div class="flex flex-col items-center justify-center h-full text-kyv-text opacity-50">
-                            <i data-lucide="loader-2" class="w-12 h-12 mb-3 animate-spin text-blue-500"></i>
-                            <p class="text-sm font-medium">Sincronizzazione in corso...</p>
+
+                    <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar min-w-0" id="events-list">
+                        <div class="flex flex-col items-center justify-center h-full min-h-[280px] text-kyv-text opacity-70 text-center p-6">
+                            <i data-lucide="calendar-days" class="w-12 h-12 mb-3 text-blue-500"></i>
+                            <p class="text-sm font-bold text-white">Agenda pronta</p>
+                            <p class="text-xs mt-2">Premi “Sincronizza Ora” per caricare gli appuntamenti di Google Calendar.</p>
                         </div>
                     </div>
                 </div>
-
             </div>
         </section>
     </main>
@@ -165,7 +163,6 @@
     </div>
 
     <script>
-        // Inizializzazione della Sidebar e Fallback
         if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4"><p class="text-rose-400 text-xs">Fallback Menu</p></aside>`;};}
         loadKyvSidebar('calendar');
 
@@ -176,35 +173,38 @@
             url: window.KYV_CONFIG?.GOOGLE_SCRIPT_URL || ''
         };
 
-        const DOM = { 
-            btnSync: document.getElementById('btn-sync'), 
-            syncIcon: document.getElementById('sync-icon'), 
-            syncText: document.getElementById('sync-text'), 
-            eventsList: document.getElementById('events-list'), 
-            lastSync: document.getElementById('last-sync'), 
-            formNew: document.getElementById('form-new-event'), 
-            btnCreate: document.getElementById('btn-create'), 
-            createIcon: document.getElementById('create-icon') 
+        const DOM = {
+            btnSync: document.getElementById('btn-sync'),
+            syncIcon: document.getElementById('sync-icon'),
+            syncText: document.getElementById('sync-text'),
+            eventsList: document.getElementById('events-list'),
+            lastSync: document.getElementById('last-sync'),
+            formNew: document.getElementById('form-new-event'),
+            btnCreate: document.getElementById('btn-create'),
+            createIcon: document.getElementById('create-icon')
         };
 
-        function showToast(msg, isError = false) { return (window.KYV_TOAST ? KYV_TOAST.show(msg, isError ? 'error' : 'success') : KYV.showToast(msg, isError ? 'error' : 'success')); }
+        function showToast(msg, isError = false) {
+            return window.KYV_TOAST ? KYV_TOAST.show(msg, isError ? 'error' : 'success') : KYV.showToast(msg, isError ? 'error' : 'success');
+        }
+
         function H(value){
             return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         }
+
         async function calendarRequest(action, params = {}){
             if(!calendarAccount.url) throw new Error(`Calendar ${calendarAccount.email}: URL Apps Script non configurato.`);
             if(!window.KYV_DRIVE?.fetchJson) throw new Error('Proxy Calendar non disponibile: ricarica la pagina.');
             return window.KYV_DRIVE.fetchJson(calendarAccount, action, params);
         }
+
         document.getElementById('calendar-account').textContent = calendarAccount.email;
 
-        // --- SINCRONIZZA EVENTI DA GOOGLE CALENDAR ---
         DOM.btnSync.addEventListener('click', async () => {
-            // Animazione caricamento
-            DOM.btnSync.disabled = true; 
-            DOM.syncIcon.classList.add('animate-spin'); 
-            DOM.syncText.innerText = "Sincronizzazione...";
-            DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-blue-500"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mb-4"></i><p class="text-sm font-bold tracking-wide">Lettura Agenda in corso...</p></div>`;
+            DOM.btnSync.disabled = true;
+            DOM.syncIcon.classList.add('animate-spin');
+            DOM.syncText.innerText = 'Sincronizzazione...';
+            DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-blue-500 text-center p-6"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mb-4"></i><p class="text-sm font-bold tracking-wide">Lettura Agenda in corso...</p></div>`;
             if(window.lucide) lucide.createIcons({root: DOM.eventsList});
 
             try {
@@ -212,50 +212,50 @@
                 if(data.error) throw new Error(data.error);
 
                 DOM.lastSync.innerHTML = `<span class="text-emerald-400">●</span> ${new Date().toLocaleTimeString('it-IT')}`;
-                
-                if(!data.events || data.events.length === 0) {
-                    DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-kyv-text opacity-50"><i data-lucide="calendar-check-2" class="w-16 h-16 mb-4 opacity-50"></i><p class="text-lg font-medium">Nessun appuntamento in agenda.</p></div>`;
+
+                const events = Array.isArray(data.events) ? data.events.slice(0, 120) : [];
+                if(events.length === 0) {
+                    DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-kyv-text opacity-70 text-center p-6"><i data-lucide="calendar-check-2" class="w-16 h-16 mb-4 opacity-50"></i><p class="text-lg font-medium">Nessun appuntamento in agenda.</p></div>`;
                 } else {
                     let html = '';
-                    data.events.forEach(ev => {
+                    events.forEach(ev => {
                         const dt = new Date(ev.date);
                         if(Number.isNaN(dt.getTime())) return;
                         const dayName = H(dt.toLocaleDateString('it-IT', { weekday: 'short' }));
                         const monthName = H(dt.toLocaleDateString('it-IT', { month: 'short' }));
                         const time = H(dt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
-                        
+
                         html += `
-                            <div class="bg-kyv-bg border border-kyv-border rounded-xl p-4 flex items-center hover:border-blue-500/40 hover:bg-[#11141f] transition-all group">
-                                <div class="bg-kyv-card border border-kyv-border/50 rounded-lg p-2 text-center mr-4 w-16 shrink-0 group-hover:bg-blue-900/10 transition-colors">
+                            <div class="bg-kyv-bg border border-kyv-border rounded-xl p-3 sm:p-4 flex items-center hover:border-blue-500/40 hover:bg-[#11141f] transition-all group min-w-0">
+                                <div class="bg-kyv-card border border-kyv-border/50 rounded-lg p-2 text-center mr-3 sm:mr-4 w-14 sm:w-16 shrink-0 group-hover:bg-blue-900/10 transition-colors">
                                     <div class="text-[9px] text-blue-400 font-bold uppercase tracking-wider">${dayName}</div>
                                     <div class="text-xl font-black text-white leading-none my-0.5">${dt.getDate()}</div>
                                     <div class="text-[9px] text-kyv-text uppercase font-semibold">${monthName}</div>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-white text-sm mb-1 truncate group-hover:text-blue-300 transition-colors">${H(ev.title || 'Senza titolo')}</h3>
-                                    <p class="text-[10px] text-kyv-text flex items-center font-mono uppercase tracking-wider"><i data-lucide="clock" class="w-3 h-3 mr-1.5 opacity-70"></i> Ore ${time}</p>
+                                    <h3 class="font-bold text-white text-sm mb-1 break-words group-hover:text-blue-300 transition-colors">${H(ev.title || 'Senza titolo')}</h3>
+                                    <p class="text-[10px] text-kyv-text flex items-center font-mono uppercase tracking-wider"><i data-lucide="clock" class="w-3 h-3 mr-1.5 opacity-70 shrink-0"></i> Ore ${time}</p>
                                 </div>
                             </div>`;
                     });
                     DOM.eventsList.innerHTML = html;
                 }
-                if(window.lucide) lucide.createIcons({root: DOM.eventsList}); 
-                
-            } catch(err) { 
-                showToast(err.message || "Errore di connessione.", true); 
-                DOM.lastSync.innerHTML = '<span class="text-rose-400">●</span> Non connesso';
-                DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-red-500 opacity-80 text-center"><i data-lucide="alert-triangle" class="w-16 h-16 mb-4 opacity-50"></i><p class="font-medium">${H(err.message || 'Errore di connessione.')}</p><p class="mt-2 text-xs text-kyv-text">Nessun evento è stato modificato.</p></div>`;
                 if(window.lucide) lucide.createIcons({root: DOM.eventsList});
-            } finally { 
-                DOM.btnSync.disabled = false; 
-                DOM.syncIcon.classList.remove('animate-spin'); 
-                DOM.syncText.innerText = "Sincronizza Ora"; 
+            } catch(err) {
+                const message = err.message || 'Errore di connessione.';
+                showToast(message, true);
+                DOM.lastSync.innerHTML = '<span class="text-rose-400">●</span> Non connesso';
+                DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-red-400 text-center p-6"><i data-lucide="alert-triangle" class="w-14 h-14 mb-4 opacity-60"></i><p class="font-medium break-words max-w-3xl">${H(message)}</p><p class="mt-2 text-xs text-kyv-text">Nessun evento è stato modificato.</p></div>`;
+                if(window.lucide) lucide.createIcons({root: DOM.eventsList});
+            } finally {
+                DOM.btnSync.disabled = false;
+                DOM.syncIcon.classList.remove('animate-spin');
+                DOM.syncText.innerText = 'Sincronizza Ora';
             }
         });
 
-        // --- CREA NUOVO EVENTO SU GOOGLE CALENDAR ---
         DOM.formNew.addEventListener('submit', async (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             const title = document.getElementById('ev-title').value;
             const date = document.getElementById('ev-date').value;
             const time = document.getElementById('ev-time').value;
@@ -263,10 +263,9 @@
             const confirmed = window.confirm(`Confermi la creazione su ${calendarAccount.email}?\n\n${title}\n${date} alle ${time}`);
             if(!confirmed) return;
 
-            // UI Caricamento
-            DOM.btnCreate.disabled = true; 
-            DOM.createIcon.setAttribute('data-lucide', 'loader-2'); 
-            DOM.createIcon.classList.add('animate-spin'); 
+            DOM.btnCreate.disabled = true;
+            DOM.createIcon.setAttribute('data-lucide', 'loader-2');
+            DOM.createIcon.classList.add('animate-spin');
             if(window.lucide) lucide.createIcons({root: DOM.btnCreate.parentElement});
 
             try {
@@ -276,31 +275,24 @@
                     time,
                     clientRequestId: `calendar-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
                 });
-                
+
                 if(data.error) throw new Error(data.error);
-                
-                showToast("Evento inserito in Google Calendar!"); 
-                DOM.formNew.reset(); 
-                
-                // Forza un ricaricamento degli eventi per mostrare quello nuovo
-                setTimeout(() => DOM.btnSync.click(), 800);
-            } catch(err) { 
-                showToast(err.message || "Errore durante la creazione.", true); 
-            } finally { 
-                DOM.btnCreate.disabled = false; 
-                DOM.createIcon.setAttribute('data-lucide', 'calendar-plus'); 
-                DOM.createIcon.classList.remove('animate-spin'); 
-                if(window.lucide) lucide.createIcons({root: DOM.btnCreate.parentElement}); 
+                showToast('Evento inserito in Google Calendar!');
+                DOM.formNew.reset();
+                setTimeout(() => DOM.btnSync.click(), 500);
+            } catch(err) {
+                showToast(err.message || 'Errore durante la creazione.', true);
+            } finally {
+                DOM.btnCreate.disabled = false;
+                DOM.createIcon.setAttribute('data-lucide', 'calendar-plus');
+                DOM.createIcon.classList.remove('animate-spin');
+                if(window.lucide) lucide.createIcons({root: DOM.btnCreate.parentElement});
             }
         });
 
-        // Avvio automatico all'apertura del modulo
+        // Nessuna sincronizzazione automatica: evita freeze e rende l'apertura dell'Agenda immediata.
         document.addEventListener('DOMContentLoaded', () => {
             if(window.lucide) lucide.createIcons();
-            
-            setTimeout(() => {
-                DOM.btnSync.click();
-            }, 300);
         });
     </script>
 </body>

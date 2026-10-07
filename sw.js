@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-31-calendar-freeze-phase5-20261007';
+const CACHE_NAME = 'kyv-studio-v2-32-calendar-proxy-responsive-20261007';
 const APP_SHELL = [
     './',
     './index.html',
@@ -14,7 +14,6 @@ const APP_SHELL = [
     './kyv-auth.js',
     './menu.js',
     './kyv-hardening-overrides.js',
-    './kyv-calendar-safety.js',
     './icon-192.png',
     './icon-512.png'
 ];
@@ -24,10 +23,6 @@ function hardenHtml(html, pathname = '') {
     const path = pathname.toLowerCase();
     if (path.endsWith('/scheda_progetto.html') && !out.includes('kyv-hardening-overrides.js')) {
         out = out.replace('</head>', '    <script src="./kyv-hardening-overrides.js" defer></script>\n</head>');
-    }
-    if (path.endsWith('/kyv_calendar.html') && !out.includes('kyv-calendar-safety.js')) {
-        // Non defer: deve installare il guard MutationObserver prima dei moduli deferred dell'Agenda.
-        out = out.replace('</head>', '    <script src="./kyv-calendar-safety.js"></script>\n</head>');
     }
     return out;
 }
@@ -43,6 +38,20 @@ async function htmlResponse(response, pathname = '') {
         statusText: response.statusText,
         headers
     });
+}
+
+async function networkFirst(request, transform = null) {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+        let response = await fetch(request, { cache: 'no-store' });
+        if (transform) response = await transform(response);
+        if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
+        return response;
+    } catch (_) {
+        const cached = await caches.match(request);
+        if (cached) return transform ? transform(cached) : cached;
+        throw _;
+    }
 }
 
 self.addEventListener('install', (event) => {
@@ -71,16 +80,14 @@ self.addEventListener('fetch', (event) => {
 
     if (url.origin !== self.location.origin || request.method !== 'GET') return;
 
+    // Le funzioni Vercel non devono mai passare dalla cache PWA.
+    if (url.pathname.startsWith('/api/')) return;
+
     if (request.mode === 'navigate') {
         event.respondWith((async () => {
             try {
-                const fresh = await htmlResponse(await fetch(request), url.pathname);
-                const cache = await caches.open(CACHE_NAME);
-                cache.put(request, fresh.clone()).catch(() => {});
-                return fresh;
+                return await networkFirst(request, response => htmlResponse(response, url.pathname));
             } catch (_) {
-                const cached = await caches.match(request);
-                if (cached) return htmlResponse(cached, url.pathname);
                 const home = await caches.match('./index.html');
                 if (home) return htmlResponse(home, '/index.html');
                 return new Response(
@@ -92,19 +99,36 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    const path = url.pathname.toLowerCase();
+    const networkFirstAsset = path.endsWith('.js') || path.endsWith('.css') || path.endsWith('.json');
+
+    if (networkFirstAsset) {
+        event.respondWith(
+            networkFirst(request).catch(() => new Response('Risorsa non disponibile offline', {
+                status: 503,
+                statusText: 'Offline',
+                headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+            }))
+        );
+        return;
+    }
+
     event.respondWith((async () => {
         const cached = await caches.match(request);
-        const network = fetch(request).then(async response => {
+        if (cached) return cached;
+        try {
+            const response = await fetch(request);
             if (response && response.ok) {
                 const cache = await caches.open(CACHE_NAME);
                 cache.put(request, response.clone()).catch(() => {});
             }
             return response;
-        });
-        return cached || network.catch(() => new Response('Risorsa non disponibile offline', {
-            status: 503,
-            statusText: 'Offline',
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        }));
+        } catch (_) {
+            return new Response('Risorsa non disponibile offline', {
+                status: 503,
+                statusText: 'Offline',
+                headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+            });
+        }
     })());
 });
