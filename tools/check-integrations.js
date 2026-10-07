@@ -14,6 +14,8 @@ const dropbox = read('kyv_dropbox.html');
 const projects = read('progetti.html');
 const projectSheetPage = read('scheda_progetto.html');
 const audioProjects = read('kyv-audio-project.js');
+const projectInvoices = read('kyv-project-invoices.js');
+const recordEditor = read('kyv-record-editor.js');
 const proxy = read('api/drive-proxy.js');
 const htmlFiles = fs.readdirSync(root).filter(file => file.endsWith('.html'));
 const htmlBundle = htmlFiles.map(read).join('\n');
@@ -48,5 +50,13 @@ assert(projectSheetPage.includes("q=>q.eq('ID_PROGETTO', projectId)"), 'La Sched
 assert(projectSheetPage.includes("q=>q.in('ID_FILE',audioIds)"), 'La Scheda Progetto deve recuperare gli invii tramite i file audio collegati');
 assert(!projectSheetPage.includes("safeTable('DROPBOX_AUDIO_FILES'"), 'La Scheda Progetto non deve caricare globalmente gli archivi correlati');
 assert(audioProjects.includes('insertProjectSafely') && audioProjects.includes('Crea progetto e collega'), 'La creazione progetto contestuale deve restare disponibile');
+
+assert(config.includes("invoices.src='kyv-project-invoices.js'"), 'Le fatture progetto devono essere caricate nelle viste producer collegate');
+assert(projectInvoices.includes("from('FATTURE').select") && projectInvoices.includes(".eq('ID_PROGETTO',projectId)"), 'Le fatture progetto devono usare ID_PROGETTO come collegamento principale');
+assert(projectInvoices.includes("select('ID,IDFT,FT')"), 'I riferimenti IDFT/FT devono restare disponibili solo come fallback legacy');
+assert(projectInvoices.includes("tab=amministrazione") && projectInvoices.includes("newInvoice=1"), 'Le viste collegate devono aprire direttamente Amministrazione e la creazione fattura contestuale');
+assert(projectInvoices.includes('Registra fattura') && projectInvoices.includes('Da incassare') && projectInvoices.includes('Incassata'), 'Lo stato fattura deve essere visibile nel flusso producer');
+assert(recordEditor.includes("FATTURE:") && recordEditor.includes("'ID_PROGETTO'"), 'L’editor condiviso deve continuare a collegare la fattura al progetto senza nuove tabelle');
+assert(!projectInvoices.match(/\.from\(['"][^'"]+['"]\)\s*\.insert/), 'Il modulo fatture progetto deve delegare la scrittura all’editor condiviso');
 
 console.log('Controlli integrazioni: OK');
