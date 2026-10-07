@@ -70,6 +70,13 @@ window.KYV_CONFIG = KYV_CONFIG;
     workflowNav.async=false;
     document.head.appendChild(workflowNav);
 
+    if(page==='index.html'||page===''){
+        // Oggi resta una cabina di regia leggera: aggrega priorità ma non modifica dati.
+        const todayPriority=document.createElement('script');
+        todayPriority.src='kyv-today-priority.js';
+        todayPriority.async=false;
+        document.head.appendChild(todayPriority);
+    }
     if(page==='scheda_progetto.html'){
         const script=document.createElement('script');
         script.src='kyv-project-hub-v227.js';
