@@ -54,6 +54,13 @@ function consumeUrlPrefill(){
   return true;
 }
 
+function pitchKeyFromListening(key){
+  const raw=text(key);
+  if(raw.startsWith('audio:'))return`v:${raw.slice(6)}`;
+  if(raw.startsWith('dropbox:'))return`f:${raw.slice(8)}`;
+  return'';
+}
+
 function projectIdFromListenHead(){
   const href=document.querySelector('#kyv-listen-project-head a[href*="scheda_progetto.html"]')?.getAttribute('href')||'';
   if(!href)return'';
@@ -64,9 +71,10 @@ function enhanceListenVersions(){
   if(page!=='ascolto.html')return;
   const host=document.getElementById('kyv-listen-versions'),projectId=projectIdFromListenHead();
   if(!host||!projectId)return;
+  let changed=false;
   host.querySelectorAll('article[data-version-key]').forEach(card=>{
     if(card.querySelector('[data-kyv-send-version]'))return;
-    const key=text(card.dataset.versionKey);if(!key)return;
+    const key=pitchKeyFromListening(card.dataset.versionKey);if(!key)return;
     let actions=[...card.querySelectorAll('div')].find(node=>node.classList.contains('mt-3')&&node.classList.contains('flex')&&node.classList.contains('flex-wrap'));
     if(!actions){actions=document.createElement('div');actions.className='flex flex-wrap gap-2 mt-3';card.appendChild(actions);}
     const link=document.createElement('a');
@@ -74,9 +82,9 @@ function enhanceListenVersions(){
     link.className='kyv-listen-action';
     link.href=`scheda_progetto.html?id=${encodeURIComponent(projectId)}&pitchVersion=${encodeURIComponent(key)}&pitchSource=ascolto#kyv-pitch-followup-project`;
     link.innerHTML='<i data-lucide="send" class="w-3.5 h-3.5"></i>Registra invio';
-    actions.appendChild(link);
+    actions.appendChild(link);changed=true;
   });
-  if(window.lucide)lucide.createIcons({root:host});
+  if(changed&&window.lucide)lucide.createIcons({root:host});
 }
 
 function normalizedOptionLabel(option){return text(option?.textContent).replace(/^Ultima\s*·\s*/i,'');}
@@ -85,6 +93,7 @@ function enhanceProjectVersions(){
   const host=document.getElementById('kyv-project-v2-versions'),select=pitchSelect();
   if(!host||!select)return;
   const options=[...select.options].filter(option=>option.value);
+  let changed=false;
   host.querySelectorAll('.kyv-v2-version').forEach(card=>{
     if(card.querySelector('[data-kyv-send-version]'))return;
     const name=text(card.querySelector('h4')?.textContent);if(!name)return;
@@ -101,8 +110,9 @@ function enhanceProjectVersions(){
       const wrap=document.createElement('div');wrap.className='flex flex-col items-end gap-2';
       card.insertBefore(wrap,directLink);wrap.appendChild(directLink);wrap.appendChild(button);
     }else card.appendChild(button);
+    changed=true;
   });
-  if(window.lucide)lucide.createIcons({root:host});
+  if(changed&&window.lucide)lucide.createIcons({root:host});
 }
 
 function run(){
