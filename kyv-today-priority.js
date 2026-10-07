@@ -54,7 +54,7 @@ function buildItems(){
  pitchRows.filter(pitchDue).forEach(r=>{const p=currentProject(r.ID_PROGETTO);const d=daysSince(pitchDate(r));items.push(item('followup',110+d,`Sollecitare ${text(r.Destinatario)||'destinatario'}`,projectLabel(p),`scheda_progetto.html?id=${encodeURIComponent(text(r.ID_PROGETTO))}&tab=produzione`,`${d}g senza attività`));});
  items.push(...legacyItems());
  projects.filter(p=>!isDone(p)&&projectDate(p)&&daysSince(projectDate(p))>=STALE_DAYS).forEach(p=>{const d=daysSince(projectDate(p));items.push(item('stale',75+d/10,`Progetto fermo da ${d} giorni`,projectLabel(p),`scheda_progetto.html?id=${encodeURIComponent(p.ID)}`,text(p.SVILUPPO)||'Nessuna prossima azione'));});
- projects.filter(hasAction).forEach(p=>items.push(item('action',60,text(p.SVILUPPO),projectLabel(p),`scheda_progetto.html?id=${encodeURIComponent(p.ID)}`,'Prossima azione'));
+ projects.filter(hasAction).forEach(p=>items.push(item('action',60,text(p.SVILUPPO),projectLabel(p),`scheda_progetto.html?id=${encodeURIComponent(p.ID)}`,'Prossima azione')));
  const seen=new Set();return items.sort((a,b)=>b.priority-a.priority).filter(x=>{const k=`${x.type}|${x.title}|${x.subtitle}`;if(seen.has(k))return false;seen.add(k);return true;}).slice(0,7);
 }
 function icon(type){return type==='followup'?'send':type==='deadline'?'alarm-clock':type==='session'?'music-2':type==='stale'?'hourglass':'move-right';}
