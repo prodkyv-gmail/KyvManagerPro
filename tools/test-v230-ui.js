@@ -18,6 +18,7 @@ assert.match(producer,/kyv-projects-phase3\.js/,'La nuova lista Progetti deve es
 assert.match(producer,/kyv-action-bridge\.js/,'Il bridge azioni deve essere caricato dal Producer Mode');
 assert.match(intake,/Cattura prima/);assert.match(intake,/id="quick-form"/);assert.match(intake,/Salva e continua dopo/);assert.match(intake,/db\.from\('PROGETTI'\)\.insert/);assert.match(intake,/id="cloud-flow"/);assert.match(intake,/Controlla duplicati/);assert.doesNotMatch(intake,/await loadReferences\(\);status\('Pronto/,'La cattura rapida non deve precaricare gli archivi audio');
 assert.match(projects,/openNewProjectChoices/);assert.match(projects,/source=drive/);assert.match(projects,/source=dropbox/);
+assert.match(projects,/Manager Pro 2\.31/,'La pagina Progetti stabile deve mostrare la versione PWA corrente');
 assert.doesNotMatch(archive,/id="drive-scan"/);assert.match(audit,/\.limit\(LIMIT\)/);assert.doesNotMatch(audit,/fetch\(|method:\s*['"]HEAD/);
 assert.match(phase2,/Focus progetto/);assert.match(phase2,/Lavorazione/);assert.match(phase2,/Pitch & invii/);assert.match(phase2,/Uscita & crediti/);assert.match(phase2,/Controllo/);
 assert.match(phase2,/Audio \/ versioni/);assert.match(phase2,/Prossima azione/);
