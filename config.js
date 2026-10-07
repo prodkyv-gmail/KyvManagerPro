@@ -1,7 +1,7 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
-    APP_VERSION: '2.30',
+    APP_VERSION: '2.31',
 
     // Chiavi Supabase pubblicabili (nessun service_role nel browser).
     SUPABASE_URL: 'https://vppqnolgxtegtxznmgqb.supabase.co',
@@ -99,7 +99,7 @@ window.KYV_CONFIG = KYV_CONFIG;
     }
     if(page==='scheda_progetto.html'){
         const script=document.createElement('script');
-        script.src='kyv-project-hub-v227.js';
+        script.src='kyv-project-sheet-v2.js';
         script.async=false;
         document.head.appendChild(script);
 

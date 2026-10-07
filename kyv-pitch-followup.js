@@ -8,7 +8,7 @@ if(!['scheda_progetto.html','kyv_calendar.html'].includes(page))return;
 const FOLLOWUP_DAYS=5;
 let db=null;
 let pitchRows=[];
-let projectFiles=[];
+let projectVersions=[];
 let agendaProjects=[];
 let agendaRows=[];
 let lastProjectId='';
@@ -20,9 +20,9 @@ let refreshTimer=null;
 const statusMeta={
   waiting:{label:'In attesa',className:'kyv-pitch-waiting',icon:'clock-3'},
   due:{label:'Da sollecitare',className:'kyv-pitch-due',icon:'alarm-clock'},
-  feedback:{label:'Feedback',className:'kyv-pitch-feedback',icon:'message-square-text'},
-  confirmed:{label:'Confermato',className:'kyv-pitch-confirmed',icon:'circle-check-big'},
-  no:{label:'No',className:'kyv-pitch-no',icon:'circle-x'}
+  revision:{label:'Da revisionare',className:'kyv-pitch-feedback',icon:'message-square-text'},
+  interested:{label:'Interessato',className:'kyv-pitch-confirmed',icon:'circle-check-big'},
+  closed:{label:'Chiuso / non interessato',className:'kyv-pitch-no',icon:'circle-x'}
 };
 
 function text(value){return String(value??'').trim();}
@@ -43,9 +43,9 @@ function activityDate(row){return row?.Data_Conferma||row?.Data_Invio||row?.upda
 function daysSince(value){const t=timeValue(value);if(!t)return 0;return Math.max(0,Math.floor((Date.now()-t)/86400000));}
 function statusKey(row){
   const raw=text(row?.Stato).toLowerCase();
-  if(/confermat|approvat|accettat|scelt|preso/.test(raw))return'confirmed';
-  if(/(^|\s|\/)(no|pass)(\s|$)|rifiut|declin|non interess|scartat/.test(raw))return'no';
-  if(/feedback|rispost|revision|comment/.test(raw))return'feedback';
+  if(/interessat|confermat|approvat|accettat|scelt|preso/.test(raw))return'interested';
+  if(/chius|(^|\s|\/)(no|pass)(\s|$)|rifiut|declin|non interess|scartat/.test(raw))return'closed';
+  if(/da revisionare|feedback|rispost|revision|comment/.test(raw))return'revision';
   if(/da sollecitare|sollecito dovuto|follow-up dovuto/.test(raw))return'due';
   return daysSince(activityDate(row))>=FOLLOWUP_DAYS?'due':'waiting';
 }
@@ -54,7 +54,20 @@ function projectLabel(p){return [text(p?.ARTISTA)||'Artista non indicato',text(p
 function rowProjectId(row){return text(row?.ID_PROGETTO||row?.id_progetto||row?.PROGETTO_ID);}
 function rowSort(a,b){return (timeValue(activityDate(b))||Number(b?.ID_INVIO||0))-(timeValue(activityDate(a))||Number(a?.ID_INVIO||0));}
 function dedupeRows(rows){const map=new Map();(rows||[]).forEach((row,index)=>{const key=text(row.ID_INVIO)||`row-${index}`;if(!map.has(key)||rowSort(row,map.get(key))<0)map.set(key,row);});return [...map.values()].sort(rowSort);}
-function latestFile(){return [...projectFiles].sort((a,b)=>Number(b.ID_FILE||0)-Number(a.ID_FILE||0))[0]||null;}
+function versionDate(row){return timeValue(row?.DATA_FILE||row?.Data_Caricamento||row?.updated_at||row?.created_at)||Number(row?.ID_VERSIONE||row?.ID_FILE||0);}
+function versionName(row){return text(row?.NOME_FILE||row?.Nome_File||row?.TITOLO||row?.Titolo)||'Versione audio';}
+function versionKey(row){
+  if(row?._versionKey)return text(row._versionKey);
+  if(row?.ID_VERSIONE!==undefined&&row?.ID_VERSIONE!==null)return`v:${row.ID_VERSIONE}`;
+  if(row?.ID_FILE!==undefined&&row?.ID_FILE!==null)return`f:${row.ID_FILE}`;
+  return'';
+}
+function latestFile(){return [...projectVersions].sort((a,b)=>versionDate(b)-versionDate(a))[0]||null;}
+function versionMarker(row){if(!row)return'';const source=row.ID_VERSIONE?`AUDIO_VERSIONI #${row.ID_VERSIONE}`:`DROPBOX_AUDIO_FILES #${row.ID_FILE}`;return`Versione inviata: [${source}] ${versionName(row)}`;}
+function exactVersion(row){
+  const marker=text(row?.Messaggio).match(/Versione inviata:\s*(?:\[[^\]]+\]\s*)?([^\n]+)/i);if(marker)return marker[1].trim();
+  const match=projectVersions.find(item=>String(item.ID_FILE||item?.METADATI?.id_legacy||'')===String(row?.ID_FILE||''));return match?versionName(match):(row?.ID_FILE?`File #${row.ID_FILE}`:'Versione non indicata');
+}
 
 function injectStyles(){
   if(document.getElementById('kyv-pitch-followup-style'))return;
@@ -65,10 +78,14 @@ function injectStyles(){
 
 async function loadProjectRows(projectId){
   const c=client();if(!c||!projectId)return{rows:[],files:[]};
-  let direct=[],byFile=[],files=[];
+  let direct=[],byFile=[],files=[],versions=[];
+  try{
+    const versionResult=await c.from('AUDIO_VERSIONI').select('*').eq('ID_PROGETTO',projectId).order('DATA_FILE',{ascending:false}).limit(150);
+    if(!versionResult.error)versions=(versionResult.data||[]).map(row=>({...row,_versionKey:`v:${row.ID_VERSIONE}`}));
+  }catch(_){}
   try{
     const fileResult=await c.from('DROPBOX_AUDIO_FILES').select('*').eq('ID_PROGETTO',projectId).order('ID_FILE',{ascending:false}).limit(100);
-    if(!fileResult.error)files=fileResult.data||[];
+    if(!fileResult.error)files=(fileResult.data||[]).map(row=>({...row,_versionKey:`f:${row.ID_FILE}`}));
   }catch(_){}
   try{
     const directResult=await c.from('INVII_AUDIO').select('*').eq('ID_PROGETTO',projectId).order('ID_INVIO',{ascending:false}).limit(250);
@@ -81,20 +98,22 @@ async function loadProjectRows(projectId){
       if(!fileInvii.error)byFile=fileInvii.data||[];
     }catch(_){}
   }
-  return{rows:dedupeRows([...direct,...byFile]),files};
+  const merged=[...versions,...files].filter((row,index,all)=>all.findIndex(candidate=>text(candidate.LINK_FILE||candidate.Link_Dropbox||versionKey(candidate))===text(row.LINK_FILE||row.Link_Dropbox||versionKey(row)))===index).sort((a,b)=>versionDate(b)-versionDate(a));
+  return{rows:dedupeRows([...direct,...byFile]),files:merged};
 }
 
-function summaryCounts(){const counts={waiting:0,due:0,feedback:0,confirmed:0,no:0};pitchRows.forEach(row=>{counts[statusKey(row)]++;});return counts;}
+function summaryCounts(){const counts={waiting:0,due:0,revision:0,interested:0,closed:0};pitchRows.forEach(row=>{counts[statusKey(row)]++;});return counts;}
 function renderProjectPanel(projectId){
-  const host=document.getElementById('tab-audio');if(!host||!projectId)return false;
+  const host=document.getElementById('kyv-project-v2-pitch')||document.getElementById('tab-audio');if(!host||!projectId)return false;
   let panel=document.getElementById('kyv-pitch-followup-project');
   if(panel&&panel.dataset.projectId!==String(projectId)){panel.remove();panel=null;}
+  if(panel&&panel.parentElement!==host)host.prepend(panel);
   if(!panel){panel=document.createElement('section');panel.id='kyv-pitch-followup-project';panel.dataset.projectId=String(projectId);host.insertBefore(panel,host.firstChild);}
   const counts=summaryCounts(),latest=latestFile();
   panel.innerHTML=`
-    <div class="kyv-pitch-head"><div><p class="text-[9px] uppercase tracking-[.14em] font-black text-sky-200">Pitch & follow-up</p><h3 class="mt-1">Dall'invio alla risposta</h3><p>Ogni destinatario resta tracciato nel progetto. Dopo ${FOLLOWUP_DAYS} giorni senza attività, l'invio passa automaticamente in “Da sollecitare”.</p></div><button type="button" class="kyv-pitch-btn primary" data-pitch-new><i data-lucide="send" class="w-3.5 h-3.5"></i>Nuovo invio</button></div>
+    <div class="kyv-pitch-head"><div><p class="text-[9px] uppercase tracking-[.14em] font-black text-sky-200">INVII_AUDIO</p><h3 class="mt-1">Invii & Follow-up</h3><p>Versione, destinatario ed esito restano nello stesso flusso. Dopo ${FOLLOWUP_DAYS} giorni senza attività compare “Da sollecitare”.</p></div><button type="button" class="kyv-pitch-btn primary" data-pitch-new><i data-lucide="send" class="w-3.5 h-3.5"></i>Nuovo invio</button></div>
     <div class="kyv-pitch-summary">
-      <div><strong>${counts.waiting}</strong><span>In attesa</span></div><div><strong>${counts.due}</strong><span>Da sollecitare</span></div><div><strong>${counts.feedback}</strong><span>Feedback</span></div><div><strong>${counts.confirmed}</strong><span>Confermati</span></div><div><strong>${counts.no}</strong><span>No</span></div>
+      <div><strong>${counts.waiting}</strong><span>In attesa</span></div><div><strong>${counts.due}</strong><span>Da sollecitare</span></div><div><strong>${counts.revision}</strong><span>Da revisionare</span></div><div><strong>${counts.interested}</strong><span>Interessati</span></div><div><strong>${counts.closed}</strong><span>Chiusi</span></div>
     </div>
     <form class="kyv-pitch-form" data-pitch-form>
       <div class="kyv-pitch-form-grid">
@@ -103,8 +122,9 @@ function renderProjectPanel(projectId){
         <label><span class="kyv-pitch-label">Canale</span><select class="kyv-pitch-input" name="channel"><option>WhatsApp</option><option>Email</option><option>Telegram</option><option>iMessage</option><option>DM / altro</option></select></label>
         <label><span class="kyv-pitch-label">Contesto</span><select class="kyv-pitch-input" name="context"><option>Pitch brano</option><option>Ascolto demo</option><option>Invio a label / editore</option><option>Revisione</option><option>Approvazione finale</option><option>Altro</option></select></label>
       </div>
-      <label class="block mt-2"><span class="kyv-pitch-label">Nota opzionale</span><textarea class="kyv-pitch-input" name="note" rows="2" placeholder="Cosa hai mandato / cosa stai aspettando"></textarea></label>
-      <div class="flex flex-wrap items-center justify-between gap-2 mt-2"><span class="text-[10px] text-kyv-text">${latest?`Collego automaticamente il file #${H(latest.ID_FILE)}${latest.Nome_File?` · ${H(latest.Nome_File)}`:''}.`:'Nessun file Dropbox collegato: provo a registrare l’invio sul solo progetto.'}</span><div class="flex gap-2"><button type="button" class="kyv-pitch-btn" data-pitch-cancel>Annulla</button><button type="submit" class="kyv-pitch-btn primary" data-pitch-submit><i data-lucide="save" class="w-3.5 h-3.5"></i>Registra invio</button></div></div>
+      <label class="block mt-2"><span class="kyv-pitch-label">Versione inviata</span><select class="kyv-pitch-input" name="versionKey">${projectVersions.length?projectVersions.map((row,index)=>`<option value="${H(versionKey(row))}">${index===0?'Ultima · ':''}${H(versionName(row))}</option>`).join(''):'<option value="">Nessuna versione collegata</option>'}</select></label>
+      <label class="block mt-2"><span class="kyv-pitch-label">Nota opzionale</span><textarea class="kyv-pitch-input" name="note" rows="2" placeholder="Cosa stai aspettando"></textarea></label>
+      <div class="flex flex-wrap items-center justify-between gap-2 mt-2"><span class="text-[10px] text-kyv-text">${latest?`Versione proposta: ${H(versionName(latest))}.`:'L’invio resta collegato al progetto; aggiungi una versione per tracciare il file esatto.'}</span><div class="flex gap-2"><button type="button" class="kyv-pitch-btn" data-pitch-cancel>Annulla</button><button type="submit" class="kyv-pitch-btn primary" data-pitch-submit><i data-lucide="save" class="w-3.5 h-3.5"></i>Registra invio</button></div></div>
     </form>
     <div class="kyv-pitch-grid">${pitchRows.length?pitchRows.map(renderPitchCard).join(''):'<div class="kyv-pitch-empty">Nessun pitch registrato. Usa “Nuovo invio” quando mandi il brano a un artista, manager, A&R, label o editore.</div>'}</div>`;
   wireProjectPanel(panel,projectId);
@@ -113,9 +133,9 @@ function renderProjectPanel(projectId){
 }
 
 function renderPitchCard(row){
-  const key=statusKey(row),age=daysSince(activityDate(row)),feedback=text(row.Conferma_Ricezione),last=formatDate(activityDate(row))||'—';
+  const key=statusKey(row),age=daysSince(activityDate(row)),feedback=text(row.Conferma_Ricezione),last=formatDate(activityDate(row))||'—',version=exactVersion(row);
   const dueText=key==='due'?`${age}g senza attività`:`Ultima attività: ${last}`;
-  return `<article class="kyv-pitch-card" data-pitch-id="${H(row.ID_INVIO)}"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="text-[9px] uppercase tracking-wider font-black text-sky-200">Invio #${H(row.ID_INVIO)}</p><h4 class="mt-1 break-words">${H(row.Destinatario||'Destinatario non indicato')}</h4><p>${H([row.Tipo_Destinatario,row.Canale,row.Contesto].filter(Boolean).join(' · ')||'Pitch')}</p></div>${statusChip(row)}</div><p class="mt-2">${H(dueText)}${row.Data_Invio?` · inviato ${H(formatDate(row.Data_Invio))}`:''}</p>${feedback?`<p class="mt-2 text-violet-200"><strong>Nota:</strong> ${H(feedback)}</p>`:''}<div class="kyv-pitch-actions">${key==='due'?'<button type="button" class="kyv-pitch-btn primary" data-pitch-followup><i data-lucide="send" class="w-3 h-3"></i>Sollecitato</button>':''}<button type="button" class="kyv-pitch-btn" data-pitch-wait><i data-lucide="clock-3" class="w-3 h-3"></i>Attesa</button><button type="button" class="kyv-pitch-btn" data-pitch-feedback><i data-lucide="message-square-text" class="w-3 h-3"></i>Feedback</button><button type="button" class="kyv-pitch-btn good" data-pitch-confirm><i data-lucide="circle-check-big" class="w-3 h-3"></i>Confermato</button><button type="button" class="kyv-pitch-btn bad" data-pitch-no><i data-lucide="circle-x" class="w-3 h-3"></i>No</button></div><div class="kyv-pitch-feedback-editor" data-feedback-editor><textarea class="kyv-pitch-input" rows="3" placeholder="Feedback ricevuto...">${H(feedback.replace(/^Feedback:\s*/i,''))}</textarea><div class="kyv-pitch-actions justify-end"><button type="button" class="kyv-pitch-btn" data-feedback-cancel>Annulla</button><button type="button" class="kyv-pitch-btn primary" data-feedback-save>Salva feedback</button></div></div></article>`;
+  return `<article class="kyv-pitch-card" data-pitch-id="${H(row.ID_INVIO)}"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="text-[9px] uppercase tracking-wider font-black text-sky-200">Invio #${H(row.ID_INVIO)}</p><h4 class="mt-1 break-words">${H(row.Destinatario||'Destinatario non indicato')}</h4><p>${H([row.Tipo_Destinatario,row.Canale,row.Contesto].filter(Boolean).join(' · ')||'Pitch')}</p><p class="text-blue-200"><strong>Versione:</strong> ${H(version)}</p></div>${statusChip(row)}</div><p class="mt-2">${H(dueText)}${row.Data_Invio?` · inviato ${H(formatDate(row.Data_Invio))}`:''}</p>${feedback?`<p class="mt-2 text-violet-200"><strong>Nota:</strong> ${H(feedback)}</p>`:''}<div class="kyv-pitch-actions">${key==='due'?'<button type="button" class="kyv-pitch-btn primary" data-pitch-followup><i data-lucide="send" class="w-3 h-3"></i>Sollecitato</button>':''}<button type="button" class="kyv-pitch-btn" data-pitch-wait><i data-lucide="clock-3" class="w-3 h-3"></i>In attesa</button><button type="button" class="kyv-pitch-btn" data-pitch-revision><i data-lucide="message-square-text" class="w-3 h-3"></i>Da revisionare</button><button type="button" class="kyv-pitch-btn good" data-pitch-interest><i data-lucide="circle-check-big" class="w-3 h-3"></i>Interessato</button><button type="button" class="kyv-pitch-btn bad" data-pitch-close><i data-lucide="circle-x" class="w-3 h-3"></i>Chiudi</button></div><div class="kyv-pitch-feedback-editor" data-feedback-editor><textarea class="kyv-pitch-input" rows="3" placeholder="Revisione o feedback ricevuto...">${H(feedback.replace(/^Feedback:\s*/i,''))}</textarea><div class="kyv-pitch-actions justify-end"><button type="button" class="kyv-pitch-btn" data-feedback-cancel>Annulla</button><button type="button" class="kyv-pitch-btn primary" data-feedback-save>Salva revisione</button></div></div></article>`;
 }
 
 function wireProjectPanel(panel,projectId){
@@ -127,10 +147,10 @@ function wireProjectPanel(panel,projectId){
     const id=card.dataset.pitchId;
     card.querySelector('[data-pitch-followup]')?.addEventListener('click',event=>markFollowup(id,event.currentTarget));
     card.querySelector('[data-pitch-wait]')?.addEventListener('click',event=>setPitchStatus(id,'In attesa',event.currentTarget));
-    card.querySelector('[data-pitch-confirm]')?.addEventListener('click',event=>setPitchStatus(id,'Confermato',event.currentTarget));
-    card.querySelector('[data-pitch-no]')?.addEventListener('click',event=>setPitchStatus(id,'No',event.currentTarget));
+    card.querySelector('[data-pitch-interest]')?.addEventListener('click',event=>setPitchStatus(id,'Interessato',event.currentTarget));
+    card.querySelector('[data-pitch-close]')?.addEventListener('click',event=>setPitchStatus(id,'Chiuso / non interessato',event.currentTarget));
     const editor=card.querySelector('[data-feedback-editor]');
-    card.querySelector('[data-pitch-feedback]')?.addEventListener('click',()=>{editor?.classList.add('open');setTimeout(()=>editor?.querySelector('textarea')?.focus(),0);});
+    card.querySelector('[data-pitch-revision]')?.addEventListener('click',()=>{editor?.classList.add('open');setTimeout(()=>editor?.querySelector('textarea')?.focus(),0);});
     card.querySelector('[data-feedback-cancel]')?.addEventListener('click',()=>editor?.classList.remove('open'));
     card.querySelector('[data-feedback-save]')?.addEventListener('click',event=>saveFeedback(id,editor?.querySelector('textarea')?.value||'',event.currentTarget));
   });
@@ -140,13 +160,14 @@ async function createPitch(projectId,form){
   const c=client();if(!c)return;const submit=form.querySelector('[data-pitch-submit]');
   const data=new FormData(form),recipient=text(data.get('recipient'));if(!recipient)return;
   if(submit){submit.disabled=true;submit.textContent='Salvo…';}
-  const file=latestFile(),now=new Date().toISOString();
-  const payload={ID_PROGETTO:projectId,Destinatario:recipient,Tipo_Destinatario:text(data.get('recipientType'))||'Altro',Canale:text(data.get('channel'))||'Altro',Contesto:text(data.get('context'))||'Pitch brano',Messaggio:text(data.get('note'))||null,Stato:'In attesa',Data_Invio:now};
-  if(file?.ID_FILE!==undefined&&file?.ID_FILE!==null)payload.ID_FILE=file.ID_FILE;
+  const selected=projectVersions.find(row=>versionKey(row)===text(data.get('versionKey')))||latestFile(),now=new Date().toISOString(),note=text(data.get('note'));
+  const message=[versionMarker(selected),note].filter(Boolean).join('\n')||null;
+  const payload={ID_PROGETTO:projectId,Destinatario:recipient,Tipo_Destinatario:text(data.get('recipientType'))||'Altro',Canale:text(data.get('channel'))||'Altro',Contesto:text(data.get('context'))||'Pitch brano',Messaggio:message,Stato:'In attesa',Data_Invio:now};
+  const legacyId=selected?.ID_FILE||selected?.METADATI?.id_legacy;if(legacyId!==undefined&&legacyId!==null)payload.ID_FILE=legacyId;
   try{
     const {error}=await c.from('INVII_AUDIO').insert([payload]);if(error)throw error;
     toast('Invio registrato.');form.reset();form.classList.remove('open');await refreshProject(projectId,true);
-  }catch(error){console.error('KYV Pitch: insert',error);toast(file?'Errore registrazione invio.':'Non riesco a registrare un invio senza file Dropbox: aggiungi una versione al progetto e riprova.','error');}
+  }catch(error){console.error('KYV Pitch: insert',error);toast('Errore registrazione invio.','error');}
   finally{if(submit){submit.disabled=false;submit.innerHTML='<i data-lucide="save" class="w-3.5 h-3.5"></i>Registra invio';if(window.lucide)lucide.createIcons({root:submit});}}
 }
 
@@ -158,7 +179,7 @@ async function updatePitch(id,payload,button,message){
 }
 function setPitchStatus(id,status,button){return updatePitch(id,{Stato:status,Data_Conferma:new Date().toISOString()},button,`Stato: ${status}.`);}
 function markFollowup(id,button){return updatePitch(id,{Stato:'In attesa',Data_Conferma:new Date().toISOString()},button,'Sollecito registrato: riparte il conteggio.');}
-function saveFeedback(id,note,button){const clean=text(note);if(!clean){toast('Scrivi il feedback ricevuto.','warning');return;}return updatePitch(id,{Stato:'Feedback',Conferma_Ricezione:`Feedback: ${clean}`,Data_Conferma:new Date().toISOString()},button,'Feedback salvato.');}
+function saveFeedback(id,note,button){const clean=text(note);if(!clean){toast('Scrivi la revisione richiesta.','warning');return;}return updatePitch(id,{Stato:'Da revisionare',Conferma_Ricezione:`Feedback: ${clean}`,Data_Conferma:new Date().toISOString()},button,'Revisione salvata.');}
 
 async function refreshProject(projectId,force=false){
   projectId=text(projectId);if(!projectId||projectLoading)return;
@@ -166,7 +187,7 @@ async function refreshProject(projectId,force=false){
   if(!force&&projectId===lastProjectId&&panel){renderProjectPanel(projectId);return;}
   if(!force&&projectId===lastProjectId&&!panel&&pitchRows.length>=0){renderProjectPanel(projectId);return;}
   projectLoading=true;
-  try{const result=await loadProjectRows(projectId);pitchRows=result.rows;projectFiles=result.files;lastProjectId=projectId;renderProjectPanel(projectId);}catch(error){console.warn('KYV Pitch: caricamento progetto non disponibile',error);}finally{projectLoading=false;}
+  try{const result=await loadProjectRows(projectId);pitchRows=result.rows;projectVersions=result.files;lastProjectId=projectId;renderProjectPanel(projectId);}catch(error){console.warn('KYV Pitch: caricamento progetto non disponibile',error);}finally{projectLoading=false;}
 }
 function watchProjectPage(){
   injectStyles();
@@ -175,6 +196,7 @@ function watchProjectPage(){
   projectObserver=new MutationObserver(()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(run,80);});
   projectObserver.observe(document.documentElement,{childList:true,subtree:true});
   setTimeout(()=>projectObserver?.disconnect(),120000);
+  window.addEventListener('kyv:project-v2-ready',()=>refreshProject(currentProjectId(),true));
 }
 
 async function loadAgendaPitch(){

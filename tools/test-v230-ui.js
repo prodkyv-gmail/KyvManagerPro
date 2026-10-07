@@ -1,6 +1,6 @@
 const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),actionBridge=read('kyv-action-bridge.js'),todayPriority=read('kyv-today-priority.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),releaseDesk=read('kyv-release-desk.js'),pastel=read('kyv-pastel.css');
+const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),projectSheet=read('kyv-project-sheet-v2.js'),actionBridge=read('kyv-action-bridge.js'),todayPriority=read('kyv-today-priority.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),releaseDesk=read('kyv-release-desk.js'),pastel=read('kyv-pastel.css');
 assert.match(config,/kyv-producer-mode\.js/,'Producer Mode deve essere caricato globalmente');
 assert.match(config,/kyv-listening-phase4\.js/,'La vista Ascolto producer-first deve essere caricata prima della stazione legacy');
 assert.match(config,/kyv-agenda-phase5\.js/,'La vista Agenda producer-first deve essere caricata sul calendario');
@@ -8,6 +8,8 @@ assert.match(config,/kyv-workflow-nav\.js/,'La navigazione trasversale deve esse
 assert.match(config,/kyv-pitch-followup\.js/,'Pitch & Follow-up deve essere attivo su Scheda progetto e Agenda');
 assert.match(config,/kyv-today-priority\.js/,'La Home deve caricare il cockpit leggero delle priorità');
 assert.match(config,/kyv-release-desk\.js/,'La Scheda progetto deve caricare il Release Desk essenziale');
+assert.match(config,/kyv-project-sheet-v2\.js/,'La Scheda progetto deve caricare la vista 2.0');
+assert.doesNotMatch(config,/kyv-project-hub-v227\.js/,'La Scheda progetto non deve caricare due hub concorrenti');
 assert.match(producer,/\['index\.html','Oggi'/);assert.match(producer,/\['kyv_calendar\.html','Agenda'/);assert.match(producer,/\['acquisisci_audio\.html','Nuovo'/);assert.match(producer,/\['progetti\.html','Progetti'/);assert.match(producer,/\['ascolto\.html','Ascolto'/);
 assert.match(producer,/details\('Controllo'/);assert.match(producer,/fatture\.html','Fatture e incassi'/);assert.match(producer,/rendiconto\.html','Rendiconto SIAE'/);
 assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.html','Studio Editor'/);assert.match(producer,/archivio_musicale\.html','Archivio musicale'/);
@@ -23,6 +25,10 @@ assert.doesNotMatch(phase2,/\.from\(/,'Phase 2 deve essere solo una vista: nessu
 assert.match(phase3,/Recenti/);assert.match(phase3,/Da fare/);assert.match(phase3,/In attesa/);assert.match(phase3,/Usciti/);assert.match(phase3,/Ultima attività/);assert.match(phase3,/Ultimo audio/);assert.match(phase3,/Prossima azione/);assert.match(phase3,/Fermo da/);
 assert.match(phase3,/AUDIO_VERSIONI/);assert.match(phase3,/DROPBOX_AUDIO_FILES/);assert.match(phase3,/DOCUMENTI_PROGETTO/);
 assert.doesNotMatch(phase3,/\.from\([^)]*\)\s*\.(?:insert|update|delete|upsert)\(/,'La lista Progetti operativa può leggere il database ma non deve mutarlo');
+assert.match(projectSheet,/id="kyv-project-v2-versions"/);assert.match(projectSheet,/id="kyv-project-v2-pitch"/);assert.match(projectSheet,/id="kyv-project-v2-release"/);assert.match(projectSheet,/id="kyv-project-v2-timeline"/);
+assert.match(projectSheet,/Prossima azione/);assert.match(projectSheet,/AUDIO_VERSIONI/);assert.match(projectSheet,/INVII_AUDIO/);assert.match(projectSheet,/FOLLOWUP_DAYS=5/);
+assert.match(projectSheet,/Versione caricata/);assert.match(projectSheet,/Versione inviata/);assert.match(projectSheet,/Follow-up registrato/);assert.match(projectSheet,/Master consegnato/);assert.match(projectSheet,/Release/);
+assert.doesNotMatch(projectSheet,/\.from\(/,'La Scheda Progetto 2.0 deve comporre state.currentView senza nuove query o tabelle');
 assert.match(actionBridge,/Azioni progetto/);assert.match(actionBridge,/Apri progetto/);assert.match(actionBridge,/Pianifica/);assert.match(actionBridge,/Fatto/);
 assert.match(actionBridge,/from\('PROGETTI'\)\.update\(\{SVILUPPO:''\}\)\.eq\('ID'/,'Fatto deve chiudere solo la prossima azione del progetto');
 assert.match(actionBridge,/kyv_calendar\.html\?/,'Pianifica deve usare l’Agenda esistente');
@@ -57,7 +63,9 @@ assert.match(workflowNav,/kyv-agenda-actions \[data-project-id\]/,'Agenda deve e
 assert.match(workflowNav,/data-kyv-project-action/,'Oggi deve evidenziare l’azione del progetto contestuale');
 assert.doesNotMatch(workflowNav,/\.from\(/,'La navigazione trasversale non deve interrogare o modificare il database');
 assert.match(pitch,/FOLLOWUP_DAYS=5/,'Un pitch fermo deve diventare sollecito dopo 5 giorni');
-assert.match(pitch,/In attesa/);assert.match(pitch,/Da sollecitare/);assert.match(pitch,/Feedback/);assert.match(pitch,/Confermato/);assert.match(pitch,/No/);
+assert.match(pitch,/In attesa/);assert.match(pitch,/Da sollecitare/);assert.match(pitch,/Da revisionare/);assert.match(pitch,/Interessato/);assert.match(pitch,/Chiuso \/ non interessato/);
+assert.match(pitch,/from\('AUDIO_VERSIONI'\)\.select/,'Ogni invio deve poter indicare la versione esatta');
+assert.match(pitch,/Versione inviata:/,'La versione scelta deve restare nello storico senza richiedere nuove colonne');
 assert.match(pitch,/from\('INVII_AUDIO'\)\.insert/,'La scheda deve poter registrare un nuovo invio usando la tabella esistente');
 assert.match(pitch,/from\('INVII_AUDIO'\)\.update/,'Gli stati del pitch devono aggiornare la riga esistente');
 assert.match(pitch,/Conferma_Ricezione/,'Il feedback deve riusare il campo di conferma già esistente');
@@ -69,6 +77,7 @@ assert.match(releaseDesk,/Uscita & crediti/);assert.match(releaseDesk,/Completa 
 assert.match(releaseDesk,/Data_Pubblicazione/);assert.match(releaseDesk,/Data_Consegna_Master/);assert.match(releaseDesk,/Codice_ISRC/);assert.match(releaseDesk,/AUTORI/);assert.match(releaseDesk,/Quota_Musica_Kyv/);assert.match(releaseDesk,/Produttore_Fonografico/);assert.match(releaseDesk,/Ruolo_IMAIE_Kyv/);
 assert.match(releaseDesk,/Pronto/);assert.match(releaseDesk,/Da confermare/);assert.match(releaseDesk,/Mancante/);
 assert.match(releaseDesk,/openCompactEdit/,'Il Release Desk deve riusare l’editor esistente mostrando solo i campi utili');
+assert.match(releaseDesk,/kyv-project-v2-release/,'Il Release Desk deve vivere nel flusso principale della Scheda 2.0');
 assert.match(releaseDesk,/classList\.toggle\('hidden'/,'L’editor Release deve nascondere i campi non necessari');
 assert.doesNotMatch(releaseDesk,/\.from\(/,'Il Release Desk deve usare state.currentView senza interrogare direttamente il database');
 assert.match(pastel,/\.kyv-pastel-lavender/);assert.match(pastel,/\.kyv-pastel-mint/);assert.match(pastel,/\.kyv-pastel-peach/);assert.match(pastel,/\.kyv-pastel-sky/);assert.match(pastel,/\.kyv-collapse/);

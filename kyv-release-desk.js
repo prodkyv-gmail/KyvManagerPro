@@ -80,12 +80,14 @@ function openCompactEdit(entries){
   });
 }
 function render(){
-  const current=view(),host=document.getElementById('tab-diritti');if(!current||!host)return false;
-  const fp=fingerprint(current);if(fp===lastFingerprint&&document.getElementById('kyv-release-desk'))return true;lastFingerprint=fp;
+  const current=view(),host=document.getElementById('kyv-project-v2-release')||document.getElementById('tab-diritti');if(!current||!host)return false;
+  let desk=document.getElementById('kyv-release-desk');
+  if(desk&&desk.parentElement!==host)host.prepend(desk);
+  const fp=fingerprint(current);if(fp===lastFingerprint&&desk)return true;lastFingerprint=fp;
   const entries=releaseItems(current),ready=entries.filter(x=>x.state==='ready').length,partial=entries.filter(x=>x.state==='partial'),missing=entries.filter(x=>x.state==='missing'),open=[...partial,...missing];
   const date=entries.find(x=>x.key==='release-date'),master=entries.find(x=>x.key==='master'),credits=entries.find(x=>x.key==='authors');
   const status=ready===entries.length?'Pronto per uscire':ready>=5?'Quasi pronto':'Da completare';
-  let desk=document.getElementById('kyv-release-desk');if(!desk){desk=document.createElement('section');desk.id='kyv-release-desk';host.prepend(desk);}
+  if(!desk){desk=document.createElement('section');desk.id='kyv-release-desk';host.prepend(desk);}
   desk.innerHTML=`<div class="kyv-release-head"><div><p class="text-[9px] uppercase tracking-[.14em] font-black text-violet-200">Release Desk</p><h3 class="mt-1">Uscita & crediti</h3><p>${H(status)}. Vedi subito solo ciò che serve per portare il brano alla pubblicazione.</p></div><div class="kyv-release-score"><strong>${ready}/${entries.length}</strong><span>pronti</span></div></div><div class="kyv-release-main">${mainCard('Data uscita',date)}${mainCard('Master',master)}${mainCard('Autori',credits)}</div><div class="kyv-release-missing"><div class="kyv-release-missing-title">${open.length?'Da chiudere':'Tutto pronto'}</div><div class="kyv-release-chips">${open.length?open.map(entry=>{const meta=statusMeta(entry.state);return `<span class="kyv-release-chip ${meta.cls}"><i data-lucide="${meta.icon}" class="w-3 h-3"></i>${H(entry.label)}</span>`;}).join(''):'<span class="kyv-release-chip ready"><i data-lucide="circle-check-big" class="w-3 h-3"></i>Nessuna mancanza essenziale</span>'}</div></div><div class="kyv-release-actions"><button type="button" class="kyv-release-btn primary" data-release-edit><i data-lucide="pencil" class="w-3.5 h-3.5"></i>${open.length?'Completa mancanti':'Modifica dati uscita'}</button><a class="kyv-release-btn" href="ascolto.html?projectId=${encodeURIComponent(current.p.ID)}"><i data-lucide="headphones" class="w-3.5 h-3.5"></i>Ascolto</a></div><details class="kyv-release-details"><summary><span>Vedi tutti i controlli release</span><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></summary><div class="kyv-release-all">${entries.map(renderRow).join('')}</div></details>`;
   desk.querySelector('[data-release-edit]')?.addEventListener('click',()=>openCompactEdit(entries));
   if(window.lucide)lucide.createIcons({root:desk});return true;
@@ -95,6 +97,7 @@ function boot(){
   injectStyles();render();
   const root=document.getElementById('project-view')||document.documentElement;
   observer=new MutationObserver(scheduleRender);observer.observe(root,{childList:true,subtree:true,characterData:true});
+  window.addEventListener('kyv:project-v2-ready',scheduleRender);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
