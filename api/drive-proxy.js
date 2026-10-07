@@ -81,6 +81,18 @@ module.exports = async function handler(req, res) {
   if (!user) return sendJson(req, res, 401, { ok:false, error:'Sessione richiesta o scaduta. Accedi di nuovo a KyvManagerPro.' });
 
   const query = req.query || {};
+
+  // Diagnostica autenticata: verifica funzione Vercel + sessione senza contattare Apps Script.
+  // Il test operativo Drive resta KYV_DRIVE.ping(), che prova invece il connettore reale.
+  if (String(query.diagnostic || '') === '1') {
+    return sendJson(req, res, 200, {
+      ok:true,
+      proxy:'drive',
+      authenticated:true,
+      message:'Proxy Vercel Drive disponibile e sessione valida.'
+    });
+  }
+
   const target = String(query.target || query.url || '').trim();
 
   if (!target) return sendJson(req, res, 400, { ok:false, error:'Parametro target mancante.' });
@@ -147,4 +159,3 @@ module.exports = async function handler(req, res) {
     });
   }
 };
-
