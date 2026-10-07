@@ -54,7 +54,7 @@ assert.match(agenda,/Agenda <span class="text-violet-300">di produzione/,'L’Ag
 assert.match(agenda,/Da pianificare/);assert.match(agenda,/Sessione/);assert.match(agenda,/Follow-up/);assert.match(agenda,/Scadenza/);assert.match(agenda,/Filtra calendario/);
 assert.match(agenda,/from\('PROGETTI'\)\s*\.select/,'L’Agenda deve leggere le prossime azioni dai progetti');
 assert.match(agenda,/from\('PROGETTI'\)\s*\.update\(\s*\{\s*SVILUPPO:\s*''\s*\}\s*\)\s*\.eq\(\s*'ID'/,'Fatto in Agenda deve chiudere solo la prossima azione');
-assert.match(agenda,/Pianifica attività/);assert.match(agenda,/Aggiungi in Agenda/);assert.match(agenda,/Sincronizzazione Calendar/);
+assert.match(agenda,/Pianifica attività/);assert.match(agenda,/Aggiungi in Agenda/);assert.match(agenda,/#btn-sync/,'L’Agenda deve preservare il controllo di sincronizzazione Calendar');assert.doesNotMatch(agenda,/function\s+collapseTechnical\s*\(/,'L’Agenda non deve più nascondere la sincronizzazione Calendar in un pannello tecnico');
 assert.doesNotMatch(agenda,/\.from\(['"](?:FATTURE|DOCUMENTI_PROGETTO|AUDIO_VERSIONI|DROPBOX_AUDIO_FILES|CONSEGNE_MASTER)['"]\)\s*\.(?:insert|update|delete|upsert)/,'L’Agenda non deve modificare aree amministrative o audio');
 assert.doesNotMatch(agenda,/KYV_DRIVE\.listFiles|DROPBOX_AUDIO_FILES|AUDIO_VERSIONI/,'L’Agenda non deve scandire archivi audio o Drive');
 assert.match(workflowNav,/Percorso/,'Il percorso rapido deve essere visibile nelle viste operative');
