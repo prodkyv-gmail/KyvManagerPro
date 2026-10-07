@@ -14,11 +14,11 @@ const FILTERS=[
   ['TUTTI','Tutti']
 ];
 const STALE_DAYS=14;
-let db=null,projects=[],audioRows=[],activeFilter='RECENTI',loading=false;
+let db=null,projects=[],audioRows=[],activeFilter='RECENTI',loading=false,legacyGuardInstalled=false,legacyRepairQueued=false;
 
 function H(value){
   if(window.KYV&&typeof KYV.safeHtml==='function')return KYV.safeHtml(value??'');
-  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[ch]));
 }
 function text(value){return String(value??'').trim();}
 function upper(value){return text(value).toUpperCase();}
@@ -141,6 +141,10 @@ function mountChrome(){
 async function safeRows(table,limit){
   try{const {data,error}=await db.from(table).select('*').limit(limit);if(error){console.warn(`[KYV Projects] ${table} non disponibile`,error);return[];}return data||[];}catch(error){console.warn(`[KYV Projects] ${table} non disponibile`,error);return[];}
 }
+function bindRows(body){
+  body.querySelectorAll('[data-kyv-project-id]').forEach(row=>row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;location.href=`scheda_progetto.html?id=${encodeURIComponent(row.dataset.kyvProjectId)}`;}));
+  if(window.lucide)lucide.createIcons({root:body});
+}
 function renderMinimalProjects(error){
   console.error('[KYV Projects] Rendering avanzato non riuscito, uso fallback minimale.',error);
   const body=document.getElementById('tbody-uscite');if(!body)return;
@@ -148,12 +152,28 @@ function renderMinimalProjects(error){
   const count=document.getElementById('project-count');if(count)count.textContent=`${projects.length} ${projects.length===1?'progetto':'progetti'}`;
   if(!rows.length){body.innerHTML='<tr><td colspan="6" class="p-10 text-center text-kyv-text">Nessun progetto disponibile.</td></tr>';return;}
   body.innerHTML=rows.map(row=>`<tr class="kyv-project-row cursor-pointer border-b border-kyv-border/40" data-kyv-project-id="${H(row.ID)}"><td data-label="Progetto" class="px-4 py-3.5 min-w-[220px]"><span class="kyv-project-title block">${H(row.TITOLO||'Senza titolo')}</span><span class="kyv-project-artist block">${H(row.ARTISTA||'Artista non indicato')}</span></td><td data-label="Stato" class="px-4 py-3.5"><span class="kyv-status-chip">${H(row.STATO||row.SVILUPPO||'Stato non indicato')}</span></td><td data-label="Prossima azione" class="px-4 py-3.5"><span class="kyv-next-action">${H(nextAction(row)||'Da decidere')}</span></td><td data-label="Ultima attività" class="px-4 py-3.5"><span class="kyv-project-muted">Dati progetto caricati</span></td><td data-label="Ultimo audio" class="px-4 py-3.5"><span class="kyv-project-muted">Caricamento dettagli non disponibile</span></td><td data-label="Azioni" class="px-4 py-3.5 text-right"><a href="scheda_progetto.html?id=${encodeURIComponent(String(row.ID))}" class="kyv-row-primary"><i data-lucide="panel-top-open" class="w-4 h-4"></i>Apri</a></td></tr>`).join('');
-  body.querySelectorAll('[data-kyv-project-id]').forEach(row=>row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;location.href=`scheda_progetto.html?id=${encodeURIComponent(row.dataset.kyvProjectId)}`;}));
-  if(window.lucide)lucide.createIcons({root:body});
+  bindRows(body);
 }
 function renderProjects(){
   try{applyFilter(activeFilter);}
   catch(error){renderMinimalProjects(error);}
+}
+function installLegacyRenderGuard(){
+  if(legacyGuardInstalled)return;
+  const body=document.getElementById('tbody-uscite');if(!body)return;
+  legacyGuardInstalled=true;
+  const observer=new MutationObserver(()=>{
+    if(!projects.length||legacyRepairQueued)return;
+    const legacyRows=body.querySelector('tr[data-action="open-ref"]');
+    const legacyLoader=body.querySelector('.animate-spin')&&!body.querySelector('[data-kyv-project-id]');
+    if(!legacyRows&&!legacyLoader)return;
+    legacyRepairQueued=true;
+    setTimeout(()=>{
+      legacyRepairQueued=false;
+      if(projects.length)renderProjects();
+    },0);
+  });
+  observer.observe(body,{childList:true});
 }
 async function load(){
   if(loading)return;loading=true;
@@ -208,11 +228,10 @@ function applyFilter(nextFilter){
       <td data-label="Azioni" class="px-4 py-3.5 text-right min-w-[145px]"><div class="flex items-center justify-end gap-2"><a href="scheda_progetto.html?id=${pid}" onclick="event.stopPropagation()" class="kyv-row-primary"><i data-lucide="panel-top-open" class="w-4 h-4"></i>Apri</a><button data-action="open-ref" data-id="${H(row.ID)}" onclick="event.stopPropagation()" class="kyv-row-menu" aria-label="Modifica ${H(row.TITOLO||'progetto')}" title="Modifica"><i data-lucide="pencil" class="w-4 h-4"></i></button></div></td>
     </tr>`;
   }).join('');
-  body.querySelectorAll('[data-kyv-project-id]').forEach(row=>row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;location.href=`scheda_progetto.html?id=${encodeURIComponent(row.dataset.kyvProjectId)}`;}));
-  if(window.lucide)lucide.createIcons({root:body});
+  bindRows(body);
 }
 async function boot(){
-  injectStyles();mountChrome();db=window.KYV?.createSupabaseClient?.();if(!db)return;
+  injectStyles();mountChrome();installLegacyRenderGuard();db=window.KYV?.createSupabaseClient?.();if(!db)return;
   window.fetchUscite=load;window.applyUsciteFilters=applyFilter;
   const authRequired=window.KYV_AUTH?.authRequired?.()!==false;
   const session=await window.KYV_AUTH?.requireAuth?.();
