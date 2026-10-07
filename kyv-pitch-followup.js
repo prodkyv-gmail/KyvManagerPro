@@ -105,6 +105,7 @@ async function loadProjectRows(projectId){
 function summaryCounts(){const counts={waiting:0,due:0,revision:0,interested:0,closed:0};pitchRows.forEach(row=>{counts[statusKey(row)]++;});return counts;}
 function renderProjectPanel(projectId){
   const host=document.getElementById('kyv-project-v2-pitch')||document.getElementById('tab-audio');if(!host||!projectId)return false;
+  host.querySelector('[data-v2-placeholder]')?.remove();
   let panel=document.getElementById('kyv-pitch-followup-project');
   if(panel&&panel.dataset.projectId!==String(projectId)){panel.remove();panel=null;}
   if(panel&&panel.parentElement!==host)host.prepend(panel);

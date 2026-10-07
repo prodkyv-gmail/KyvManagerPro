@@ -29,6 +29,8 @@ assert.doesNotMatch(phase3,/\.from\([^)]*\)\s*\.(?:insert|update|delete|upsert)\
 assert.match(projectSheet,/id="kyv-project-v2-versions"/);assert.match(projectSheet,/id="kyv-project-v2-pitch"/);assert.match(projectSheet,/id="kyv-project-v2-release"/);assert.match(projectSheet,/id="kyv-project-v2-timeline"/);
 assert.match(projectSheet,/Prossima azione/);assert.match(projectSheet,/AUDIO_VERSIONI/);assert.match(projectSheet,/INVII_AUDIO/);assert.match(projectSheet,/FOLLOWUP_DAYS=5/);
 assert.match(projectSheet,/Versione caricata/);assert.match(projectSheet,/Versione inviata/);assert.match(projectSheet,/Follow-up registrato/);assert.match(projectSheet,/Master consegnato/);assert.match(projectSheet,/Release/);
+assert.match(projectSheet,/link:\$\{link\}/,'Le versioni moderne e legacy con lo stesso link devono essere deduplicate');
+assert.match(projectSheet,/data-v2-placeholder/);assert.match(pitch,/data-v2-placeholder/);assert.match(releaseDesk,/data-v2-placeholder/);
 assert.doesNotMatch(projectSheet,/\.from\(/,'La Scheda Progetto 2.0 deve comporre state.currentView senza nuove query o tabelle');
 assert.match(actionBridge,/Azioni progetto/);assert.match(actionBridge,/Apri progetto/);assert.match(actionBridge,/Pianifica/);assert.match(actionBridge,/Fatto/);
 assert.match(actionBridge,/from\('PROGETTI'\)\.update\(\{SVILUPPO:''\}\)\.eq\('ID'/,'Fatto deve chiudere solo la prossima azione del progetto');

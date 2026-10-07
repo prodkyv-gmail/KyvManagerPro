@@ -27,7 +27,7 @@ function audioProvider(row){return text(row?.PROVIDER||row?._source||row?.Fonte|
 function versionKind(row){const raw=`${audioType(row)} ${audioName(row)}`.toLowerCase();if(/master|final|definitiv/.test(raw))return'Finale';if(/rev|mix|v\d|version/.test(raw))return'Revisione';return'Demo';}
 function audioRows(matches){
   const raw=[...((matches?.audio)||[]),...((matches?.consegne)||[])],seen=new Set();
-  return raw.filter((row,index)=>{const key=text(row?.ID_VERSIONE)?`v:${row.ID_VERSIONE}`:text(row?.ID_FILE)?`f:${row.ID_FILE}`:text(audioLink(row))||`row:${index}`;if(seen.has(key))return false;seen.add(key);return true;}).sort((a,b)=>(timestamp(audioDate(b))||Number(audioId(b)))-(timestamp(audioDate(a))||Number(audioId(a))));
+  return raw.filter((row,index)=>{const link=text(audioLink(row)).toLowerCase();const key=link?`link:${link}`:text(row?.ID_VERSIONE)?`v:${row.ID_VERSIONE}`:text(row?.ID_FILE)?`f:${row.ID_FILE}`:`row:${index}`;if(seen.has(key))return false;seen.add(key);return true;}).sort((a,b)=>(timestamp(audioDate(b))||Number(audioId(b)))-(timestamp(audioDate(a))||Number(audioId(a))));
 }
 function pitchStatus(row){
   const raw=text(row?.Stato).toLowerCase();
@@ -109,7 +109,7 @@ function render(){
   const current=currentView(),mount=ensureMount();if(!current||!mount)return false;
   const fp=fingerprint(current);if(fp===lastFingerprint&&mount.children.length)return true;lastFingerprint=fp;
   const versions=audioRows(current.matches),events=timeline(current),next=nextAction(current);renderHero(current,next);
-  mount.innerHTML=`<section id="kyv-project-v2-versions" class="kyv-v2-section">${renderVersions(versions)}</section><section id="kyv-project-v2-pitch" class="kyv-v2-section"><div class="kyv-v2-empty">Carico Invii & Follow-up da INVII_AUDIO…</div></section><section id="kyv-project-v2-release" class="kyv-v2-section"><div class="kyv-v2-empty">Carico Release Desk…</div></section><section id="kyv-project-v2-timeline" class="kyv-v2-section">${renderTimeline(events)}</section><div class="kyv-v2-secondary"><span class="kyv-v2-secondary-label">Sotto trovi documenti, diritti, amministrazione e controlli avanzati.</span></div>`;
+  mount.innerHTML=`<section id="kyv-project-v2-versions" class="kyv-v2-section">${renderVersions(versions)}</section><section id="kyv-project-v2-pitch" class="kyv-v2-section"><div class="kyv-v2-empty" data-v2-placeholder>Carico Invii & Follow-up da INVII_AUDIO…</div></section><section id="kyv-project-v2-release" class="kyv-v2-section"><div class="kyv-v2-empty" data-v2-placeholder>Carico Release Desk…</div></section><section id="kyv-project-v2-timeline" class="kyv-v2-section">${renderTimeline(events)}</section><div class="kyv-v2-secondary"><span class="kyv-v2-secondary-label">Sotto trovi documenti, diritti, amministrazione e controlli avanzati.</span></div>`;
   mount.classList.remove('hidden');
   window.dispatchEvent(new CustomEvent('kyv:project-v2-ready',{detail:{projectId:current.p.ID}}));
   if(window.lucide)lucide.createIcons({root:document.getElementById('project-view')});return true;

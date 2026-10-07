@@ -81,6 +81,7 @@ function openCompactEdit(entries){
 }
 function render(){
   const current=view(),host=document.getElementById('kyv-project-v2-release')||document.getElementById('tab-diritti');if(!current||!host)return false;
+  host.querySelector('[data-v2-placeholder]')?.remove();
   let desk=document.getElementById('kyv-release-desk');
   if(desk&&desk.parentElement!==host)host.prepend(desk);
   const fp=fingerprint(current);if(fp===lastFingerprint&&desk)return true;lastFingerprint=fp;
