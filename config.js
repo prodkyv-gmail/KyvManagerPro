@@ -75,6 +75,13 @@ window.KYV_CONFIG = KYV_CONFIG;
         script.src='kyv-project-hub-v227.js';
         script.async=false;
         document.head.appendChild(script);
+
+        // Pipeline Pitch & Follow-up: usa INVII_AUDIO già esistente e aggiunge
+        // stati operativi e solleciti senza creare nuove tabelle.
+        const pitch=document.createElement('script');
+        pitch.src='kyv-pitch-followup.js';
+        pitch.async=false;
+        document.head.appendChild(pitch);
     }
     if(page==='kyv_calendar.html'){
         // Agenda producer-first: aggiunge vista operativa, categorie e filtri sopra
@@ -83,6 +90,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         phase5.src='kyv-agenda-phase5.js';
         phase5.async=false;
         document.head.appendChild(phase5);
+
+        // I pitch senza attività da 5 giorni entrano tra i solleciti da pianificare.
+        const pitch=document.createElement('script');
+        pitch.src='kyv-pitch-followup.js';
+        pitch.async=false;
+        document.head.appendChild(pitch);
     }
     if(page==='ascolto.html'){
         // Vista producer-first: viene caricata prima della vecchia stazione per evitare
