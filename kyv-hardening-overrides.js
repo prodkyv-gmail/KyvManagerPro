@@ -94,7 +94,7 @@
   }
 
   function fixIcons(root = document) {
-    root.querySelectorAll?.('[data-lucide="message-circle-clock"]').forEach(el => el.setAttribute('data-lucide', 'message-square-clock'));
+    root.querySelectorAll?.('[data-lucide="message-circle-clock"]').forEach(el => el.setAttribute('data-lucide', 'message-square-text'));
   }
 
   function fixChecklist(current) {
