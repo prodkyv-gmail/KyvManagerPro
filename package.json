@@ -6,6 +6,7 @@
   "scripts": {
     "check:js": "node tools/check-js-syntax.js",
     "check:assets": "node tools/check-local-assets.js",
+    "check:data-quality": "node tools/test-data-quality.js",
     "check:project-sheet": "node tools/test-project-sheet-loading.js",
     "check:integrations": "node tools/check-integrations.js",
     "check:proxy": "node tools/test-drive-proxy.js",
@@ -13,6 +14,6 @@
     "check:links": "node tools/test-link-audit.js",
     "check:v230": "node tools/test-v230-ui.js",
     "check:loading": "node tools/test-supabase-loading.js",
-    "check": "npm run check:js && npm run check:assets && npm run check:project-sheet && npm run check:integrations && npm run check:proxy && npm run check:intake && npm run check:links && npm run check:v230 && npm run check:loading"
+    "check": "npm run check:js && npm run check:assets && npm run check:data-quality && npm run check:project-sheet && npm run check:integrations && npm run check:proxy && npm run check:intake && npm run check:links && npm run check:v230 && npm run check:loading"
   }
 }

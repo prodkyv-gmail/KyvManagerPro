@@ -1,5 +1,11 @@
 # Changelog
 
+## Consolidamento 2026-10-07
+
+- Aggiunta la pagina **Qualità Dati**, in sola lettura, per individuare progetti senza titolo o artista, possibili duplicati titolo/artista, versioni audio senza hash e documenti senza link.
+- Il controllo usa colonne esplicite e limiti per ogni fonte, non modifica record e collega ogni anomalia alla relativa Scheda Progetto.
+- La pagina è disponibile da Strumenti, App Launcher e Diagnostica ed è inclusa nella cache PWA.
+
 ## v2.31.0 - Scheda Progetto 2.0
 
 - Ricomposta la Scheda Progetto in un flusso producer-first unico: header compatto, prossima azione, Versioni, Invii & Follow-up, Release Desk e Timeline.

@@ -1,9 +1,10 @@
-const CACHE_NAME = 'kyv-studio-v2-32-calendar-proxy-responsive-20261007';
+const CACHE_NAME = 'kyv-studio-v2-32-data-quality-20261007';
 const APP_SHELL = [
     './',
     './index.html',
     './progetti.html',
     './scheda_progetto.html',
+    './data_quality.html',
     './ascolto.html',
     './kyv_calendar.html',
     './manifest.json',
@@ -12,6 +13,7 @@ const APP_SHELL = [
     './config.js',
     './kyv-core.js',
     './kyv-auth.js',
+    './kyv-data-quality.js',
     './menu.js',
     './kyv-hardening-overrides.js',
     './icon-192.png',

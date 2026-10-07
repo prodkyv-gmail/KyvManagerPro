@@ -178,6 +178,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
         importexport: ['importexport'],
         guida: ['guida'],
         diagnostica: ['diagnostica'],
+        dataquality: ['data-quality'],
         spese: ['spese', 'documenti']
     };
 
@@ -240,7 +241,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
                     </ul>
                 </details>
 
-                <details class="kyv-nav-group" ${groupIsOpen(['integrazioni', 'editor', 'importexport', 'diagnostica', 'guida']) ? 'open' : ''}>
+                <details class="kyv-nav-group" ${groupIsOpen(['integrazioni', 'editor', 'importexport', 'diagnostica', 'dataquality', 'guida']) ? 'open' : ''}>
                     <summary>
                         <i data-lucide="wrench"></i>
                         <span>Strumenti</span>
@@ -251,6 +252,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
                         ${navItem('editor', 'editor.html', 'database', 'Studio Editor')}
                         ${navItem('importexport', 'importexport.html', 'arrow-down-up', 'Import / Export', 'text-purple-300')}
                         ${navItem('diagnostica', 'diagnostica.html', 'activity', 'Diagnostica', 'text-cyan-300')}
+                        ${navItem('dataquality', 'data_quality.html', 'list-checks', 'Qualità dati', 'text-amber-300')}
                         ${navItem('guida', 'guida.html', 'book-open', 'Manuale', 'text-amber-300')}
                     </ul>
                 </details>
