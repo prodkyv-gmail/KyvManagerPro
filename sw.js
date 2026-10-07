@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-31-hardening-20261007c';
+const CACHE_NAME = 'kyv-studio-v2-31-calendar-loopfix-20261007';
 const APP_SHELL = [
     './',
     './index.html',
@@ -17,22 +17,21 @@ const APP_SHELL = [
     './icon-512.png'
 ];
 
-function hardenHtml(html) {
-    let out = html;
-    out = out.replaceAll('data-lucide="message-circle-clock"', 'data-lucide="message-square-text"');
-    if (!out.includes('kyv-hardening-overrides.js')) {
+function hardenHtml(html, pathname = '') {
+    let out = html.replaceAll('data-lucide="message-circle-clock"', 'data-lucide="message-square-text"');
+    if (pathname.toLowerCase().endsWith('/scheda_progetto.html') && !out.includes('kyv-hardening-overrides.js')) {
         out = out.replace('</head>', '    <script src="./kyv-hardening-overrides.js" defer></script>\n</head>');
     }
     return out;
 }
 
-async function htmlResponse(response) {
+async function htmlResponse(response, pathname = '') {
     if (!response || !response.ok) return response;
     const type = response.headers.get('content-type') || '';
     if (!type.includes('text/html')) return response;
     const headers = new Headers(response.headers);
     headers.delete('content-length');
-    return new Response(hardenHtml(await response.text()), {
+    return new Response(hardenHtml(await response.text(), pathname), {
         status: response.status,
         statusText: response.statusText,
         headers
@@ -68,15 +67,15 @@ self.addEventListener('fetch', (event) => {
     if (request.mode === 'navigate') {
         event.respondWith((async () => {
             try {
-                const fresh = await htmlResponse(await fetch(request));
+                const fresh = await htmlResponse(await fetch(request), url.pathname);
                 const cache = await caches.open(CACHE_NAME);
                 cache.put(request, fresh.clone()).catch(() => {});
                 return fresh;
             } catch (_) {
                 const cached = await caches.match(request);
-                if (cached) return htmlResponse(cached);
+                if (cached) return htmlResponse(cached, url.pathname);
                 const home = await caches.match('./index.html');
-                if (home) return htmlResponse(home);
+                if (home) return htmlResponse(home, '/index.html');
                 return new Response(
                     '<!doctype html><meta charset="utf-8"><title>KYV offline</title><body style="font-family:sans-serif;background:#0f111a;color:#f8fafc;padding:2rem"><h1>KYV Manager è offline</h1><p>Questa pagina non è ancora disponibile nella cache. Riconnettiti una volta per salvarla.</p></body>',
                     { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
