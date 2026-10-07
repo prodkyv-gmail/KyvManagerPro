@@ -111,6 +111,11 @@ window.KYV_CONFIG = KYV_CONFIG;
         versionToPitch.src='kyv-version-to-pitch.js';
         versionToPitch.async=false;
         document.head.appendChild(versionToPitch);
+
+        const interestToRelease=document.createElement('script');
+        interestToRelease.src='kyv-interest-to-release.js';
+        interestToRelease.async=false;
+        document.head.appendChild(interestToRelease);
     }
 
     if(page==='kyv_calendar.html'){
