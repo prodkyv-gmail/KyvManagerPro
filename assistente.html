@@ -19,8 +19,8 @@
         })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+    <script src="https://unpkg.com/lucide@0.468.0"></script>
     <script src="config.js"></script>
     <script src="kyv-drive-bridge.js"></script>
     <script src="kyv-core.js"></script>
@@ -215,7 +215,7 @@ function setDataStatus(kind, title, message) {
 }
 function renderBlockedState() {
     ['stat-contact','stat-work','stat-wait','stat-admin'].forEach(id => KYV.setText(id, '—'));
-    const message = '<div class="kyv-soft p-6 text-center text-rose-100"><i data-lucide="database-x" class="w-8 h-8 mx-auto mb-2 text-rose-300"></i>I dati non sono completi: nessuna priorità viene calcolata per evitare indicazioni sbagliate. Premi <b>Aggiorna</b> dopo aver ripristinato la connessione o i permessi.</div>';
+    const message = '<div class="kyv-soft p-6 text-center text-rose-100"><i data-lucide="database-zap" class="w-8 h-8 mx-auto mb-2 text-rose-300"></i>I dati non sono completi: nessuna priorità viene calcolata per evitare indicazioni sbagliate. Premi <b>Aggiorna</b> dopo aver ripristinato la connessione o i permessi.</div>';
     document.getElementById('today-actions-list').innerHTML = message;
     document.getElementById('view-container').innerHTML = message;
     document.getElementById('project-list').innerHTML = message;

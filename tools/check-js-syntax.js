@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const files = [];
@@ -23,5 +24,15 @@ for(const file of files){
     if(res.stdout) console.error(res.stdout.trim());
   }
 }
+for(const file of fs.readdirSync(root).filter(name => name.endsWith('.html'))){
+  const html = fs.readFileSync(path.join(root, file), 'utf8');
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+  scripts.forEach((match, index) => {
+    const attrs = match[1] || '';
+    if(/\bsrc\s*=/i.test(attrs) || /\btype=["'](?:application\/ld\+json|importmap)["']/i.test(attrs)) return;
+    try { new vm.Script(match[2], { filename: `${file}#inline-${index + 1}` }); }
+    catch(err){ failed = true; console.error(`\n[INLINE JS SYNTAX ERROR] ${file} script ${index + 1}`); console.error(err.message); }
+  });
+}
 if(failed) process.exit(1);
-console.log(`OK: sintassi valida per ${files.length} file JS.`);
+console.log(`OK: sintassi valida per ${files.length} file JS e gli script inline HTML.`);

@@ -19,9 +19,9 @@
         })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+    <script src="https://unpkg.com/lucide@0.468.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7"></script>
     
     <!-- FILE ESTERNI -->
     <script src="config.js"></script>
@@ -307,7 +307,7 @@
                 list.innerHTML = '<div class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-6 text-center text-sm text-emerald-100 font-bold"><i data-lucide="check-circle-2" class="w-6 h-6 mx-auto mb-2"></i>Nessuna attività nel filtro selezionato.</div>';
             } else {
                 const visuals = {
-                    followup: { icon: 'message-circle-clock', box: 'border-rose-500/25 bg-rose-500/10 text-rose-200', label: 'Follow-up' },
+                    followup: { icon: 'message-square-text', box: 'border-rose-500/25 bg-rose-500/10 text-rose-200', label: 'Follow-up' },
                     sessioni: { icon: 'calendar-clock', box: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200', label: 'Sessioni' },
                     fatture: { icon: 'receipt', box: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200', label: 'Fatture' },
                     documenti: { icon: 'folder-lock', box: 'border-sky-500/25 bg-sky-500/10 text-sky-200', label: 'Documenti' },
@@ -475,7 +475,7 @@
             const firstFollowup = followupActivities[0];
             const radar = document.getElementById('ops-radar');
             if (radar) radar.innerHTML = [
-                mini('Follow-up', followupActivities.length, firstFollowup ? `${dueFollowups.length} da fare ora · ${safe(firstFollowup.title.replace(/^Follow-up:\s*/, ''))}` : 'Nessun follow-up pianificato', 'message-circle-clock', 'rose', '#studio-pulse', 'followup'),
+                mini('Follow-up', followupActivities.length, firstFollowup ? `${dueFollowups.length} da fare ora · ${safe(firstFollowup.title.replace(/^Follow-up:\s*/, ''))}` : 'Nessun follow-up pianificato', 'message-square-text', 'rose', '#studio-pulse', 'followup'),
                 mini('Sessioni 30g', upcomingSessions.length, upcomingSessions[0] ? `${safe(upcomingSessions[0].ARTISTA || 'Prossima')} · ${fmtDate(upcomingSessions[0].Data_Sessione)}` : 'Nessuna sessione datata', 'mic-2', 'cyan', 'sessioni.html'),
                 mini('Master aperti', masterTodo.length, masterTodo[0] ? `${safe(masterTodo[0].ARTISTA || '')} · ${safe(masterTodo[0].TITOLO || '')}` : 'Nessuna consegna aperta', 'send', 'amber', 'sessioni.html?filter=master'),
                 mini('Uscite 90g', releases.length, releases[0] ? `${safe(releases[0].ARTISTA || 'Prossima')} · ${fmtDate(releases[0].Data_Pubblicazione)}` : 'Nessuna uscita futura', 'rocket', 'emerald', 'sessioni.html?filter=uscite'),

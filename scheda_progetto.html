@@ -19,8 +19,8 @@
         })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+    <script src="https://unpkg.com/lucide@0.468.0"></script>
     <script src="config.js"></script>
     <script src="kyv-drive-bridge.js"></script>
     <script src="kyv-core.js"></script>
@@ -178,7 +178,7 @@
         loadKyvSidebar('scheda');
 
         let supabaseClient;
-        const state = { projects: [], audio: [], versions: [], invii: [], documenti: [], consegne: [], fatture: [], spese: [], siae: [], siaeVert: [], imaie: [], current: null, currentView: null, activeTab: 'sintesi' };
+        const state = { projects: [], audio: [], versions: [], invii: [], documenti: [], consegne: [], fatture: [], spese: [], siae: [], siaeVert: [], imaie: [], stats: { audio: 0, invii: 0, documenti: 0 }, current: null, currentView: null, activeTab: 'sintesi', loadToken: 0 };
         const H = (v) => KYV.safeHtml(v ?? '');
         const has = (v) => String(v ?? '').trim().length > 0;
         const N = (v) => KYV.normalize(v ?? '');
@@ -187,24 +187,57 @@
         function daysFrom(value){ if(!value) return null; const d=new Date(value); if(Number.isNaN(d.getTime())) return null; d.setHours(0,0,0,0); return Math.round((d-today)/86400000); }
         function safeUrl(url){ return has(url) ? String(url).trim() : ''; }
         function setLoading(on){ document.getElementById('loading-state').classList.toggle('hidden', !on); }
-        async function safeTable(table, select='*', orderCol=null){ try{ let q=supabaseClient.from(table).select(select); if(orderCol) q=q.order(orderCol,{ascending:false}); const {data,error}=await q.limit(2000); if(error) throw error; return data||[]; } catch(err){ console.warn('Tabella non disponibile:', table, err.message); return []; } }
+        async function safeFilteredTable(table, configure, orderCol=null, limit=500){ try{ let q=supabaseClient.from(table).select('*'); if(configure) q=configure(q); if(orderCol) q=q.order(orderCol,{ascending:false}); const {data,error}=await q.limit(limit); if(error) throw error; return data||[]; } catch(err){ console.warn('Tabella/relazione non disponibile:', table, err.message); return []; } }
+        async function safeProjectRows(table, projectId, orderCol=null){ return safeFilteredTable(table, q=>q.eq('ID_PROGETTO', projectId), orderCol); }
+        async function safeCount(table, column){ try{ const {count,error}=await supabaseClient.from(table).select(column,{count:'exact',head:true}); if(error) throw error; return count||0; } catch(err){ console.warn('Conteggio non disponibile:', table, err.message); return 0; } }
+        function mergeRows(groups, key){ const rows=groups.flat(); return [...new Map(rows.map(row=>[String(row[key]??JSON.stringify(row)),row])).values()]; }
+        function escapeLike(value){ return String(value||'').replace(/[\\%_]/g,'\\$&'); }
+        function relationTerms(value){ const full=String(value||'').trim(); return [...new Set([full,...full.split(/\s+/).filter(part=>part.length>=4).slice(0,4)])].filter(Boolean); }
+        async function safeTextRows(table, columns, values, orderCol=null){
+            const terms=[...new Set(values.map(v=>String(v||'').trim()).filter(Boolean))];
+            if(!terms.length) return [];
+            const groups=await Promise.all(columns.flatMap(column=>terms.map(term=>safeFilteredTable(table,q=>q.ilike(column,`%${escapeLike(term)}%`),orderCol,150))));
+            return mergeRows(groups, '__kyv_missing_key__');
+        }
         async function fetchProjects(){ const { data, error } = await supabaseClient.from('PROGETTI').select('*').order('ID', {ascending:false}).limit(1000); if(error) throw error; return data||[]; }
+        async function loadProjectData(p){
+            const [audioByProject, versions, documenti, fattureByProject, speseByProject, consegne, siae, siaeVert, imaie] = await Promise.all([
+                safeProjectRows('DROPBOX_AUDIO_FILES',p.ID,'ID_FILE'),
+                safeProjectRows('AUDIO_VERSIONI',p.ID,'ID_VERSIONE'),
+                safeProjectRows('DOCUMENTI_PROGETTO',p.ID,'ID_DOCUMENTO'),
+                safeProjectRows('FATTURE',p.ID,'ID_FT'),
+                safeProjectRows('Spese Extra',p.ID,'ID_SPESE'),
+                safeTextRows('CONSEGNE_MASTER',['Progetto'],relationTerms(p.TITOLO),'ID_CONSEGNA'),
+                safeTextRows('EXPORT SIAE',['Titolo'],relationTerms(p.TITOLO)),
+                safeTextRows('EXPORT SIAE VERTICALE',['Titolo'],relationTerms(p.TITOLO),'ID_SIAVERT'),
+                safeTextRows('ESTRATTO_IMAIE',['TITOLO_OPERA'],relationTerms(p.TITOLO),'id')
+            ]);
+            const audioFallback=audioByProject.length?[]:await safeTextRows('DROPBOX_AUDIO_FILES',['Progetto','Titolo','Artista','Nome_File'],[p.TITOLO,p.ARTISTA],'ID_FILE');
+            const audio=mergeRows([audioByProject,audioFallback],'ID_FILE');
+
+            const audioIds=audio.map(a=>a.ID_FILE).filter(id=>id!==null&&id!==undefined);
+            const [inviiByProject, inviiByFile, fattureById, fattureByNumero, speseFallback] = await Promise.all([
+                safeProjectRows('INVII_AUDIO',p.ID,'ID_INVIO'),
+                audioIds.length?safeFilteredTable('INVII_AUDIO',q=>q.in('ID_FILE',audioIds),'ID_INVIO'):[],
+                has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT'):[],
+                has(p.FT)?safeFilteredTable('FATTURE',q=>q.eq('Numero',p.FT),'ID_FT'):[],
+                safeTextRows('Spese Extra',['Descrizione','Categoria'],[p.TITOLO,p.ARTISTA],'ID_SPESE')
+            ]);
+            return {audio,versions,documenti,consegne,siae,siaeVert,imaie,invii:mergeRows([inviiByProject,inviiByFile],'ID_INVIO'),fatture:mergeRows([fattureByProject,fattureById,fattureByNumero],'ID_FT'),spese:mergeRows([speseByProject,speseFallback],'ID_SPESE')};
+        }
         async function refreshAll(){
             setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden');
             try{
-                state.projects = await fetchProjects();
-                const tables = await Promise.all([
-                    safeTable('DROPBOX_AUDIO_FILES','*','ID_FILE'), safeTable('AUDIO_VERSIONI','*','ID_VERSIONE'), safeTable('INVII_AUDIO','*','ID_INVIO'), safeTable('DOCUMENTI_PROGETTO','*','ID_DOCUMENTO'), safeTable('CONSEGNE_MASTER','*','ID_CONSEGNA'), safeTable('FATTURE','*','ID_FT'), safeTable('Spese Extra','*','ID_SPESE'), safeTable('EXPORT SIAE','*'), safeTable('EXPORT SIAE VERTICALE','*','ID_SIAVERT'), safeTable('ESTRATTO_IMAIE','*','id')
-                ]);
-                [state.audio, state.versions, state.invii, state.documenti, state.consegne, state.fatture, state.spese, state.siae, state.siaeVert, state.imaie] = tables;
+                const [projects,versionCount,legacyAudioCount,legacyDeliveryCount,inviiCount,documentiCount] = await Promise.all([fetchProjects(),safeCount('AUDIO_VERSIONI','ID_VERSIONE'),safeCount('DROPBOX_AUDIO_FILES','ID_FILE'),safeCount('CONSEGNE_MASTER','ID_CONSEGNA'),safeCount('INVII_AUDIO','ID_INVIO'),safeCount('DOCUMENTI_PROGETTO','ID_DOCUMENTO')]);
+                state.projects=projects; state.stats={audio:versionCount||legacyAudioCount||legacyDeliveryCount,invii:inviiCount,documenti:documentiCount};
                 updateStats(); renderProjectResults();
                 const params = new URLSearchParams(location.search); const id = params.get('id'); const requestedTab = params.get('tab'); if(requestedTab) state.activeTab=normalizeProjectTab(requestedTab);
                 const first = id ? state.projects.find(p => String(p.ID) === String(id)) : null;
-                if(first) selectProject(first.ID); else { document.getElementById('empty-state').classList.remove('hidden'); }
+                if(first) await selectProject(first.ID); else { document.getElementById('empty-state').classList.remove('hidden'); }
             }catch(err){ console.error(err); document.getElementById('empty-state').innerHTML = `<i data-lucide="circle-alert" class="w-12 h-12 mx-auto mb-3 text-rose-300"></i><h3 class="text-white font-black text-lg">Errore caricamento</h3><p class="mt-1 text-rose-200">${H(err.message)}</p>`; document.getElementById('empty-state').classList.remove('hidden'); }
             finally{ setLoading(false); if(window.lucide) lucide.createIcons(); }
         }
-        function updateStats(){ KYV.setText('stat-projects', state.projects.length); KYV.setText('stat-audio', state.versions.length || state.audio.length || state.consegne.length); KYV.setText('stat-invii', state.invii.length); KYV.setText('stat-docs', state.documenti.length); }
+        function updateStats(){ KYV.setText('stat-projects', state.projects.length); KYV.setText('stat-audio', state.stats.audio); KYV.setText('stat-invii', state.stats.invii); KYV.setText('stat-docs', state.stats.documenti); }
         function renderProjectResults(){
             const q=N(document.getElementById('project-search')?.value||'');
             const rows=state.projects.filter(p=>!q || N([p.TITOLO,p.ARTISTA,p.AUTORI,p.MANAGEMENT,p.Label,p.Codice_ISRC,p.STATO].join(' ')).includes(q)).slice(0,80);
@@ -212,7 +245,7 @@
             if(!rows.length){ el.innerHTML='<div class="p-4 text-center text-kyv-text text-xs">Nessun progetto trovato.</div>'; return; }
             el.innerHTML=rows.map(p=>`<button class="project-result w-full text-left p-3 flex items-start justify-between gap-3 transition-colors ${state.current && String(state.current.ID)===String(p.ID)?'bg-indigo-500/10':''}" onclick="selectProject('${String(p.ID).replaceAll("'","\\'")}')"><span class="min-w-0"><strong class="block text-white truncate">${H(p.TITOLO || 'Senza titolo')}</strong><em class="not-italic block text-cyan-200 text-xs font-bold truncate mt-0.5">${H(p.ARTISTA || 'Artista non indicato')}</em><small class="block text-kyv-text truncate mt-1">${H([p.MANAGEMENT,p.Label,p.STATO].filter(Boolean).join(' · ') || 'Nessun referente/stato')}</small></span><span class="kyv-chip shrink-0">#${H(p.ID)}</span></button>`).join('');
         }
-        window.selectProject = function(id){ const p=state.projects.find(x=>String(x.ID)===String(id)); if(!p) return; const shouldEdit=new URLSearchParams(location.search).get('edit')==='1'; state.current=p; buildCurrentView(); renderProjectResults(); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.remove('hidden'); const picker=document.getElementById('project-picker'); if(picker) picker.removeAttribute('open'); if(shouldEdit) window.openQuickEdit(); if(window.lucide) lucide.createIcons(); }
+        window.selectProject = async function(id){ const p=state.projects.find(x=>String(x.ID)===String(id)); if(!p) return; const token=++state.loadToken; const shouldEdit=new URLSearchParams(location.search).get('edit')==='1'; state.current=p; setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden'); try{ const related=await loadProjectData(p); if(token!==state.loadToken) return; Object.assign(state,related); buildCurrentView(); renderProjectResults(); document.getElementById('project-view').classList.remove('hidden'); const picker=document.getElementById('project-picker'); if(picker) picker.removeAttribute('open'); if(shouldEdit) window.openQuickEdit(); } finally{ if(token===state.loadToken){ setLoading(false); if(window.lucide) lucide.createIcons(); } } }
 
         function matchByProjectId(rows, p){ return (rows||[]).filter(r=>has(r.ID_PROGETTO) && String(r.ID_PROGETTO)===String(p.ID)); }
         function matchByTitle(rows, p, titleFields=['Titolo','TITOLO_OPERA','Progetto']){ const pt=N(p.TITOLO); if(!pt) return []; return (rows||[]).filter(r=>titleFields.some(f=>N(r[f]).includes(pt)||pt.includes(N(r[f])))); }

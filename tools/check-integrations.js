@@ -12,10 +12,19 @@ const config = read('config.js');
 const bridge = read('kyv-drive-bridge.js');
 const dropbox = read('kyv_dropbox.html');
 const projects = read('progetti.html');
+const projectSheetPage = read('scheda_progetto.html');
 const audioProjects = read('kyv-audio-project.js');
 const proxy = read('api/drive-proxy.js');
+const htmlFiles = fs.readdirSync(root).filter(file => file.endsWith('.html'));
+const htmlBundle = htmlFiles.map(read).join('\n');
 
-assert(calendar.includes('@supabase/supabase-js@2') && calendar.indexOf('@supabase/supabase-js@2') < calendar.indexOf('kyv-auth.js'), 'Calendar deve caricare Supabase prima di kyv-auth');
+assert(calendar.includes('@supabase/supabase-js@2.49.4') && calendar.indexOf('@supabase/supabase-js@2.49.4') < calendar.indexOf('kyv-auth.js'), 'Calendar deve caricare Supabase prima di kyv-auth');
+assert(!htmlBundle.includes('@supabase/supabase-js@2"'), 'Supabase JS deve usare una versione esatta');
+assert(!htmlBundle.includes('lucide@latest'), 'Lucide deve usare una versione esatta');
+assert(!htmlBundle.includes('npm/chart.js"'), 'Chart.js deve usare una versione esatta');
+assert(htmlBundle.includes('@supabase/supabase-js@2.49.4'), 'Versione Supabase JS attesa non trovata');
+assert(htmlBundle.includes('lucide@0.468.0'), 'Versione Lucide attesa non trovata');
+assert(htmlBundle.includes('chart.js@4.4.7'), 'Versione Chart.js attesa non trovata');
 assert(calendar.includes("loadKyvSidebar('calendar')"), 'Calendar deve evidenziare Agenda nel menu');
 assert(calendar.includes('KYV_DRIVE.fetchJson'), 'Calendar deve usare il proxy condiviso');
 assert(!calendar.includes('fetch(`${url}?action=getEvents`)'), 'Calendar non deve chiamare Apps Script direttamente');
@@ -31,6 +40,9 @@ assert(!proxy.includes("Access-Control-Allow-Origin', '*'"), 'Il proxy non deve 
 assert(dropbox.includes('ensureDropboxChooser'), 'Dropbox deve caricare il Chooser con diagnostica');
 assert(dropbox.includes('Puoi comunque incollare il link Dropbox'), 'Dropbox deve mantenere il fallback manuale');
 assert(projects.includes('acquisisci_audio.html') && projects.includes('openNewProjectChoices'), 'La creazione progetto deve restare accessibile');
+assert(projectSheetPage.includes("q=>q.eq('ID_PROGETTO', projectId)"), 'La Scheda Progetto deve filtrare le relazioni per ID_PROGETTO');
+assert(projectSheetPage.includes("q=>q.in('ID_FILE',audioIds)"), 'La Scheda Progetto deve recuperare gli invii tramite i file audio collegati');
+assert(!projectSheetPage.includes("safeTable('DROPBOX_AUDIO_FILES'"), 'La Scheda Progetto non deve caricare globalmente gli archivi correlati');
 assert(audioProjects.includes('insertProjectSafely') && audioProjects.includes('Crea progetto e collega'), 'La creazione progetto contestuale deve restare disponibile');
 
 console.log('Controlli integrazioni: OK');
