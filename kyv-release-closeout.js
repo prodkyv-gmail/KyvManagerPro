@@ -19,7 +19,7 @@ function audioType(row){return text(row?.Tipo_File||row?.TIPO_VERSIONE||row?.Ver
 function audioRows(matches){const rows=[...((matches?.consegne)||[]),...((matches?.audio)||[])],seen=new Set();return rows.filter((row,index)=>{const key=text(row?.ID_VERSIONE||row?.ID_FILE||row?.ID_CONSEGNA||row?.ID_DOCUMENTO||row?.LINK_FILE||row?.Link_Drive||row?.Link_Dropbox||index);if(seen.has(key))return false;seen.add(key);return true;});}
 function masterReady(view){const p=view?.p||{};return has(p.Data_Consegna_Master)||audioRows(view?.matches).some(row=>/master|final/i.test(audioType(row)));}
 function splitReady(p){return [p.Quota_Musica_Kyv,p.Quota_Musica_Artista,p.Quota_Testo_Artista].some(has);}
-function doneProject(p){return /uscita|pubblicat|completat|finita|chius/i.test(`${text(p?.STATO)} ${text(p?.SVILUPPO)}`);}
+function doneProject(p){return /pubblicat|chius|completat|finita/i.test(text(p?.STATO));}
 function releasePassed(value){if(!value)return false;const raw=String(value).slice(0,10);const now=new Date();const local=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);return raw<=local;}
 function checks(view){const p=view?.p||{};return[
   {key:'identity',label:'Titolo e artista',ready:has(p.TITOLO)&&has(p.ARTISTA),fields:['TITOLO','ARTISTA']},
