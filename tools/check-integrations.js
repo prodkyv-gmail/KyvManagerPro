@@ -18,6 +18,7 @@ const projectInvoices = read('kyv-project-invoices.js');
 const financeSummary = read('kyv-project-finance-summary.js');
 const layoutPolish = read('kyv-layout-polish.js');
 const releaseCloseout = read('kyv-release-closeout.js');
+const projectEditSafety = read('kyv-project-edit-safety.js');
 const recordEditor = read('kyv-record-editor.js');
 const proxy = read('api/drive-proxy.js');
 const htmlFiles = fs.readdirSync(root).filter(file => file.endsWith('.html'));
@@ -72,8 +73,11 @@ assert(layoutPolish.includes('overflow-y:auto') && layoutPolish.includes('overfl
 assert(config.includes("releaseCloseout.src='kyv-release-closeout.js'"), 'La Scheda progetto deve caricare il percorso di chiusura release');
 assert(releaseCloseout.includes('Master definitivo') && releaseCloseout.includes('ISRC') && releaseCloseout.includes('Data pubblicazione'), 'Il closeout deve guidare master, ISRC e data pubblicazione');
 assert(releaseCloseout.includes('Label / produttore fonografico') && releaseCloseout.includes('Split / quote') && releaseCloseout.includes('Credito KYV'), 'Il closeout deve verificare label/produzione fonografica e crediti');
-assert(releaseCloseout.includes("update({STATO:'Pubblicato',SVILUPPO:'Pubblicata'})"), 'La chiusura deve usare i campi progetto esistenti senza nuove tabelle');
+assert(releaseCloseout.includes("update({STATO:'Pubblicato'})"), 'La chiusura deve aggiornare soltanto lo stato del progetto');
+assert(!releaseCloseout.includes("SVILUPPO:'Pubblicata'"), 'La chiusura release non deve sovrascrivere SVILUPPO');
 assert(releaseCloseout.includes('Fattura & incasso'), 'Dopo la chiusura il flusso deve portare ad amministrazione/fattura');
 assert(!releaseCloseout.includes('observer.observe(root,{childList:true,subtree:true,characterData:true})'), 'Il closeout release non deve usare un observer globale che possa autoalimentarsi');
+assert(config.includes("projectEditSafety.src='kyv-project-edit-safety.js'"), 'La Scheda progetto deve caricare il guard di salvataggio non distruttivo');
+assert(projectEditSafety.includes('stopImmediatePropagation') && projectEditSafety.includes('Nessuna modifica da salvare'), 'Il guard deve sostituire il submit legacy con un salvataggio patch-only');
 
 console.log('Controlli integrazioni: OK');
