@@ -14,8 +14,11 @@ let contextInvoices=[];
 let contextProjectId='';
 let listObserver=null;
 let adminObserver=null;
+let heroInvoiceObserver=null;
 let editorPromise=null;
 let mountTimer=null;
+let contextRefreshToken=0;
+let listInvoiceReadFailed=false;
 
 function text(v){return String(v??'').trim();}
 function H(v){
@@ -41,7 +44,7 @@ function currentProjectId(){
   const p=new URLSearchParams(location.search);
   return text(p.get(page==='scheda_progetto.html'?'id':'projectId')||p.get('id')||p.get('project'));
 }
-function todayIso(){return new Date().toISOString().slice(0,10);}
+function todayIso(){const now=new Date();return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);}
 function invoiceKey(row){return text(row?.ID_FT||row?.Numero);}
 function uniqueInvoices(rows){
   const map=new Map();
@@ -74,11 +77,8 @@ function injectStyles(){
   const style=document.createElement('style');
   style.id='kyv-project-invoices-style';
   style.textContent=`
-.kyv-invoice-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.48rem .66rem;border-radius:.7rem;border:1px solid rgba(255,255,255,.09);font-size:.67rem;font-weight:850;white-space:nowrap;transition:.15s}
-.kyv-invoice-chip:hover{color:#fff;filter:brightness(1.08)}.kyv-invoice-none{color:#fcd34d;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.22)}.kyv-invoice-open{color:#fecaca;background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.22)}.kyv-invoice-paid{color:#a7f3d0;background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.22)}
-.kyv-invoice-cell{min-width:155px}.kyv-invoice-cell a,.kyv-invoice-cell button{font-size:.66rem;font-weight:850}.kyv-invoice-cell .kyv-invoice-main{display:inline-flex;align-items:center;gap:.35rem;padding:.38rem .5rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.09)}.kyv-invoice-cell .kyv-invoice-add{margin-left:.35rem;color:#c7d2fe}.kyv-invoice-editable{cursor:pointer}.kyv-invoice-editable:hover{background:rgba(99,102,241,.06)}
-.kyv-invoice-admin-action{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;padding:.55rem .75rem;border-radius:.75rem;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.28);color:#e0e7ff;font-size:.72rem;font-weight:900}.kyv-invoice-admin-action:hover{background:rgba(99,102,241,.20);color:#fff}
-@media(max-width:640px){.kyv-invoice-chip{padding:.45rem .55rem;font-size:.63rem}.kyv-invoice-cell{min-width:130px}}
+.kyv-invoice-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.48rem .66rem;border-radius:.7rem;border:1px solid rgba(255,255,255,.09);font-size:.67rem;font-weight:850;white-space:nowrap;transition:.15s}.kyv-invoice-chip:hover{color:#fff;filter:brightness(1.08)}.kyv-invoice-none{color:#fcd34d;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.22)}.kyv-invoice-open{color:#fecaca;background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.22)}.kyv-invoice-paid{color:#a7f3d0;background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.22)}.kyv-invoice-error{color:#fda4af;background:rgba(244,63,94,.06);border-color:rgba(244,63,94,.18)}
+.kyv-invoice-cell{min-width:155px}.kyv-invoice-cell a,.kyv-invoice-cell button,.kyv-invoice-cell span{font-size:.66rem;font-weight:850}.kyv-invoice-cell .kyv-invoice-main{display:inline-flex;align-items:center;gap:.35rem;padding:.38rem .5rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.09)}.kyv-invoice-cell .kyv-invoice-add{margin-left:.35rem;color:#c7d2fe}.kyv-invoice-editable{cursor:pointer}.kyv-invoice-editable:hover{background:rgba(99,102,241,.06)}.kyv-invoice-admin-action{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;padding:.55rem .75rem;border-radius:.75rem;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.28);color:#e0e7ff;font-size:.72rem;font-weight:900}.kyv-invoice-admin-action:hover{background:rgba(99,102,241,.20);color:#fff}@media(max-width:640px){.kyv-invoice-chip{padding:.45rem .55rem;font-size:.63rem}.kyv-invoice-cell{min-width:130px}}
 `;
   document.head.appendChild(style);
 }
@@ -115,8 +115,10 @@ async function ensureEditor(){
       client:db,
       onSaved:async tableName=>{
         if(tableName!=='FATTURE')return;
-        await refreshContext(contextProjectId||currentProjectId());
+        const pid=contextProjectId||currentProjectId();
         if(page==='scheda_progetto.html'&&typeof window.refreshAll==='function')await window.refreshAll();
+        await refreshContext(pid);
+        window.dispatchEvent(new CustomEvent('kyv:invoice-updated',{detail:{projectId:pid}}));
       }
     });
     return editor;
@@ -125,19 +127,21 @@ async function ensureEditor(){
 }
 async function openNewInvoice(projectId,title='',artist=''){
   projectId=text(projectId);if(!projectId)return;
-  if(page!=='scheda_progetto.html'){
-    location.href=contextHref(projectId,true);
-    return;
-  }
+  if(page!=='scheda_progetto.html'){location.href=contextHref(projectId,true);return;}
   try{
     const instance=await ensureEditor();
     await instance.open('FATTURE',null);
     const modal=document.getElementById('kyv-record-editor-modal');
     const setField=(key,value)=>{
-      const input=modal?.querySelector(`[data-key="${CSS.escape(key)}"]`);if(!input)return;
-      input.value=value??'';input.dispatchEvent(new Event('change',{bubbles:true}));
+      const input=modal?.querySelector(`[data-key="${CSS.escape(key)}"]`);if(!input)return false;
+      if(key==='ID_PROGETTO'&&input.tagName==='SELECT'&&![...input.options].some(option=>String(option.value)===String(value))){
+        input.add(new Option(`Progetto #${value}`,String(value)));
+      }
+      input.value=value??'';
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+      return String(input.value)===String(value??'');
     };
-    setField('ID_PROGETTO',projectId);
+    if(!setField('ID_PROGETTO',projectId))throw new Error('Collegamento al progetto non impostato: fattura non aperta per evitare una relazione mancante.');
     setField('Data',todayIso());
     setField('Descrizione',[artist,title].filter(Boolean).join(' · '));
   }catch(error){
@@ -151,22 +155,25 @@ async function openExistingInvoice(invoiceId){
   catch(error){console.error('[KYV Invoices] Apertura fattura non riuscita',error);if(window.KYV_TOAST)KYV_TOAST.show(error.message||'Impossibile aprire la fattura.','error');}
 }
 
+const invoiceFields='ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,ID_PROGETTO';
 async function fetchDirectInvoices(projectId){
   const client=await ensureDb();
-  const {data,error}=await client.from('FATTURE').select('ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,ID_PROGETTO').eq('ID_PROGETTO',projectId).order('Data',{ascending:false}).limit(50);
+  const {data,error}=await client.from('FATTURE').select(invoiceFields).eq('ID_PROGETTO',projectId).order('Data',{ascending:false}).limit(50);
   if(error)throw error;
   return data||[];
 }
 async function fetchLegacyInvoices(projectId){
   const client=await ensureDb();
   const {data:project,error}=await client.from('PROGETTI').select('ID,IDFT,FT').eq('ID',projectId).maybeSingle();
-  if(error||!project)return[];
+  if(error)throw error;
+  if(!project)return[];
   const tasks=[];
-  if(text(project.IDFT))tasks.push(client.from('FATTURE').select('ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,ID_PROGETTO').eq('ID_FT',project.IDFT).limit(5));
-  if(text(project.FT))tasks.push(client.from('FATTURE').select('ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,ID_PROGETTO').eq('Numero',project.FT).limit(5));
+  if(text(project.IDFT))tasks.push(client.from('FATTURE').select(invoiceFields).eq('ID_FT',project.IDFT).limit(5));
+  if(text(project.FT))tasks.push(client.from('FATTURE').select(invoiceFields).eq('Numero',project.FT).limit(5));
   if(!tasks.length)return[];
   const results=await Promise.all(tasks);
-  return uniqueInvoices(results.flatMap(result=>result.error?[]:(result.data||[])));
+  const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;
+  return uniqueInvoices(results.flatMap(result=>result.data||[]));
 }
 async function loadProjectInvoices(projectId){
   projectId=text(projectId);if(!projectId)return[];
@@ -174,7 +181,7 @@ async function loadProjectInvoices(projectId){
     const direct=await fetchDirectInvoices(projectId);
     if(direct.length)return uniqueInvoices(direct);
     return await fetchLegacyInvoices(projectId);
-  }catch(error){console.warn('[KYV Invoices] Lettura fatture progetto non riuscita',error);return[];}
+  }catch(error){console.warn('[KYV Invoices] Lettura fatture progetto non riuscita',error);return null;}
 }
 
 function contextHref(projectId,create=false){
@@ -183,24 +190,32 @@ function contextHref(projectId,create=false){
 }
 function mountContextChip(projectId,rows){
   const nav=document.getElementById('kyv-workflow-nav');if(!nav)return false;
-  const old=document.getElementById('kyv-project-invoice-chip');
-  const info=summary(rows);
-  const href=contextHref(projectId,info.kind==='none');
-  if(old){old.href=href;old.className=`kyv-invoice-chip ${toneClass(info.kind)}`;old.textContent=`🧾 ${info.short}`;old.title=info.detail;return true;}
-  const chip=document.createElement('a');
-  chip.id='kyv-project-invoice-chip';chip.href=href;chip.className=`kyv-invoice-chip ${toneClass(info.kind)}`;chip.textContent=`🧾 ${info.short}`;chip.title=info.detail;
-  nav.appendChild(chip);return true;
+  let chip=document.getElementById('kyv-project-invoice-chip');
+  if(rows===null){
+    if(!chip){chip=document.createElement('span');chip.id='kyv-project-invoice-chip';nav.appendChild(chip);}
+    if(chip.tagName==='A'){const replacement=document.createElement('span');replacement.id=chip.id;chip.replaceWith(replacement);chip=replacement;}
+    chip.className='kyv-invoice-chip kyv-invoice-error';chip.textContent='⚠ Fatture non disponibili';chip.title='Lettura fatture non riuscita: nessuna assenza viene dedotta.';return true;
+  }
+  const info=summary(rows);const href=contextHref(projectId,info.kind==='none');
+  if(!chip||chip.tagName!=='A'){
+    const replacement=document.createElement('a');replacement.id='kyv-project-invoice-chip';
+    if(chip)chip.replaceWith(replacement);else nav.appendChild(replacement);chip=replacement;
+  }
+  chip.href=href;chip.className=`kyv-invoice-chip ${toneClass(info.kind)}`;chip.textContent=`🧾 ${info.short}`;chip.title=info.detail;return true;
 }
 async function refreshContext(projectId){
-  projectId=text(projectId);contextProjectId=projectId;
-  if(!projectId){document.getElementById('kyv-project-invoice-chip')?.remove();return;}
-  contextInvoices=await loadProjectInvoices(projectId);
-  mountContextChip(projectId,contextInvoices);
+  projectId=text(projectId);const token=++contextRefreshToken;contextProjectId=projectId;
+  if(!projectId){contextInvoices=[];document.getElementById('kyv-project-invoice-chip')?.remove();return;}
+  const rows=await loadProjectInvoices(projectId);
+  if(token!==contextRefreshToken||contextProjectId!==projectId)return;
+  contextInvoices=rows;
+  mountContextChip(projectId,rows);
   if(page==='scheda_progetto.html')enhanceSchedaAdmin();
 }
 function scheduleContextMount(projectId,attempt=0){
   clearTimeout(mountTimer);
   mountTimer=setTimeout(()=>{
+    if(projectId!==contextProjectId)return;
     if(mountContextChip(projectId,contextInvoices))return;
     if(attempt<20)scheduleContextMount(projectId,attempt+1);
   },attempt?250:0);
@@ -209,9 +224,12 @@ function scheduleContextMount(projectId,attempt=0){
 async function loadListData(){
   const client=await ensureDb();
   const [invoiceRes,projectRes]=await Promise.all([
-    client.from('FATTURE').select('ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,ID_PROGETTO').order('Data',{ascending:false}).limit(1500),
+    client.from('FATTURE').select(invoiceFields).order('Data',{ascending:false}).limit(1500),
     client.from('PROGETTI').select('ID,IDFT,FT').order('ID',{ascending:false}).limit(600)
   ]);
+  listInvoiceReadFailed=Boolean(invoiceRes.error);
+  if(invoiceRes.error)console.warn('[KYV Invoices] Lettura lista fatture non riuscita',invoiceRes.error);
+  if(projectRes.error)console.warn('[KYV Invoices] Lettura riferimenti legacy non riuscita',projectRes.error);
   listInvoices=invoiceRes.error?[]:(invoiceRes.data||[]);
   legacyProjects=projectRes.error?[]:(projectRes.data||[]);
   enhanceProjectList();
@@ -224,6 +242,7 @@ function listInvoicesForProject(projectId){
   return uniqueInvoices(listInvoices.filter(row=>(text(legacy.IDFT)&&text(row.ID_FT)===text(legacy.IDFT))||(text(legacy.FT)&&text(row.Numero)===text(legacy.FT))));
 }
 function renderListCell(projectId){
+  if(listInvoiceReadFailed)return '<span class="kyv-invoice-main kyv-invoice-error" title="Lettura fatture non riuscita">⚠ Stato non disponibile</span>';
   const rows=listInvoicesForProject(projectId);const info=summary(rows);
   if(!rows.length)return `<a href="${H(contextHref(projectId,true))}" onclick="event.stopPropagation()" class="kyv-invoice-main ${toneClass(info.kind)}">+ Fattura</a>`;
   return `<a href="${H(contextHref(projectId,false))}" onclick="event.stopPropagation()" class="kyv-invoice-main ${toneClass(info.kind)}" title="${H(info.detail)}">🧾 ${H(info.short)}</a><a href="${H(contextHref(projectId,true))}" onclick="event.stopPropagation()" class="kyv-invoice-add" title="Registra un'altra fattura">＋</a>`;
@@ -262,18 +281,19 @@ function projectMetaFromScheda(){return{title:text(document.getElementById('hero
 function enhanceSchedaAdmin(){
   const pid=contextProjectId||currentProjectId();if(!pid)return false;
   const card=findInvoiceCard();if(!card)return false;
-  if(!card.querySelector('[data-kyv-invoice-admin-new]')){
+  if(contextInvoices!==null&&!card.querySelector('[data-kyv-invoice-admin-new]')){
     const meta=projectMetaFromScheda();
     const button=document.createElement('button');button.type='button';button.dataset.kyvInvoiceAdminNew='1';button.className='kyv-invoice-admin-action';button.innerHTML='＋ Registra fattura';
     button.addEventListener('click',event=>{event.preventDefault();openNewInvoice(pid,meta.title,meta.artist);});
     const heading=[...card.querySelectorAll('h3')].find(node=>/fatture collegate/i.test(text(node.textContent)));
     heading?.insertAdjacentElement('afterend',button);
   }
+  if(contextInvoices===null)return true;
   const rows=[...card.querySelectorAll('tbody tr')];
   rows.forEach(row=>{
     if(row.dataset.kyvInvoiceEditable==='1')return;
     const first=text(row.querySelector('td')?.textContent);if(!first||/nessuna/i.test(first))return;
-    const invoice=contextInvoices.find(item=>text(item.Numero)===first||text(item.ID_FT)===first);
+    const invoice=(contextInvoices||[]).find(item=>text(item.Numero)===first||text(item.ID_FT)===first);
     if(!invoice)return;
     row.dataset.kyvInvoiceEditable='1';row.classList.add('kyv-invoice-editable');row.title='Apri e modifica la fattura';
     row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;openExistingInvoice(invoice.ID_FT);});
@@ -284,9 +304,9 @@ function wireScheda(){
   const admin=document.getElementById('tab-admin');
   if(admin&&!adminObserver){adminObserver=new MutationObserver(()=>enhanceSchedaAdmin());adminObserver.observe(admin,{childList:true,subtree:false});}
   const hero=document.getElementById('hero-title');
-  if(hero&&!hero.dataset.kyvInvoiceWatch){
-    hero.dataset.kyvInvoiceWatch='1';
-    new MutationObserver(()=>setTimeout(()=>refreshContext(currentProjectId()),0)).observe(hero,{childList:true,characterData:true,subtree:true});
+  if(hero&&!heroInvoiceObserver){
+    heroInvoiceObserver=new MutationObserver(()=>setTimeout(()=>refreshContext(currentProjectId()),0));
+    heroInvoiceObserver.observe(hero,{childList:true,characterData:true,subtree:true});
   }
 }
 async function maybeOpenNewFromUrl(){
@@ -323,6 +343,7 @@ async function boot(){
   }catch(error){console.warn('[KYV Invoices] Avvio non riuscito',error);}
 }
 
+window.addEventListener('beforeunload',()=>{listObserver?.disconnect();adminObserver?.disconnect();heroInvoiceObserver?.disconnect();clearTimeout(mountTimer);},{once:true});
 window.KYV_PROJECT_INVOICES={refresh:refreshContext,openNew:openNewInvoice,openExisting:openExistingInvoice};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
