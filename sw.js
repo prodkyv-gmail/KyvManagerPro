@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-sheet-responsive-20261008';
+const CACHE_NAME = 'kyv-studio-v2-32-dropdown-fix-20261008';
 const APP_SHELL = [
     './',
     './index.html',
@@ -29,6 +29,7 @@ const APP_SHELL = [
     './kyv-layout-polish.js',
     './kyv-sheet-controls.js',
     './kyv-sheet-responsive-menus.js',
+    './kyv-sheet-dropdown-fix.js',
     './menu.js',
     './kyv-hardening-overrides.js',
     './icon-192.png',
