@@ -11,9 +11,11 @@ const sw = read('sw.js');
 
 assert.ok(responsive.includes("if(page==='editor.html'"), 'Il fix delle tendine deve caricarsi solo nello Studio Editor');
 assert.ok(responsive.includes("dropdownFix.src='kyv-sheet-dropdown-fix.js'"), 'Lo Studio Editor deve caricare il menu custom');
-assert.ok(responsive.includes('font-size:8.5px!important'), 'Su smartphone i dati principali dei menu devono essere ridotti di 3 px');
-assert.ok(responsive.includes('font-size:8px!important'), 'Su smartphone i pulsanti devono essere ridotti di 3 px');
-assert.ok(responsive.includes('font-size:7.5px!important'), 'Su smartphone il testo secondario deve essere ridotto di 3 px');
+assert.ok(responsive.includes('font-size:10px!important'), 'Su smartphone i valori delle liste devono restare compatti ma leggibili');
+assert.ok(responsive.includes('font-size:9.5px!important'), 'Su smartphone i pulsanti secondari devono restare compatti');
+assert.ok(responsive.includes('font-size:9px!important'), 'Su smartphone il testo secondario deve restare leggibile');
+assert.ok(responsive.includes('font-size:16px!important'), 'Gli input smartphone devono usare 16 px per evitare lo zoom automatico Safari/iOS');
+assert.ok(responsive.includes('min-height:36px!important'), 'Le righe selezionabili mobile devono mantenere un target touch adeguato');
 
 assert.ok(dropdown.includes('kyv-cell-choice-list'), 'La tendina deve avere un elenco custom visibile');
 assert.ok(dropdown.includes('function renderChoices'), 'La tendina deve renderizzare realmente i valori disponibili');
@@ -27,7 +29,7 @@ assert.ok(dropdown.includes('stopImmediatePropagation()'), 'Il fix deve impedire
 assert.doesNotMatch(dropdown, /<datalist/i, 'Il nuovo menu non deve dipendere dal datalist nativo');
 assert.doesNotMatch(dropdown, /new MutationObserver/, 'Il fix delle tendine non deve aggiungere observer e possibili loop');
 
-assert.match(sw, /kyv-studio-v2-32-dropdown-fix-20261008/, 'La cache PWA deve ruotare per distribuire il fix');
+assert.match(sw, /kyv-studio-v2-32-dropdown-fix-20261008/, 'La cache PWA deve includere il fix delle tendine');
 assert.ok(sw.includes("'./kyv-sheet-dropdown-fix.js'"), 'Il menu custom deve essere disponibile nella cache PWA');
 
 console.log('OK: tendine Studio Editor visibili, responsive e protette.');
