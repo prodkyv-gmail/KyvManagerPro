@@ -111,14 +111,17 @@
             return `<label class="block"><span class="kyv-record-label">${label}</span><input ${common} type="${isDate ? 'date' : 'text'}" value="${H(inputValue)}" placeholder="Inserisci valore"></label>`;
         }
 
-        async function open(tableName, rowId = null) {
+        async function open(tableName, rowId = null, openOptions = {}) {
             const config = tables[tableName];
             if (!config) throw new Error(`Tabella non configurata: ${tableName}`);
-            current = { tableName, rowId, config };
-            title.textContent = `${rowId === null || rowId === undefined ? 'Nuova' : 'Modifica'} ${config.label.toLowerCase()}`;
-            subtitle.textContent = rowId === null || rowId === undefined
+            const requestedFields = Array.isArray(openOptions.fields) ? openOptions.fields.filter(Boolean) : null;
+            current = { tableName, rowId, config, requestedFields };
+            title.textContent = openOptions.title || `${rowId === null || rowId === undefined ? 'Nuova' : 'Modifica'} ${config.label.toLowerCase()}`;
+            subtitle.textContent = openOptions.subtitle || (rowId === null || rowId === undefined
                 ? 'Inserisci i dati disponibili. I campi vuoti resteranno non compilati.'
-                : 'Aggiungi o correggi i valori senza uscire dalla pagina.';
+                : requestedFields?.length === 1
+                    ? 'Correggi soltanto il campo indicato e salva.'
+                    : 'Aggiungi o correggi i valori senza uscire dalla pagina.');
             fieldsRoot.innerHTML = '<div class="md:col-span-2 lg:col-span-3 p-8 text-center text-kyv-text"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-300"></i>Caricamento campi…</div>';
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -135,8 +138,10 @@
                 row = data || {};
             }
 
-            const keys = (Object.keys(row).length ? Object.keys(row) : config.fields)
-                .filter(key => key !== config.pk && !excludedFields.has(key));
+            const sourceKeys = requestedFields?.length
+                ? requestedFields
+                : (Object.keys(row).length ? Object.keys(row) : config.fields);
+            const keys = sourceKeys.filter(key => key !== config.pk && !excludedFields.has(key));
             const markup = [];
             for (const key of keys) markup.push(await renderField(key, row[key]));
             fieldsRoot.innerHTML = markup.join('');
