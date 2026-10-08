@@ -29,8 +29,24 @@
         return relationFields.has(key) || /^ID_[A-Z0-9]/.test(key);
     }
 
-    function comparable(value) {
-        return value === null || value === undefined ? '' : String(value).trim();
+    function normalizedValue(key, value) {
+        const raw = value === null || value === undefined ? '' : String(value).trim();
+        if (!raw) return null;
+        if (numericFields.has(key)) return window.KYV?.parseNumber ? KYV.parseNumber(raw) : raw;
+        if (/^ID_/.test(key) && /^\d+$/.test(raw)) return Number(raw);
+        return raw;
+    }
+
+    function comparableField(key, value) {
+        if (value === null || value === undefined || value === '') return '';
+        const lower = String(key).toLowerCase();
+        if (lower.includes('data')) return String(value).slice(0, 10);
+        if (numericFields.has(key)) {
+            const parsed = window.KYV?.parseNumber ? KYV.parseNumber(value) : Number(value);
+            return Number.isFinite(Number(parsed)) ? String(Number(parsed)) : String(value).trim();
+        }
+        if (/^ID_/.test(key) && /^\d+$/.test(String(value).trim())) return String(Number(value));
+        return String(value).trim();
     }
 
     function ensureModal() {
@@ -69,12 +85,20 @@
         const title = modal.querySelector('#kyv-record-editor-title');
         const subtitle = modal.querySelector('#kyv-record-editor-subtitle');
         const saveButton = modal.querySelector('#kyv-record-editor-save');
+        const instanceId = `kyv-editor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         let current = null;
         let projectOptions = [];
         let openToken = 0;
+        let saving = false;
+
+        function ownsModal() {
+            return modal.dataset.kyvRecordEditorOwner === instanceId;
+        }
 
         function close() {
+            if (modal.dataset.kyvRecordEditorOwner && !ownsModal()) return;
             openToken += 1;
+            delete modal.dataset.kyvRecordEditorOwner;
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             modal.setAttribute('aria-hidden', 'true');
@@ -127,6 +151,7 @@
             const config = tables[tableName];
             if (!config) throw new Error(`Tabella non configurata: ${tableName}`);
             const token = ++openToken;
+            modal.dataset.kyvRecordEditorOwner = instanceId;
             const requestedFields = Array.isArray(openOptions.fields) ? openOptions.fields.filter(Boolean) : null;
             current = { tableName, rowId, config, requestedFields, originalRow: {}, token };
             title.textContent = openOptions.title || `${rowId === null || rowId === undefined ? 'Nuova' : 'Modifica'} ${config.label.toLowerCase()}`;
@@ -144,14 +169,14 @@
             let row = {};
             if (rowId !== null && rowId !== undefined) {
                 const { data, error } = await client.from(tableName).select('*').eq(config.pk, rowId).single();
-                if (token !== openToken) return;
+                if (token !== openToken || !ownsModal()) return;
                 if (error) {
                     close();
                     throw error;
                 }
                 row = data || {};
             }
-            if (token !== openToken) return;
+            if (token !== openToken || !ownsModal()) return;
             if (current?.token === token) current.originalRow = { ...row };
 
             const sourceKeys = requestedFields?.length
@@ -162,7 +187,7 @@
             const keys = sourceKeys.filter(key => key !== config.pk && !excludedFields.has(key));
             const markup = [];
             for (const key of keys) markup.push(await renderField(key, row[key]));
-            if (token !== openToken) return;
+            if (token !== openToken || !ownsModal()) return;
             fieldsRoot.innerHTML = markup.join('');
 
             if (window.KYV_PRIORITY) KYV_PRIORITY.bind(fieldsRoot);
@@ -176,27 +201,26 @@
         form.addEventListener('submit', async event => {
             event.preventDefault();
             const active = current;
-            if (!active) return;
+            if (!active || !ownsModal() || saving) return;
+            const isExisting = active.rowId !== null && active.rowId !== undefined;
             const payload = {};
             fieldsRoot.querySelectorAll('.dyn-record-input').forEach(input => {
                 const key = input.dataset.key;
-                const value = input.value.trim();
-                if (!value) payload[key] = null;
-                else if (numericFields.has(key)) payload[key] = window.KYV?.parseNumber ? KYV.parseNumber(value) : value;
-                else if (/^ID_/.test(key) && /^\d+$/.test(value)) payload[key] = Number(value);
-                else payload[key] = value;
+                const nextValue = normalizedValue(key, input.value);
+                if (isExisting && comparableField(key, active.originalRow?.[key]) === comparableField(key, nextValue)) return;
+                payload[key] = nextValue;
             });
             if (!Object.keys(payload).length) {
-                const message = 'Nessun campo modificabile disponibile.';
+                const message = isExisting ? 'Nessuna modifica da salvare.' : 'Nessun campo compilato.';
                 if (window.KYV_TOAST) KYV_TOAST.show(message, 'warning');
                 else if (window.KYV?.showToast) KYV.showToast(message, 'warning');
                 return;
             }
 
-            if (active.rowId !== null && active.rowId !== undefined) {
+            if (isExisting) {
                 const relationChanges = Object.keys(payload).filter(key =>
                     isRelationField(key, active.config.pk) &&
-                    comparable(active.originalRow?.[key]) !== comparable(payload[key])
+                    comparableField(key, active.originalRow?.[key]) !== comparableField(key, payload[key])
                 );
                 if (relationChanges.length) {
                     const names = relationChanges.map(humanLabel).join(', ');
@@ -205,19 +229,20 @@
                 }
             }
 
+            saving = true;
             saveButton.disabled = true;
             saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Salvataggio…';
             if (window.lucide) lucide.createIcons({ root: saveButton });
             try {
-                const { error } = active.rowId === null || active.rowId === undefined
-                    ? await client.from(active.tableName).insert([payload])
-                    : await client.from(active.tableName).update(payload).eq(active.config.pk, active.rowId);
+                const { error } = isExisting
+                    ? await client.from(active.tableName).update(payload).eq(active.config.pk, active.rowId)
+                    : await client.from(active.tableName).insert([payload]);
                 if (error) throw error;
-                const message = `${active.config.label} ${active.rowId === null || active.rowId === undefined ? 'inserita' : 'aggiornata'}.`;
+                const message = `${active.config.label} ${isExisting ? 'aggiornata' : 'inserita'}.`;
                 const savedTable = active.tableName;
                 if (window.KYV_TOAST) KYV_TOAST.show(message, 'success');
                 else if (window.KYV?.showToast) KYV.showToast(message, 'success');
-                if (current === active) close();
+                if (current === active && ownsModal()) close();
                 if (typeof options.onSaved === 'function') await options.onSaved(savedTable);
             } catch (error) {
                 console.error(error);
@@ -225,6 +250,7 @@
                 if (window.KYV_TOAST) KYV_TOAST.show(message, 'error');
                 else if (window.KYV?.showToast) KYV.showToast(message, 'error');
             } finally {
+                saving = false;
                 saveButton.disabled = false;
                 saveButton.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i>Salva';
                 if (window.lucide) lucide.createIcons({ root: saveButton });
@@ -239,9 +265,10 @@
             const add = event.target.closest('[data-kyv-new-table]');
             const trigger = edit || add;
             if (!trigger) return;
+            const tableName = edit ? edit.dataset.kyvEditTable : add.dataset.kyvNewTable;
+            if (!tables[tableName]) return;
             event.preventDefault();
             event.stopPropagation();
-            const tableName = edit ? edit.dataset.kyvEditTable : add.dataset.kyvNewTable;
             const rowId = edit ? edit.dataset.kyvEditId : null;
             open(tableName, rowId).catch(error => {
                 console.error(error);
