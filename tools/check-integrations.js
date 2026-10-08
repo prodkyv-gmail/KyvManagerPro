@@ -64,11 +64,13 @@ assert(recordEditor.includes("FATTURE:") && recordEditor.includes("'ID_PROGETTO'
 assert(!projectInvoices.match(/\.from\(['"][^'"]+['"]\)\s*\.insert/), 'Il modulo fatture progetto deve delegare la scrittura all’editor condiviso');
 
 assert(config.includes("financeSummary.src='kyv-project-finance-summary.js'"), 'La Scheda progetto deve caricare il riepilogo fattura/pagamento');
-assert(financeSummary.includes('Fattura emessa') && financeSummary.includes('Pagamento') && financeSummary.includes('Residuo da incassare'), 'Il riepilogo economico deve rendere visibili fattura e stato incasso nella parte alta della Scheda');
+assert(financeSummary.includes('Fattura') && financeSummary.includes('Pagamento') && financeSummary.includes('Residuo da incassare'), 'Il riepilogo economico deve rendere visibili fattura e stato incasso nella parte alta della Scheda');
+assert(financeSummary.includes('PrezzoTotale') && financeSummary.includes('PrezzoUnitario'), 'Il riepilogo economico deve preferire il totale fattura quando disponibile');
 assert(financeSummary.includes(".eq('ID_PROGETTO',pid)") && financeSummary.includes("select('ID,IDFT,FT')"), 'Il riepilogo economico deve usare ID_PROGETTO con fallback legacy');
 assert(config.includes("layoutPolish.src='kyv-layout-polish.js'"), 'Le viste producer devono caricare il modulo di leggibilità/scroll');
 assert(layoutPolish.includes('#kyv-listen-versions') && layoutPolish.includes('#kyv-agenda-actions') && layoutPolish.includes('#tab-admin table'), 'Il layout polish deve coprire Ascolto, Agenda e tabelle amministrative');
 assert(layoutPolish.includes('overflow-y:auto') && layoutPolish.includes('overflow-x:auto'), 'I contenitori dati estesi devono avere scroll verticale/orizzontale esplicito dove serve');
+assert(!layoutPolish.includes('new MutationObserver'), 'Il layout polish non deve introdurre observer globali');
 
 assert(config.includes("releaseCloseout.src='kyv-release-closeout.js'"), 'La Scheda progetto deve caricare il percorso di chiusura release');
 assert(releaseCloseout.includes('Master definitivo') && releaseCloseout.includes('ISRC') && releaseCloseout.includes('Data pubblicazione'), 'Il closeout deve guidare master, ISRC e data pubblicazione');
