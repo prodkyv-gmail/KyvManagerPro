@@ -143,6 +143,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         financeSummary.async=false;
         financeSummary.dataset.kyvProjectFinanceSummary='1';
         document.head.appendChild(financeSummary);
+
+        const projectEditSafety=document.createElement('script');
+        projectEditSafety.src='kyv-project-edit-safety.js';
+        projectEditSafety.async=false;
+        projectEditSafety.dataset.kyvProjectEditSafety='1';
+        document.head.appendChild(projectEditSafety);
     }
 
     if(page==='kyv_calendar.html'){
