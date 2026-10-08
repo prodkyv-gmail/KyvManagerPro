@@ -122,6 +122,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         releaseDesk.async=false;
         document.head.appendChild(releaseDesk);
 
+        const releaseCloseout=document.createElement('script');
+        releaseCloseout.src='kyv-release-closeout.js';
+        releaseCloseout.async=false;
+        releaseCloseout.dataset.kyvReleaseCloseout='1';
+        document.head.appendChild(releaseCloseout);
+
         const versionToPitch=document.createElement('script');
         versionToPitch.src='kyv-version-to-pitch.js';
         versionToPitch.async=false;
