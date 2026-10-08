@@ -49,6 +49,10 @@
         return String(value).trim();
     }
 
+    function guardOriginal(query, key, value) {
+        return value === null || value === undefined ? query.is(key, null) : query.eq(key, value);
+    }
+
     function ensureModal() {
         let modal = document.getElementById('kyv-record-editor-modal');
         if (modal) return modal;
@@ -131,11 +135,13 @@
 
             if (key === 'ID_PROGETTO') {
                 await loadProjectOptions();
+                const present = projectOptions.some(project => String(project.ID) === raw);
+                const currentOption = raw && !present ? `<option value="${H(raw)}" selected>Progetto #${H(raw)} · collegamento esistente</option>` : '';
                 const choices = projectOptions.map(project => {
                     const selected = String(project.ID) === raw ? 'selected' : '';
                     return `<option value="${H(project.ID)}" ${selected}>${H([project.TITOLO, project.ARTISTA].filter(Boolean).join(' · ') || `Progetto #${project.ID}`)}</option>`;
                 }).join('');
-                return `<label class="block"><span class="kyv-record-label">${label}</span><select ${common}><option value="">Nessun progetto collegato</option>${choices}</select></label>`;
+                return `<label class="block"><span class="kyv-record-label">${label}</span><select ${common}><option value="">Nessun progetto collegato</option>${currentOption}${choices}</select></label>`;
             }
 
             if (lower.includes('descrizione') || lower.includes('note') || lower.includes('oggetto')) {
@@ -208,6 +214,7 @@
                 const key = input.dataset.key;
                 const nextValue = normalizedValue(key, input.value);
                 if (isExisting && comparableField(key, active.originalRow?.[key]) === comparableField(key, nextValue)) return;
+                if (!isExisting && nextValue === null) return;
                 payload[key] = nextValue;
             });
             if (!Object.keys(payload).length) {
@@ -234,9 +241,17 @@
             saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Salvataggio…';
             if (window.lucide) lucide.createIcons({ root: saveButton });
             try {
-                const { error } = isExisting
-                    ? await client.from(active.tableName).update(payload).eq(active.config.pk, active.rowId)
-                    : await client.from(active.tableName).insert([payload]);
+                let error = null;
+                if (isExisting) {
+                    let query = client.from(active.tableName).update(payload).eq(active.config.pk, active.rowId);
+                    Object.keys(payload).forEach(key => { query = guardOriginal(query, key, active.originalRow?.[key]); });
+                    const result = await query.select(active.config.pk).maybeSingle();
+                    error = result.error;
+                    if (!error && !result.data) throw new Error('Il record è cambiato da un’altra operazione. Riaprilo prima di salvare: nessun dato è stato sovrascritto.');
+                } else {
+                    const result = await client.from(active.tableName).insert([payload]);
+                    error = result.error;
+                }
                 if (error) throw error;
                 const message = `${active.config.label} ${isExisting ? 'aggiornata' : 'inserita'}.`;
                 const savedTable = active.tableName;
