@@ -15,12 +15,22 @@
 
     const excludedFields = new Set(['created_at', 'updated_at', '_RowNumber']);
     const numericFields = new Set(['PrezzoUnitario', 'PrezzoTotale', 'ImportoTotaleDocumento', 'ImportoPagamento', 'FEE', 'ROY', 'Importo']);
+    const relationFields = new Set(['ID_PROGETTO', 'IDFT']);
     const H = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
     }[char]));
 
     function humanLabel(key) {
         return String(key).replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function isRelationField(key, pk) {
+        if (!key || key === pk) return false;
+        return relationFields.has(key) || /^ID_[A-Z0-9]/.test(key);
+    }
+
+    function comparable(value) {
+        return value === null || value === undefined ? '' : String(value).trim();
     }
 
     function ensureModal() {
@@ -61,8 +71,10 @@
         const saveButton = modal.querySelector('#kyv-record-editor-save');
         let current = null;
         let projectOptions = [];
+        let openToken = 0;
 
         function close() {
+            openToken += 1;
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             modal.setAttribute('aria-hidden', 'true');
@@ -114,8 +126,9 @@
         async function open(tableName, rowId = null, openOptions = {}) {
             const config = tables[tableName];
             if (!config) throw new Error(`Tabella non configurata: ${tableName}`);
+            const token = ++openToken;
             const requestedFields = Array.isArray(openOptions.fields) ? openOptions.fields.filter(Boolean) : null;
-            current = { tableName, rowId, config, requestedFields };
+            current = { tableName, rowId, config, requestedFields, originalRow: {}, token };
             title.textContent = openOptions.title || `${rowId === null || rowId === undefined ? 'Nuova' : 'Modifica'} ${config.label.toLowerCase()}`;
             subtitle.textContent = openOptions.subtitle || (rowId === null || rowId === undefined
                 ? 'Inserisci i dati disponibili. I campi vuoti resteranno non compilati.'
@@ -131,19 +144,25 @@
             let row = {};
             if (rowId !== null && rowId !== undefined) {
                 const { data, error } = await client.from(tableName).select('*').eq(config.pk, rowId).single();
+                if (token !== openToken) return;
                 if (error) {
                     close();
                     throw error;
                 }
                 row = data || {};
             }
+            if (token !== openToken) return;
+            if (current?.token === token) current.originalRow = { ...row };
 
             const sourceKeys = requestedFields?.length
                 ? requestedFields
-                : (Object.keys(row).length ? Object.keys(row) : config.fields);
+                : (rowId === null || rowId === undefined
+                    ? config.fields
+                    : config.fields.filter(key => Object.prototype.hasOwnProperty.call(row, key)));
             const keys = sourceKeys.filter(key => key !== config.pk && !excludedFields.has(key));
             const markup = [];
             for (const key of keys) markup.push(await renderField(key, row[key]));
+            if (token !== openToken) return;
             fieldsRoot.innerHTML = markup.join('');
 
             if (window.KYV_PRIORITY) KYV_PRIORITY.bind(fieldsRoot);
@@ -156,7 +175,8 @@
 
         form.addEventListener('submit', async event => {
             event.preventDefault();
-            if (!current) return;
+            const active = current;
+            if (!active) return;
             const payload = {};
             fieldsRoot.querySelectorAll('.dyn-record-input').forEach(input => {
                 const key = input.dataset.key;
@@ -166,20 +186,38 @@
                 else if (/^ID_/.test(key) && /^\d+$/.test(value)) payload[key] = Number(value);
                 else payload[key] = value;
             });
+            if (!Object.keys(payload).length) {
+                const message = 'Nessun campo modificabile disponibile.';
+                if (window.KYV_TOAST) KYV_TOAST.show(message, 'warning');
+                else if (window.KYV?.showToast) KYV.showToast(message, 'warning');
+                return;
+            }
+
+            if (active.rowId !== null && active.rowId !== undefined) {
+                const relationChanges = Object.keys(payload).filter(key =>
+                    isRelationField(key, active.config.pk) &&
+                    comparable(active.originalRow?.[key]) !== comparable(payload[key])
+                );
+                if (relationChanges.length) {
+                    const names = relationChanges.map(humanLabel).join(', ');
+                    const confirmed = window.confirm(`Stai modificando una relazione del record (${names}). Confermi il nuovo collegamento?`);
+                    if (!confirmed) return;
+                }
+            }
 
             saveButton.disabled = true;
             saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Salvataggio…';
             if (window.lucide) lucide.createIcons({ root: saveButton });
             try {
-                const { error } = current.rowId === null || current.rowId === undefined
-                    ? await client.from(current.tableName).insert([payload])
-                    : await client.from(current.tableName).update(payload).eq(current.config.pk, current.rowId);
+                const { error } = active.rowId === null || active.rowId === undefined
+                    ? await client.from(active.tableName).insert([payload])
+                    : await client.from(active.tableName).update(payload).eq(active.config.pk, active.rowId);
                 if (error) throw error;
-                const message = `${current.config.label} ${current.rowId === null || current.rowId === undefined ? 'inserita' : 'aggiornata'}.`;
-                const savedTable = current.tableName;
+                const message = `${active.config.label} ${active.rowId === null || active.rowId === undefined ? 'inserita' : 'aggiornata'}.`;
+                const savedTable = active.tableName;
                 if (window.KYV_TOAST) KYV_TOAST.show(message, 'success');
                 else if (window.KYV?.showToast) KYV.showToast(message, 'success');
-                close();
+                if (current === active) close();
                 if (typeof options.onSaved === 'function') await options.onSaved(savedTable);
             } catch (error) {
                 console.error(error);
