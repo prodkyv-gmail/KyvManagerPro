@@ -83,6 +83,8 @@ assert.ok(sheetControls.includes('relationTargets={'), 'I REF devono usare una m
 assert.ok(sheetControls.includes("ID_PROGETTO:{table:'PROGETTI'"), 'ID_PROGETTO deve puntare esplicitamente a PROGETTI');
 assert.ok(sheetControls.includes("IDFT:{table:'FATTURE'"), 'IDFT deve puntare esplicitamente a FATTURE');
 assert.ok(sheetControls.includes("Seleziona un riferimento esistente dall’elenco."), 'Un REF manuale inesistente deve essere rifiutato');
+assert.ok(sheetControls.includes('Rimuovere il collegamento esistente da questo record?'), 'La rimozione di un REF esistente deve richiedere conferma esplicita');
+assert.ok(sheetControls.includes('onSort:direction=>{sortDomTable(table,index,direction);markSort(table,index,direction);applyFilters(table,editorColumnFilters);}'), 'Il menu Editor deve rispettare esattamente crescente/decrescente senza toggle ambiguo');
 assert.ok(sheetControls.includes('await safePatch({table,pk,rowId,column,original,next})'), 'La modifica intelligente deve passare dal salvataggio concorrente protetto');
 assert.ok(sheetControls.includes("if(String(live)!==String(original??''))throw new Error"), 'Un valore cambiato altrove deve fermare il salvataggio');
 assert.ok(sheetControls.includes('query.is(column,null):query.eq(column,current[column])'), 'L’update deve essere condizionato al valore originale del campo');
