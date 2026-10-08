@@ -40,13 +40,14 @@ function injectStyles(){if(document.getElementById('kyv-release-closeout-style')
 function openField(check){const edit=document.querySelector('#kyv-release-desk [data-release-edit]');if(edit)edit.click();else if(typeof window.openQuickEdit==='function')window.openQuickEdit();setTimeout(()=>{const modal=document.getElementById('quick-edit-modal');const candidates=(check?.fields||[]).map(field=>modal?.querySelector(`[data-key="${CSS.escape(field)}"]`)).filter(Boolean);const target=candidates.find(input=>!text(input.value))||candidates[0];target?.focus();target?.scrollIntoView({behavior:'smooth',block:'center'});},100);}
 function goAdmin(){if(typeof window.setTab==='function')window.setTab('amministrazione');setTimeout(()=>document.getElementById('tab-admin')?.scrollIntoView({behavior:'smooth',block:'start'}),60);}
 async function closeProject(view,button){
-  if(busy)return;const p=view?.p||{};if(!p.ID||!client())return;if(!window.confirm('Segnare questo progetto come pubblicato e chiuso?'))return;
+  if(busy)return;const p=view?.p||{};if(!p.ID||!client())return;if(!window.confirm('Segnare questo progetto come pubblicato e chiuso? Le note di sviluppo resteranno invariate.'))return;
   busy=true;if(button){button.disabled=true;button.textContent='Chiusura…';}
   try{
-    const {error}=await client().from('PROGETTI').update({STATO:'Pubblicato',SVILUPPO:'Pubblicata'}).eq('ID',p.ID);if(error)throw error;
-    if(window.KYV_TOAST)KYV_TOAST.show('Progetto segnato come pubblicato e chiuso.','success');else if(window.KYV?.showToast)KYV.showToast('Progetto segnato come pubblicato e chiuso.','success');
+    const {data,error}=await client().from('PROGETTI').update({STATO:'Pubblicato'}).eq('ID',p.ID).select('ID,STATO,SVILUPPO').single();if(error)throw error;
+    if(text(data?.SVILUPPO)!==text(p.SVILUPPO))throw new Error('Verifica integrità fallita: SVILUPPO è cambiato durante la chiusura.');
+    if(window.KYV_TOAST)KYV_TOAST.show('Progetto segnato come pubblicato. Note di sviluppo preservate.','success');else if(window.KYV?.showToast)KYV.showToast('Progetto segnato come pubblicato. Note di sviluppo preservate.','success');
     lastFingerprint='';window.dispatchEvent(new CustomEvent('kyv:release-closed',{detail:{projectId:p.ID}}));if(typeof window.refreshAll==='function')await window.refreshAll();
-  }catch(error){console.error('[KYV Release Closeout]',error);if(window.KYV_TOAST)KYV_TOAST.show('Chiusura progetto non riuscita.','error');else if(window.KYV?.showToast)KYV.showToast('Chiusura progetto non riuscita.','error');}
+  }catch(error){console.error('[KYV Release Closeout]',error);if(window.KYV_TOAST)KYV_TOAST.show(error.message||'Chiusura progetto non riuscita.','error');else if(window.KYV?.showToast)KYV.showToast(error.message||'Chiusura progetto non riuscita.','error');}
   finally{busy=false;if(button){button.disabled=false;button.textContent='Segna pubblicato e chiudi';}}
 }
 function render(){
