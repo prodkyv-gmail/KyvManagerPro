@@ -26,18 +26,18 @@ const fields='ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,
 async function fetchInvoices(pid){
   if(!client())return null;
   try{
-    const direct=await client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(50);
-    if(direct.error)throw direct.error;
-    if(direct.data?.length)return unique(direct.data);
-    const project=await client().from('PROGETTI').select('ID,IDFT,FT').eq('ID',pid).maybeSingle();
-    if(project.error)throw project.error;
-    if(!project.data)return[];
-    const tasks=[];
-    if(text(project.data.IDFT))tasks.push(client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5));
-    if(text(project.data.FT))tasks.push(client().from('FATTURE').select(fields).eq('Numero',project.data.FT).limit(5));
-    if(!tasks.length)return[];
-    const results=await Promise.all(tasks);const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;
-    return unique(results.flatMap(result=>result.data||[]));
+    const directPromise=client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(200);
+    const projectPromise=client().from('PROGETTI').select('ID,IDFT,FT').eq('ID',pid).maybeSingle();
+    const [direct,project]=await Promise.all([directPromise,projectPromise]);
+    if(direct.error)throw direct.error;if(project.error)throw project.error;
+    const legacy=[];
+    if(project.data){
+      const tasks=[];
+      if(text(project.data.IDFT))tasks.push(client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5));
+      if(text(project.data.FT))tasks.push(client().from('FATTURE').select(fields).eq('Numero',project.data.FT).limit(5));
+      if(tasks.length){const results=await Promise.all(tasks);const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;legacy.push(...results.flatMap(result=>result.data||[]));}
+    }
+    return unique([...(direct.data||[]),...legacy]);
   }catch(error){console.warn('[KYV Finance Summary] Lettura fatture non riuscita',error);return null;}
 }
 
@@ -74,9 +74,6 @@ function mount(rows,pid){
 async function refresh(){clearTimeout(refreshTimer);const pid=projectId();if(!pid)return;const token=++refreshToken;const rows=await fetchInvoices(pid);if(token!==refreshToken||pid!==projectId())return;mount(rows,pid);}
 function schedule(delay=80){clearTimeout(refreshTimer);refreshTimer=setTimeout(refresh,delay);}
 function watch(){const target=document.getElementById('hero-badges')||document.getElementById('hero-title');if(!target||heroObserver)return false;heroObserver=new MutationObserver(()=>{lastFingerprint='';schedule(60);});heroObserver.observe(target,{childList:true,subtree:true,characterData:true});return true;}
-function boot(){
-  ensureStyle();const timer=setInterval(()=>{if(watch()){clearInterval(timer);schedule(0);}},100);setTimeout(()=>{clearInterval(timer);watch();schedule(0);},5000);
-  window.addEventListener('kyv:project-v2-ready',()=>{lastFingerprint='';schedule(40);});window.addEventListener('kyv:pitch-updated',()=>schedule(80));window.addEventListener('kyv:invoice-updated',()=>{lastFingerprint='';schedule(20);});window.addEventListener('beforeunload',()=>heroObserver?.disconnect(),{once:true});
-}
+function boot(){ensureStyle();const timer=setInterval(()=>{if(watch()){clearInterval(timer);schedule(0);}},100);setTimeout(()=>{clearInterval(timer);watch();schedule(0);},5000);window.addEventListener('kyv:project-v2-ready',()=>{lastFingerprint='';schedule(40);});window.addEventListener('kyv:pitch-updated',()=>schedule(80));window.addEventListener('kyv:invoice-updated',()=>{lastFingerprint='';schedule(20);});window.addEventListener('beforeunload',()=>heroObserver?.disconnect(),{once:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
