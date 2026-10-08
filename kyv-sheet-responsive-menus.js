@@ -9,12 +9,7 @@ const style=document.createElement('style');
 style.id='kyv-sheet-responsive-menu-style';
 style.textContent=`
 /* Desktop: menu compatti, più dati visibili senza sacrificare la leggibilità. */
-.kyv-sheet-menu{
-  width:min(270px,calc(100vw - 16px))!important;
-  padding:8px!important;
-  font-size:10.5px!important;
-  line-height:1.28!important;
-}
+.kyv-sheet-menu{width:min(270px,calc(100vw - 16px))!important;padding:8px!important;font-size:10.5px!important;line-height:1.28!important}
 .kyv-sheet-menu-head{padding:1px 1px 6px!important;gap:6px!important}
 .kyv-sheet-menu-head strong{font-size:10.5px!important;line-height:1.2!important}
 .kyv-sheet-menu-head button{font-size:17px!important;line-height:1!important}
@@ -35,7 +30,12 @@ style.textContent=`
 .kyv-cell-editor-actions button{padding:5px 8px!important;font-size:10px!important}
 .kyv-ref-edit-button{font-size:8.5px!important;padding:1px 4px!important}
 .kyv-cell-choice-list,.kyv-cell-choice{font-size:10.5px!important;line-height:1.25!important}
-.kyv-cell-choice{padding:5px 6px!important}
+.kyv-cell-choice{padding:5px 6px!important;min-height:34px!important}
+
+/* Scrollbar Editor: coerenti con il resto dell'app. */
+body.editor-compact .custom-scrollbar::-webkit-scrollbar,body.editor-comfort .custom-scrollbar::-webkit-scrollbar{width:10px!important;height:10px!important}
+body.editor-compact .custom-scrollbar::-webkit-scrollbar-thumb,body.editor-comfort .custom-scrollbar::-webkit-scrollbar-thumb{background:#465064!important;border:2px solid #10131b!important;border-radius:999px!important}
+body.editor-compact .custom-scrollbar,body.editor-comfort .custom-scrollbar{scrollbar-width:thin!important;scrollbar-color:#465064 rgba(255,255,255,.025)!important}
 
 #modal-dynamic input[list],#dynamic-form-fields input[list],.kyv-cell-editor input[list]{font-size:10.5px!important}
 datalist option{font-size:10.5px!important;line-height:1.25!important}
@@ -51,19 +51,23 @@ datalist option{font-size:10.5px!important;line-height:1.25!important}
   #modal-dynamic input[list],#dynamic-form-fields input[list],.kyv-cell-editor input[list],datalist option{font-size:11px!important}
 }
 
-/* Smartphone: -3 px rispetto alla versione precedente. */
+/* Smartphone: valori compatti, ma input a 16px per evitare zoom Safari/iOS. */
 @media (max-width:640px){
-  .kyv-sheet-menu{width:min(310px,calc(100vw - 12px))!important;max-height:min(72vh,520px)!important;padding:7px!important;font-size:8.5px!important}
-  .kyv-sheet-menu-head strong,.kyv-sheet-menu-search,.kyv-sheet-values,.kyv-sheet-values label{font-size:8.5px!important}
-  .kyv-sheet-menu button{font-size:8px!important;padding:5px 6px!important}
+  .kyv-sheet-menu{width:min(310px,calc(100vw - 12px))!important;max-height:min(72vh,520px)!important;padding:7px!important;font-size:10px!important}
+  .kyv-sheet-menu-head strong,.kyv-sheet-values,.kyv-sheet-values label{font-size:10px!important}
+  .kyv-sheet-menu-search{font-size:16px!important;min-height:40px!important;padding:7px 8px!important}
+  .kyv-sheet-menu button{font-size:9.5px!important;padding:5px 6px!important;min-height:34px!important}
   .kyv-sheet-values{max-height:min(230px,36vh)!important}
-  .kyv-cell-editor{width:calc(100vw - 12px)!important;padding:8px!important;font-size:8.5px!important}
-  .kyv-cell-editor label,.kyv-cell-editor input,.kyv-cell-choice-list,.kyv-cell-choice{font-size:8.5px!important}
-  .kyv-cell-editor small{font-size:7.5px!important}
-  .kyv-cell-editor-actions button{font-size:8px!important;padding:5px 7px!important}
-  .kyv-ref-edit-button{font-size:7px!important}
-  .kyv-cell-choice{padding:4px 5px!important}
-  #modal-dynamic input[list],#dynamic-form-fields input[list],.kyv-cell-editor input[list],datalist option{font-size:8.5px!important}
+  .kyv-cell-editor{width:calc(100vw - 12px)!important;padding:8px!important;font-size:10px!important}
+  .kyv-cell-editor label,.kyv-cell-choice-list,.kyv-cell-choice{font-size:10px!important}
+  .kyv-cell-editor input{font-size:16px!important;min-height:40px!important;padding:7px 8px!important}
+  .kyv-cell-editor small{font-size:9px!important}
+  .kyv-cell-editor-actions button{font-size:9.5px!important;padding:5px 7px!important;min-height:34px!important}
+  .kyv-ref-edit-button{font-size:8px!important}
+  .kyv-cell-choice{padding:5px 6px!important;min-height:36px!important}
+  .kyv-cell-choice-ref{font-size:8.5px!important}
+  #modal-dynamic input[list],#dynamic-form-fields input[list],.kyv-cell-editor input[list]{font-size:16px!important}
+  datalist option{font-size:10px!important}
 }
 `;
 document.head.appendChild(style);
