@@ -1,4 +1,4 @@
-// kyv-data-quality.js - Regole pure per l'audit dati in sola lettura.
+// kyv-data-quality.js - Regole pure per audit e correzione assistita dei dati.
 (function(root, factory){
     const api = factory();
     if(typeof module === 'object' && module.exports) module.exports = api;
@@ -29,7 +29,10 @@
             id: text(project.ID),
             projectId: text(project.ID),
             title: projectLabel(project),
-            detail: 'Titolo del progetto non compilato.'
+            detail: 'Titolo del progetto non compilato.',
+            editTable: 'PROGETTI',
+            editId: text(project.ID),
+            editField: 'TITOLO'
         }));
 
         const missingArtists = projects.filter(project => !has(project.ARTISTA)).map(project => ({
@@ -38,7 +41,10 @@
             title: projectLabel(project),
             detail: has(project.Nome_Vero_Artista)
                 ? `Artista mancante; nome anagrafico presente: ${text(project.Nome_Vero_Artista)}.`
-                : 'Artista del progetto non compilato.'
+                : 'Artista del progetto non compilato.',
+            editTable: 'PROGETTI',
+            editId: text(project.ID),
+            editField: 'ARTISTA'
         }));
 
         const duplicateMap = new Map();
@@ -57,7 +63,8 @@
                 projectId: text(group[0].ID),
                 projectIds: group.map(project => text(project.ID)),
                 title: projectLabel(group[0]),
-                detail: `Possibile duplicato: progetti ${group.map(project => `#${text(project.ID)}`).join(', ')}.`
+                detail: `Possibile duplicato: progetti ${group.map(project => `#${text(project.ID)}`).join(', ')}.`,
+                action: 'compare-projects'
             }));
 
         const versionIssues = audioVersions.filter(row => !has(row.CONTENT_HASH)).map(row => {
@@ -67,7 +74,10 @@
                 projectId: text(row.ID_PROGETTO),
                 title: text(row.NOME_FILE) || text(row.TITOLO) || `Versione #${text(row.ID_VERSIONE)}`,
                 detail: `${project ? projectLabel(project) : `Progetto #${text(row.ID_PROGETTO) || '?'}`} · hash SHA-256 mancante.`,
-                source: 'AUDIO_VERSIONI'
+                source: 'AUDIO_VERSIONI',
+                editTable: 'AUDIO_VERSIONI',
+                editId: text(row.ID_VERSIONE),
+                editField: 'CONTENT_HASH'
             };
         });
         const dropboxIssues = dropboxAudio.filter(row => !has(row.Hash_SHA256)).map(row => {
@@ -77,7 +87,10 @@
                 projectId: text(row.ID_PROGETTO),
                 title: text(row.Nome_File) || text(row.Titolo) || `Audio #${text(row.ID_FILE)}`,
                 detail: `${project ? projectLabel(project) : `Progetto #${text(row.ID_PROGETTO) || '?'}`} · hash SHA-256 mancante.`,
-                source: 'DROPBOX_AUDIO_FILES'
+                source: 'DROPBOX_AUDIO_FILES',
+                editTable: 'DROPBOX_AUDIO_FILES',
+                editId: text(row.ID_FILE),
+                editField: 'Hash_SHA256'
             };
         });
 
@@ -88,15 +101,18 @@
                 projectId: text(row.ID_PROGETTO),
                 title: text(row.Titolo_Documento) || text(row.Tipo_Documento) || `Documento #${text(row.ID_DOCUMENTO)}`,
                 detail: `${project ? projectLabel(project) : `Progetto #${text(row.ID_PROGETTO) || '?'}`} · link non presente; verificare se il record è una nota interna.`,
-                source: 'DOCUMENTI_PROGETTO'
+                source: 'DOCUMENTI_PROGETTO',
+                editTable: 'DOCUMENTI_PROGETTO',
+                editId: text(row.ID_DOCUMENTO),
+                editField: 'Link_Drive'
             };
         });
 
         const groups = [
             { key:'missing-title', label:'Titoli mancanti', severity:'high', description:'Progetti che non hanno un titolo utilizzabile.', items:missingTitles },
             { key:'missing-artist', label:'Artisti mancanti', severity:'medium', description:'Progetti senza artista principale.', items:missingArtists },
-            { key:'duplicate-project', label:'Possibili duplicati', severity:'high', description:'Stessa coppia titolo + artista dopo la normalizzazione.', items:duplicates },
-            { key:'missing-audio-hash', label:'Audio senza hash', severity:'medium', description:'Versioni audio senza impronta SHA-256.', items:[...versionIssues, ...dropboxIssues] },
+            { key:'duplicate-project', label:'Possibili duplicati', severity:'high', description:'Stessa coppia titolo + artista dopo la normalizzazione. Nessuna fusione viene eseguita automaticamente.', items:duplicates },
+            { key:'missing-audio-hash', label:'Audio senza hash', severity:'medium', description:'Versioni audio senza impronta SHA-256. La pagina apre il record, ma non inventa né calcola hash.', items:[...versionIssues, ...dropboxIssues] },
             { key:'missing-document-link', label:'Documenti senza link', severity:'low', description:'Documenti senza URL: possono essere anomalie oppure note interne legittime.', items:documentsWithoutLink }
         ];
 
