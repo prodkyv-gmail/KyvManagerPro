@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-safety-20261008';
+const CACHE_NAME = 'kyv-studio-v2-32-integrity-20261008';
 const APP_SHELL = [
     './',
     './index.html',
