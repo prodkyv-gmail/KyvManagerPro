@@ -197,6 +197,7 @@ async function openSmartCellEditor(td,column){
   editor.querySelector('[data-save]').addEventListener('click',async()=>{
     let raw=text(input.value),next=raw||null;
     if(isRelation&&raw){const found=options.find(option=>option.value===raw);if(!found){toast('Seleziona un riferimento esistente dall’elenco.','warning');input.focus();return;}if(/^\d+$/.test(raw))next=Number(raw);}
+    if(isRelation&&original&&!raw){const confirmed=window.confirm('Rimuovere il collegamento esistente da questo record?');if(!confirmed){input.focus();return;}}
     const saveButton=editor.querySelector('[data-save]');saveButton.disabled=true;saveButton.textContent='Salvataggio…';
     try{
       await safePatch({table,pk,rowId,column,original,next});
@@ -215,7 +216,7 @@ function decorateEditorTable(){
     th.classList.add('kyv-sheet-head');th.dataset.kyvSheetKey=key;th.dataset.kyvSheetLabel=key;
     if(!th.querySelector('.kyv-sheet-filter-trigger')){
       const trigger=document.createElement('button');trigger.type='button';trigger.className='kyv-sheet-filter-trigger';trigger.textContent='▾';trigger.title='Filtra questa colonna';
-      trigger.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openHeaderMenu({table,th,index,key,filters:editorColumnFilters,onSort:direction=>{const current=th.dataset.kyvSort==='asc'?'asc':th.dataset.kyvSort==='desc'?'desc':'';if(typeof window.KYV_TABLE_TOOLS?.sortTableByColumn==='function'){if(current===direction){}KYV_TABLE_TOOLS.sortTableByColumn(table,index,th);}else sortDomTable(table,index,direction);markSort(table,index,direction);applyFilters(table,editorColumnFilters);},onFilter:()=>{applyFilters(table,editorColumnFilters);decorateEditorTable();}});});
+      trigger.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openHeaderMenu({table,th,index,key,filters:editorColumnFilters,onSort:direction=>{sortDomTable(table,index,direction);markSort(table,index,direction);applyFilters(table,editorColumnFilters);},onFilter:()=>{applyFilters(table,editorColumnFilters);decorateEditorTable();}});});
       th.appendChild(trigger);
     }
     th.querySelector('.kyv-sheet-filter-trigger')?.classList.toggle('active',editorColumnFilters.has(key));
