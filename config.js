@@ -71,6 +71,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         sheetControls.async=false;
         sheetControls.dataset.kyvSheetControls='1';
         document.head.appendChild(sheetControls);
+
+        const responsiveMenus=document.createElement('script');
+        responsiveMenus.src='kyv-sheet-responsive-menus.js';
+        responsiveMenus.async=false;
+        responsiveMenus.dataset.kyvSheetResponsiveMenus='1';
+        document.head.appendChild(responsiveMenus);
     }
 
     if(producerViews.includes(page)){
