@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-data-quality-20261007';
+const CACHE_NAME = 'kyv-studio-v2-32-safety-20261008';
 const APP_SHELL = [
     './',
     './index.html',
@@ -14,6 +14,19 @@ const APP_SHELL = [
     './kyv-core.js',
     './kyv-auth.js',
     './kyv-data-quality.js',
+    './kyv-record-editor.js',
+    './kyv-project-invoices.js',
+    './kyv-project-finance-summary.js',
+    './kyv-project-sheet-v2.js',
+    './kyv-project-edit-safety.js',
+    './kyv-pitch-followup.js',
+    './kyv-release-desk.js',
+    './kyv-release-closeout.js',
+    './kyv-interest-to-release.js',
+    './kyv-version-to-pitch.js',
+    './kyv-workflow-nav.js',
+    './kyv-producer-mode.js',
+    './kyv-layout-polish.js',
     './menu.js',
     './kyv-hardening-overrides.js',
     './icon-192.png',
