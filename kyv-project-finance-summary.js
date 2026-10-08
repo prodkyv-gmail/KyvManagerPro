@@ -14,14 +14,14 @@ function H(v){if(window.KYV&&typeof KYV.safeHtml==='function')return KYV.safeHtm
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
 function paid(row){if(window.KYV&&typeof KYV.isPaid==='function')return KYV.isPaid(row?.PAGATA)||KYV.isPaid(row?.PAGAMENTO);return /^(SI|SÌ|YES|PAGAT|INCASSAT)/i.test(text(row?.PAGATA||row?.PAGAMENTO));}
 function numberValue(value){if(window.KYV&&typeof KYV.parseNumber==='function')return KYV.parseNumber(value)||0;if(typeof value==='number')return Number.isFinite(value)?value:0;const n=Number(String(value??'').replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0;}
-function amount(row){return numberValue(row?.PrezzoTotale??row?.PrezzoUnitario??0);}
+function amount(row){return numberValue(row?.ImportoTotaleDocumento??row?.PrezzoTotale??row?.PrezzoUnitario??row?.ImportoPagamento??0);}
 function euro(value){return window.KYV?.formatEuro?KYV.formatEuro(value):new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(value)||0);}
 function date(value){return value?(window.KYV?.formatDate?KYV.formatDate(value,'-'):new Date(value).toLocaleDateString('it-IT')):'-';}
 function projectId(){const badge=text(document.getElementById('hero-badges')?.textContent).match(/\bID\s+(\d+)\b/i)?.[1];if(badge)return badge;return text(new URLSearchParams(location.search).get('id'));}
 function projectMeta(){return{title:text(document.getElementById('hero-title')?.textContent),artist:text(document.getElementById('hero-artist')?.textContent)};}
 function key(row){return text(row?.ID_FT||row?.Numero);}
 function unique(rows){const map=new Map();(rows||[]).forEach((row,index)=>map.set(key(row)||`row-${index}`,row));return[...map.values()];}
-const fields='ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PrezzoTotale,PAGATA,ID_PROGETTO';
+const fields='ID_FT,Numero,Data,Denominazione,Descrizione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO';
 
 async function fetchInvoices(pid){
   if(!client())return null;
@@ -57,7 +57,7 @@ function stateFor(rows){
   const allPaid=paidRows.length===rows.length;const payment=allPaid?(rows.length===1?'Incassata':'Tutte incassate'):(paidRows.length?`${paidRows.length}/${rows.length} incassate`:'Da incassare');
   return{rows,total,paidTotal,openTotal,paidCount:paidRows.length,invoice,invoiceMeta,payment,kind:allPaid?'paid':'open'};
 }
-function fingerprint(pid,rows){return rows===null?`${pid}|read-error`:JSON.stringify([pid,unique(rows).map(row=>[row.ID_FT,row.Numero,row.Data,row.PrezzoTotale,row.PrezzoUnitario,row.PAGATA,row.ID_PROGETTO])]);}
+function fingerprint(pid,rows){return rows===null?`${pid}|read-error`:JSON.stringify([pid,unique(rows).map(row=>[row.ID_FT,row.Numero,row.Data,row.ImportoTotaleDocumento,row.PrezzoTotale,row.PrezzoUnitario,row.ImportoPagamento,row.PAGATA,row.ID_PROGETTO])]);}
 function mount(rows,pid){
   const anchor=host();if(!anchor)return false;const fp=fingerprint(pid,rows);const existing=document.getElementById('kyv-project-finance-summary');if(existing&&fp===lastFingerprint)return true;lastFingerprint=fp;
   let panel=existing;if(!panel){panel=document.createElement('section');panel.id='kyv-project-finance-summary';anchor.insertAdjacentElement('afterend',panel);}
