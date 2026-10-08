@@ -65,6 +65,14 @@ window.KYV_CONFIG = KYV_CONFIG;
     const page=(window.location.pathname.split('/').pop()||'index.html').toLowerCase();
     const producerViews=['progetti.html','scheda_progetto.html','ascolto.html','kyv_calendar.html','index.html',''];
 
+    if(page==='progetti.html'||page==='editor.html'){
+        const sheetControls=document.createElement('script');
+        sheetControls.src='kyv-sheet-controls.js';
+        sheetControls.async=false;
+        sheetControls.dataset.kyvSheetControls='1';
+        document.head.appendChild(sheetControls);
+    }
+
     if(producerViews.includes(page)){
         const invoices=document.createElement('script');
         invoices.src='kyv-project-invoices.js';

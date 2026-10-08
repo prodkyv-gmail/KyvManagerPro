@@ -14,6 +14,7 @@ const releaseDesk = read('kyv-release-desk.js');
 const interestToRelease = read('kyv-interest-to-release.js');
 const versionToPitch = read('kyv-version-to-pitch.js');
 const pitchFollowup = read('kyv-pitch-followup.js');
+const sheetControls = read('kyv-sheet-controls.js');
 const sw = read('sw.js');
 const config = read('config.js');
 
@@ -73,10 +74,27 @@ assert.ok(versionToPitch.includes('observer?.disconnect(),120000'), 'Version →
 assert.ok(pitchFollowup.includes("else if(!document.getElementById('kyv-pitch-followup-project'))renderProjectPanel(id)"), 'Pitch deve evitare il rerender quando il pannello esiste già');
 assert.ok(pitchFollowup.includes('projectObserver?.disconnect(),120000'), 'Pitch deve disconnettere l’observer di bootstrap');
 
+// Foglio dati: filtri per colonna, suggerimenti liberi e REF protetti.
+assert.ok(config.includes("sheetControls.src='kyv-sheet-controls.js'"), 'Progetti e Studio Editor devono caricare i controlli foglio condivisi');
+assert.ok(sheetControls.includes("if(!['progetti.html','editor.html'].includes(page))return"), 'I controlli foglio devono restare confinati a Progetti e Studio Editor');
+assert.ok(sheetControls.includes('projectColumnFilters=new Map()'), 'Progetti deve mantenere filtri per singola colonna');
+assert.ok(sheetControls.includes('editorColumnFilters=new Map()'), 'Studio Editor deve mantenere filtri per singola colonna');
+assert.ok(sheetControls.includes('relationTargets={'), 'I REF devono usare una mappa esplicita, non relazioni indovinate');
+assert.ok(sheetControls.includes("ID_PROGETTO:{table:'PROGETTI'"), 'ID_PROGETTO deve puntare esplicitamente a PROGETTI');
+assert.ok(sheetControls.includes("IDFT:{table:'FATTURE'"), 'IDFT deve puntare esplicitamente a FATTURE');
+assert.ok(sheetControls.includes("Seleziona un riferimento esistente dall’elenco."), 'Un REF manuale inesistente deve essere rifiutato');
+assert.ok(sheetControls.includes('Rimuovere il collegamento esistente da questo record?'), 'La rimozione di un REF esistente deve richiedere conferma esplicita');
+assert.ok(sheetControls.includes('onSort:direction=>{sortDomTable(table,index,direction);markSort(table,index,direction);applyFilters(table,editorColumnFilters);}'), 'Il menu Editor deve rispettare esattamente crescente/decrescente senza toggle ambiguo');
+assert.ok(sheetControls.includes('await safePatch({table,pk,rowId,column,original,next})'), 'La modifica intelligente deve passare dal salvataggio concorrente protetto');
+assert.ok(sheetControls.includes("if(String(live)!==String(original??''))throw new Error"), 'Un valore cambiato altrove deve fermare il salvataggio');
+assert.ok(sheetControls.includes('query.is(column,null):query.eq(column,current[column])'), 'L’update deve essere condizionato al valore originale del campo');
+assert.ok(sheetControls.includes('observer.observe(table,{childList:true,subtree:true})'), 'L’unico observer del foglio deve essere confinato alla tabella Editor');
+assert.doesNotMatch(sheetControls, /observer\.observe\(document\.documentElement/, 'Il foglio non deve introdurre observer globali sul documento');
+
 // PWA: gli asset di sicurezza devono essere nello stesso ciclo cache del deploy.
-assert.match(sw, /kyv-studio-v2-32-integrity-20261008/, 'Il service worker deve ruotare la cache dopo l’hardening di integrità');
-for (const asset of ['kyv-record-editor.js','kyv-project-invoices.js','kyv-project-finance-summary.js','kyv-release-closeout.js','kyv-project-edit-safety.js']) {
+assert.match(sw, /kyv-studio-v2-32-sheet-controls-20261008/, 'Il service worker deve ruotare la cache dopo i controlli foglio');
+for (const asset of ['kyv-record-editor.js','kyv-project-invoices.js','kyv-project-finance-summary.js','kyv-release-closeout.js','kyv-project-edit-safety.js','kyv-sheet-controls.js']) {
   assert.ok(sw.includes(`'./${asset}'`), `${asset} deve essere incluso nell’APP_SHELL`);
 }
 
-console.log('OK: sicurezza interazioni, observer e integrità relazioni verificata.');
+console.log('OK: sicurezza interazioni, observer, fogli e integrità relazioni verificata.');
