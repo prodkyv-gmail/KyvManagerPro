@@ -10,16 +10,24 @@ const invoices = read('kyv-project-invoices.js');
 const finance = read('kyv-project-finance-summary.js');
 const closeout = read('kyv-release-closeout.js');
 const quickEditSafety = read('kyv-project-edit-safety.js');
+const releaseDesk = read('kyv-release-desk.js');
+const interestToRelease = read('kyv-interest-to-release.js');
+const versionToPitch = read('kyv-version-to-pitch.js');
+const pitchFollowup = read('kyv-pitch-followup.js');
 const sw = read('sw.js');
 const config = read('config.js');
 
-// Editor condiviso: niente riscrittura dell'intero record, niente race fra aperture, relazioni confermate.
+// Editor condiviso: patch-only, anti-race, relazioni confermate e concorrenza ottimistica.
 assert.match(editor, /config\.fields\.filter\(key => Object\.prototype\.hasOwnProperty\.call\(row, key\)\)/, 'I record esistenti devono esporre solo campi esplicitamente configurati');
 assert.match(editor, /if \(isExisting && comparableField\(key, active\.originalRow\?\.\[key\]\) === comparableField\(key, nextValue\)\) return;/, 'L’editor deve inviare solo campi realmente modificati');
 assert.match(editor, /openToken/, 'Le aperture asincrone dell’editor devono avere un token anti-race');
 assert.match(editor, /saving/, 'L’editor deve impedire submit concorrenti');
 assert.match(editor, /Stai modificando una relazione del record/, 'Le modifiche alle relazioni devono richiedere conferma esplicita');
 assert.match(editor, /kyvRecordEditorOwner/, 'Più istanze dell’editor non devono contendersi lo stesso modal senza ownership');
+assert.ok(editor.includes('query = guardOriginal(query, key, active.originalRow?.[key])'), 'Ogni campo modificato deve essere protetto contro sovrascritture concorrenti');
+assert.ok(editor.includes('Il record è cambiato da un’altra operazione'), 'Un conflitto concorrente deve fermare il salvataggio');
+assert.ok(editor.includes('collegamento esistente'), 'Un ID_PROGETTO fuori dalla lista caricata deve restare rappresentato nel select');
+assert.ok(editor.includes("if (!isExisting && nextValue === null) return;"), 'I nuovi record non devono scrivere null inutili al posto dei default DB');
 
 // Scheda progetto legacy: il submit completo viene intercettato e trasformato in patch-only.
 assert.match(config, /projectEditSafety\.src='kyv-project-edit-safety\.js'/, 'Il guard del quick edit deve essere caricato nella Scheda progetto');
@@ -28,19 +36,24 @@ assert.match(quickEditSafety, /if\(compare\(key,snapshot\.values\[key\]\)===comp
 assert.match(quickEditSafety, /pid!==snapshot\.projectId/, 'Il quick edit deve annullarsi se il progetto cambia durante la modifica');
 assert.match(quickEditSafety, /relationFields=new Set\(\['IDFT'\]\)/, 'Il collegamento fattura legacy deve essere protetto');
 
-// Fatture: richieste fuori ordine e letture fallite non possono diventare falsi “nessuna fattura”.
+// Fatture: richieste fuori ordine, errori e relazioni moderne/legacy.
 assert.match(invoices, /contextRefreshToken/, 'Le letture fatture devono scartare risposte asincrone obsolete');
 assert.match(invoices, /token!==contextRefreshToken\|\|contextProjectId!==projectId/, 'Una risposta di un progetto precedente non deve aggiornare il progetto corrente');
 assert.match(invoices, /return null;/, 'Un errore di lettura fatture deve essere distinto da un risultato vuoto');
 assert.match(invoices, /Fatture non disponibili/, 'L’interfaccia deve mostrare esplicitamente gli errori di lettura fatture');
 assert.match(invoices, /Collegamento al progetto non impostato/, 'La creazione fattura deve fallire chiusa se ID_PROGETTO non viene precompilato');
 assert.match(invoices, /kyv:invoice-updated/, 'Il salvataggio fattura deve notificare gli altri moduli senza chiamate circolari');
+assert.ok(invoices.includes('return uniqueInvoices([...direct,...legacy])'), 'Le fatture moderne e legacy devono essere unite, non sostituirsi a vicenda');
+assert.ok(invoices.includes('return uniqueInvoices([...direct,...legacyMatches])'), 'La lista Progetti deve includere sia ID_PROGETTO sia IDFT/FT');
+assert.ok(invoices.includes("projectInput.disabled=true"), 'Durante una nuova fattura contestuale ID_PROGETTO deve restare bloccato');
+assert.ok(invoices.includes('listCoverageLimited'), 'I limiti di lettura non devono diventare falsi “nessuna fattura”');
 
-// Riepilogo economico: nessun richiamo circolare al modulo fatture e nessun falso vuoto su errore.
+// Riepilogo economico: nessun richiamo circolare, nessun falso vuoto e unione delle relazioni.
 assert.doesNotMatch(finance, /KYV_PROJECT_INVOICES\?\.refresh/, 'Il riepilogo economico non deve richiamare direttamente il refresh del modulo fatture');
 assert.match(finance, /kyv:invoice-updated/, 'Il riepilogo economico deve aggiornarsi tramite evento');
 assert.match(finance, /rows===null/, 'Il riepilogo deve distinguere errore di lettura da assenza di fatture');
 assert.match(finance, /Stato non disponibile/, 'Il riepilogo deve rendere visibile l’errore senza suggerire dati assenti');
+assert.ok(finance.includes('return unique([...(direct.data||[]),...legacy])'), 'I totali economici devono includere fatture moderne e legacy');
 
 // Release: la chiusura non deve distruggere note o sovrascrivere modifiche concorrenti.
 assert.match(closeout, /update\(\{STATO:'Pubblicato'\}\)/, 'La chiusura release deve aggiornare soltanto STATO');
@@ -52,10 +65,18 @@ assert.ok(closeout.includes('if(text(data.SVILUPPO)!==text(p.SVILUPPO))'), 'La c
 assert.ok(closeout.includes('function doneProject(p){return /pubblicat|chius|completat|finita/i.test(text(p?.STATO));}'), 'Lo stato di chiusura deve dipendere da STATO, non da testo libero in SVILUPPO');
 assert.doesNotMatch(closeout, /observer\.observe\(root,\{childList:true,subtree:true,characterData:true\}\)/, 'Il closeout non deve osservare tutto il sottoalbero e autoalimentarsi');
 
+// Observer sensibili: ogni modulo che usa Lucide dentro un observer deve avere un guard anti-riscrittura.
+assert.ok(releaseDesk.includes('if(fp===lastFingerprint&&desk)return true'), 'Release Desk deve fermarsi prima di riscrivere il DOM se i dati non sono cambiati');
+assert.ok(interestToRelease.includes('if(changed&&window.lucide)'), 'Interested → Release deve chiamare Lucide solo dopo vere modifiche DOM');
+assert.ok(versionToPitch.includes('if(changed&&window.lucide)'), 'Version → Pitch deve chiamare Lucide solo dopo vere modifiche DOM');
+assert.ok(versionToPitch.includes('observer?.disconnect(),120000'), 'Version → Pitch deve disconnettere l’observer dopo il periodo utile');
+assert.ok(pitchFollowup.includes("else if(!document.getElementById('kyv-pitch-followup-project'))renderProjectPanel(id)"), 'Pitch deve evitare il rerender quando il pannello esiste già');
+assert.ok(pitchFollowup.includes('projectObserver?.disconnect(),120000'), 'Pitch deve disconnettere l’observer di bootstrap');
+
 // PWA: gli asset di sicurezza devono essere nello stesso ciclo cache del deploy.
-assert.match(sw, /kyv-studio-v2-32-safety-20261008/, 'Il service worker deve usare una cache nuova dopo l’hardening');
+assert.match(sw, /kyv-studio-v2-32-integrity-20261008/, 'Il service worker deve ruotare la cache dopo l’hardening di integrità');
 for (const asset of ['kyv-record-editor.js','kyv-project-invoices.js','kyv-project-finance-summary.js','kyv-release-closeout.js','kyv-project-edit-safety.js']) {
   assert.ok(sw.includes(`'./${asset}'`), `${asset} deve essere incluso nell’APP_SHELL`);
 }
 
-console.log('OK: sicurezza interazioni e integrità relazioni verificata.');
+console.log('OK: sicurezza interazioni, observer e integrità relazioni verificata.');
