@@ -25,6 +25,7 @@
     <script src="kyv-toast.js"></script>
     <script src="kyv-helpers.js"></script>
     <script src="kyv-data-quality.js"></script>
+    <script src="kyv-record-editor.js"></script>
     <script src="kyv-help.js"></script>
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
@@ -35,20 +36,22 @@
     <link rel="stylesheet" href="kyv-theme.css">
     <style>
         body{background:#0f111a;color:#f8fafc}.quality-card{background:#151923;border:1px solid #232838;border-radius:1.25rem}.quality-soft{background:rgba(15,17,26,.75);border:1px solid #232838;border-radius:1rem}.quality-row{transition:.15s ease}.quality-row:hover{border-color:rgba(99,102,241,.45);transform:translateY(-1px)}
+        .quality-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem}.quality-action{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding:.52rem .68rem;border-radius:.72rem;border:1px solid rgba(99,102,241,.28);background:rgba(99,102,241,.10);color:#e0e7ff;font-size:.68rem;font-weight:900;white-space:nowrap}.quality-action:hover{background:rgba(99,102,241,.18);color:#fff}.quality-action.secondary{border-color:rgba(148,163,184,.15);background:rgba(148,163,184,.055);color:#cbd5e1}.quality-action.warn{border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.08);color:#fde68a}.quality-compare{display:flex;flex-wrap:wrap;gap:.35rem}.quality-compare a{display:inline-flex;align-items:center;gap:.25rem;padding:.4rem .55rem;border-radius:.65rem;border:1px solid rgba(244,63,94,.20);background:rgba(244,63,94,.06);color:#fecdd3;font-size:.64rem;font-weight:850}.quality-note{padding:.7rem .8rem;border-radius:.8rem;border:1px solid rgba(56,189,248,.14);background:rgba(56,189,248,.05);color:#bae6fd;font-size:.68rem;line-height:1.45}
         ::-webkit-scrollbar{width:14px;height:14px}::-webkit-scrollbar-track{background:rgba(255,255,255,.02)}::-webkit-scrollbar-thumb{background:#4b5563;border-radius:8px;border:4px solid #0f111a}
+        @media(max-width:640px){.quality-row{align-items:stretch}.quality-actions,.quality-action{width:100%}.quality-compare a{flex:1}}
     </style>
 </head>
 <body class="flex h-screen overflow-hidden antialiased text-sm">
     <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full bg-kyv-bg">
-        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 relative z-10">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8 relative z-10 custom-scrollbar">
             <header class="flex flex-col xl:flex-row justify-between xl:items-end gap-4 mb-6 border-b border-kyv-border/50 pb-6">
                 <div class="flex items-center min-w-0">
                     <button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
                     <div class="min-w-0">
-                        <p class="text-xs uppercase tracking-[.18em] text-cyan-300 font-black">Controllo archivio · sola lettura</p>
+                        <p class="text-xs uppercase tracking-[.18em] text-cyan-300 font-black">Controllo archivio · correzione assistita</p>
                         <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Qualità <span class="text-cyan-400">Dati</span></h2>
-                        <p class="text-kyv-text mt-1 text-xs sm:text-sm max-w-4xl">Trova record incompleti o possibili duplicati. Nessun dato viene corretto automaticamente.</p>
+                        <p class="text-kyv-text mt-1 text-xs sm:text-sm max-w-4xl">Trova record incompleti o possibili duplicati e apri soltanto il campo da verificare. Nessun valore viene inventato, fuso o corretto automaticamente.</p>
                     </div>
                 </div>
                 <button id="refresh-quality" type="button" class="px-4 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs disabled:opacity-50">
@@ -63,8 +66,8 @@
                 <div id="quality-stats" class="grid grid-cols-2 lg:grid-cols-5 gap-3"></div>
                 <div id="quality-groups" class="space-y-4"></div>
                 <div class="quality-card p-5 text-xs text-kyv-text leading-relaxed">
-                    <h3 class="text-white font-black mb-2 flex items-center"><i data-lucide="shield-check" class="w-4 h-4 mr-2 text-emerald-300"></i>Controllo non distruttivo</h3>
-                    <p>La pagina esegue solo letture mirate su PROGETTI, AUDIO_VERSIONI, DROPBOX_AUDIO_FILES e DOCUMENTI_PROGETTO. I documenti senza link sono segnalati come verifica informativa perché alcune note interne possono essere valide anche senza URL.</p>
+                    <h3 class="text-white font-black mb-2 flex items-center"><i data-lucide="shield-check" class="w-4 h-4 mr-2 text-emerald-300"></i>Correzione controllata</h3>
+                    <p>La pagina legge PROGETTI, AUDIO_VERSIONI, DROPBOX_AUDIO_FILES e DOCUMENTI_PROGETTO. “Apri e correggi” mostra solo il campo segnalato; il salvataggio avviene esclusivamente dopo una tua conferma manuale. I duplicati vengono soltanto affiancati per il confronto e non vengono mai uniti automaticamente.</p>
                 </div>
             </section>
         </section>
@@ -84,6 +87,12 @@
             medium:{ label:'Media', tone:'border-amber-500/30 bg-amber-600/10 text-amber-200', icon:'triangle-alert' },
             low:{ label:'Verifica', tone:'border-sky-500/30 bg-sky-600/10 text-sky-200', icon:'info' }
         };
+        const fieldLabels = {
+            TITOLO:'Titolo progetto', ARTISTA:'Artista progetto', CONTENT_HASH:'Hash SHA-256', Hash_SHA256:'Hash SHA-256', Link_Drive:'Link documento'
+        };
+        let qualityDb = null;
+        let qualityEditor = null;
+        let issueIndex = new Map();
 
         async function readRows(db, table, columns, orderColumn, optional=false){
             let query = db.from(table).select(columns).limit(limits[table]);
@@ -94,16 +103,78 @@
             return data || [];
         }
 
-        function projectLink(item){
+        function ensureEditor(db){
+            if(qualityEditor) return qualityEditor;
+            qualityEditor = KYV_RECORD_EDITOR.create({
+                client: db,
+                tables: {
+                    PROGETTI:{ pk:'ID', label:'Progetto', fields:['TITOLO','ARTISTA'] },
+                    AUDIO_VERSIONI:{ pk:'ID_VERSIONE', label:'Versione audio', fields:['CONTENT_HASH'] },
+                    DROPBOX_AUDIO_FILES:{ pk:'ID_FILE', label:'Audio Dropbox', fields:['Hash_SHA256'] },
+                    DOCUMENTI_PROGETTO:{ pk:'ID_DOCUMENTO', label:'Documento progetto', fields:['Link_Drive'] }
+                },
+                onSaved: async ()=>loadQuality()
+            });
+            return qualityEditor;
+        }
+
+        function projectLink(item, label='Apri scheda'){
             return item.projectId
-                ? `<a href="scheda_progetto.html?id=${encodeURIComponent(item.projectId)}" class="inline-flex items-center px-3 py-2 rounded-lg border border-indigo-500/25 bg-indigo-500/10 text-indigo-200 hover:text-white text-xs font-black"><i data-lucide="panel-top-open" class="w-3.5 h-3.5 mr-1.5"></i>Apri scheda</a>`
+                ? `<a href="scheda_progetto.html?id=${encodeURIComponent(item.projectId)}" class="quality-action secondary"><i data-lucide="panel-top-open" class="w-3.5 h-3.5"></i>${H(label)}</a>`
                 : '';
         }
 
+        function compareLinks(item){
+            const ids = Array.isArray(item.projectIds) ? item.projectIds : [];
+            if(!ids.length) return projectLink(item);
+            return `<div class="quality-compare">${ids.map(id=>`<a href="scheda_progetto.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener"><i data-lucide="panel-top-open" class="w-3 h-3"></i>Progetto #${H(id)}</a>`).join('')}</div>`;
+        }
+
+        function issueKey(groupKey, item){ return `${groupKey}:${item.id}`; }
+
+        function actionMarkup(group, item){
+            if(group.key === 'duplicate-project'){
+                return `<div class="quality-actions"><span class="quality-note">Confronta i record e decidi manualmente quale mantenere.</span>${compareLinks(item)}</div>`;
+            }
+            const key = issueKey(group.key, item);
+            const edit = item.editTable && item.editId && item.editField
+                ? `<button type="button" class="quality-action ${group.key==='missing-audio-hash'?'warn':''}" data-quality-edit="${H(key)}"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>${group.key==='missing-audio-hash'?'Verifica e compila':'Apri e correggi'}</button>`
+                : '';
+            return `<div class="quality-actions">${edit}${projectLink(item)}</div>`;
+        }
+
+        async function openIssue(item){
+            if(!item?.editTable || !item?.editId || !item?.editField || !qualityDb) return;
+            const editor = ensureEditor(qualityDb);
+            const label = fieldLabels[item.editField] || item.editField;
+            let subtitle = `Correggi soltanto “${label}”. Nessun altro campo verrà modificato.`;
+            if(item.editField === 'CONTENT_HASH' || item.editField === 'Hash_SHA256') subtitle = 'Inserisci soltanto un hash SHA-256 già verificato sul file originale. Non viene calcolato né inventato automaticamente.';
+            if(item.editField === 'Link_Drive') subtitle = 'Inserisci il link solo se il documento deve realmente avere un file associato; una nota interna può restare senza URL.';
+            await editor.open(item.editTable, item.editId, {
+                fields:[item.editField],
+                title:`Correggi · ${label}`,
+                subtitle
+            });
+        }
+
+        function wireActions(){
+            document.querySelectorAll('[data-quality-edit]').forEach(button=>button.addEventListener('click', async ()=>{
+                const item = issueIndex.get(button.dataset.qualityEdit);
+                if(!item) return;
+                button.disabled = true;
+                try{ await openIssue(item); }
+                catch(error){ console.error(error); if(window.KYV_TOAST) KYV_TOAST.show('Impossibile aprire il record da correggere.','error'); }
+                finally{ button.disabled = false; }
+            }));
+        }
+
         function render(result, loaded){
+            issueIndex = new Map();
+            result.groups.forEach(group=>group.items.forEach(item=>issueIndex.set(issueKey(group.key,item), item)));
+
             const status = document.getElementById('quality-status');
             status.className = 'quality-card p-5 border-emerald-500/20 bg-emerald-500/5';
-            status.innerHTML = `<div class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 mt-0.5 text-emerald-300 shrink-0"></i><div><p class="text-white font-black">Controllo completato</p><p class="text-xs text-kyv-text mt-1">${result.totalIssues} elementi da verificare. Le fonti sono state lette senza modificare record.</p></div></div>`;
+            status.innerHTML = `<div class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 mt-0.5 text-emerald-300 shrink-0"></i><div><p class="text-white font-black">Controllo completato</p><p class="text-xs text-kyv-text mt-1">${result.totalIssues} elementi da verificare. Le correzioni restano manuali e tracciabili record per record.</p></div></div>`;
 
             const cards = [
                 ['Progetti', result.stats.projects, 'music-2', 'text-indigo-300'],
@@ -117,7 +188,7 @@
             document.getElementById('quality-groups').innerHTML = result.groups.map((group, index) => {
                 const cfg = severity[group.severity];
                 const rows = group.items.length
-                    ? group.items.map(item => `<article class="quality-soft quality-row p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"><div class="min-w-0"><p class="font-black text-white break-words">${H(item.title)}</p><p class="text-xs text-kyv-text mt-1 break-words">${H(item.detail)}</p>${item.source ? `<p class="text-[10px] uppercase tracking-wider text-slate-500 font-black mt-2">${H(item.source)}</p>` : ''}</div>${projectLink(item)}</article>`).join('')
+                    ? group.items.map(item => `<article class="quality-soft quality-row p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3"><div class="min-w-0"><p class="font-black text-white break-words">${H(item.title)}</p><p class="text-xs text-kyv-text mt-1 break-words">${H(item.detail)}</p>${item.source ? `<p class="text-[10px] uppercase tracking-wider text-slate-500 font-black mt-2">${H(item.source)}</p>` : ''}</div>${actionMarkup(group,item)}</article>`).join('')
                     : '<div class="quality-soft p-5 text-emerald-200 text-sm font-bold">Nessuna anomalia trovata.</div>';
                 return `<details class="quality-card overflow-hidden" ${index < 3 && group.items.length ? 'open' : ''}><summary class="cursor-pointer list-none p-5 flex items-start justify-between gap-4"><div><div class="flex flex-wrap items-center gap-2"><h3 class="text-white font-black text-lg">${H(group.label)}</h3><span class="inline-flex items-center px-2 py-1 rounded-full border text-[10px] font-black ${cfg.tone}"><i data-lucide="${cfg.icon}" class="w-3 h-3 mr-1"></i>${cfg.label}</span></div><p class="text-xs text-kyv-text mt-2">${H(group.description)}</p></div><span class="text-2xl font-black text-white">${group.items.length}</span></summary><div class="px-5 pb-5 space-y-3">${rows}</div></details>`;
             }).join('');
@@ -127,6 +198,7 @@
                 status.className = 'quality-card p-5 border-amber-500/20 bg-amber-500/5';
                 status.innerHTML += `<p class="text-xs text-amber-200 mt-3">Limite di lettura raggiunto per ${H(clipped.join(', '))}: il controllo potrebbe non includere i record più vecchi.</p>`;
             }
+            wireActions();
             if(window.lucide) lucide.createIcons();
         }
 
@@ -142,12 +214,13 @@
             try{
                 const session = await KYV_AUTH.requireAuth();
                 if(!session) return;
-                const db = KYV.createSupabaseClient();
+                qualityDb = qualityDb || KYV.createSupabaseClient();
+                ensureEditor(qualityDb);
                 const [projects, audioVersions, dropboxAudio, documents] = await Promise.all([
-                    readRows(db, 'PROGETTI', 'ID,TITOLO,ARTISTA,Nome_Vero_Artista,STATO', 'ID'),
-                    readRows(db, 'AUDIO_VERSIONI', 'ID_VERSIONE,ID_PROGETTO,NOME_FILE,TITOLO,ARTISTA,CONTENT_HASH,LINK_FILE', 'ID_VERSIONE', true),
-                    readRows(db, 'DROPBOX_AUDIO_FILES', 'ID_FILE,ID_PROGETTO,Nome_File,Titolo,Artista,Hash_SHA256,Link_Dropbox', 'ID_FILE'),
-                    readRows(db, 'DOCUMENTI_PROGETTO', 'ID_DOCUMENTO,ID_PROGETTO,Tipo_Documento,Titolo_Documento,Link_Drive,Fonte', 'ID_DOCUMENTO')
+                    readRows(qualityDb, 'PROGETTI', 'ID,TITOLO,ARTISTA,Nome_Vero_Artista,STATO', 'ID'),
+                    readRows(qualityDb, 'AUDIO_VERSIONI', 'ID_VERSIONE,ID_PROGETTO,NOME_FILE,TITOLO,ARTISTA,CONTENT_HASH,LINK_FILE', 'ID_VERSIONE', true),
+                    readRows(qualityDb, 'DROPBOX_AUDIO_FILES', 'ID_FILE,ID_PROGETTO,Nome_File,Titolo,Artista,Hash_SHA256,Link_Dropbox', 'ID_FILE'),
+                    readRows(qualityDb, 'DOCUMENTI_PROGETTO', 'ID_DOCUMENTO,ID_PROGETTO,Tipo_Documento,Titolo_Documento,Link_Drive,Fonte', 'ID_DOCUMENTO')
                 ]);
                 const loaded = { PROGETTI:projects, AUDIO_VERSIONI:audioVersions, DROPBOX_AUDIO_FILES:dropboxAudio, DOCUMENTI_PROGETTO:documents };
                 render(KYV_DATA_QUALITY.audit({ projects, audioVersions, dropboxAudio, documents }), loaded);
