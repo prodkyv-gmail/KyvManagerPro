@@ -39,12 +39,17 @@ function injectStyles(){if(document.getElementById('kyv-release-closeout-style')
 
 function openField(check){const edit=document.querySelector('#kyv-release-desk [data-release-edit]');if(edit)edit.click();else if(typeof window.openQuickEdit==='function')window.openQuickEdit();setTimeout(()=>{const modal=document.getElementById('quick-edit-modal');const candidates=(check?.fields||[]).map(field=>modal?.querySelector(`[data-key="${CSS.escape(field)}"]`)).filter(Boolean);const target=candidates.find(input=>!text(input.value))||candidates[0];target?.focus();target?.scrollIntoView({behavior:'smooth',block:'center'});},100);}
 function goAdmin(){if(typeof window.setTab==='function')window.setTab('amministrazione');setTimeout(()=>document.getElementById('tab-admin')?.scrollIntoView({behavior:'smooth',block:'start'}),60);}
+function guardSnapshot(query,key,value){return value===null||value===undefined?query.is(key,null):query.eq(key,value);}
 async function closeProject(view,button){
   if(busy)return;const p=view?.p||{};if(!p.ID||!client())return;if(!window.confirm('Segnare questo progetto come pubblicato e chiuso? Le note di sviluppo resteranno invariate.'))return;
   busy=true;if(button){button.disabled=true;button.textContent='Chiusura…';}
   try{
-    const {data,error}=await client().from('PROGETTI').update({STATO:'Pubblicato'}).eq('ID',p.ID).select('ID,STATO,SVILUPPO').single();if(error)throw error;
-    if(text(data?.SVILUPPO)!==text(p.SVILUPPO))throw new Error('Verifica integrità fallita: SVILUPPO è cambiato durante la chiusura.');
+    let query=client().from('PROGETTI').update({STATO:'Pubblicato'}).eq('ID',p.ID);
+    query=guardSnapshot(query,'STATO',p.STATO);
+    query=guardSnapshot(query,'SVILUPPO',p.SVILUPPO);
+    const {data,error}=await query.select('ID,STATO,SVILUPPO').maybeSingle();if(error)throw error;
+    if(!data)throw new Error('Il progetto è stato modificato da un’altra operazione. Aggiorna la scheda e riprova: nessun dato è stato sovrascritto.');
+    if(text(data.SVILUPPO)!==text(p.SVILUPPO))throw new Error('Verifica integrità fallita: SVILUPPO è cambiato durante la chiusura.');
     if(window.KYV_TOAST)KYV_TOAST.show('Progetto segnato come pubblicato. Note di sviluppo preservate.','success');else if(window.KYV?.showToast)KYV.showToast('Progetto segnato come pubblicato. Note di sviluppo preservate.','success');
     lastFingerprint='';window.dispatchEvent(new CustomEvent('kyv:release-closed',{detail:{projectId:p.ID}}));if(typeof window.refreshAll==='function')await window.refreshAll();
   }catch(error){console.error('[KYV Release Closeout]',error);if(window.KYV_TOAST)KYV_TOAST.show(error.message||'Chiusura progetto non riuscita.','error');else if(window.KYV?.showToast)KYV.showToast(error.message||'Chiusura progetto non riuscita.','error');}
