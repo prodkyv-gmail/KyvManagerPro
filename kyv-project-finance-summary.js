@@ -7,6 +7,7 @@ let db=null;
 let refreshTimer=null;
 let refreshToken=0;
 let heroObserver=null;
+let lastFingerprint='';
 
 function text(v){return String(v??'').trim();}
 function H(v){
@@ -81,9 +82,11 @@ function stateFor(rows){
   const payment=allPaid?(rows.length===1?'Incassata':'Tutte incassate'):(paidRows.length?`${paidRows.length}/${rows.length} incassate`:'Da incassare');
   return{rows,total,paidTotal,openTotal,paidCount:paidRows.length,invoice,invoiceMeta,payment,kind:allPaid?'paid':'open'};
 }
+function fingerprint(pid,rows){return JSON.stringify([pid,unique(rows).map(row=>[row.ID_FT,row.Numero,row.Data,row.PrezzoUnitario,row.PAGATA,row.ID_PROGETTO])]);}
 function mount(rows,pid){
   const anchor=host();if(!anchor)return false;
-  const data=stateFor(rows);let panel=document.getElementById('kyv-project-finance-summary');
+  const fp=fingerprint(pid,rows);const existing=document.getElementById('kyv-project-finance-summary');if(existing&&fp===lastFingerprint)return true;lastFingerprint=fp;
+  const data=stateFor(rows);let panel=existing;
   if(!panel){panel=document.createElement('section');panel.id='kyv-project-finance-summary';anchor.insertAdjacentElement('afterend',panel);}
   const paymentMeta=data.kind==='none'?'Registra la fattura quando viene emessa.':data.kind==='paid'?`Incassato ${euro(data.paidTotal)}`:`Residuo da incassare ${euro(data.openTotal)}`;
   panel.innerHTML=`
@@ -102,15 +105,14 @@ async function refresh(){
   clearTimeout(refreshTimer);
   const pid=projectId();if(!pid)return;
   const token=++refreshToken;
-  const rows=await fetchInvoices(pid);if(token!==refreshToken)return;
+  const rows=await fetchInvoices(pid);if(token!==refreshToken||pid!==projectId())return;
   mount(rows,pid);
-  if(window.KYV_PROJECT_INVOICES?.refresh)KYV_PROJECT_INVOICES.refresh(pid);
 }
 function schedule(delay=80){clearTimeout(refreshTimer);refreshTimer=setTimeout(refresh,delay);}
 function watch(){
   const target=document.getElementById('hero-badges')||document.getElementById('hero-title');
   if(!target||heroObserver)return false;
-  heroObserver=new MutationObserver(()=>schedule(60));
+  heroObserver=new MutationObserver(()=>{lastFingerprint='';schedule(60);});
   heroObserver.observe(target,{childList:true,subtree:true,characterData:true});
   return true;
 }
@@ -118,8 +120,9 @@ function boot(){
   ensureStyle();
   const timer=setInterval(()=>{if(watch()){clearInterval(timer);schedule(0);}},100);
   setTimeout(()=>{clearInterval(timer);watch();schedule(0);},5000);
-  window.addEventListener('kyv:project-v2-ready',()=>schedule(40));
+  window.addEventListener('kyv:project-v2-ready',()=>{lastFingerprint='';schedule(40);});
   window.addEventListener('kyv:pitch-updated',()=>schedule(80));
+  window.addEventListener('beforeunload',()=>heroObserver?.disconnect(),{once:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
