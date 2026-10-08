@@ -14,14 +14,14 @@ function H(v){if(window.KYV&&typeof KYV.safeHtml==='function')return KYV.safeHtm
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
 function paid(row){if(window.KYV&&typeof KYV.isPaid==='function')return KYV.isPaid(row?.PAGATA)||KYV.isPaid(row?.PAGAMENTO);return /^(SI|SÌ|YES|PAGAT|INCASSAT)/i.test(text(row?.PAGATA||row?.PAGAMENTO));}
 function numberValue(value){if(window.KYV&&typeof KYV.parseNumber==='function')return KYV.parseNumber(value)||0;if(typeof value==='number')return Number.isFinite(value)?value:0;const n=Number(String(value??'').replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0;}
-function amount(row){return numberValue(row?.ImportoTotaleDocumento??row?.ImportoPagamento??row?.PrezzoTotale??row?.PrezzoUnitario??0);}
+function amount(row){return numberValue(row?.PrezzoTotale??row?.PrezzoUnitario??0);}
 function euro(value){return window.KYV?.formatEuro?KYV.formatEuro(value):new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(value)||0);}
 function date(value){return value?(window.KYV?.formatDate?KYV.formatDate(value,'-'):new Date(value).toLocaleDateString('it-IT')):'-';}
 function projectId(){const badge=text(document.getElementById('hero-badges')?.textContent).match(/\bID\s+(\d+)\b/i)?.[1];if(badge)return badge;return text(new URLSearchParams(location.search).get('id'));}
 function projectMeta(){return{title:text(document.getElementById('hero-title')?.textContent),artist:text(document.getElementById('hero-artist')?.textContent)};}
 function key(row){return text(row?.ID_FT||row?.Numero);}
 function unique(rows){const map=new Map();(rows||[]).forEach((row,index)=>map.set(key(row)||`row-${index}`,row));return[...map.values()];}
-const fields='ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,ID_PROGETTO';
+const fields='ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PrezzoTotale,PAGATA,ID_PROGETTO';
 
 async function fetchInvoices(pid){
   if(!client())return null;
@@ -52,20 +52,20 @@ function stateFor(rows){
   rows=unique(rows).sort((a,b)=>new Date(b.Data||0)-new Date(a.Data||0));
   if(!rows.length)return{rows,total:0,paidTotal:0,openTotal:0,paidCount:0,invoice:'Non emessa',invoiceMeta:'Nessuna fattura collegata al progetto',payment:'Da emettere',kind:'none'};
   const total=rows.reduce((s,row)=>s+amount(row),0);const paidRows=rows.filter(paid);const paidTotal=paidRows.reduce((s,row)=>s+amount(row),0);const openTotal=Math.max(0,total-paidTotal);const latest=rows[0];
-  const invoice=rows.length===1?`N° ${text(latest.Numero)||text(latest.ID_FT)||'—'}`:`${rows.length} fatture`;
-  const invoiceMeta=rows.length===1?`${date(latest.Data)} · ${euro(amount(latest))}`:`Totale ${euro(total)} · ultima N° ${text(latest.Numero)||text(latest.ID_FT)||'—'} del ${date(latest.Data)}`;
+  const invoice=rows.length===1?`Fattura ${text(latest.Numero)||text(latest.ID_FT)||'—'}`:`${rows.length} fatture`;
+  const invoiceMeta=rows.length===1?`${date(latest.Data)} · ${euro(amount(latest))}`:`Totale ${euro(total)} · ultima ${text(latest.Numero)||text(latest.ID_FT)||'—'} del ${date(latest.Data)}`;
   const allPaid=paidRows.length===rows.length;const payment=allPaid?(rows.length===1?'Incassata':'Tutte incassate'):(paidRows.length?`${paidRows.length}/${rows.length} incassate`:'Da incassare');
   return{rows,total,paidTotal,openTotal,paidCount:paidRows.length,invoice,invoiceMeta,payment,kind:allPaid?'paid':'open'};
 }
-function fingerprint(pid,rows){return rows===null?`${pid}|read-error`:JSON.stringify([pid,unique(rows).map(row=>[row.ID_FT,row.Numero,row.Data,row.PrezzoUnitario,row.PAGATA,row.ID_PROGETTO])]);}
+function fingerprint(pid,rows){return rows===null?`${pid}|read-error`:JSON.stringify([pid,unique(rows).map(row=>[row.ID_FT,row.Numero,row.Data,row.PrezzoTotale,row.PrezzoUnitario,row.PAGATA,row.ID_PROGETTO])]);}
 function mount(rows,pid){
   const anchor=host();if(!anchor)return false;const fp=fingerprint(pid,rows);const existing=document.getElementById('kyv-project-finance-summary');if(existing&&fp===lastFingerprint)return true;lastFingerprint=fp;
   let panel=existing;if(!panel){panel=document.createElement('section');panel.id='kyv-project-finance-summary';anchor.insertAdjacentElement('afterend',panel);}
   if(rows===null){
-    panel.innerHTML='<div class="kyv-finance-block"><span class="kyv-finance-label">Fatture</span><strong class="kyv-finance-value">Stato non disponibile</strong><span class="kyv-finance-meta">La lettura delle fatture non è riuscita. Non viene dedotto che la fattura sia assente.</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-error">⚠ Da verificare</span><span class="kyv-finance-meta">Riprova l’aggiornamento prima di registrare nuovi documenti.</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Amministrazione</button></div>';
+    panel.innerHTML='<div class="kyv-finance-block"><span class="kyv-finance-label">Fattura</span><strong class="kyv-finance-value">Stato non disponibile</strong><span class="kyv-finance-meta">La lettura delle fatture non è riuscita. Non viene dedotto che la fattura sia assente.</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-error">⚠ Da verificare</span><span class="kyv-finance-meta">Riprova l’aggiornamento prima di registrare nuovi documenti.</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Amministrazione</button></div>';
   }else{
-    const data=stateFor(rows);const paymentMeta=data.kind==='none'?'Registra la fattura quando viene emessa.':data.kind==='paid'?`Incassato ${euro(data.paidTotal)}`:`Residuo da incassare ${euro(data.openTotal)}`;
-    panel.innerHTML=`<div class="kyv-finance-block"><span class="kyv-finance-label">Fattura emessa</span><strong class="kyv-finance-value">${H(data.invoice)}</strong><span class="kyv-finance-meta">${H(data.invoiceMeta)}</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-${data.kind}">${data.kind==='paid'?'✓':data.kind==='open'?'●':'○'} ${H(data.payment)}</span><span class="kyv-finance-meta">${H(paymentMeta)}</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Amministrazione</button><button type="button" class="kyv-finance-btn secondary" data-kyv-finance-new>＋ Registra fattura</button></div>`;
+    const data=stateFor(rows);const paymentMeta=data.kind==='none'?'Quando la emetti, registrala direttamente da qui.':data.kind==='paid'?`Incassato ${euro(data.paidTotal)}`:`Residuo da incassare ${euro(data.openTotal)}`;
+    panel.innerHTML=`<div class="kyv-finance-block"><span class="kyv-finance-label">Fattura</span><strong class="kyv-finance-value">${H(data.invoice)}</strong><span class="kyv-finance-meta">${H(data.invoiceMeta)}</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-${data.kind}">${data.kind==='paid'?'✓':data.kind==='open'?'●':'○'} ${H(data.payment)}</span><span class="kyv-finance-meta">${H(paymentMeta)}</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Apri amministrazione</button><button type="button" class="kyv-finance-btn secondary" data-kyv-finance-new>＋ Registra fattura</button></div>`;
   }
   panel.querySelector('[data-kyv-finance-admin]')?.addEventListener('click',()=>{if(typeof window.setTab==='function')window.setTab('amministrazione');setTimeout(()=>document.getElementById('tab-admin')?.scrollIntoView({behavior:'smooth',block:'start'}),60);});
   panel.querySelector('[data-kyv-finance-new]')?.addEventListener('click',()=>{const meta=projectMeta();if(window.KYV_PROJECT_INVOICES?.openNew)KYV_PROJECT_INVOICES.openNew(pid,meta.title,meta.artist);else location.href=`scheda_progetto.html?id=${encodeURIComponent(pid)}&tab=amministrazione&newInvoice=1`;});
