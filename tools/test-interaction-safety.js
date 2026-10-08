@@ -42,11 +42,14 @@ assert.match(finance, /kyv:invoice-updated/, 'Il riepilogo economico deve aggior
 assert.match(finance, /rows===null/, 'Il riepilogo deve distinguere errore di lettura da assenza di fatture');
 assert.match(finance, /Stato non disponibile/, 'Il riepilogo deve rendere visibile l’errore senza suggerire dati assenti');
 
-// Release: la chiusura non deve distruggere note o relazioni.
+// Release: la chiusura non deve distruggere note o sovrascrivere modifiche concorrenti.
 assert.match(closeout, /update\(\{STATO:'Pubblicato'\}\)/, 'La chiusura release deve aggiornare soltanto STATO');
 assert.doesNotMatch(closeout, /SVILUPPO:'Pubblicata'/, 'SVILUPPO non deve essere sovrascritto automaticamente');
-assert.match(closeout, /data\?\.SVILUPPO/, 'La chiusura deve verificare che SVILUPPO sia rimasto invariato');
-assert.match(closeout, /function doneProject\(p\)\{return \/pubblicat\|chius\|completat\|finita\/i\.test\(text\(p\?\.STATO\)\);\}/, 'Lo stato di chiusura deve dipendere da STATO, non da testo libero in SVILUPPO');
+assert.ok(closeout.includes("query=guardSnapshot(query,'STATO',p.STATO)"), 'La chiusura deve verificare che STATO non sia cambiato nel frattempo');
+assert.ok(closeout.includes("query=guardSnapshot(query,'SVILUPPO',p.SVILUPPO)"), 'La chiusura deve verificare che SVILUPPO non sia cambiato nel frattempo');
+assert.ok(closeout.includes('if(!data)throw new Error'), 'Se il record è cambiato la chiusura deve fermarsi senza sovrascrivere');
+assert.ok(closeout.includes('if(text(data.SVILUPPO)!==text(p.SVILUPPO))'), 'La chiusura deve verificare che SVILUPPO sia rimasto invariato');
+assert.ok(closeout.includes('function doneProject(p){return /pubblicat|chius|completat|finita/i.test(text(p?.STATO));}'), 'Lo stato di chiusura deve dipendere da STATO, non da testo libero in SVILUPPO');
 assert.doesNotMatch(closeout, /observer\.observe\(root,\{childList:true,subtree:true,characterData:true\}\)/, 'Il closeout non deve osservare tutto il sottoalbero e autoalimentarsi');
 
 // PWA: gli asset di sicurezza devono essere nello stesso ciclo cache del deploy.
