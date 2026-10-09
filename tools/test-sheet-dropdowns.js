@@ -29,7 +29,7 @@ assert.ok(dropdown.includes('stopImmediatePropagation()'), 'Il fix deve impedire
 assert.doesNotMatch(dropdown, /<datalist/i, 'Il nuovo menu non deve dipendere dal datalist nativo');
 assert.doesNotMatch(dropdown, /new MutationObserver/, 'Il fix delle tendine non deve aggiungere observer e possibili loop');
 
-assert.match(sw, /kyv-studio-v2-32-dropdown-fix-20261008/, 'La cache PWA deve includere il fix delle tendine');
+assert.match(sw, /kyv-studio-v2-32-editor-project-ux-20261009/, 'La cache PWA deve includere il fix delle tendine e l’UX Progetti corrente');
 assert.ok(sw.includes("'./kyv-sheet-dropdown-fix.js'"), 'Il menu custom deve essere disponibile nella cache PWA');
 
 console.log('OK: tendine Studio Editor visibili, responsive e protette.');
