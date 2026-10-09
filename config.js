@@ -91,6 +91,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         editorRelations.async=false;
         editorRelations.dataset.kyvEditorRelations='1';
         document.head.appendChild(editorRelations);
+
+        const editorProjectFields=document.createElement('script');
+        editorProjectFields.src='kyv-editor-project-fields.js';
+        editorProjectFields.async=false;
+        editorProjectFields.dataset.kyvEditorProjectFields='1';
+        document.head.appendChild(editorProjectFields);
     }
 
     if(producerViews.includes(page)){
@@ -121,6 +127,12 @@ window.KYV_CONFIG = KYV_CONFIG;
     producer.src='kyv-producer-mode.js';
     producer.async=false;
     document.head.appendChild(producer);
+
+    const navOrder=document.createElement('script');
+    navOrder.src='kyv-nav-order.js';
+    navOrder.async=false;
+    navOrder.dataset.kyvNavOrder='1';
+    document.head.appendChild(navOrder);
 
     const workflowNav=document.createElement('script');
     workflowNav.src='kyv-workflow-nav.js';
