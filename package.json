@@ -12,11 +12,12 @@
     "check:safety": "node tools/test-interaction-safety.js",
     "check:dropdowns": "node tools/test-sheet-dropdowns.js",
     "check:editor-relations": "node tools/test-editor-relations.js",
+    "check:siae-import": "node tools/test-siae-import-guard.js",
     "check:proxy": "node tools/test-drive-proxy.js",
     "check:intake": "node tools/test-manual-intake.js",
     "check:links": "node tools/test-link-audit.js",
     "check:v230": "node tools/test-v230-ui.js",
     "check:loading": "node tools/test-supabase-loading.js",
-    "check": "npm run check:js && npm run check:assets && npm run check:data-quality && npm run check:project-sheet && npm run check:integrations && npm run check:safety && npm run check:dropdowns && npm run check:editor-relations && npm run check:proxy && npm run check:intake && npm run check:links && npm run check:v230 && npm run check:loading"
+    "check": "npm run check:js && npm run check:assets && npm run check:data-quality && npm run check:project-sheet && npm run check:integrations && npm run check:safety && npm run check:dropdowns && npm run check:editor-relations && npm run check:siae-import && npm run check:proxy && npm run check:intake && npm run check:links && npm run check:v230 && npm run check:loading"
   }
 }

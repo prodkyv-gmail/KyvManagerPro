@@ -74,12 +74,24 @@
         }
     }
 
+    function loadPageModules() {
+        const page = (location.pathname.split('/').pop() || '').toLowerCase();
+        if (page === 'importexport.html' && !document.querySelector('script[data-kyv-siae-import-guard]')) {
+            const script = document.createElement('script');
+            script.src = 'kyv-siae-import-guard.js';
+            script.defer = true;
+            script.dataset.kyvSiaeImportGuard = '1';
+            document.head.appendChild(script);
+        }
+    }
+
     function init() {
         document.documentElement.classList.add('kyv-responsive-ready');
         improveViewportMeta();
         markReadableContainers();
         enhanceTables();
         observeDynamicTables();
+        loadPageModules();
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
