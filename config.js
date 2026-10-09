@@ -79,6 +79,14 @@ window.KYV_CONFIG = KYV_CONFIG;
         document.head.appendChild(responsiveMenus);
     }
 
+    if(page==='editor.html'){
+        const editorNav=document.createElement('script');
+        editorNav.src='kyv-editor-nav-v2.js';
+        editorNav.async=false;
+        editorNav.dataset.kyvEditorNavV2='1';
+        document.head.appendChild(editorNav);
+    }
+
     if(producerViews.includes(page)){
         const invoices=document.createElement('script');
         invoices.src='kyv-project-invoices.js';
@@ -178,6 +186,12 @@ window.KYV_CONFIG = KYV_CONFIG;
     }
 
     if(page==='ascolto.html'){
+        const listeningNav=document.createElement('script');
+        listeningNav.src='kyv-listening-nav-v2.js';
+        listeningNav.async=false;
+        listeningNav.dataset.kyvListeningNavV2='1';
+        document.head.appendChild(listeningNav);
+
         const phase4=document.createElement('script');
         phase4.src='kyv-listening-phase4.js';
         phase4.async=false;
