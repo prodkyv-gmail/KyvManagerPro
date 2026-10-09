@@ -34,6 +34,7 @@ const APP_SHELL = [
     './kyv-editor-nav-v2.js',
     './kyv-editor-relations.js',
     './kyv-editor-project-fields.js',
+    './kyv-editor-invoice-fields.js',
     './kyv-listening-nav-v2.js',
     './menu.js',
     './kyv-hardening-overrides.js',
