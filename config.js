@@ -85,6 +85,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         editorNav.async=false;
         editorNav.dataset.kyvEditorNavV2='1';
         document.head.appendChild(editorNav);
+
+        const editorRelations=document.createElement('script');
+        editorRelations.src='kyv-editor-relations.js';
+        editorRelations.async=false;
+        editorRelations.dataset.kyvEditorRelations='1';
+        document.head.appendChild(editorRelations);
     }
 
     if(producerViews.includes(page)){
