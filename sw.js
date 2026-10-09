@@ -30,6 +30,8 @@ const APP_SHELL = [
     './kyv-sheet-controls.js',
     './kyv-sheet-responsive-menus.js',
     './kyv-sheet-dropdown-fix.js',
+    './kyv-editor-nav-v2.js',
+    './kyv-listening-nav-v2.js',
     './menu.js',
     './kyv-hardening-overrides.js',
     './icon-192.png',
