@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-dropdown-fix-20261008';
+const CACHE_NAME = 'kyv-studio-v2-32-editor-project-ux-20261009';
 const APP_SHELL = [
     './',
     './index.html',
@@ -26,11 +26,14 @@ const APP_SHELL = [
     './kyv-version-to-pitch.js',
     './kyv-workflow-nav.js',
     './kyv-producer-mode.js',
+    './kyv-nav-order.js',
     './kyv-layout-polish.js',
     './kyv-sheet-controls.js',
     './kyv-sheet-responsive-menus.js',
     './kyv-sheet-dropdown-fix.js',
     './kyv-editor-nav-v2.js',
+    './kyv-editor-relations.js',
+    './kyv-editor-project-fields.js',
     './kyv-listening-nav-v2.js',
     './menu.js',
     './kyv-hardening-overrides.js',
