@@ -97,6 +97,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         editorProjectFields.async=false;
         editorProjectFields.dataset.kyvEditorProjectFields='1';
         document.head.appendChild(editorProjectFields);
+
+        const editorInvoiceFields=document.createElement('script');
+        editorInvoiceFields.src='kyv-editor-invoice-fields.js';
+        editorInvoiceFields.async=false;
+        editorInvoiceFields.dataset.kyvEditorInvoiceFields='1';
+        document.head.appendChild(editorInvoiceFields);
     }
 
     if(producerViews.includes(page)){
