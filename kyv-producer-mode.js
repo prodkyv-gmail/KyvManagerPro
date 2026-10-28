@@ -174,7 +174,7 @@ function dashboardProducerMode(){
 
   const quick=document.querySelector('.kyv-quick-actions');
   if(quick){
-    quick.innerHTML=`<a href="acquisisci_audio.html"><i data-lucide="circle-plus" class="w-4 h-4 mr-2 text-cyan-300"></i>Nuovo</a><a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a><a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a><a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a>`;
+    quick.innerHTML=`<a href="acquisisci_audio.html"><i data-lucide="circle-plus" class="w-4 h-4 mr-2 text-cyan-300"></i>Nuovo</a><a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a><a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a><a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a><a href="pipeline.html"><i data-lucide="columns-3" class="w-4 h-4 mr-2 text-amber-300"></i>Pipeline</a>`;
   }
 
   const pulse=document.getElementById('studio-pulse');

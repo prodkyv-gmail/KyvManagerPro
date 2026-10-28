@@ -1,12 +1,12 @@
 const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),projectSheet=read('kyv-project-sheet-v2.js'),actionBridge=read('kyv-action-bridge.js'),todayPriority=read('kyv-today-priority.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),releaseDesk=read('kyv-release-desk.js'),pastel=read('kyv-pastel.css');
+const config=read('config.js'),intake=read('acquisisci_audio.html'),projects=read('progetti.html'),archive=read('archivio_musicale.html'),audit=read('kyv-listen-link-audit.js'),producer=read('kyv-producer-mode.js'),phase2=read('kyv-project-phase2.js'),phase3=read('kyv-projects-phase3.js'),projectSheet=read('kyv-project-sheet-v2.js'),actionBridge=read('kyv-action-bridge.js'),todayPriority=read('kyv-today-home-v5.js'),listening=read('kyv-listening-phase4.js'),agenda=read('kyv-agenda-phase5.js'),workflowNav=read('kyv-workflow-nav.js'),pitch=read('kyv-pitch-followup.js'),releaseDesk=read('kyv-release-desk.js'),pastel=read('kyv-pastel.css');
 assert.match(config,/kyv-producer-mode\.js/,'Producer Mode deve essere caricato globalmente');
 assert.match(config,/kyv-listening-phase4\.js/,'La vista Ascolto producer-first deve essere caricata prima della stazione legacy');
 assert.match(config,/kyv-agenda-phase5\.js/,'La vista Agenda producer-first deve essere caricata sul calendario');
 assert.match(config,/kyv-workflow-nav\.js/,'La navigazione trasversale deve essere caricata globalmente');
 assert.match(config,/kyv-pitch-followup\.js/,'Pitch & Follow-up deve essere attivo su Scheda progetto e Agenda');
-assert.match(config,/kyv-today-priority\.js/,'La Home deve caricare il cockpit leggero delle priorità');
+assert.match(config,/kyv-today-home-v5\.js/,'La Home deve caricare il cockpit operativo v5');
 assert.match(config,/kyv-release-desk\.js/,'La Scheda progetto deve caricare il Release Desk essenziale');
 assert.match(config,/kyv-project-sheet-v2\.js/,'La Scheda progetto deve caricare la vista 2.0');
 assert.doesNotMatch(config,/kyv-project-hub-v227\.js/,'La Scheda progetto non deve caricare due hub concorrenti');
@@ -39,9 +39,9 @@ assert.match(actionBridge,/URLSearchParams/,'Il passaggio di contesto all’Agen
 assert.match(actionBridge,/panel\.id='kyv-today-project-actions'/,'Oggi deve avere un pannello dedicato alle azioni progetto');
 assert.match(actionBridge,/dataset\.activityFilter='project'/,'Il filtro Azioni progetto deve restare disponibile nelle attività a scomparsa');
 assert.doesNotMatch(actionBridge,/\.from\(['"](?:FATTURE|DOCUMENTI_PROGETTO|AUDIO_VERSIONI|DROPBOX_AUDIO_FILES)['"]\)\s*\.update/,'Il bridge non deve modificare aree amministrative o audio');
-assert.match(todayPriority,/Priorità di oggi/,'Oggi deve mostrare una sintesi unica delle priorità');
-assert.match(todayPriority,/follow-up dovuti/);assert.match(todayPriority,/progetti fermi/);assert.match(todayPriority,/azioni aperte/);assert.match(todayPriority,/sessioni\/scadenze visibili/);
-assert.match(todayPriority,/PROGETTI/);assert.match(todayPriority,/INVII_AUDIO/);assert.match(todayPriority,/STALE_DAYS=14/);assert.match(todayPriority,/FOLLOWUP_DAYS=5/);
+assert.match(todayPriority,/Cosa richiede attenzione adesso/,'Oggi deve mostrare una sintesi unica delle priorità');
+assert.match(todayPriority,/Questa settimana/);assert.match(todayPriority,/Da controllare/);assert.match(todayPriority,/Da incassare/);
+assert.match(todayPriority,/PROGETTI/);assert.match(todayPriority,/FATTURE/);assert.match(todayPriority,/INVII_AUDIO/);assert.match(todayPriority,/FOLLOWUP_DAYS=5/);assert.match(todayPriority,/slice\(0,5\)/,'Oggi deve limitarsi a cinque priorità reali');
 assert.doesNotMatch(todayPriority,/\.from\([^)]*\)\s*\.(?:insert|update|delete|upsert)\(/,'Oggi deve restare un cockpit in sola lettura: la gestione avviene nelle pagine specialistiche');
 assert.match(listening,/Artista → Progetto → Versioni/,'Ascolto deve seguire il percorso artista-progetto-versioni');
 assert.match(listening,/AUDIO_VERSIONI/);assert.match(listening,/DROPBOX_AUDIO_FILES/);assert.match(listening,/CONSEGNE_MASTER/);
