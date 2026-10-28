@@ -103,7 +103,7 @@ async function fetchLegacyInvoices(projectId){
   const client=await ensureDb();const {data:project,error}=await client.from('PROGETTI').select('ID,IDFT').eq('ID',projectId).maybeSingle();if(error)throw error;if(!project||!text(project.IDFT))return[];
   const {data,error:invoiceError}=await client.from('FATTURE').select(invoiceFields).eq('ID_FT',project.IDFT).limit(5);if(invoiceError)throw invoiceError;return uniqueInvoices(data||[]);
 }
-async function loadProjectInvoices(projectId){projectId=text(projectId);if(!projectId)return[];try{const direct=await fetchDirectInvoices(projectId);if(direct.length)return uniqueInvoices(direct);return await fetchLegacyInvoices(projectId);}catch(error){console.warn('[KYV Invoices] Lettura fatture progetto non riuscita',error);return null;}}
+async function loadProjectInvoices(projectId){projectId=text(projectId);if(!projectId)return[];try{const [direct,legacy]=await Promise.all([fetchDirectInvoices(projectId),fetchLegacyInvoices(projectId)]);return uniqueInvoices([...direct,...legacy]);}catch(error){console.warn('[KYV Invoices] Lettura fatture progetto non riuscita',error);return null;}}
 
 function contextHref(projectId,create=false){const base=`scheda_progetto.html?id=${encodeURIComponent(projectId)}&tab=amministrazione`;return create?`${base}&newInvoice=1`:base;}
 function mountContextChip(projectId,rows){
@@ -122,9 +122,10 @@ async function loadListData(){
   listInvoices=invoiceRes.error?[]:(invoiceRes.data||[]);legacyProjects=projectRes.error?[]:(projectRes.data||[]);enhanceProjectList();
 }
 function listInvoicesForProject(projectId){
-  const direct=listInvoices.filter(row=>text(row.ID_PROGETTO)===text(projectId));if(direct.length)return uniqueInvoices(direct);
-  const legacy=legacyProjects.find(row=>text(row.ID)===text(projectId));if(!legacy||!text(legacy.IDFT))return[];
-  return uniqueInvoices(listInvoices.filter(row=>text(row.ID_FT)===text(legacy.IDFT)));
+  const direct=listInvoices.filter(row=>text(row.ID_PROGETTO)===text(projectId));
+  const legacy=legacyProjects.find(row=>text(row.ID)===text(projectId));
+  const byInvoiceId=legacy&&text(legacy.IDFT)?listInvoices.filter(row=>text(row.ID_FT)===text(legacy.IDFT)):[];
+  return uniqueInvoices([...direct,...byInvoiceId]);
 }
 function renderListCell(projectId){
   if(listInvoiceReadFailed)return '<span class="kyv-invoice-main kyv-invoice-error" title="Lettura fatture non riuscita">⚠ Stato non disponibile</span>';
