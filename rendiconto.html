@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" href="./favicon.ico">
-    <title>KYV Studio - Rendiconto SIAE</title>
+    <title>KYV Studio - Diritti SIAE / IMAIE</title>
     <script>
         // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
         (function(){
@@ -75,18 +75,18 @@
         <section class="flex-1 overflow-y-auto w-full h-full flex flex-col">
             <header class="pt-8 px-4 sm:px-8 pb-4 flex justify-between items-end border-b border-kyv-border/50 shrink-0">
                 <div class="flex items-center"><button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
-                <div><h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Rendiconto <span class="text-indigo-400">SIAE</span></h2><p class="text-kyv-text mt-1 text-xs sm:text-sm">Analisi visuale dei dati estratti da SIAE.</p></div></div>
+                <div><h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Diritti <span class="text-indigo-400">SIAE / IMAIE</span></h2><p class="text-kyv-text mt-1 text-xs sm:text-sm">Controllo repertorio, movimenti economici e copertura dei progetti pubblicati.</p></div></div>
                 <button onclick="fetchSiaeDataForRendiconto()" class="flex items-center px-4 py-2 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg shadow-sm"><i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> <span class="hidden sm:inline">Aggiorna</span></button>
             </header>
             
             <div class="p-4 sm:p-8 pt-6 flex-1 overflow-y-auto">
-                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-emerald-900/10 border border-emerald-500/20 p-5 rounded-xl flex flex-col"><div class="flex items-center mb-2"><i data-lucide="coins" class="w-4 h-4 text-emerald-400 mr-2"></i><p class="text-[10px] font-bold text-emerald-400/80 uppercase">Totale Incassi SIAE</p></div><h3 class="text-3xl font-bold text-emerald-400 mt-1" id="val-siae-entrate">€ 0,00</h3><div id="siae-entrate-anni" class="mt-3 flex-1 overflow-y-auto custom-scrollbar"></div></div>
-                    <div class="bg-kyv-card p-5 rounded-xl border border-kyv-border"><div class="flex items-center mb-2"><i data-lucide="music-4" class="w-4 h-4 text-indigo-400 mr-2"></i><p class="text-[10px] font-bold text-kyv-text uppercase">Totale Opere Depositate</p></div><h3 class="text-3xl font-bold text-white mt-1" id="val-siae-opere">0</h3></div>
+                 <div id="kyv-siae-legacy-summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-emerald-900/10 border border-emerald-500/20 p-5 rounded-xl flex flex-col"><div class="flex items-center mb-2"><i data-lucide="coins" class="w-4 h-4 text-emerald-400 mr-2"></i><p class="text-[10px] font-bold text-emerald-400/80 uppercase">Diritti accreditati SIAE</p></div><h3 class="text-3xl font-bold text-emerald-400 mt-1" id="val-siae-entrate">€ 0,00</h3><div id="siae-entrate-anni" class="mt-3 flex-1 overflow-y-auto custom-scrollbar"></div></div>
+                    <div class="bg-kyv-card p-5 rounded-xl border border-kyv-border"><div class="flex items-center mb-2"><i data-lucide="music-4" class="w-4 h-4 text-indigo-400 mr-2"></i><p class="text-[10px] font-bold text-kyv-text uppercase">Opere SIAE importate</p></div><h3 class="text-3xl font-bold text-white mt-1" id="val-siae-opere">0</h3></div>
                     <div class="bg-kyv-card p-5 rounded-xl border border-kyv-border"><div class="flex items-center mb-2"><i data-lucide="users-2" class="w-4 h-4 text-indigo-400 mr-2"></i><p class="text-[10px] font-bold text-kyv-text uppercase">Autori/Editori Coinvolti</p></div><h3 class="text-3xl font-bold text-white mt-1" id="val-siae-autori">0</h3></div>
-                    <div class="bg-kyv-card p-5 rounded-xl border border-kyv-border"><div class="flex items-center mb-2"><i data-lucide="pie-chart" class="w-4 h-4 text-purple-400 mr-2"></i><p class="text-[10px] font-bold text-kyv-text uppercase">Quote KYV (Media Stimata)</p></div><h3 class="text-3xl font-bold text-purple-100 mt-1" id="val-siae-quote">0%</h3></div>
+                    <div class="bg-kyv-card p-5 rounded-xl border border-kyv-border"><div class="flex items-center mb-2"><i data-lucide="pie-chart" class="w-4 h-4 text-purple-400 mr-2"></i><p class="text-[10px] font-bold text-kyv-text uppercase">Quota DEM prima posizione</p></div><h3 class="text-3xl font-bold text-purple-100 mt-1" id="val-siae-quote">0%</h3></div>
                  </div>
-                 <div class="bg-kyv-card rounded-xl border border-kyv-border p-5 h-[300px] sm:h-[450px] flex flex-col mb-10"><div class="flex items-center mb-4"><i data-lucide="bar-chart" class="w-4 h-4 text-indigo-400 mr-2"></i><h3 class="font-semibold text-white text-sm">Distribuzione Quote DEM</h3></div><div class="flex-1 relative w-full"><canvas id="chartSiaeHistogram"></canvas></div></div>
+                 <div id="kyv-siae-legacy-chart" class="bg-kyv-card rounded-xl border border-kyv-border p-5 h-[300px] sm:h-[450px] flex flex-col mb-10"><div class="flex items-center mb-4"><i data-lucide="bar-chart" class="w-4 h-4 text-indigo-400 mr-2"></i><h3 class="font-semibold text-white text-sm">Distribuzione Quote DEM</h3></div><div class="flex-1 relative w-full"><canvas id="chartSiaeHistogram"></canvas></div></div>
             </div>
         </section>
     </main>

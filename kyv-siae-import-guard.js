@@ -158,7 +158,20 @@ function install(){
   const originalExecuteImport=window.executeImport;
   const originalHint=window.updateDuplicateHint;
 
-  window.updateDuplicateHint=function(){if(!updateSiaeHint())return originalHint.apply(this,arguments);};
+  window.updateDuplicateHint=function(){
+    const handled=updateSiaeHint();
+    const tableName=document.getElementById('target-table')?.value;
+    const checkbox=document.getElementById('skip-duplicates');
+    if(SIAE_TABLES.has(tableName)&&checkbox){
+      checkbox.checked=true;
+      checkbox.disabled=true;
+      checkbox.title='Per le tabelle SIAE il controllo duplicati/conflitti è sempre attivo.';
+    }else if(checkbox){
+      checkbox.disabled=false;
+      checkbox.title='';
+    }
+    if(!handled)return originalHint.apply(this,arguments);
+  };
   const guardedExecuteImport=async function(){
     const targetTable=document.getElementById('target-table')?.value;
     if(!SIAE_TABLES.has(targetTable))return originalExecuteImport.apply(this,arguments);
@@ -177,7 +190,7 @@ function install(){
       state.fileConflicts=fileCheck.conflicts;
 
       let skippedInDb=[];let checkedExisting=0;
-      if(document.getElementById('skip-duplicates')?.checked&&cleanPayload.length){
+      if(cleanPayload.length){
         const dbCheck=await filterSiaeAgainstDb(targetTable,cleanPayload);
         cleanPayload=dbCheck.insertable;
         skippedInDb=dbCheck.skipped;

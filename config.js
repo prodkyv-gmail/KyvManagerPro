@@ -151,6 +151,14 @@ window.KYV_CONFIG = KYV_CONFIG;
     workflowNav.async=false;
     document.head.appendChild(workflowNav);
 
+    if(page==='rendiconto.html'){
+        const rights=document.createElement('script');
+        rights.src='kyv-rights-v7.js';
+        rights.async=false;
+        rights.dataset.kyvRightsV7='1';
+        document.head.appendChild(rights);
+    }
+
     if(page==='fatture.html'){
         const economy=document.createElement('script');
         economy.src='kyv-economy-v6.js';
