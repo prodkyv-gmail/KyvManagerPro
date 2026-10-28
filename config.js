@@ -201,6 +201,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         projectEditSafety.async=false;
         projectEditSafety.dataset.kyvProjectEditSafety='1';
         document.head.appendChild(projectEditSafety);
+
+        const projectHubV3=document.createElement('script');
+        projectHubV3.src='kyv-project-hub-v3.js';
+        projectHubV3.async=false;
+        projectHubV3.dataset.kyvProjectHubV3='1';
+        document.head.appendChild(projectHubV3);
     }
 
     if(page==='kyv_calendar.html'){
