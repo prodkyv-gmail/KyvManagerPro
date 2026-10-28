@@ -57,7 +57,8 @@ assert(audioProjects.includes('insertProjectSafely') && audioProjects.includes('
 
 assert(config.includes("invoices.src='kyv-project-invoices.js'"), 'Le fatture progetto devono essere caricate nelle viste producer collegate');
 assert(projectInvoices.includes("from('FATTURE').select") && projectInvoices.includes(".eq('ID_PROGETTO',projectId)"), 'Le fatture progetto devono usare ID_PROGETTO come collegamento principale');
-assert(projectInvoices.includes("select('ID,IDFT,FT')"), 'I riferimenti IDFT/FT devono restare disponibili solo come fallback legacy');
+assert(projectInvoices.includes("select('ID,IDFT')"), 'Il fallback legacy deve usare soltanto IDFT → FATTURE.ID_FT');
+assert(!projectInvoices.includes(".eq('Numero',project.FT)"), 'Il numero fattura FT non deve mai essere usato per collegare un progetto');
 assert(projectInvoices.includes("tab=amministrazione") && projectInvoices.includes("newInvoice=1"), 'Le viste collegate devono aprire direttamente Amministrazione e la creazione fattura contestuale');
 assert(projectInvoices.includes('Registra fattura') && projectInvoices.includes('Da incassare') && projectInvoices.includes('Incassata'), 'Lo stato fattura deve essere visibile nel flusso producer');
 assert(recordEditor.includes("FATTURE:") && recordEditor.includes("'ID_PROGETTO'"), 'L’editor condiviso deve continuare a collegare la fattura al progetto senza nuove tabelle');
@@ -66,7 +67,8 @@ assert(!projectInvoices.match(/\.from\(['"][^'"]+['"]\)\s*\.insert/), 'Il modulo
 assert(config.includes("financeSummary.src='kyv-project-finance-summary.js'"), 'La Scheda progetto deve caricare il riepilogo fattura/pagamento');
 assert(financeSummary.includes('Fattura') && financeSummary.includes('Pagamento') && financeSummary.includes('Residuo da incassare'), 'Il riepilogo economico deve rendere visibili fattura e stato incasso nella parte alta della Scheda');
 assert(financeSummary.includes('PrezzoTotale') && financeSummary.includes('PrezzoUnitario'), 'Il riepilogo economico deve preferire il totale fattura quando disponibile');
-assert(financeSummary.includes(".eq('ID_PROGETTO',pid)") && financeSummary.includes("select('ID,IDFT,FT')"), 'Il riepilogo economico deve usare ID_PROGETTO con fallback legacy');
+assert(financeSummary.includes(".eq('ID_PROGETTO',pid)") && financeSummary.includes("select('ID,IDFT')"), 'Il riepilogo economico deve usare ID_PROGETTO e IDFT/ID_FT');
+assert(!financeSummary.includes(".eq('Numero',project.data.FT)"), 'Il riepilogo economico non deve collegare per numero fattura');
 assert(config.includes("layoutPolish.src='kyv-layout-polish.js'"), 'Le viste producer devono caricare il modulo di leggibilità/scroll');
 assert(layoutPolish.includes('#kyv-listen-versions') && layoutPolish.includes('#kyv-agenda-actions') && layoutPolish.includes('#tab-admin table'), 'Il layout polish deve coprire Ascolto, Agenda e tabelle amministrative');
 assert(layoutPolish.includes('overflow-y:auto') && layoutPolish.includes('overflow-x:auto'), 'I contenitori dati estesi devono avere scroll verticale/orizzontale esplicito dove serve');
