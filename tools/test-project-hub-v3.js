@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');const fs=require('fs');
+const hub=fs.readFileSync('kyv-project-hub-v3.js','utf8');
+const config=fs.readFileSync('config.js','utf8');const sw=fs.readFileSync('sw.js','utf8');
+for(const label of ['Produzione','Pitch','Release','Economia']) assert.ok(hub.includes("'"+label+"'")||hub.includes('"'+label+'"'),label+' lane missing');
+assert.ok(hub.includes('Prossima azione'),'next action missing');
+assert.ok(hub.includes('Ultime attività'),'recent activity missing');
+assert.ok(hub.includes("kyv:project-v2-ready"),'project ready event missing');
+assert.ok(hub.includes("kyv:pitch-updated"),'pitch event missing');
+assert.ok(hub.includes("kyv:invoice-updated"),'invoice event missing');
+assert.doesNotMatch(hub,/new MutationObserver/,'hub must not add a MutationObserver');
+assert.doesNotMatch(hub,/\.from\(/,'hub must reuse current page state and not query DB directly');
+assert.doesNotMatch(hub,/\.(?:insert|update|upsert|delete)\(/,'hub must not write data');
+assert.ok(config.includes("projectHubV3.src='kyv-project-hub-v3.js'"),'config does not load hub');
+assert.ok(sw.includes("'./kyv-project-hub-v3.js'"),'PWA does not cache hub');
+console.log('OK: project hub v3 is read-only, event-driven and integrated.');
