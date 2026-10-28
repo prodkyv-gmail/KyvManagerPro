@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-economy-v6-20261028';
+const CACHE_NAME = 'kyv-studio-v2-32-rights-v7-20261028';
 const APP_SHELL = [
     './',
     './index.html',
@@ -9,6 +9,7 @@ const APP_SHELL = [
     './kyv_calendar.html',
     './pipeline.html',
     './fatture.html',
+    './rendiconto.html',
     './manifest.json',
     './kyv-theme.css',
     './kyv-responsive.css',
@@ -24,6 +25,8 @@ const APP_SHELL = [
     './kyv-pipeline-v4.js',
     './kyv-today-home-v5.js',
     './kyv-economy-v6.js',
+    './kyv-rights-v7.js',
+    './kyv-siae-import-guard.js',
     './kyv-project-edit-safety.js',
     './kyv-pitch-followup.js',
     './kyv-release-desk.js',
