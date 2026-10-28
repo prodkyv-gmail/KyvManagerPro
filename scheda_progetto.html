@@ -219,10 +219,10 @@
             const [inviiByProject, inviiByFile, fattureById, speseFallback] = await Promise.all([
                 safeProjectRows('INVII_AUDIO',p.ID,'ID_INVIO'),
                 audioIds.length?safeFilteredTable('INVII_AUDIO',q=>q.in('ID_FILE',audioIds),'ID_INVIO'):[],
-                has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT'):[],
+                !fattureByProject.length && has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT'):[],
                 safeTextRows('Spese Extra',['Descrizione','Categoria'],[p.TITOLO,p.ARTISTA],'ID_SPESE')
             ]);
-            const fatture=mergeRows([fattureByProject,fattureById],'ID_FT');
+            const fatture=fattureByProject.length?fattureByProject:fattureById.filter(f=>!has(f.ID_PROGETTO)||String(f.ID_PROGETTO)===String(p.ID));
             return {audio,versions,documenti,consegne,siae,siaeVert,imaie,invii:mergeRows([inviiByProject,inviiByFile],'ID_INVIO'),fatture,spese:mergeRows([speseByProject,speseFallback],'ID_SPESE')};
         }
         async function refreshAll(){
@@ -256,7 +256,7 @@
         function isDriveAudioDoc(d){ return /audio[_ -]?drive|versione audio/i.test(String(d.Tipo_Documento||'')); }
         function matchDriveAudio(p){ return matchByProjectId(state.documenti,p).filter(isDriveAudioDoc).map(d=>({...d,_source:'drive',Link_Dropbox:d.Link_Drive})); }
         function matchDocs(p){ const byId=matchByProjectId(state.documenti,p).filter(d=>!isDriveAudioDoc(d)); const inline=[]; if(has(p['Contratto link'])) inline.push({ID_DOCUMENTO:'contratto', Tipo_Documento:'Contratto principale', Titolo_Documento:p.TITOLO, Link_Drive:p['Contratto link'], Data_Documento:p['Data Contratto'], Fonte:'PROGETTI.Contratto link'}); if(has(p.LINK)) inline.push({ID_DOCUMENTO:'drive', Tipo_Documento:'Cartella Drive progetto', Titolo_Documento:p.TITOLO, Link_Drive:p.LINK, Data_Documento:null, Fonte:'PROGETTI.LINK'}); return [...inline,...byId]; }
-        function matchFatture(p){ return state.fatture.filter(f=>String(f.ID_PROGETTO||'')===String(p.ID) || (has(p.IDFT)&&String(f.ID_FT)===String(p.IDFT))); }
+        function matchFatture(p){ const direct=state.fatture.filter(f=>has(f.ID_PROGETTO)&&String(f.ID_PROGETTO)===String(p.ID)); return direct.length?direct:state.fatture.filter(f=>has(p.IDFT)&&String(f.ID_FT)===String(p.IDFT)&&(!has(f.ID_PROGETTO)||String(f.ID_PROGETTO)===String(p.ID))); }
         function matchSpese(p){ const title=N(p.TITOLO); const artist=N(p.ARTISTA); return state.spese.filter(s=>{ if(Number(s.ID_PROGETTO)===Number(p.ID)) return true; const blob=N([s.Descrizione,s.Categoria].join(' ')); return (title && blob.includes(title)) || (artist && blob.includes(artist)); }); }
         function matchSiae(p){ return [...matchByTitle(state.siaeVert,p,['Titolo']), ...matchByTitle(state.siae,p,['Titolo'])]; }
         function matchImaie(p){ return matchByTitle(state.imaie,p,['TITOLO_OPERA']); }
