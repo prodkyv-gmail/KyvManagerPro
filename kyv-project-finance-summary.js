@@ -30,13 +30,13 @@ async function fetchInvoices(pid){
     const projectPromise=client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle();
     const [direct,project]=await Promise.all([directPromise,projectPromise]);
     if(direct.error)throw direct.error;if(project.error)throw project.error;
-    if((direct.data||[]).length)return unique(direct.data||[]);
+    const legacy=[];
     if(project.data&&text(project.data.IDFT)){
-      const legacy=await client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5);
-      if(legacy.error)throw legacy.error;
-      return unique(legacy.data||[]);
+      const result=await client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5);
+      if(result.error)throw result.error;
+      legacy.push(...(result.data||[]));
     }
-    return [];
+    return unique([...(direct.data||[]),...legacy]);
   }catch(error){console.warn('[KYV Finance Summary] Lettura fatture non riuscita',error);return null;}
 }
 
