@@ -1,5 +1,13 @@
 # KyvManagerPro v2.26 — Centro operativo
 
+## Importazione fatture elettroniche Aruba XML (28/10/2026)
+
+La pagina **Fatture → Importa XML Aruba** permette di selezionare fino a 50 file **FatturaPA XML** da Aruba (massimo 5 MB ciascuno), leggerli localmente nel browser, visualizzarne una anteprima e registrare soltanto le righe nuove selezionate dall'utente. Sono supportati i campi già presenti in FATTURE: tipo documento, numero numerico, data, cliente, codice fiscale/partita IVA destinatario, descrizione, importi, progressivo e codice destinatario. Le fatture importate partono con `PAGATA=NO`: la presenza dei dati di pagamento non è prova d'incasso. Il file XML originale e l'IBAN non vengono copiati su Supabase.
+
+**Schema database:** aggiunti `FATTURE.Numero_Originale` (testo, es. `FPR 14/26`) e `FATTURE.XML_SHA256` (impronta SHA-256); creato indice unico parziale `fatture_owner_xml_sha256_unique` su `(owner_id, XML_SHA256)` per impedire importazioni ripetute dello stesso file per proprietario. Migrazione additiva, nessuna rielaborazione dello storico. SQL idempotente in `docs/aruba-xml-import-migration.sql`.
+
+**Duplicati:** confronto dell'impronta XML, poi numero originale/anno/tipo documento/cliente/importo; per i record storici privi di numero originale si usa la combinazione numero numerico/anno/cliente/importo. Valori in conflitto o dubbi richiedono verifica manuale e non vengono importati; anche dati non leggibili o letture incomplete bloccano il salvataggio. L'importazione è esplicita e richiede conferma dell'emittente e conferma finale. Lo stesso numero in anni diversi è ammesso. Si può collegare **manualmente** ogni fattura a un progetto tramite `ID_PROGETTO`, oppure lasciarlo vuoto. Il pulsante **Nuova** e la modifica manuale delle fatture restano disponibili. Nessun nuovo `MutationObserver`, nessun invio automatico allo SdI.
+
 ## Completamento progetto e fatturazione guidata (28/10/2026)
 
 Nella Scheda Progetto, quando `STATO` indica **Pubblicato, Chiuso, Completato o Finito** e le fatture collegate sono leggibili ma assenti, il riepilogo economico mostra **“Progetto completato · Fattura da emettere”** con l'azione **Crea fattura collegata**. Questa apre l'editor esistente di `FATTURE` precompilando e bloccando `ID_PROGETTO` sull'ID della scheda; l'utente verifica i dati e salva. Non emette fatture elettroniche né scrive nulla senza conferma. La segnalazione scompare quando una relazione ID valida esiste; errori di lettura non sono considerati assenza.
