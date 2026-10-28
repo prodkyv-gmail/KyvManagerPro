@@ -15,8 +15,10 @@ const feeAmount=p=>num(p?.FEE);
 const yearOf=v=>{const d=v?new Date(v):null;return d&&!Number.isNaN(d.getTime())?d.getFullYear():null;};
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
 function projectInvoices(p,invoices){
- const pid=text(p.ID),idft=text(p.IDFT),ft=text(p.FT);
- return invoices.filter(f=>text(f.ID_PROGETTO)===pid||(idft&&text(f.ID_FT)===idft)||(ft&&text(f.Numero)===ft));
+ const pid=text(p.ID),idft=text(p.IDFT);
+ const direct=invoices.filter(f=>text(f.ID_PROGETTO)===pid);
+ const byInvoiceId=idft?invoices.filter(f=>text(f.ID_FT)===idft):[];
+ return [...new Map([...direct,...byInvoiceId].map(f=>[text(f.ID_FT),f])).values()];
 }
 function yearMatch(row,year,field){return year==='all'||yearOf(row?.[field])===Number(year);}
 function projectYearMatch(p,year){if(year==='all')return true;return [p.Data_Pubblicazione,p.Data_Consegna_Master,p.Data_Sessione].some(v=>yearOf(v)===Number(year));}
@@ -74,7 +76,7 @@ function render(year='all'){
 async function load(){
  const c=client();if(!c)return;
  const [p,f,s]=await Promise.all([
-  c.from('PROGETTI').select('ID,TITOLO,ARTISTA,FEE,STATO,SVILUPPO,FT,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione').limit(1000),
+  c.from('PROGETTI').select('ID,TITOLO,ARTISTA,FEE,STATO,SVILUPPO,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione').limit(1000),
   c.from('FATTURE').select('ID_FT,Numero,Data,Denominazione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO').limit(2000),
   c.from('Spese Extra').select('ID_SPESE,Data,Descrizione,Categoria,Importo,ID_PROGETTO').limit(2000)
  ]);

@@ -9,7 +9,7 @@ assert.ok(economy.includes("c.from('FATTURE')"),'FATTURE source missing');
 assert.ok(economy.includes("c.from('Spese Extra')"),'cost source missing');
 assert.ok(economy.includes('projectInvoices'),'modern/legacy invoice relation logic missing');
 assert.ok(economy.includes('IDFT'),'legacy IDFT missing');
-assert.ok(economy.includes('p.FT'),'legacy FT missing');
+assert.doesNotMatch(economy,/\b(?:p\.)?FT\b/,'invoice number FT must not be used for project relations');
 assert.ok(economy.includes('daIncassare+feeDaFatturare'),'minimum forecast rule missing');
 assert.doesNotMatch(economy,/\.(?:insert|update|upsert|delete)\(/,'economy dashboard must remain read-only');
 assert.doesNotMatch(economy,/new MutationObserver/,'economy dashboard must not add MutationObserver');

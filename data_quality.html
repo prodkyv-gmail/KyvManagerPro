@@ -221,7 +221,7 @@
                 qualityDb = qualityDb || KYV.createSupabaseClient();
                 ensureEditor(qualityDb);
                 const [projects, invoices, sends, audioVersions, dropboxAudio, documents] = await Promise.all([
-                    readRows(qualityDb, 'PROGETTI', 'ID,TITOLO,ARTISTA,Nome_Vero_Artista,STATO,PAGAMENTO,IDFT', 'ID'),
+                    readRows(qualityDb, 'PROGETTI', 'ID,TITOLO,ARTISTA,Nome_Vero_Artista,STATO,PAGAMENTO,IDFT,FT', 'ID'),
                     readRows(qualityDb, 'FATTURE', 'ID_FT,Numero,Data,Denominazione,ID_PROGETTO,PAGATA', 'ID_FT'),
                     readRows(qualityDb, 'INVII_AUDIO', 'ID_INVIO,ID_PROGETTO,Destinatario,Stato,Data_Invio', 'ID_INVIO'),
                     readRows(qualityDb, 'AUDIO_VERSIONI', 'ID_VERSIONE,ID_PROGETTO,NOME_FILE,TITOLO,ARTISTA,CONTENT_HASH,LINK_FILE', 'ID_VERSIONE', true),

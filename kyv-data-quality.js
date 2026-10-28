@@ -27,6 +27,7 @@
         const projectById = new Map(projects.map(project => [text(project.ID), project]));
         const invoiceById = new Map(invoices.map(invoice => [text(invoice.ID_FT), invoice]));
         const projectFor = id => projectById.get(text(id));
+        const directInvoicesFor = id => invoices.filter(invoice => has(invoice.ID_PROGETTO) && text(invoice.ID_PROGETTO)===text(id));
 
         const missingTitles = projects.filter(project => !has(project.TITOLO)).map(project => ({
             id: text(project.ID),
@@ -138,6 +139,28 @@
                 editField:'IDFT'
             }));
 
+
+        const invoiceNumberOnlyRelations = projects
+            .filter(project => {
+                const direct = directInvoicesFor(project.ID);
+                const byId = has(project.IDFT) && invoiceById.has(text(project.IDFT));
+                return !direct.length && !byId && has(project.FT);
+            })
+            .map(project => {
+                const candidates = invoices.filter(invoice => text(invoice.Numero)===text(project.FT));
+                const years = [...new Set(candidates.map(invoice => text(invoice.Data).slice(0,4)).filter(Boolean))];
+                return {
+                    id:`invoice-number-only-${text(project.ID)}`,
+                    projectId:text(project.ID),
+                    title:projectLabel(project),
+                    detail:`FT ${text(project.FT)} è solo il numero fattura e non viene usato come relazione. Corrisponde a ${candidates.length} record${years.length ? ` in ${years.length} anni` : ''}; collega tramite FATTURE.ID_PROGETTO o PROGETTI.IDFT → FATTURE.ID_FT.`,
+                    source:'PROGETTI.FT (non univoco)',
+                    editTable:'PROGETTI',
+                    editId:text(project.ID),
+                    editField:'IDFT'
+                };
+            });
+
         const orphanSends = sends
             .filter(row => has(row.ID_PROGETTO) && !projectFor(row.ID_PROGETTO))
             .map(row => ({
@@ -184,6 +207,7 @@
             { key:'missing-audio-hash', label:'Audio senza hash', severity:'medium', description:'Versioni audio senza impronta SHA-256. La pagina apre il record, ma non inventa né calcola hash.', items:[...versionIssues, ...dropboxIssues] },
             { key:'missing-document-link', label:'Documenti senza link', severity:'low', description:'Documenti senza URL: possono essere anomalie oppure note interne legittime.', items:documentsWithoutLink },
             { key:'orphan-relations', label:'Relazioni orfane', severity:'high', description:'Collegamenti verso Progetti o Fatture che non esistono più. Nessuna relazione viene corretta automaticamente.', items:[...orphanInvoices,...orphanProjectInvoices,...orphanSends] },
+            { key:'invoice-number-only', label:'Fatture collegate solo per numero', severity:'high', description:'FT/Numero non è una chiave stabile perché la numerazione può ripartire ogni anno. Questi progetti richiedono un collegamento tramite ID_PROGETTO o IDFT/ID_FT.', items:invoiceNumberOnlyRelations },
             { key:'invalid-audio-hash', label:'Hash non validi', severity:'high', description:'Hash compilati ma non conformi al formato SHA-256.', items:invalidHashes },
             { key:'payment-mismatch', label:'Pagamento incoerente', severity:'medium', description:'Fatture segnate pagate col progetto non coerentemente marcato come incassato. Solo verifica, nessuna sincronizzazione automatica.', items:paidMismatches }
         ];
@@ -197,7 +221,7 @@
                 documents: documents.length,
                 invoices: invoices.length,
                 sends: sends.length,
-                relationIssues: orphanInvoices.length + orphanProjectInvoices.length + orphanSends.length,
+                relationIssues: orphanInvoices.length + orphanProjectInvoices.length + orphanSends.length + invoiceNumberOnlyRelations.length,
                 paymentIssues: paidMismatches.length,
                 duplicateGroups: duplicates.length
             }

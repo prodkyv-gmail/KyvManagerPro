@@ -100,9 +100,8 @@ async function openExistingInvoice(invoiceId){if(invoiceId===null||invoiceId===u
 const invoiceFields='ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,ID_PROGETTO';
 async function fetchDirectInvoices(projectId){const client=await ensureDb();const {data,error}=await client.from('FATTURE').select(invoiceFields).eq('ID_PROGETTO',projectId).order('Data',{ascending:false}).limit(200);if(error)throw error;return data||[];}
 async function fetchLegacyInvoices(projectId){
-  const client=await ensureDb();const {data:project,error}=await client.from('PROGETTI').select('ID,IDFT,FT').eq('ID',projectId).maybeSingle();if(error)throw error;if(!project)return[];
-  const tasks=[];if(text(project.IDFT))tasks.push(client.from('FATTURE').select(invoiceFields).eq('ID_FT',project.IDFT).limit(5));if(text(project.FT))tasks.push(client.from('FATTURE').select(invoiceFields).eq('Numero',project.FT).limit(5));if(!tasks.length)return[];
-  const results=await Promise.all(tasks);const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;return uniqueInvoices(results.flatMap(result=>result.data||[]));
+  const client=await ensureDb();const {data:project,error}=await client.from('PROGETTI').select('ID,IDFT').eq('ID',projectId).maybeSingle();if(error)throw error;if(!project||!text(project.IDFT))return[];
+  const {data,error:invoiceError}=await client.from('FATTURE').select(invoiceFields).eq('ID_FT',project.IDFT).limit(5);if(invoiceError)throw invoiceError;return uniqueInvoices(data||[]);
 }
 async function loadProjectInvoices(projectId){projectId=text(projectId);if(!projectId)return[];try{const [direct,legacy]=await Promise.all([fetchDirectInvoices(projectId),fetchLegacyInvoices(projectId)]);return uniqueInvoices([...direct,...legacy]);}catch(error){console.warn('[KYV Invoices] Lettura fatture progetto non riuscita',error);return null;}}
 
@@ -117,15 +116,16 @@ function scheduleContextMount(projectId,attempt=0){clearTimeout(mountTimer);moun
 
 async function loadListData(){
   const client=await ensureDb();const invoiceLimit=1500,projectLimit=600;
-  const [invoiceRes,projectRes]=await Promise.all([client.from('FATTURE').select(invoiceFields).order('Data',{ascending:false}).limit(invoiceLimit),client.from('PROGETTI').select('ID,IDFT,FT').order('ID',{ascending:false}).limit(projectLimit)]);
+  const [invoiceRes,projectRes]=await Promise.all([client.from('FATTURE').select(invoiceFields).order('Data',{ascending:false}).limit(invoiceLimit),client.from('PROGETTI').select('ID,IDFT').order('ID',{ascending:false}).limit(projectLimit)]);
   listInvoiceReadFailed=Boolean(invoiceRes.error||projectRes.error);listCoverageLimited=!listInvoiceReadFailed&&((invoiceRes.data||[]).length>=invoiceLimit||(projectRes.data||[]).length>=projectLimit);
   if(invoiceRes.error)console.warn('[KYV Invoices] Lettura lista fatture non riuscita',invoiceRes.error);if(projectRes.error)console.warn('[KYV Invoices] Lettura riferimenti legacy non riuscita',projectRes.error);
   listInvoices=invoiceRes.error?[]:(invoiceRes.data||[]);legacyProjects=projectRes.error?[]:(projectRes.data||[]);enhanceProjectList();
 }
 function listInvoicesForProject(projectId){
-  const direct=listInvoices.filter(row=>text(row.ID_PROGETTO)===text(projectId));const legacy=legacyProjects.find(row=>text(row.ID)===text(projectId));
-  const legacyMatches=legacy?listInvoices.filter(row=>(text(legacy.IDFT)&&text(row.ID_FT)===text(legacy.IDFT))||(text(legacy.FT)&&text(row.Numero)===text(legacy.FT))):[];
-  return uniqueInvoices([...direct,...legacyMatches]);
+  const direct=listInvoices.filter(row=>text(row.ID_PROGETTO)===text(projectId));
+  const legacy=legacyProjects.find(row=>text(row.ID)===text(projectId));
+  const byInvoiceId=legacy&&text(legacy.IDFT)?listInvoices.filter(row=>text(row.ID_FT)===text(legacy.IDFT)):[];
+  return uniqueInvoices([...direct,...byInvoiceId]);
 }
 function renderListCell(projectId){
   if(listInvoiceReadFailed)return '<span class="kyv-invoice-main kyv-invoice-error" title="Lettura fatture non riuscita">⚠ Stato non disponibile</span>';
@@ -148,7 +148,7 @@ function enhanceSchedaAdmin(){
   const pid=contextProjectId||currentProjectId();if(!pid)return false;const card=findInvoiceCard();if(!card)return false;
   if(contextInvoices!==null&&!card.querySelector('[data-kyv-invoice-admin-new]')){const meta=projectMetaFromScheda(),button=document.createElement('button');button.type='button';button.dataset.kyvInvoiceAdminNew='1';button.className='kyv-invoice-admin-action';button.innerHTML='＋ Registra fattura';button.addEventListener('click',event=>{event.preventDefault();openNewInvoice(pid,meta.title,meta.artist);});const heading=[...card.querySelectorAll('h3')].find(node=>/fatture collegate/i.test(text(node.textContent)));heading?.insertAdjacentElement('afterend',button);}
   if(contextInvoices===null)return true;
-  [...card.querySelectorAll('tbody tr')].forEach(row=>{if(row.dataset.kyvInvoiceEditable==='1')return;const first=text(row.querySelector('td')?.textContent);if(!first||/nessuna/i.test(first))return;const invoice=(contextInvoices||[]).find(item=>text(item.Numero)===first||text(item.ID_FT)===first);if(!invoice)return;row.dataset.kyvInvoiceEditable='1';row.classList.add('kyv-invoice-editable');row.title='Apri e modifica la fattura';row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;openExistingInvoice(invoice.ID_FT);});});return true;
+  [...card.querySelectorAll('tbody tr')].forEach(row=>{if(row.dataset.kyvInvoiceEditable==='1')return;const invoiceId=text(row.dataset.invoiceId);if(!invoiceId)return;const invoice=(contextInvoices||[]).find(item=>text(item.ID_FT)===invoiceId);if(!invoice)return;row.dataset.kyvInvoiceEditable='1';row.classList.add('kyv-invoice-editable');row.title='Apri e modifica la fattura';row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;openExistingInvoice(invoice.ID_FT);});});return true;
 }
 function wireScheda(){const admin=document.getElementById('tab-admin');if(admin&&!adminObserver){adminObserver=new MutationObserver(()=>enhanceSchedaAdmin());adminObserver.observe(admin,{childList:true,subtree:false});}const hero=document.getElementById('hero-title');if(hero&&!heroInvoiceObserver){heroInvoiceObserver=new MutationObserver(()=>setTimeout(()=>refreshContext(currentProjectId()),0));heroInvoiceObserver.observe(hero,{childList:true,characterData:true,subtree:true});}}
 async function maybeOpenNewFromUrl(){if(page!=='scheda_progetto.html')return;const u=new URL(location.href);if(u.searchParams.get('newInvoice')!=='1')return;const pid=text(u.searchParams.get('id'));if(!pid)return;const ready=()=>document.getElementById('hero-title')&&!document.getElementById('project-view')?.classList.contains('hidden');for(let i=0;i<30&&!ready();i++)await new Promise(resolve=>setTimeout(resolve,150));const meta=projectMetaFromScheda();await openNewInvoice(pid,meta.title,meta.artist);u.searchParams.delete('newInvoice');history.replaceState(history.state,'',`${u.pathname}${u.search}${u.hash}`);}

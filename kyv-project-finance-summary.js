@@ -27,15 +27,14 @@ async function fetchInvoices(pid){
   if(!client())return null;
   try{
     const directPromise=client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(200);
-    const projectPromise=client().from('PROGETTI').select('ID,IDFT,FT').eq('ID',pid).maybeSingle();
+    const projectPromise=client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle();
     const [direct,project]=await Promise.all([directPromise,projectPromise]);
     if(direct.error)throw direct.error;if(project.error)throw project.error;
     const legacy=[];
-    if(project.data){
-      const tasks=[];
-      if(text(project.data.IDFT))tasks.push(client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5));
-      if(text(project.data.FT))tasks.push(client().from('FATTURE').select(fields).eq('Numero',project.data.FT).limit(5));
-      if(tasks.length){const results=await Promise.all(tasks);const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;legacy.push(...results.flatMap(result=>result.data||[]));}
+    if(project.data&&text(project.data.IDFT)){
+      const result=await client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5);
+      if(result.error)throw result.error;
+      legacy.push(...(result.data||[]));
     }
     return unique([...(direct.data||[]),...legacy]);
   }catch(error){console.warn('[KYV Finance Summary] Lettura fatture non riuscita',error);return null;}
