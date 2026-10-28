@@ -173,6 +173,14 @@ window.KYV_CONFIG = KYV_CONFIG;
         document.head.appendChild(economy);
     }
 
+    if(['pipeline.html','fatture.html','rendiconto.html'].includes(page)){
+        const easySecondary=document.createElement('script');
+        easySecondary.src='kyv-easy-secondary-v9.js';
+        easySecondary.async=false;
+        easySecondary.dataset.kyvEasySecondaryV9='1';
+        document.head.appendChild(easySecondary);
+    }
+
     if(page==='index.html'||page===''){
         const todayPriority=document.createElement('script');
         todayPriority.src='kyv-today-home-v5.js';
