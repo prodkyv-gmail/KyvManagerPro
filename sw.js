@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-invoice-id-relations-20261028';
+const CACHE_NAME = 'kyv-studio-v2-33-invoice-id-precedence-20261028';
 const APP_SHELL = [
     './',
     './index.html',
