@@ -32,9 +32,9 @@ assert.doesNotMatch(finance,/eq\('Numero',project\.data\.FT\)/,'Finance summary 
 assert.ok(economy.includes('const direct=invoices.filter'), 'Economy must include FATTURE.ID_PROGETTO relation');
 assert.ok(economy.includes('const byInvoiceId=idft?invoices.filter'), 'Economy must include IDFT → ID_FT relation');
 assert.ok(economy.includes('return direct.length?direct:'),'Economy must prefer direct invoice IDs');
-const fn=economy.match(/function projectInvoices\\(p,invoices\\)\\{[\\s\\S]*?\\n\\}/)?.[0];
+const fn=economy.match(/function projectInvoices\(p,invoices\)\{[\s\S]*?\n\}/)?.[0];
 assert.ok(fn,'Economy invoice resolver must be testable');
-const projectInvoices=new Function('text',fn+'\\nreturn projectInvoices;')(value=>String(value??'').trim());
+const projectInvoices=new Function('text',fn+'\nreturn projectInvoices;')(value=>String(value??'').trim());
 const rows=[{ID_FT:86,ID_PROGETTO:86,Numero:7},{ID_FT:93,ID_PROGETTO:null,Numero:12},{ID_FT:94,ID_PROGETTO:2,Numero:7}];
 assert.deepEqual(projectInvoices({ID:86,IDFT:93,FT:12},rows).map(row=>row.ID_FT),[86],'Direct project ID 86 wins over legacy 93');
 assert.deepEqual(projectInvoices({ID:11,IDFT:93,FT:12},rows).map(row=>row.ID_FT),[93],'Valid legacy IDFT remains available');
