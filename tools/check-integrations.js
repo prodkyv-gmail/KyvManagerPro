@@ -77,7 +77,7 @@ assert(!financeSummary.includes(".eq('Numero',project.data.FT)"), 'Il riepilogo 
 assert(financeSummary.includes('if((direct.data||[]).length)return unique(direct.data);'), 'Riepilogo deve preferire ID_PROGETTO');
 assert(economyInvoices.includes('return direct.length?direct:'), 'Economia deve preferire ID_PROGETTO');
 assert(qualityInvoices.includes("key:'invoice-id-conflict'"), 'Data Quality deve rilevare conflitti ID_PROGETTO/IDFT');
-for(const source of [projectSheetPage,projectInvoices,financeSummary,economyInvoices]) assert(!/\\.eq\\(['\"]Numero['\"]\\s*,[^)]*\\b(?:p|project)(?:\\.data)?\\.FT\\b/.test(source),'Vietato collegare fatture tramite Numero = FT');
+for(const source of [projectSheetPage,projectInvoices,financeSummary,economyInvoices]) assert(!/\.eq\(['"]Numero['"]\s*,[^)]*\b(?:p|project)(?:\.data)?\.FT\b/.test(source),'Vietato collegare fatture tramite Numero = FT');
 assert(config.includes("layoutPolish.src='kyv-layout-polish.js'"), 'Le viste producer devono caricare il modulo di leggibilità/scroll');
 assert(layoutPolish.includes('#kyv-listen-versions') && layoutPolish.includes('#kyv-agenda-actions') && layoutPolish.includes('#tab-admin table'), 'Il layout polish deve coprire Ascolto, Agenda e tabelle amministrative');
 assert(layoutPolish.includes('overflow-y:auto') && layoutPolish.includes('overflow-x:auto'), 'I contenitori dati estesi devono avere scroll verticale/orizzontale esplicito dove serve');
