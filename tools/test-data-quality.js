@@ -28,7 +28,9 @@ const result = audit({
         { ID:2, TITOLO:' stessa-canzone ', ARTISTA:'ARTISTA' },
         { ID:3, TITOLO:'', ARTISTA:'Altro' },
         { ID:4, TITOLO:'Solo', ARTISTA:'', Nome_Vero_Artista:'Nome vero', IDFT:'999' },
-        { ID:5, TITOLO:'Legacy FT', ARTISTA:'Artista', FT:'7' }
+        { ID:5, TITOLO:'Legacy FT', ARTISTA:'Artista', FT:'7' },
+        { ID:6, TITOLO:'Yummy Yummy', ARTISTA:'Silielly', IDFT:'93' },
+        { ID:7, TITOLO:'Contraddizione', ARTISTA:'Artista', IDFT:'94' }
     ],
     audioVersions: [
         { ID_VERSIONE:10, ID_PROGETTO:1, NOME_FILE:'demo.wav', CONTENT_HASH:'' },
@@ -40,7 +42,10 @@ const result = audit({
         { ID_FT:50, Numero:1, Denominazione:'Cliente', ID_PROGETTO:1, PAGATA:'SI' },
         { ID_FT:51, Numero:2, Denominazione:'Orfana', ID_PROGETTO:999, PAGATA:'NO' },
         { ID_FT:52, Numero:7, Data:'2025-01-10', Denominazione:'Anno 1', ID_PROGETTO:1, PAGATA:'NO' },
-        { ID_FT:53, Numero:7, Data:'2026-01-10', Denominazione:'Anno 2', ID_PROGETTO:2, PAGATA:'NO' }
+        { ID_FT:53, Numero:7, Data:'2026-01-10', Denominazione:'Anno 2', ID_PROGETTO:2, PAGATA:'NO' },
+        { ID_FT:86, Numero:30, Denominazione:'Diretta', ID_PROGETTO:6, PAGATA:'NO' },
+        { ID_FT:93, Numero:31, Denominazione:'IDFT diverso', ID_PROGETTO:null, PAGATA:'NO' },
+        { ID_FT:94, Numero:32, Denominazione:'Collegata altrove', ID_PROGETTO:2, PAGATA:'NO' }
     ],
     sends: [{ ID_INVIO:60, ID_PROGETTO:999, Destinatario:'A&R' }]
 });
@@ -61,10 +66,15 @@ assert.equal(byKey['orphan-relations'].items.length, 3);
 assert.equal(byKey['payment-mismatch'].items.length, 1);
 assert.equal(byKey['invoice-number-only'].items.length, 1);
 assert.match(byKey['invoice-number-only'].items[0].detail, /non viene usato come relazione/);
-assert.equal(result.totalIssues, 12);
+assert.equal(byKey['invoice-id-conflict'].items.length, 2);
+assert.match(byKey['invoice-id-conflict'].items[0].detail, /Prevale ID_PROGETTO/);
+assert.match(byKey['invoice-id-conflict'].items[1].detail, /non viene attribuita automaticamente/);
+assert.equal(byKey['invoice-number-only'].label, 'Relazione fattura da verificare');
+assert.equal(byKey['invoice-id-conflict'].label, 'Conflitto relazione fattura');
+assert.equal(result.totalIssues, 14);
 assert.equal(result.stats.audio, 3);
-assert.equal(result.stats.invoices, 4);
-assert.equal(result.stats.relationIssues, 4);
+assert.equal(result.stats.invoices, 7);
+assert.equal(result.stats.relationIssues, 6);
 assert.equal(result.stats.paymentIssues, 1);
 
 console.log('OK: regole Data Quality e correzione assistita verificate.');
