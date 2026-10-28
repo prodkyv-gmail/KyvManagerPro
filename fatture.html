@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" href="./favicon.ico">
-    <title>KYV Studio - Fatture</title>
+    <title>KYV Studio - Economia</title>
     <script>
         // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
         (function(){
@@ -85,8 +85,8 @@
                         <button class="md:hidden kyv-icon-action mr-3" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
                         <div>
                             <p class="kyv-eyebrow mb-1">Amministrazione</p>
-                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white">Fatture</h2>
-                            <p class="text-kyv-text mt-2 text-xs md:text-sm">Clicca una riga per aggiungere o correggere i dati della fattura.</p>
+                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white">Economia</h2>
+                            <p class="text-kyv-text mt-2 text-xs md:text-sm">Controlla fatturato, incassi e fee; sotto trovi il registro completo delle fatture.</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 w-full xl:w-auto">
@@ -101,9 +101,9 @@
                 </div>
             </header>
             <div class="flex-1 overflow-auto bg-kyv-bg relative custom-scrollbar p-4 md:p-8 space-y-8">
-                <!-- DA PAGARE -->
+                <!-- DA INCASSARE -->
                 <div>
-                    <h3 class="text-red-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> FATTURE DA PAGARE</span><span class="text-lg bg-red-900/30 px-4 py-1 rounded-lg border border-red-500/30 font-black tracking-wide" id="tot-da-pagare">€ 0,00</span></h3>
+                    <h3 class="text-red-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> FATTURE DA INCASSARE</span><span class="text-lg bg-red-900/30 px-4 py-1 rounded-lg border border-red-500/30 font-black tracking-wide" id="tot-da-pagare">€ 0,00</span></h3>
                     <div class="bg-red-900/10 rounded-xl border border-red-500/20 overflow-hidden shadow-lg"><div class="overflow-x-auto"><table class="kyv-card-mode w-full text-left text-sm whitespace-nowrap"><thead class="bg-red-900/20 text-red-300 uppercase tracking-wider text-[10px] border-b border-red-500/20"><tr><th class="px-6 py-3 font-semibold">N° / Data</th><th class="px-6 py-3 font-semibold">Denominazione</th><th class="px-6 py-3 font-semibold">Descrizione & Progetto</th><th class="px-6 py-3 font-semibold">Importo</th></tr></thead><tbody class="divide-y divide-red-500/10" id="tbody-ft-nopag"></tbody></table></div></div>
                 </div>
                 <!-- PAGATE -->
@@ -128,7 +128,7 @@
         async function fetchFattureCorrelate() {
             document.getElementById('tbody-ft-nopag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; if(window.lucide) lucide.createIcons();
             try {
-                const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Data, Denominazione, Descrizione, PrezzoUnitario, PAGATA, ID_PROGETTO').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
+                const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
                 if(fatRes.error) throw fatRes.error;
                 correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
                 correlazioneFattureGlobal = fatRes.data || []; document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters();
@@ -137,13 +137,13 @@
 
         window.applyCorrelazioneFilters = function() {
             const searchTxt = (document.getElementById('correlazione-search')?.value || '').toLowerCase();
-            let hNopag = [], hPag = [], sumDaPagare = 0, sumPagate = 0;
+            let hNopag = [], hPag = [], sumDaIncassare = 0, sumPagate = 0;
             correlazioneFattureGlobal.forEach(f => {
                 let linkedProj = f.ID_PROGETTO ? correlazioneProjMapGlobal[f.ID_PROGETTO] : null;
                 let combinedStr = `${f.Numero} ${f.Denominazione} ${f.Descrizione} ${linkedProj}`.toLowerCase();
                 if (searchTxt && !combinedStr.includes(searchTxt)) return;
                 let isPagata = f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI');
-                let numVal = parseKyvNumber(f.PrezzoUnitario); let imp = fmtEuro.format(numVal); let d = f.Data ? new Date(f.Data).toLocaleDateString('it-IT') : '-';
+                let numVal = parseKyvNumber(f.ImportoTotaleDocumento || f.PrezzoTotale || f.PrezzoUnitario || f.ImportoPagamento); let imp = fmtEuro.format(numVal); let d = f.Data ? new Date(f.Data).toLocaleDateString('it-IT') : '-';
                 let projBadge = linkedProj ? `<span class="mt-2 inline-flex px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-200 border border-indigo-500/20"><i data-lucide="folder" class="w-3 h-3 mr-1"></i>${H(linkedProj)}</span>` : '<span class="mt-2 text-[10px] text-amber-200">Progetto non collegato</span>';
                 let tr = `<tr class="kyv-editable-row hover:bg-kyv-border/30 transition-colors border-b border-kyv-border/30 cursor-pointer group" data-kyv-edit-table="FATTURE" data-kyv-edit-id="${H(f.ID_FT)}" title="Apri e modifica la fattura">
                     <td data-label="Numero / Data" class="px-6 py-3 font-medium group-hover:text-indigo-300 transition-colors"><i data-lucide="pencil" class="w-3 h-3 inline mr-2 opacity-60"></i>N° ${H(f.Numero || '-')}<br><span class="text-xs opacity-60 ml-5">${H(d)}</span></td>
@@ -151,14 +151,14 @@
                     <td data-label="Descrizione / Progetto" class="px-6 py-3 whitespace-normal opacity-90"><span class="block truncate max-w-[300px]">${H(f.Descrizione || '-')}</span>${projBadge}</td>
                     <td data-label="Importo" class="px-6 py-3 font-black">${H(imp)}</td>
                 </tr>`;
-                if(isPagata) { hPag.push(tr); sumPagate += numVal; } else { hNopag.push(tr); sumDaPagare += numVal; }
+                if(isPagata) { hPag.push(tr); sumPagate += numVal; } else { hNopag.push(tr); sumDaIncassare += numVal; }
             });
-            document.getElementById('tot-da-pagare').innerText = fmtEuro.format(sumDaPagare); document.getElementById('tot-pagate').innerText = fmtEuro.format(sumPagate);
+            document.getElementById('tot-da-pagare').innerText = fmtEuro.format(sumDaIncassare); document.getElementById('tot-pagate').innerText = fmtEuro.format(sumPagate);
             document.getElementById('tbody-ft-nopag').innerHTML = hNopag.length ? hNopag.join('') : '<tr><td colspan="4" class="p-4 text-center opacity-50">Nessuna fattura trovata</td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = hPag.length ? hPag.join('') : '<tr><td colspan="4" class="p-4 text-center opacity-50">Nessuna fattura trovata</td></tr>';
             if(window.lucide) lucide.createIcons();
         }
         document.addEventListener('DOMContentLoaded', () => {
-            KYV_RECORD_EDITOR.create({ client: supabaseClient, onSaved: fetchFattureCorrelate });
+            KYV_RECORD_EDITOR.create({ client: supabaseClient, onSaved: async () => { await fetchFattureCorrelate(); window.KYV_ECONOMY_V6?.refresh?.(); } });
             fetchFattureCorrelate();
         });
     </script>

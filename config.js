@@ -151,6 +151,14 @@ window.KYV_CONFIG = KYV_CONFIG;
     workflowNav.async=false;
     document.head.appendChild(workflowNav);
 
+    if(page==='fatture.html'){
+        const economy=document.createElement('script');
+        economy.src='kyv-economy-v6.js';
+        economy.async=false;
+        economy.dataset.kyvEconomyV6='1';
+        document.head.appendChild(economy);
+    }
+
     if(page==='index.html'||page===''){
         const todayPriority=document.createElement('script');
         todayPriority.src='kyv-today-home-v5.js';
