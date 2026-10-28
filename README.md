@@ -1,5 +1,11 @@
 # KyvManagerPro v2.26 — Centro operativo
 
+## Completamento progetto e fatturazione guidata (28/10/2026)
+
+Nella Scheda Progetto, quando `STATO` indica **Pubblicato, Chiuso, Completato o Finito** e le fatture collegate sono leggibili ma assenti, il riepilogo economico mostra **“Progetto completato · Fattura da emettere”** con l'azione **Crea fattura collegata**. Questa apre l'editor esistente di `FATTURE` precompilando e bloccando `ID_PROGETTO` sull'ID della scheda; l'utente verifica i dati e salva. Non emette fatture elettroniche né scrive nulla senza conferma. La segnalazione scompare quando una relazione ID valida esiste; errori di lettura non sono considerati assenza.
+
+Resta disponibile **Collega fattura esistente (manuale)**: apre `fatture.html?collegaProgetto=<ID>`, che spiega come aprire il record FATTURE esistente o crearne uno con **Nuova**, scegliere manualmente `ID_PROGETTO` e salvare. Anche il pulsante tradizionale **Registra fattura** in Amministrazione rimane attivo e consente più fatture per progetto. Nessuna modifica allo schema o ai dati storici Supabase; nessun nuovo MutationObserver.
+
 ## Fix fatture/progetti — priorità delle relazioni ID (28/10/2026)
 
 Le fatture vengono associate ai progetti esclusivamente per **FATTURE.ID_PROGETTO = PROGETTI.ID**, usando **PROGETTI.IDFT = FATTURE.ID_FT** soltanto in assenza di fatture dirette e senza appropriare fatture che hanno ID_PROGETTO di un altro progetto. **PROGETTI.FT / FATTURE.Numero** rimane un dato storico/di visualizzazione: non è una chiave di associazione. Il Centro Qualità Dati segnala le relazioni basate solo su FT e i conflitti tra identificativi, senza correggerli automaticamente. Test anti-regressione per scheda, elenco, riepilogo, Economia e Qualità Dati. Nessuna migrazione, scrittura o modifica ai dati Supabase.
