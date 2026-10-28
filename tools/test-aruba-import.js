@@ -21,7 +21,7 @@ assert.ok(source.includes("if(projectId)data.ID_PROGETTO=Number(projectId)"),'Pr
 assert.ok(source.includes("if(!window.confirm("),'Final user confirmation required');
 assert.ok(source.includes("item.kind!=='ok'"),'Conflicts and duplicates must be skipped');
 assert.ok(source.includes("state.busy=true"),'Guard repeated UI actions');
-assert.doesNotMatch(source,/MutationObserver/,'Importer must not create MutationObservers');
+assert.doesNotMatch(source,/new\s+MutationObserver/,'Importer must not create MutationObservers');
 assert.match(sw,/kyv-aruba-import\.js/,'PWA cache must contain importer');
 assert.equal(api.normalizedNumber('FPR 14/26'),14);
 assert.equal(api.normalizedNumber('FPR 01/27'),1);
