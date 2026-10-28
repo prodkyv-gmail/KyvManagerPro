@@ -74,12 +74,12 @@ function wrapSetTab(){
 }
 function restructureQuickEdit(){
  if(mode!=='easy')return;
- const root=document.getElementById('quick-edit-fields');if(!root||root.dataset.kyvEasyStructured==='1')return;
+ const root=document.getElementById('quick-edit-fields');if(!root||root.querySelector('.kyv-advanced-fields'))return;
  const labels=[...root.children].filter(el=>el.matches('label'));
  const advanced=labels.filter(label=>!ESSENTIAL_FIELDS.has(label.querySelector('[data-key]')?.dataset.key));
  if(!advanced.length)return;
  const details=document.createElement('details');details.className='kyv-advanced-fields';details.innerHTML='<summary>Campi avanzati · diritti, link ed economia</summary><div class="kyv-advanced-fields-grid"></div>';
- const grid=details.querySelector('.kyv-advanced-fields-grid');advanced.forEach(label=>grid.appendChild(label));root.appendChild(details);root.dataset.kyvEasyStructured='1';
+ const grid=details.querySelector('.kyv-advanced-fields-grid');advanced.forEach(label=>grid.appendChild(label));root.appendChild(details);
 }
 function wrapQuickEdit(){
  if(wrappedEdit||typeof window.openQuickEdit!=='function')return false;
