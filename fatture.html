@@ -101,6 +101,15 @@
                 </div>
             </header>
             <div class="flex-1 overflow-auto bg-kyv-bg relative custom-scrollbar p-4 md:p-8 space-y-8">
+                <div id="kyv-manual-invoice-link" class="hidden rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-4 md:p-5" role="status">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <strong class="block text-white font-black text-base">Collegamento manuale · <span id="kyv-manual-invoice-project"></span></strong>
+                            <p class="text-sm text-slate-200 mt-2 leading-relaxed">Se la fattura è già registrata, clicca sulla sua riga qui sotto, scegli il progetto nel campo <strong>ID_PROGETTO</strong> e salva. Per crearne una manualmente usa <strong>Nuova</strong> e seleziona il progetto. Nulla viene collegato senza il tuo salvataggio.</p>
+                        </div>
+                        <a id="kyv-manual-invoice-back" class="inline-flex items-center justify-center rounded-xl border border-indigo-400/30 px-4 py-2 text-sm font-bold text-indigo-100 hover:bg-indigo-500/10" href="scheda_progetto.html">Torna al progetto</a>
+                    </div>
+                </div>
                 <!-- DA INCASSARE -->
                 <div>
                     <h3 class="text-red-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> FATTURE DA INCASSARE</span><span class="text-lg bg-red-900/30 px-4 py-1 rounded-lg border border-red-500/30 font-black tracking-wide" id="tot-da-pagare">€ 0,00</span></h3>
@@ -124,6 +133,16 @@
         const H = (value) => KYV.safeHtml(value ?? '');
 
         let correlazioneFattureGlobal = [], correlazioneProjMapGlobal = {};
+        function renderManualInvoiceHelp(){
+            const projectId = new URLSearchParams(location.search).get('collegaProgetto');
+            const help = document.getElementById('kyv-manual-invoice-link');
+            if(!help)return;
+            if(!projectId || !/^\d+$/.test(projectId)){help.classList.add('hidden');return;}
+            const name = correlazioneProjMapGlobal[projectId];
+            document.getElementById('kyv-manual-invoice-project').textContent = name ? name + ' (#' + projectId + ')' : 'Progetto #' + projectId;
+            document.getElementById('kyv-manual-invoice-back').href = 'scheda_progetto.html?id=' + encodeURIComponent(projectId) + '&tab=amministrazione';
+            help.classList.remove('hidden');
+        }
 
         async function fetchFattureCorrelate() {
             document.getElementById('tbody-ft-nopag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; if(window.lucide) lucide.createIcons();
@@ -131,7 +150,7 @@
                 const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
                 if(fatRes.error) throw fatRes.error;
                 correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
-                correlazioneFattureGlobal = fatRes.data || []; document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters();
+                correlazioneFattureGlobal = fatRes.data || []; document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
             } catch(e) {}
         }
 
@@ -158,6 +177,7 @@
             if(window.lucide) lucide.createIcons();
         }
         document.addEventListener('DOMContentLoaded', () => {
+            renderManualInvoiceHelp();
             KYV_RECORD_EDITOR.create({ client: supabaseClient, onSaved: async () => { await fetchFattureCorrelate(); window.KYV_ECONOMY_V6?.refresh?.(); } });
             fetchFattureCorrelate();
         });
