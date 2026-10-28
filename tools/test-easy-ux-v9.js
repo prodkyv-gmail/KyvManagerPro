@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');const fs=require('fs');
+const easy=fs.readFileSync('kyv-easy-ux-v9.js','utf8');
+const config=fs.readFileSync('config.js','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
+
+assert.ok(easy.includes("localStorage.getItem(MODE_KEY)==='complete'?'complete':'easy'"),'Easy must be default when no preference exists');
+assert.ok(easy.includes("localStorage.setItem(MODE_KEY,next)"),'mode preference must persist locally');
+assert.ok(easy.includes("body.kyv-easy-mode #tabs"),'Easy mode must hide technical tabs');
+assert.ok(easy.includes("body.kyv-easy-mode #hero-badges"),'Easy mode must reduce hero metadata');
+assert.ok(easy.includes("body.kyv-easy-mode #global-stats"),'Easy mode must reduce picker stats');
+assert.ok(easy.includes('Continua progetto'),'primary wizard CTA missing');
+assert.ok(easy.includes('Mostra dettagli'),'detail progressive disclosure missing');
+for(const task of ['Produzione','Invio / follow-up','Release','Fattura / incasso','Aggiorna dati']) assert.ok(easy.includes(task),task+' wizard task missing');
+assert.ok(easy.includes('ESSENTIAL_FIELDS'),'essential quick-edit field set missing');
+assert.ok(easy.includes('Campi avanzati · diritti, link ed economia'),'advanced fields disclosure missing');
+assert.ok(easy.includes("if(mode==='easy')setMode('complete')"),'opening a technical tab must reveal complete mode');
+assert.ok(easy.includes("window.KYV_PROJECT_INVOICES?.openNew"),'economy wizard must reuse safe invoice flow');
+assert.ok(easy.includes("kyv-pitch-followup-project"),'wizard must navigate to pitch workflow');
+assert.ok(easy.includes("kyv-release-desk"),'wizard must navigate to release workflow');
+assert.doesNotMatch(easy,/\.(?:insert|update|upsert|delete)\(/,'Easy UX must not write data directly');
+assert.doesNotMatch(easy,/new MutationObserver/,'Easy UX must not add MutationObserver');
+assert.ok(config.includes("easyUxV9.src='kyv-easy-ux-v9.js'"),'config must load Easy UX on project sheet');
+assert.ok(sw.includes("'./kyv-easy-ux-v9.js'"),'PWA must cache Easy UX');
+console.log('OK: Easy UX v9 uses progressive disclosure and safe existing workflows.');
