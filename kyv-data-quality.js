@@ -161,6 +161,29 @@
                 };
             });
 
+        const invoiceIdConflicts = projects.flatMap(project => {
+            if(!has(project.IDFT)) return [];
+            const legacy = invoiceById.get(text(project.IDFT));
+            if(!legacy) return [];
+            const direct = directInvoicesFor(project.ID);
+            const conflictsWithDirect = direct.length > 0 && !direct.some(invoice => text(invoice.ID_FT)===text(project.IDFT));
+            const belongsToOtherProject = has(legacy.ID_PROGETTO) && text(legacy.ID_PROGETTO)!==text(project.ID);
+            if(!conflictsWithDirect && !belongsToOtherProject) return [];
+            const directIds = direct.map(invoice => text(invoice.ID_FT)).join(', ');
+            return [{
+                id:`invoice-id-conflict-${text(project.ID)}`,
+                projectId:text(project.ID),
+                title:projectLabel(project),
+                detail:conflictsWithDirect
+                    ? `FATTURE.ID_PROGETTO collega il progetto alle fatture ID_FT ${directIds}; PROGETTI.IDFT punta invece a ID_FT ${text(project.IDFT)}. Prevale ID_PROGETTO, verifica manuale necessaria.`
+                    : `PROGETTI.IDFT punta a ID_FT ${text(project.IDFT)}, ma la fattura ha ID_PROGETTO ${text(legacy.ID_PROGETTO)}. La fattura non viene attribuita automaticamente a questo progetto.`,
+                source:'FATTURE.ID_PROGETTO ↔ PROGETTI.IDFT',
+                editTable:'PROGETTI',
+                editId:text(project.ID),
+                editField:'IDFT'
+            }];
+        });
+
         const orphanSends = sends
             .filter(row => has(row.ID_PROGETTO) && !projectFor(row.ID_PROGETTO))
             .map(row => ({
@@ -207,7 +230,8 @@
             { key:'missing-audio-hash', label:'Audio senza hash', severity:'medium', description:'Versioni audio senza impronta SHA-256. La pagina apre il record, ma non inventa né calcola hash.', items:[...versionIssues, ...dropboxIssues] },
             { key:'missing-document-link', label:'Documenti senza link', severity:'low', description:'Documenti senza URL: possono essere anomalie oppure note interne legittime.', items:documentsWithoutLink },
             { key:'orphan-relations', label:'Relazioni orfane', severity:'high', description:'Collegamenti verso Progetti o Fatture che non esistono più. Nessuna relazione viene corretta automaticamente.', items:[...orphanInvoices,...orphanProjectInvoices,...orphanSends] },
-            { key:'invoice-number-only', label:'Fatture collegate solo per numero', severity:'high', description:'FT/Numero non è una chiave stabile perché la numerazione può ripartire ogni anno. Questi progetti richiedono un collegamento tramite ID_PROGETTO o IDFT/ID_FT.', items:invoiceNumberOnlyRelations },
+            { key:'invoice-number-only', label:'Relazione fattura da verificare', severity:'high', description:'FT/Numero non è una chiave stabile perché la numerazione può ripartire ogni anno. Questi progetti richiedono un collegamento tramite ID_PROGETTO o IDFT/ID_FT.', items:invoiceNumberOnlyRelations },
+            { key:'invoice-id-conflict', label:'Conflitto relazione fattura', severity:'high', description:'Le due chiavi ID non concordano. Prevale FATTURE.ID_PROGETTO; nessuna correzione automatica.', items:invoiceIdConflicts },
             { key:'invalid-audio-hash', label:'Hash non validi', severity:'high', description:'Hash compilati ma non conformi al formato SHA-256.', items:invalidHashes },
             { key:'payment-mismatch', label:'Pagamento incoerente', severity:'medium', description:'Fatture segnate pagate col progetto non coerentemente marcato come incassato. Solo verifica, nessuna sincronizzazione automatica.', items:paidMismatches }
         ];
@@ -221,7 +245,7 @@
                 documents: documents.length,
                 invoices: invoices.length,
                 sends: sends.length,
-                relationIssues: orphanInvoices.length + orphanProjectInvoices.length + orphanSends.length + invoiceNumberOnlyRelations.length,
+                relationIssues: orphanInvoices.length + orphanProjectInvoices.length + orphanSends.length + invoiceNumberOnlyRelations.length + invoiceIdConflicts.length,
                 paymentIssues: paidMismatches.length,
                 duplicateGroups: duplicates.length
             }

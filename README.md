@@ -1,5 +1,9 @@
 # KyvManagerPro v2.26 — Centro operativo
 
+## Fix fatture/progetti — priorità delle relazioni ID (28/10/2026)
+
+Le fatture vengono associate ai progetti esclusivamente per **FATTURE.ID_PROGETTO = PROGETTI.ID**, usando **PROGETTI.IDFT = FATTURE.ID_FT** soltanto in assenza di fatture dirette e senza appropriare fatture che hanno ID_PROGETTO di un altro progetto. **PROGETTI.FT / FATTURE.Numero** rimane un dato storico/di visualizzazione: non è una chiave di associazione. Il Centro Qualità Dati segnala le relazioni basate solo su FT e i conflitti tra identificativi, senza correggerli automaticamente. Test anti-regressione per scheda, elenco, riepilogo, Economia e Qualità Dati. Nessuna migrazione, scrittura o modifica ai dati Supabase.
+
 ## v2.26 — Follow-up nella Panoramica
 
 La Panoramica include ora i follow-up dei progetti nella coda delle attività: il filtro dedicato mostra scadenza, priorità, ultimo sollecito, esito di ascolto e note, ordinati per urgenza. Ogni riga apre direttamente la Scheda Progetto e il radar operativo riassume quanti follow-up sono presenti e quanti richiedono attenzione immediata.

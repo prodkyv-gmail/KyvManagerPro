@@ -18,7 +18,7 @@ function projectInvoices(p,invoices){
  const pid=text(p.ID),idft=text(p.IDFT);
  const direct=invoices.filter(f=>text(f.ID_PROGETTO)===pid);
  const byInvoiceId=idft?invoices.filter(f=>text(f.ID_FT)===idft):[];
- return [...new Map([...direct,...byInvoiceId].map(f=>[text(f.ID_FT),f])).values()];
+ return direct.length?direct:byInvoiceId.filter(f=>!text(f.ID_PROGETTO)||text(f.ID_PROGETTO)===pid);
 }
 function yearMatch(row,year,field){return year==='all'||yearOf(row?.[field])===Number(year);}
 function projectYearMatch(p,year){if(year==='all')return true;return [p.Data_Pubblicazione,p.Data_Consegna_Master,p.Data_Sessione].some(v=>yearOf(v)===Number(year));}
