@@ -12,6 +12,8 @@ assert.ok(register.includes('<script src="kyv-aruba-import.js" defer></script>')
 assert.ok(register.includes('id="kyv-aruba-open"'),'Import button must exist');
 assert.ok(register.includes('data-kyv-new-table="FATTURE"'),'Manual invoice creation must remain');
 assert.ok(register.includes('KYV_ARUBA_IMPORT?.boot'),'Importer must receive authenticated Supabase client');
+assert.ok(register.includes('Numero_Originale || f.Numero'),'Invoice table must show exact Aruba invoice number');
+assert.ok(fs.readFileSync('kyv-record-editor.js','utf8').includes("['Numero', 'Numero_Originale'"),'Manual editor must permit correcting the original document number');
 assert.ok(source.includes('crypto.subtle.digest'),'Imported XML must have a SHA-256 signature');
 assert.ok(source.includes("if(/<!DOCTYPE|<!ENTITY/i.test(string))"),'XML external entities must be blocked');
 assert.ok(source.includes("Numero_Originale")&&source.includes("XML_SHA256"),'Stable original number and SHA fields required');
