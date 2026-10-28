@@ -46,7 +46,8 @@ assert.match(invoices, /Fatture non disponibili/, 'L’interfaccia deve mostrare
 assert.match(invoices, /Collegamento al progetto non impostato/, 'La creazione fattura deve fallire chiusa se ID_PROGETTO non viene precompilato');
 assert.match(invoices, /kyv:invoice-updated/, 'Il salvataggio fattura deve notificare gli altri moduli senza chiamate circolari');
 assert.ok(invoices.includes('return uniqueInvoices([...direct,...legacy])'), 'Le fatture moderne e legacy devono essere unite, non sostituirsi a vicenda');
-assert.ok(invoices.includes('return uniqueInvoices([...direct,...legacyMatches])'), 'La lista Progetti deve includere sia ID_PROGETTO sia IDFT/FT');
+assert.ok(invoices.includes('return uniqueInvoices([...direct,...byInvoiceId])'), 'La lista Progetti deve includere sia ID_PROGETTO sia IDFT/ID_FT');
+assert.doesNotMatch(invoices,/legacy\.FT|eq\('Numero',project\.FT\)/,'FT/Numero non deve essere usato come relazione fattura/progetto');
 assert.ok(invoices.includes("projectInput.disabled=true"), 'Durante una nuova fattura contestuale ID_PROGETTO deve restare bloccato');
 assert.ok(invoices.includes('listCoverageLimited'), 'I limiti di lettura non devono diventare falsi “nessuna fattura”');
 
