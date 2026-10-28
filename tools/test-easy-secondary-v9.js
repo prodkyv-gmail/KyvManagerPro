@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict');const fs=require('fs');
+const easy=fs.readFileSync('kyv-easy-secondary-v9.js','utf8');
+const config=fs.readFileSync('config.js','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
+
+assert.ok(easy.includes("['pipeline.html','fatture.html','rendiconto.html']"),'secondary Easy scope missing');
+assert.ok(easy.includes("const MODE_KEY='kyv-easy-ux-v9-mode'"),'must share Easy/Complete preference with project sheet');
+assert.ok(easy.includes('#pipeline-stage-tabs'),'pipeline stage detail reduction missing');
+assert.ok(easy.includes('[data-stage="confermato"]'),'pipeline closed-stage reduction missing');
+assert.ok(easy.includes('[data-stage="perso"]'),'pipeline lost-stage reduction missing');
+assert.ok(easy.includes('Registro fatture completo'),'economy register disclosure missing');
+assert.ok(easy.includes("a[href=\"correlazione.html\"]"),'economy secondary correlation action missing');
+assert.ok(easy.includes('Storico e grafici tecnici'),'rights legacy disclosure missing');
+for(const label of ['Opere senza ISWC','Quote incoerenti','Pubblicati ↔ SIAE','Da verificare SIAE']) assert.ok(easy.includes(label),label+' action card missing');
+assert.ok(easy.includes("d.open=mode==='complete'"),'details must open automatically in Complete mode');
+assert.doesNotMatch(easy,/\.(?:insert|update|upsert|delete)\(/,'secondary Easy UX must not write data');
+assert.doesNotMatch(easy,/new MutationObserver/,'secondary Easy UX must not add observer');
+assert.ok(config.includes("easySecondary.src='kyv-easy-secondary-v9.js'"),'config must load secondary Easy UX');
+assert.ok(sw.includes("'./kyv-easy-secondary-v9.js'"),'PWA must cache secondary Easy UX');
+console.log('OK: secondary Easy UX reduces density without removing advanced content.');
