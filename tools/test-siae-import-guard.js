@@ -9,6 +9,9 @@ assert(guard.includes("'Tag','Quota DEM','Società DEM','Quota DRM','Società DR
 assert(guard.includes("tableName==='EXPORT SIAE'")&&guard.includes('Stessa Cod. Opera'),'horizontal export treats changed same work as conflict');
 assert(guard.includes('Duplicato SIAE identico nel file'),'exact duplicates inside source file are skipped');
 assert(guard.includes('Record SIAE identico già presente'),'exact duplicates against database are skipped');
+assert(guard.includes('if(cleanPayload.length){'),'always checks database for SIAE imports');
+assert(!guard.includes("if(document.getElementById('skip-duplicates')?.checked&&cleanPayload.length)"),'generic checkbox cannot bypass SIAE database guard');
+assert(guard.includes("checkbox.disabled=true"),'SIAE duplicate checkbox is locked on');
 assert(guard.includes('I conflitti NON sono stati sovrascritti né inseriti'),'changed same-work rows are surfaced and not overwritten');
 assert(!/\.update\s*\(|\.upsert\s*\(/.test(guard),'guard never updates or upserts SIAE data');
 assert(responsive.includes("script.src = 'kyv-siae-import-guard.js'"),'guard is loaded on import/export page');
