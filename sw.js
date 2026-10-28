@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-professional-data-editor-20261028';
+const CACHE_NAME = 'kyv-studio-v2-32-project-hub-v3-20261028';
 const APP_SHELL = [
     './',
     './index.html',
@@ -18,6 +18,7 @@ const APP_SHELL = [
     './kyv-project-invoices.js',
     './kyv-project-finance-summary.js',
     './kyv-project-sheet-v2.js',
+    './kyv-project-hub-v3.js',
     './kyv-project-edit-safety.js',
     './kyv-pitch-followup.js',
     './kyv-release-desk.js',
