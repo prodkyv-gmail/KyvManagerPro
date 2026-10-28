@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');const fs=require('fs');
+const js=fs.readFileSync('kyv-pipeline-v4.js','utf8');
+const html=fs.readFileSync('pipeline.html','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
+for(const stage of ['Idea','Da inviare','Inviato','Follow-up','Interesse','Trattativa','Confermato','Perso']) assert.ok(js.includes("label:'"+stage+"'"),stage+' stage missing');
+assert.ok(js.includes("client.from('PROGETTI')"),'PROGETTI source missing');
+assert.ok(js.includes("client.from('INVII_AUDIO')"),'INVII_AUDIO source missing');
+assert.ok(js.includes('historicalRecipient'),'legacy status interpretation missing');
+assert.ok(js.includes('Storico interpretato'),'legacy-source badge missing');
+assert.ok(js.includes('Invii strutturati'),'structured-source badge missing');
+assert.ok(js.includes("stage==='followup'"),'follow-up workflow missing');
+assert.doesNotMatch(js,/\.(?:insert|update|upsert|delete)\(/,'pipeline must not write data');
+assert.doesNotMatch(js,/new MutationObserver/,'pipeline must not add observer');
+assert.ok(html.includes('kyv-pipeline-v4.js'),'pipeline page does not load v4');
+assert.ok(sw.includes("'./pipeline.html'"),'pipeline page missing from PWA');
+assert.ok(sw.includes("'./kyv-pipeline-v4.js'"),'pipeline JS missing from PWA');
+console.log('OK: pipeline v4 professionale, read-only e compatibile con storico/INVII_AUDIO.');

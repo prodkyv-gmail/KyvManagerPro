@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-project-hub-v3-20261028';
+const CACHE_NAME = 'kyv-studio-v2-32-pipeline-v4-20261028';
 const APP_SHELL = [
     './',
     './index.html',
@@ -7,6 +7,7 @@ const APP_SHELL = [
     './data_quality.html',
     './ascolto.html',
     './kyv_calendar.html',
+    './pipeline.html',
     './manifest.json',
     './kyv-theme.css',
     './kyv-responsive.css',
@@ -19,6 +20,7 @@ const APP_SHELL = [
     './kyv-project-finance-summary.js',
     './kyv-project-sheet-v2.js',
     './kyv-project-hub-v3.js',
+    './kyv-pipeline-v4.js',
     './kyv-project-edit-safety.js',
     './kyv-pitch-followup.js',
     './kyv-release-desk.js',

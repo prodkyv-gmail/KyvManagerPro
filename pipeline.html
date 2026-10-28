@@ -29,7 +29,7 @@
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
     <script src="kyv-responsive.js" defer></script>
-    <script src="kyv-pipeline-v228.js" defer></script>
+    <script src="kyv-pipeline-v4.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="kyv-responsive.css">
     <link rel="stylesheet" href="kyv-theme.css">
@@ -46,7 +46,7 @@
         .pipeline-metric{display:flex;align-items:center;gap:.7rem;background:rgba(21,25,35,.9);border:1px solid #232838;border-radius:1rem;padding:.9rem 1rem;min-width:0}.pipeline-metric strong{display:block;color:white;font-size:1.25rem;line-height:1;font-weight:900}.pipeline-metric span{display:block;color:#94a3b8;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
         .pipeline-stage-filter{display:inline-flex;align-items:center;gap:.45rem;border:1px solid #232838;background:#151923;color:#94a3b8;border-radius:999px;padding:.55rem .8rem;font-size:.72rem;font-weight:900;white-space:nowrap;transition:.15s ease}.pipeline-stage-filter span{display:inline-flex;min-width:1.3rem;height:1.3rem;align-items:center;justify-content:center;border-radius:999px;background:rgba(148,163,184,.1);color:#cbd5e1;font-size:.65rem}.pipeline-stage-filter:hover{color:#fff;background:#1d2230}.pipeline-stage-filter.active{background:rgba(99,102,241,.16);border-color:rgba(99,102,241,.4);color:#c7d2fe}
         .pipeline-board{display:flex;gap:1rem;align-items:flex-start;min-height:540px;padding-bottom:1rem}.pipeline-column{width:300px;min-width:300px;background:rgba(21,25,35,.72);border:1px solid #232838;border-radius:1rem;overflow:hidden}.pipeline-column-head{padding:1rem;border-bottom:1px solid #232838;background:rgba(15,17,26,.7);display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}.pipeline-column-head h3{display:flex;align-items:center;gap:.45rem;color:#fff;font-size:.8rem;font-weight:900}.pipeline-column-head p{font-size:.65rem;color:#64748b;margin-top:.3rem;line-height:1.35}.pipeline-column-head>span{display:inline-flex;align-items:center;justify-content:center;min-width:1.8rem;height:1.8rem;border-radius:999px;background:rgba(99,102,241,.12);color:#c7d2fe;font-size:.7rem;font-weight:900}.pipeline-column-body{padding:.7rem;display:flex;flex-direction:column;gap:.65rem;max-height:calc(100vh - 355px);overflow:auto}
-        .pipeline-card{background:#11151e;border:1px solid rgba(51,65,85,.7);border-radius:.85rem;padding:.85rem;box-shadow:0 8px 30px rgba(0,0,0,.12);transition:.15s ease}.pipeline-card:hover{border-color:rgba(99,102,241,.45);transform:translateY(-1px)}.pipeline-pill{display:inline-flex;align-items:center;border-width:1px;border-radius:999px;padding:.22rem .45rem;font-size:.62rem;font-weight:800}.pipeline-open{display:inline-flex;align-items:center;gap:.35rem;color:#c7d2fe;font-size:.7rem;font-weight:900;border:1px solid rgba(99,102,241,.25);background:rgba(99,102,241,.08);border-radius:.65rem;padding:.48rem .65rem}.pipeline-open:hover{background:rgba(99,102,241,.16);color:white}.pipeline-empty{border:1px dashed #2c3345;border-radius:.8rem;padding:1.3rem;text-align:center;color:#64748b;font-size:.7rem}.pipeline-loading,.pipeline-error{min-width:100%;display:flex;align-items:center;justify-content:center;gap:.7rem;border:1px dashed #2c3345;border-radius:1rem;padding:2rem;color:#94a3b8}.pipeline-error{flex-direction:column;color:#fda4af}
+        .pipeline-context{margin-top:.7rem;padding:.65rem .7rem;border:1px solid rgba(99,102,241,.14);background:rgba(99,102,241,.045);border-radius:.7rem}.pipeline-context strong{display:block;color:#c7d2fe;font-size:.65rem}.pipeline-context p{margin-top:.22rem;color:#94a3b8;font-size:.64rem;line-height:1.4}.pipeline-card{background:#11151e;border:1px solid rgba(51,65,85,.7);border-radius:.85rem;padding:.85rem;box-shadow:0 8px 30px rgba(0,0,0,.12);transition:.15s ease}.pipeline-card:hover{border-color:rgba(99,102,241,.45);transform:translateY(-1px)}.pipeline-pill{display:inline-flex;align-items:center;border-width:1px;border-radius:999px;padding:.22rem .45rem;font-size:.62rem;font-weight:800}.pipeline-open{display:inline-flex;align-items:center;gap:.35rem;color:#c7d2fe;font-size:.7rem;font-weight:900;border:1px solid rgba(99,102,241,.25);background:rgba(99,102,241,.08);border-radius:.65rem;padding:.48rem .65rem}.pipeline-open:hover{background:rgba(99,102,241,.16);color:white}.pipeline-empty{border:1px dashed #2c3345;border-radius:.8rem;padding:1.3rem;text-align:center;color:#64748b;font-size:.7rem}.pipeline-loading,.pipeline-error{min-width:100%;display:flex;align-items:center;justify-content:center;gap:.7rem;border:1px dashed #2c3345;border-radius:1rem;padding:2rem;color:#94a3b8}.pipeline-error{flex-direction:column;color:#fda4af}
         @media(max-width:768px){.pipeline-column{width:84vw;min-width:84vw}.pipeline-column-body{max-height:none}.pipeline-board{min-height:0}.pipeline-toolbar{padding:.8rem}}
     </style>
 </head>
@@ -58,9 +58,9 @@
                 <div class="flex items-start gap-3">
                     <button class="md:hidden kyv-icon-action mt-1" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
                     <div>
-                        <div class="flex items-center gap-2 mb-1"><p class="kyv-eyebrow">Flusso opportunità</p><span class="kyv-chip text-indigo-200">v2.28</span></div>
+                        <div class="flex items-center gap-2 mb-1"><p class="kyv-eyebrow">Flusso opportunità</p><span class="kyv-chip text-indigo-200">Pipeline Pro</span></div>
                         <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Pipeline & Opportunità</h2>
-                        <p class="text-kyv-text mt-2 text-xs sm:text-sm max-w-3xl">Una vista unica per capire dove si trova ogni brano, quali pitch sono aperti e cosa richiede attenzione.</p>
+                        <p class="text-kyv-text mt-2 text-xs sm:text-sm max-w-3xl">Opportunità, invii e follow-up in una vista operativa: capisci cosa muovere adesso e cosa è già chiuso.</p>
                     </div>
                 </div>
                 <div class="flex gap-2 w-full xl:w-auto">
@@ -69,7 +69,7 @@
                 </div>
             </header>
 
-            <div id="pipeline-summary" class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4"></div>
+            <div id="pipeline-summary" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-4"></div>
 
             <section class="pipeline-toolbar mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.35fr_1fr_1fr_1fr_auto] gap-2">
@@ -99,7 +99,7 @@
             </div>
 
             <div class="mt-4 text-[11px] text-slate-500 leading-relaxed max-w-4xl">
-                La fase viene calcolata dai dati già presenti in PROGETTI senza modificare lo stato originale. In questo modo diciture storiche come “MANDATA A…” o “PROVINATA DA…” restano intatte e vengono solo interpretate nella pipeline.
+                La pipeline non riscrive gli stati storici. Quando esistono usa gli invii strutturati di INVII_AUDIO; altrimenti interpreta in modo conservativo diciture come “MANDATA A…” o “PROVINATA DA…”.
             </div>
         </section>
     </main>
