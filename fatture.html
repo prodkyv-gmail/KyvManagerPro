@@ -149,7 +149,7 @@
         async function fetchFattureCorrelate() {
             document.getElementById('tbody-ft-nopag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; if(window.lucide) lucide.createIcons();
             try {
-                const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
+                const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
                 if(fatRes.error) throw fatRes.error;
                 correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
                 correlazioneFattureGlobal = fatRes.data || []; document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
@@ -161,13 +161,13 @@
             let hNopag = [], hPag = [], sumDaIncassare = 0, sumPagate = 0;
             correlazioneFattureGlobal.forEach(f => {
                 let linkedProj = f.ID_PROGETTO ? correlazioneProjMapGlobal[f.ID_PROGETTO] : null;
-                let combinedStr = `${f.Numero} ${f.Denominazione} ${f.Descrizione} ${linkedProj}`.toLowerCase();
+                let combinedStr = `${f.Numero} ${f.Numero_Originale||''} ${f.Denominazione} ${f.Descrizione} ${linkedProj}`.toLowerCase();
                 if (searchTxt && !combinedStr.includes(searchTxt)) return;
                 let isPagata = f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI');
                 let numVal = parseKyvNumber(f.ImportoTotaleDocumento || f.PrezzoTotale || f.PrezzoUnitario || f.ImportoPagamento); let imp = fmtEuro.format(numVal); let d = f.Data ? new Date(f.Data).toLocaleDateString('it-IT') : '-';
                 let projBadge = linkedProj ? `<span class="mt-2 inline-flex px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-200 border border-indigo-500/20"><i data-lucide="folder" class="w-3 h-3 mr-1"></i>${H(linkedProj)}</span>` : '<span class="mt-2 text-[10px] text-amber-200">Progetto non collegato</span>';
                 let tr = `<tr class="kyv-editable-row hover:bg-kyv-border/30 transition-colors border-b border-kyv-border/30 cursor-pointer group" data-kyv-edit-table="FATTURE" data-kyv-edit-id="${H(f.ID_FT)}" title="Apri e modifica la fattura">
-                    <td data-label="Numero / Data" class="px-6 py-3 font-medium group-hover:text-indigo-300 transition-colors"><i data-lucide="pencil" class="w-3 h-3 inline mr-2 opacity-60"></i>N° ${H(f.Numero || '-')}<br><span class="text-xs opacity-60 ml-5">${H(d)}</span></td>
+                    <td data-label="Numero / Data" class="px-6 py-3 font-medium group-hover:text-indigo-300 transition-colors"><i data-lucide="pencil" class="w-3 h-3 inline mr-2 opacity-60"></i>N° ${H(f.Numero_Originale || f.Numero || '-')}<br><span class="text-xs opacity-60 ml-5">${H(d)}</span></td>
                     <td data-label="Denominazione" class="px-6 py-3 truncate max-w-[200px]">${H(f.Denominazione || '-')}</td>
                     <td data-label="Descrizione / Progetto" class="px-6 py-3 whitespace-normal opacity-90"><span class="block truncate max-w-[300px]">${H(f.Descrizione || '-')}</span>${projBadge}</td>
                     <td data-label="Importo" class="px-6 py-3 font-black">${H(imp)}</td>
