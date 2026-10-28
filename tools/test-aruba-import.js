@@ -17,7 +17,7 @@ assert.ok(fs.readFileSync('kyv-record-editor.js','utf8').includes("['Numero', 'N
 assert.ok(source.includes('crypto.subtle.digest'),'Imported XML must have a SHA-256 signature');
 assert.ok(source.includes("if(/<!DOCTYPE|<!ENTITY/i.test(string))"),'XML external entities must be blocked');
 assert.ok(source.includes("Numero_Originale")&&source.includes("XML_SHA256"),'Stable original number and SHA fields required');
-assert.ok(source.includes("count:'exact'")&&source.includes("res.count>READ_LIMIT"),'Duplicate read must fail closed on incomplete datasets');
+assert.ok(source.includes("count:'exact'")&&source.includes("first.count>READ_LIMIT"),'Duplicate read must fail closed on incomplete datasets');
 assert.ok(source.includes("PAGATA:'NO'"),'Payment instructions do not imply paid');
 assert.ok(source.includes("if(projectId)data.ID_PROGETTO=Number(projectId)"),'Projects are only assigned explicitly');
 assert.ok(source.includes("if(!window.confirm("),'Final user confirmation required');
@@ -76,6 +76,7 @@ assert.equal(check(incoming,[{...hist,Denominazione:'Altra Azienda',IdCodice5:'0
 assert.equal(check(incoming,[{...hist,Data:'2025-10-26'}]),'ok','Same number different years allowed');
 assert.equal(check(incoming,[{...hist,Numero_Originale:'FPR 14/26',ImportoTotaleDocumento:'999.00'}]),'review','Same original number with divergent amount');
 assert.equal(check(incoming,[{...hist,Numero_Originale:'FPR 14/26'}]),'duplicate','Same original number and details');
+assert.equal(check(incoming,[{...hist,Numero_Originale:'ALT 14/26'}]),'review','Ambiguous number aliases in same year must block automatic import');
 assert.equal(check({...incoming,TipoDocumento:'TD04'},[{...hist,Numero_Originale:'FPR 14/26'}]),'review','Historic number conflict must still be reviewed');
 
 console.log('OK: Aruba XML parsing, invoice mapping, SHA256, deduplication and manual linking safeguards');
