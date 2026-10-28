@@ -135,6 +135,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         document.head.appendChild(projects);
     }
 
+    const globalSearch=document.createElement('script');
+    globalSearch.src='kyv-global-search-v8.js';
+    globalSearch.async=false;
+    globalSearch.dataset.kyvGlobalSearchV8='1';
+    document.head.appendChild(globalSearch);
+
     const producer=document.createElement('script');
     producer.src='kyv-producer-mode.js';
     producer.async=false;
