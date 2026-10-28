@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-easy-secondary-v9-20261028';
+const CACHE_NAME = 'kyv-studio-v2-32-project-timeline-v10-20261028';
 const APP_SHELL = [
     './',
     './index.html',
@@ -22,6 +22,7 @@ const APP_SHELL = [
     './kyv-project-finance-summary.js',
     './kyv-project-sheet-v2.js',
     './kyv-project-hub-v3.js',
+    './kyv-project-timeline-v10.js',
     './kyv-pipeline-v4.js',
     './kyv-today-home-v5.js',
     './kyv-economy-v6.js',
