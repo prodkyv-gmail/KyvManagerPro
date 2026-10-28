@@ -16,8 +16,9 @@ const yearOf=v=>{const d=v?new Date(v):null;return d&&!Number.isNaN(d.getTime())
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
 function projectInvoices(p,invoices){
  const pid=text(p.ID),idft=text(p.IDFT);
- const direct=invoices.filter(f=>text(f.ID_PROGETTO)===pid);if(direct.length)return direct;
- return idft?invoices.filter(f=>text(f.ID_FT)===idft):[];
+ const direct=invoices.filter(f=>text(f.ID_PROGETTO)===pid);
+ const byInvoiceId=idft?invoices.filter(f=>text(f.ID_FT)===idft):[];
+ return [...new Map([...direct,...byInvoiceId].map(f=>[text(f.ID_FT),f])).values()];
 }
 function yearMatch(row,year,field){return year==='all'||yearOf(row?.[field])===Number(year);}
 function projectYearMatch(p,year){if(year==='all')return true;return [p.Data_Pubblicazione,p.Data_Consegna_Master,p.Data_Sessione].some(v=>yearOf(v)===Number(year));}
