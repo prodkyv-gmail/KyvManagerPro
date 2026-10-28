@@ -19,24 +19,22 @@ function euro(value){return window.KYV?.formatEuro?KYV.formatEuro(value):new Int
 function date(value){return value?(window.KYV?.formatDate?KYV.formatDate(value,'-'):new Date(value).toLocaleDateString('it-IT')):'-';}
 function projectId(){const badge=text(document.getElementById('hero-badges')?.textContent).match(/\bID\s+(\d+)\b/i)?.[1];if(badge)return badge;return text(new URLSearchParams(location.search).get('id'));}
 function projectMeta(){return{title:text(document.getElementById('hero-title')?.textContent),artist:text(document.getElementById('hero-artist')?.textContent)};}
-function key(row){return text(row?.ID_FT||row?.Numero);}
+function key(row){return text(row?.ID_FT);}
 function unique(rows){const map=new Map();(rows||[]).forEach((row,index)=>map.set(key(row)||`row-${index}`,row));return[...map.values()];}
 const fields='ID_FT,Numero,Data,Denominazione,Descrizione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO';
 
 async function fetchInvoices(pid){
   if(!client())return null;
   try{
-    const directPromise=client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(200);
-    const projectPromise=client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle();
-    const [direct,project]=await Promise.all([directPromise,projectPromise]);
-    if(direct.error)throw direct.error;if(project.error)throw project.error;
-    const legacy=[];
-    if(project.data&&text(project.data.IDFT)){
-      const result=await client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5);
-      if(result.error)throw result.error;
-      legacy.push(...(result.data||[]));
-    }
-    return unique([...(direct.data||[]),...legacy]);
+    const direct=await client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(200);
+    if(direct.error)throw direct.error;
+    if((direct.data||[]).length)return unique(direct.data);
+    const project=await client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle();
+    if(project.error)throw project.error;
+    if(!project.data||!text(project.data.IDFT))return [];
+    const legacy=await client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5);
+    if(legacy.error)throw legacy.error;
+    return unique((legacy.data||[]).filter(row=>!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===text(pid)));
   }catch(error){console.warn('[KYV Finance Summary] Lettura fatture non riuscita',error);return null;}
 }
 
