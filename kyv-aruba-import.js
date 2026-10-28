@@ -64,7 +64,8 @@ function classify(row,existing){
   }
   for(const x of existing){
     if(row.Numero_Originale&&clean(x.Numero_Originale)===clean(row.Numero_Originale)
-       &&year(x.Data)===year(row.Data)&&clean(x.TipoDocumento||'TD01')===clean(row.TipoDocumento)){
+       &&year(x.Data)===year(row.Data)){
+      if(x.TipoDocumento&&clean(x.TipoDocumento)!==clean(row.TipoDocumento))return{kind:'review',reason:'Stesso numero/anno con tipo documento diverso · ID '+x.ID_FT};
       const consistent=customerMatches(row,x)&&sameMoney(row.ImportoTotaleDocumento,x.ImportoTotaleDocumento);
       return {kind:consistent?'duplicate':'review',reason:(consistent?'Numero originale già presente':'Numero originale coincidente, ma dati differenti')+' · ID '+x.ID_FT};
     }
@@ -72,6 +73,7 @@ function classify(row,existing){
   if(row.Numero===null)return{kind:'ok',reason:'Numero alfanumerico conservato in forma originale'};
   for(const x of existing){
     if(x.Numero_Originale||Number(x.Numero)!==Number(row.Numero)||year(x.Data)!==year(row.Data))continue;
+    if(x.TipoDocumento&&clean(x.TipoDocumento)!==clean(row.TipoDocumento))return{kind:'review',reason:'Stesso numero/anno ma tipo documento diverso · ID '+x.ID_FT};
     const consistent=customerMatches(row,x)&&sameMoney(row.ImportoTotaleDocumento,x.ImportoTotaleDocumento);
     return{kind:consistent?'duplicate':'review',reason:(consistent?'Possibile importazione storica già presente':'Numero/anno già presenti nello storico; verifica manuale')+' · ID '+x.ID_FT};
   }
