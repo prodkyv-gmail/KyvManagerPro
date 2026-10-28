@@ -153,7 +153,7 @@ window.KYV_CONFIG = KYV_CONFIG;
 
     if(page==='index.html'||page===''){
         const todayPriority=document.createElement('script');
-        todayPriority.src='kyv-today-priority.js';
+        todayPriority.src='kyv-today-home-v5.js';
         todayPriority.async=false;
         document.head.appendChild(todayPriority);
     }
