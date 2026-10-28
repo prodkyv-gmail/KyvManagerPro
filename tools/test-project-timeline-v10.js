@@ -1,0 +1,22 @@
+const assert=require('node:assert/strict');const fs=require('fs');
+const timeline=fs.readFileSync('kyv-project-timeline-v10.js','utf8');
+const config=fs.readFileSync('config.js','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
+
+for(const event of ['Sessione','Contratto','Versione finale','Invio a ','Aggiornamento pitch','Master consegnato','Fattura ','Pubblicazione']) assert.ok(timeline.includes(event),event+' timeline event missing');
+assert.ok(timeline.includes('compactEvents'),'compact Easy timeline missing');
+assert.ok(timeline.includes('past.slice(-4)'),'Easy timeline must cap recent history');
+assert.ok(timeline.includes('future.slice(0,1)'),'Easy timeline must include nearest future event');
+assert.ok(timeline.includes('kyv-project-timeline-v10'),'compact mount missing');
+assert.ok(timeline.includes("document.getElementById('tab-timeline')"),'full existing timeline target must be reused');
+assert.ok(timeline.includes('stato incasso da verificare'),'invoice state must not invent payment date');
+assert.ok(timeline.includes("body.kyv-easy-mode .kyv-hub3-recent"),'Easy mode must remove duplicate recent-activity panel');
+assert.ok(timeline.includes("window.KYV_EASY_UX_V9?.setMode?.('complete')"),'full timeline action must reveal Complete mode');
+assert.ok(timeline.includes("kyv:invoice-updated"),'timeline must refresh after invoice updates');
+assert.ok(timeline.includes("kyv:pitch-updated"),'timeline must refresh after pitch updates');
+assert.doesNotMatch(timeline,/\.from\(/,'timeline must reuse current page state without DB queries');
+assert.doesNotMatch(timeline,/\.(?:insert|update|upsert|delete)\(/,'timeline must not write data');
+assert.doesNotMatch(timeline,/new MutationObserver/,'timeline must not add observer');
+assert.ok(config.includes("projectTimelineV10.src='kyv-project-timeline-v10.js'"),'config must load timeline v10');
+assert.ok(sw.includes("'./kyv-project-timeline-v10.js'"),'PWA must cache timeline v10');
+console.log('OK: Project Timeline v10 is compact in Easy, complete on demand and read-only.');

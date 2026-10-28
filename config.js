@@ -238,6 +238,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         projectHubV3.dataset.kyvProjectHubV3='1';
         document.head.appendChild(projectHubV3);
 
+        const projectTimelineV10=document.createElement('script');
+        projectTimelineV10.src='kyv-project-timeline-v10.js';
+        projectTimelineV10.async=false;
+        projectTimelineV10.dataset.kyvProjectTimelineV10='1';
+        document.head.appendChild(projectTimelineV10);
+
         const easyUxV9=document.createElement('script');
         easyUxV9.src='kyv-easy-ux-v9.js';
         easyUxV9.async=false;
