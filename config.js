@@ -229,6 +229,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         projectHubV3.async=false;
         projectHubV3.dataset.kyvProjectHubV3='1';
         document.head.appendChild(projectHubV3);
+
+        const easyUxV9=document.createElement('script');
+        easyUxV9.src='kyv-easy-ux-v9.js';
+        easyUxV9.async=false;
+        easyUxV9.dataset.kyvEasyUxV9='1';
+        document.head.appendChild(easyUxV9);
     }
 
     if(page==='kyv_calendar.html'){

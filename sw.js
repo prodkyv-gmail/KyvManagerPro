@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-32-global-search-v8-20261028';
+const CACHE_NAME = 'kyv-studio-v2-32-easy-wizard-v9-20261028';
 const APP_SHELL = [
     './',
     './index.html',
@@ -27,6 +27,7 @@ const APP_SHELL = [
     './kyv-economy-v6.js',
     './kyv-rights-v7.js',
     './kyv-global-search-v8.js',
+    './kyv-easy-ux-v9.js',
     './kyv-siae-import-guard.js',
     './kyv-project-edit-safety.js',
     './kyv-pitch-followup.js',
