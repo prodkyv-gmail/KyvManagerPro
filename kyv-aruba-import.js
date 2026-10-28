@@ -72,7 +72,8 @@ function classify(row,existing){
   }
   if(row.Numero===null)return{kind:'ok',reason:'Numero alfanumerico conservato in forma originale'};
   for(const x of existing){
-    if(x.Numero_Originale||Number(x.Numero)!==Number(row.Numero)||year(x.Data)!==year(row.Data))continue;
+    if(Number(x.Numero)!==Number(row.Numero)||year(x.Data)!==year(row.Data))continue;
+    if(x.Numero_Originale)return{kind:'review',reason:'Stesso numero numerico/anno con numerazione originale differente · ID '+x.ID_FT};
     if(x.TipoDocumento&&clean(x.TipoDocumento)!==clean(row.TipoDocumento))return{kind:'review',reason:'Stesso numero/anno ma tipo documento diverso · ID '+x.ID_FT};
     const consistent=customerMatches(row,x)&&sameMoney(row.ImportoTotaleDocumento,x.ImportoTotaleDocumento);
     return{kind:consistent?'duplicate':'review',reason:(consistent?'Possibile importazione storica già presente':'Numero/anno già presenti nello storico; verifica manuale')+' · ID '+x.ID_FT};
@@ -113,12 +114,20 @@ function render(){
   document.getElementById('kyv-aruba-count').textContent=state.items.length+' file · '+state.items.filter(it=>it.kind==='duplicate').length+' duplicati · '+state.items.filter(it=>it.kind==='review').length+' da verificare';
 }
 async function loadExisting(){
-  const res=await state.client.from('FATTURE')
-    .select('ID_FT,Numero,Numero_Originale,XML_SHA256,Data,TipoDocumento,Denominazione,IdCodice5,ImportoTotaleDocumento',{count:'exact'})
-    .order('ID_FT',{ascending:false}).limit(READ_LIMIT);
-  if(res.error)throw Error('Impossibile verificare i duplicati: '+res.error.message);
-  if(res.count===null||res.count>READ_LIMIT)throw Error('Archivio troppo grande per una verifica completa: importazione bloccata.');
-  state.existing=res.data||[];
+  const cols='ID_FT,Numero,Numero_Originale,XML_SHA256,Data,TipoDocumento,Denominazione,IdCodice5,ImportoTotaleDocumento';
+  const pageSize=500;
+  const first=await state.client.from('FATTURE').select(cols,{count:'exact'}).order('ID_FT',{ascending:false}).range(0,pageSize-1);
+  if(first.error)throw Error('Impossibile verificare i duplicati: '+first.error.message);
+  if(first.count===null||first.count>READ_LIMIT)throw Error('Archivio troppo grande per una verifica completa: importazione bloccata.');
+  const rows=[...(first.data||[])];
+  while(rows.length<first.count){
+    const offset=rows.length;
+    const next=await state.client.from('FATTURE').select(cols).order('ID_FT',{ascending:false}).range(offset,Math.min(offset+pageSize-1,first.count-1));
+    if(next.error||!(next.data||[]).length)throw Error('Lettura archivio incompleta: importazione bloccata.');
+    rows.push(...next.data);
+  }
+  if(rows.length!==first.count)throw Error('Lettura archivio incompleta: importazione bloccata.');
+  state.existing=rows;
 }
 async function loadProjects(){
   const res=await state.client.from('PROGETTI').select('ID,TITOLO,ARTISTA').order('ID',{ascending:false}).limit(1000);
