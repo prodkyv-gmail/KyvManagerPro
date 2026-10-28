@@ -46,4 +46,32 @@ assert.ok(quality.includes("key:'invoice-number-only'"),'Data Quality must flag 
 assert.ok(quality.includes("key:'invoice-id-conflict'"),'Data Quality must flag inconsistent stable invoice IDs');
 assert.ok(quality.includes('FT/Numero non è una chiave stabile'), 'Data Quality must explain annual invoice number ambiguity');
 
+
+const manualPage=fs.readFileSync('fatture.html','utf8');
+const editor=fs.readFileSync('kyv-record-editor.js','utf8');
+assert.match(finance,/function currentProject\(pid\)/,'The completion prompt must refer to the currently selected project');
+assert.match(finance,/data-kyv-finance-new>Crea fattura collegata/,'Completed projects should offer a contextual invoice action');
+assert.match(finance,/const register=pending\?'':'/,'The reminder must not duplicate the create action');
+assert.match(finance,/Collega fattura esistente \(manuale\)/,'Manual invoice linking must remain available');
+assert.match(finance,/fatture\.html\?collegaProgetto=/,'Manual linking must preserve the project context');
+assert.match(manualPage,/function renderManualInvoiceHelp/,'Invoice register must guide manual assignment');
+assert.match(manualPage,/campo <strong>ID_PROGETTO<\/strong>/,'Manual flow must identify the stable ID field');
+assert.match(manualPage,/data-kyv-new-table="FATTURE"/,'The manual creation button must be retained');
+assert.match(editor,/fieldsRoot\.querySelectorAll\('\.dyn-record-input'\)/,'The saved invoice must include the contextually preselected relation');
+assert.match(invoices,/if\(!setField\('ID_PROGETTO',projectId\)\)throw/,'Contextual creation must fail closed when ID cannot be set');
+assert.match(invoices,/projectInput\.disabled=true/,'The contextual relation must not be editable during creation');
+const completedSource=finance.match(/function completedProject\(project\)\{[^\n]+\}/)?.[0];
+const awaitingSource=finance.match(/function awaitingInvoice\(project,rows\)\{[^\n]+\}/)?.[0];
+assert.ok(completedSource&&awaitingSource,'Completion logic must be independently testable');
+const awaitingInvoice=new Function('text',completedSource+'\n'+awaitingSource+'\nreturn awaitingInvoice;')(value=>String(value??'').trim());
+for(const status of ['Pubblicato','Chiusa','Completato','Finita'])
+  assert.equal(awaitingInvoice({ID:19,STATO:status},[]),true,status+' must trigger a reminder');
+for(const status of ['In corso','Da completare','Non completato',''])
+  assert.equal(awaitingInvoice({ID:19,STATO:status},[]),false,status+' must not trigger a reminder');
+assert.equal(awaitingInvoice({ID:19,STATO:'Completato'},[{ID_FT:86,ID_PROGETTO:19}]),false,'An existing invoice must suppress the reminder');
+assert.equal(awaitingInvoice({ID:19,STATO:'Completato'},null),false,'A failed invoice read cannot be treated as missing invoice');
+assert.equal(awaitingInvoice(null,[]),false,'Unloaded project cannot trigger a reminder');
+assert.doesNotMatch(finance,/\.from\(['"](?:FATTURE|PROGETTI)['"]\)\s*\.(?:insert|update|upsert|delete)\(/,'Completion prompts must remain read-only');
+assert.equal((finance.match(/new MutationObserver/g)||[]).length,1,'Do not add another MutationObserver');
+
 console.log('OK: invoice/project relations use stable IDs only; Numero is display-only.');
