@@ -29,7 +29,7 @@
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
     <script src="kyv-responsive.js" defer></script>
-    <script src="kyv-pipeline-v228.js" defer></script>
+    <script src="kyv-pipeline-v4.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="kyv-responsive.css">
     <link rel="stylesheet" href="kyv-theme.css">
@@ -58,9 +58,9 @@
                 <div class="flex items-start gap-3">
                     <button class="md:hidden kyv-icon-action mt-1" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
                     <div>
-                        <div class="flex items-center gap-2 mb-1"><p class="kyv-eyebrow">Flusso opportunità</p><span class="kyv-chip text-indigo-200">v2.28</span></div>
+                        <div class="flex items-center gap-2 mb-1"><p class="kyv-eyebrow">Flusso opportunità</p><span class="kyv-chip text-indigo-200">Pipeline Pro</span></div>
                         <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Pipeline & Opportunità</h2>
-                        <p class="text-kyv-text mt-2 text-xs sm:text-sm max-w-3xl">Una vista unica per capire dove si trova ogni brano, quali pitch sono aperti e cosa richiede attenzione.</p>
+                        <p class="text-kyv-text mt-2 text-xs sm:text-sm max-w-3xl">Opportunità, invii e follow-up in una vista operativa: capisci cosa muovere adesso e cosa è già chiuso.</p>
                     </div>
                 </div>
                 <div class="flex gap-2 w-full xl:w-auto">
@@ -69,7 +69,7 @@
                 </div>
             </header>
 
-            <div id="pipeline-summary" class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4"></div>
+            <div id="pipeline-summary" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-4"></div>
 
             <section class="pipeline-toolbar mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.35fr_1fr_1fr_1fr_auto] gap-2">
@@ -99,7 +99,7 @@
             </div>
 
             <div class="mt-4 text-[11px] text-slate-500 leading-relaxed max-w-4xl">
-                La fase viene calcolata dai dati già presenti in PROGETTI senza modificare lo stato originale. In questo modo diciture storiche come “MANDATA A…” o “PROVINATA DA…” restano intatte e vengono solo interpretate nella pipeline.
+                La pipeline non riscrive gli stati storici. Quando esistono usa gli invii strutturati di INVII_AUDIO; altrimenti interpreta in modo conservativo diciture come “MANDATA A…” o “PROVINATA DA…”.
             </div>
         </section>
     </main>
