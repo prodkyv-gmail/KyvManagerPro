@@ -63,11 +63,11 @@
                 <div id="quality-status" class="quality-card p-5 text-kyv-text">
                     <div class="flex items-center"><i data-lucide="loader-2" class="w-5 h-5 mr-3 animate-spin text-cyan-300"></i>Controllo dati in corso…</div>
                 </div>
-                <div id="quality-stats" class="grid grid-cols-2 lg:grid-cols-5 gap-3"></div>
+                <div id="quality-stats" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3"></div>
                 <div id="quality-groups" class="space-y-4"></div>
                 <div class="quality-card p-5 text-xs text-kyv-text leading-relaxed">
                     <h3 class="text-white font-black mb-2 flex items-center"><i data-lucide="shield-check" class="w-4 h-4 mr-2 text-emerald-300"></i>Correzione controllata</h3>
-                    <p>La pagina legge PROGETTI, AUDIO_VERSIONI, DROPBOX_AUDIO_FILES e DOCUMENTI_PROGETTO. “Apri e correggi” mostra solo il campo segnalato; il salvataggio avviene esclusivamente dopo una tua conferma manuale. I duplicati vengono soltanto affiancati per il confronto e non vengono mai uniti automaticamente.</p>
+                    <p>La pagina legge PROGETTI, FATTURE, INVII_AUDIO, AUDIO_VERSIONI, DROPBOX_AUDIO_FILES e DOCUMENTI_PROGETTO. “Apri e correggi” mostra solo il campo segnalato; il salvataggio avviene esclusivamente dopo una tua conferma manuale. I duplicati vengono soltanto affiancati per il confronto e non vengono mai uniti automaticamente.</p>
                 </div>
             </section>
         </section>
@@ -81,7 +81,7 @@
         loadKyvSidebar('data-quality');
 
         const H = value => KYV_HELPERS.safeHtml(value);
-        const limits = { PROGETTI:2500, AUDIO_VERSIONI:5000, DROPBOX_AUDIO_FILES:5000, DOCUMENTI_PROGETTO:5000 };
+        const limits = { PROGETTI:2500, FATTURE:2500, INVII_AUDIO:5000, AUDIO_VERSIONI:5000, DROPBOX_AUDIO_FILES:5000, DOCUMENTI_PROGETTO:5000 };
         const severity = {
             high:{ label:'Alta', tone:'border-rose-500/30 bg-rose-600/10 text-rose-200', icon:'circle-alert' },
             medium:{ label:'Media', tone:'border-amber-500/30 bg-amber-600/10 text-amber-200', icon:'triangle-alert' },
@@ -111,7 +111,9 @@
                     PROGETTI:{ pk:'ID', label:'Progetto', fields:['TITOLO','ARTISTA'] },
                     AUDIO_VERSIONI:{ pk:'ID_VERSIONE', label:'Versione audio', fields:['CONTENT_HASH'] },
                     DROPBOX_AUDIO_FILES:{ pk:'ID_FILE', label:'Audio Dropbox', fields:['Hash_SHA256'] },
-                    DOCUMENTI_PROGETTO:{ pk:'ID_DOCUMENTO', label:'Documento progetto', fields:['Link_Drive'] }
+                    DOCUMENTI_PROGETTO:{ pk:'ID_DOCUMENTO', label:'Documento progetto', fields:['Link_Drive','ID_PROGETTO'] },
+                    FATTURE:{ pk:'ID_FT', label:'Fattura', fields:['ID_PROGETTO'] },
+                    INVII_AUDIO:{ pk:'ID_INVIO', label:'Invio audio', fields:['ID_PROGETTO'] }
                 },
                 onSaved: async ()=>loadQuality()
             });
@@ -180,8 +182,10 @@
                 ['Progetti', result.stats.projects, 'music-2', 'text-indigo-300'],
                 ['Audio', result.stats.audio, 'waveform', 'text-violet-300'],
                 ['Documenti', result.stats.documents, 'folder-lock', 'text-sky-300'],
-                ['Duplicati', result.stats.duplicateGroups, 'copy', 'text-rose-300'],
-                ['Da verificare', result.totalIssues, 'list-checks', 'text-amber-300']
+                ['Fatture', result.stats.invoices, 'receipt-text', 'text-emerald-300'],
+                ['Relazioni', result.stats.relationIssues, 'link-2-off', 'text-rose-300'],
+                ['Pagamenti', result.stats.paymentIssues, 'badge-euro', 'text-amber-300'],
+                ['Da verificare', result.totalIssues, 'list-checks', 'text-orange-300']
             ];
             document.getElementById('quality-stats').innerHTML = cards.map(([label,value,icon,color]) => `<article class="quality-card p-4"><i data-lucide="${icon}" class="w-5 h-5 ${color}"></i><p class="text-2xl font-black text-white mt-3">${value}</p><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black mt-1">${label}</p></article>`).join('');
 
@@ -216,14 +220,16 @@
                 if(!session) return;
                 qualityDb = qualityDb || KYV.createSupabaseClient();
                 ensureEditor(qualityDb);
-                const [projects, audioVersions, dropboxAudio, documents] = await Promise.all([
-                    readRows(qualityDb, 'PROGETTI', 'ID,TITOLO,ARTISTA,Nome_Vero_Artista,STATO', 'ID'),
+                const [projects, invoices, sends, audioVersions, dropboxAudio, documents] = await Promise.all([
+                    readRows(qualityDb, 'PROGETTI', 'ID,TITOLO,ARTISTA,Nome_Vero_Artista,STATO,PAGAMENTO,IDFT', 'ID'),
+                    readRows(qualityDb, 'FATTURE', 'ID_FT,Numero,Data,Denominazione,ID_PROGETTO,PAGATA', 'ID_FT'),
+                    readRows(qualityDb, 'INVII_AUDIO', 'ID_INVIO,ID_PROGETTO,Destinatario,Stato,Data_Invio', 'ID_INVIO'),
                     readRows(qualityDb, 'AUDIO_VERSIONI', 'ID_VERSIONE,ID_PROGETTO,NOME_FILE,TITOLO,ARTISTA,CONTENT_HASH,LINK_FILE', 'ID_VERSIONE', true),
                     readRows(qualityDb, 'DROPBOX_AUDIO_FILES', 'ID_FILE,ID_PROGETTO,Nome_File,Titolo,Artista,Hash_SHA256,Link_Dropbox', 'ID_FILE'),
                     readRows(qualityDb, 'DOCUMENTI_PROGETTO', 'ID_DOCUMENTO,ID_PROGETTO,Tipo_Documento,Titolo_Documento,Link_Drive,Fonte', 'ID_DOCUMENTO')
                 ]);
-                const loaded = { PROGETTI:projects, AUDIO_VERSIONI:audioVersions, DROPBOX_AUDIO_FILES:dropboxAudio, DOCUMENTI_PROGETTO:documents };
-                render(KYV_DATA_QUALITY.audit({ projects, audioVersions, dropboxAudio, documents }), loaded);
+                const loaded = { PROGETTI:projects, FATTURE:invoices, INVII_AUDIO:sends, AUDIO_VERSIONI:audioVersions, DROPBOX_AUDIO_FILES:dropboxAudio, DOCUMENTI_PROGETTO:documents };
+                render(KYV_DATA_QUALITY.audit({ projects, invoices, sends, audioVersions, dropboxAudio, documents }), loaded);
             }catch(error){
                 console.error(error);
                 status.className = 'quality-card p-5 border-rose-500/25 bg-rose-500/5';

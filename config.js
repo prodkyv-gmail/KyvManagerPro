@@ -103,6 +103,12 @@ window.KYV_CONFIG = KYV_CONFIG;
         editorInvoiceFields.async=false;
         editorInvoiceFields.dataset.kyvEditorInvoiceFields='1';
         document.head.appendChild(editorInvoiceFields);
+
+        const editorPrimaryFields=document.createElement('script');
+        editorPrimaryFields.src='kyv-editor-primary-fields.js';
+        editorPrimaryFields.async=false;
+        editorPrimaryFields.dataset.kyvEditorPrimaryFields='1';
+        document.head.appendChild(editorPrimaryFields);
     }
 
     if(producerViews.includes(page)){

@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');const fs=require('fs');
+const f=fs.readFileSync('kyv-editor-primary-fields.js','utf8');
+const config=fs.readFileSync('config.js','utf8');const sw=fs.readFileSync('sw.js','utf8');
+for(const table of ['CLIENTI','DOCUMENTI_PROGETTO','INVII_AUDIO','CONSEGNE_MASTER']) assert.ok(f.includes(table),table+' non coperta');
+assert.ok(f.includes("input.type='email'"),'email non tipizzata');
+assert.ok(f.includes("input.type='tel'"),'telefono non tipizzato');
+assert.ok(f.includes("input.type='url'"),'URL non tipizzato');
+assert.ok(f.includes("datetime-local"),'data/ora invio non tipizzata');
+assert.ok(f.includes('kyvPrimaryRowId'),'click riga mancante');
+assert.ok(f.includes("removeAttribute('contenteditable')"),'editing inline non disattivato');
+assert.ok(f.includes("scrivine uno nuovo"),'combobox non mantiene inserimento libero');
+assert.ok(config.includes("editorPrimaryFields.src='kyv-editor-primary-fields.js'"),'config non carica modulo');
+assert.ok(sw.includes("'./kyv-editor-primary-fields.js'"),'PWA non include modulo');
+console.log('OK: Studio Editor tabelle operative professionalizzate.');
