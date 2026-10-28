@@ -70,7 +70,9 @@ function display(items,label){
  const body=document.getElementById('kyv-gs-body');if(!body)return;
  results=items;active=Math.min(active,Math.max(0,items.length-1));
  if(!items.length){body.innerHTML='<div class="kyv-gs-empty">Nessun risultato.</div>';return;}
- body.innerHTML=(label?'<div class="kyv-gs-group">'+H(label)+'</div>':'')+items.map((r,i)=>`<button type="button" class="kyv-gs-result ${i===active?'active':''}" data-i="${i}"><span class="kyv-gs-icon"><i data-lucide="${H(r.icon||'search')}" class="w-4 h-4"></i></span><span class="kyv-gs-main"><strong>${H(r.title)}</strong><span>${H(r.subtitle||'')}</span></span><span class="kyv-gs-type">${H(r.type)}</span></button>`).join('');
+ const chunks=[];let previousType='';
+ items.forEach((r,i)=>{if(r.type!==previousType){chunks.push('<div class="kyv-gs-group">'+H(r.type)+'</div>');previousType=r.type;}chunks.push(`<button type="button" class="kyv-gs-result ${i===active?'active':''}" data-i="${i}"><span class="kyv-gs-icon"><i data-lucide="${H(r.icon||'search')}" class="w-4 h-4"></i></span><span class="kyv-gs-main"><strong>${H(r.title)}</strong><span>${H(r.subtitle||'')}</span></span><span class="kyv-gs-type">${H(r.type)}</span></button>`);});
+ body.innerHTML=(label?'<div class="kyv-gs-group">'+H(label)+'</div>':'')+chunks.join('');
  body.querySelectorAll('[data-i]').forEach(btn=>btn.addEventListener('click',()=>openResult(Number(btn.dataset.i))));
  if(window.lucide)lucide.createIcons({root:body});
 }
