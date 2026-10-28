@@ -36,6 +36,7 @@
     <script src="kyv-link-viewer.js" defer></script>
     <script src="kyv-table-tools.js" defer></script>
     <script src="kyv-record-editor.js" defer></script>
+    <script src="kyv-aruba-import.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }</script>
         <link rel="stylesheet" href="kyv-responsive.css">
@@ -95,6 +96,7 @@
                             <input type="search" id="correlazione-search" placeholder="Numero, cliente, progetto…" class="w-full bg-kyv-bg border border-kyv-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:border-indigo-500 outline-none transition-colors" oninput="applyCorrelazioneFilters()">
                         </div>
                         <a href="correlazione.html" class="kyv-row-primary whitespace-nowrap" aria-label="Apri correlazioni fatture" title="Correlazioni"><i data-lucide="git-merge" class="w-4 h-4"></i><span class="hidden sm:inline">Correlazioni</span></a>
+                        <button type="button" id="kyv-aruba-open" class="kyv-primary-action whitespace-nowrap" title="Importa fatture elettroniche XML Aruba"><i data-lucide="file-up" class="w-4 h-4 mr-2"></i>Importa XML Aruba</button>
                         <button type="button" data-kyv-new-table="FATTURE" class="kyv-primary-action whitespace-nowrap"><i data-lucide="plus" class="w-4 h-4 mr-2"></i>Nuova</button>
                         <button onclick="fetchFattureCorrelate()" class="kyv-icon-action shrink-0" aria-label="Ricarica fatture" title="Ricarica"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                     </div>
@@ -179,6 +181,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderManualInvoiceHelp();
             KYV_RECORD_EDITOR.create({ client: supabaseClient, onSaved: async () => { await fetchFattureCorrelate(); window.KYV_ECONOMY_V6?.refresh?.(); } });
+            window.KYV_ARUBA_IMPORT?.boot({ client: supabaseClient, onImported: async () => { await fetchFattureCorrelate(); window.KYV_ECONOMY_V6?.refresh?.(); } });
             fetchFattureCorrelate();
         });
     </script>
