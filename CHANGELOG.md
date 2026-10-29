@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-29 — SIAE: polarità estratto + colonne Studio Editor
+
+- Corretto il verso di ESTRATTO SIAE nei calcoli: IMPORTO con segno meno è a nostro favore, senza meno è a nostro sfavore. La conversione è solo in lettura/calcolo tramite `kyv-siae-amount.js`; archivio, deduplica import e importi grezzi non vengono modificati.
+- Adeguati Rendiconto SIAE (totale e anni), diritti v7 (movimenti positivi, versati a saldo, ritenute e netto) e Intelligence mensile/annuale (serie provvisoria). Le liquidazioni di bonifici SIAE e IMAIE verificati rimangono distinte e non invertono segno.
+- Studio Editor: menu **Colonne** su tutte le tabelle visualizzabili, preferenze per tabella salvate localmente, selezione individuale, ripristina tutte, minimo una colonna, piena ricerca e export CSV, senza modifiche al database. Gli importi di ESTRATTO SIAE in Studio Editor restano originali con legenda di interpretazione.
+- Test dedicati `tools/test-siae-sign-editor-columns.js`, suite e PWA aggiornate. Non è stata fatta alcuna modifica DB/RLS o migrazione.
+
+
 ## Consolidamento 2026-10-07
 
 - Aggiunta la pagina **Qualità Dati**, in sola lettura, per individuare progetti senza titolo o artista, possibili duplicati titolo/artista, versioni audio senza hash e documenti senza link.
