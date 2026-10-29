@@ -25,7 +25,7 @@ th{color:#cbd5e1}tr:hover td{background:#1e293b}.scroll{overflow-x:auto}
 footer{margin-top:24px;color:#94a3b8;font-size:12px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
-<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-siae-amount.js"></script><script src="kyv-auth.js"></script>
 <script src="kyv-invoice-line-amount.js"></script>
 <script src="kyv-intelligence-engine-v238.js"></script>
 </head><body>
@@ -40,8 +40,8 @@ footer{margin-top:24px;color:#94a3b8;font-size:12px}
 <div class="grid" id="kpis"></div>
 <div class="group"><section class="panel"><h2>Andamento fatturazione e incassi con data verificata</h2><div class="legend">Barra indaco = somma delle voci per data di emissione (PrezzoUnitario storico; PrezzoTotale per XML Aruba aggregati). <b>Il valore degli incassi bancari datati è separato:</b> non ricostruiamo la data dai pagamenti storici.</div><div class="scroll"><table><thead><tr><th>Periodo</th><th>Fatturato</th><th>Incassi fatture datati</th><th>Bonifici diritti</th><th>Voci</th><th>Andamento fatture</th></tr></thead><tbody id="period-rows"></tbody></table></div></section>
 <section class="panel"><h2>Completezza per progetti</h2><div id="coverage"></div><p class="muted">Un progetto senza fattura collegata non è necessariamente privo di ricavi: potrebbe generare SIAE, IMAIE, anticipi o altri compensi non ancora attribuiti.</p></section></div>
-<div class="group"><section class="panel"><h2>SIAE: estratto esistente, non ancora riconciliato</h2><p>I dati qui sotto derivano dalle righe presenti in ESTRATTO SIAE. Possono comprendere movimenti che non sono accrediti, addebiti o partite interne: <strong>non sono sommati agli incassi bancari.</strong></p>
-<div class="scroll"><table><thead><tr><th>Periodo</th><th>Movimenti SIAE grezzi (netto algebrico)</th></tr></thead><tbody id="siae-rows"></tbody></table></div></section>
+<div class="group"><section class="panel"><h2>SIAE: estratto esistente, non ancora riconciliato</h2><p>I dati qui sotto derivano dalle righe presenti in ESTRATTO SIAE. Possono comprendere movimenti che non sono accrediti, addebiti o partite interne: <strong>non sono sommati agli incassi bancari. I segni sono invertiti solo per il calcolo: “−” nell'estratto equivale a positivo per noi.</strong></p>
+<div class="scroll"><table><thead><tr><th>Periodo</th><th>Movimenti SIAE provvisori (saldo per noi)</th></tr></thead><tbody id="siae-rows"></tbody></table></div></section>
 <section class="panel"><h2>Segnalazioni per KYV Analyst</h2><div id="flags"></div><p class="muted">Motore di regole verificabili, senza AI generativa né modifiche automatiche. Le analisi del primo ritorno richiederanno date di sessione, attribuzione economica e date di accredito effettivo.</p></section></div>
 </section><footer>Prima versione analitica · nessun dato esistente viene modificato. Anno corrente confrontabile con gli anni precedenti solo tenendo conto della diversa porzione di anno trascorsa.</footer>
 </main>

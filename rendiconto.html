@@ -23,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7"></script>
     <script src="config.js"></script>
     <script src="kyv-drive-bridge.js"></script>
-    <script src="kyv-core.js"></script>
+    <script src="kyv-core.js"></script><script src="kyv-siae-amount.js"></script>
     <script src="kyv-toast.js"></script>
     <script src="kyv-helpers.js"></script>
     <script src="kyv-data-guard.js"></script>
@@ -75,7 +75,7 @@
         <section class="flex-1 overflow-y-auto w-full h-full flex flex-col">
             <header class="pt-8 px-4 sm:px-8 pb-4 flex justify-between items-end border-b border-kyv-border/50 shrink-0">
                 <div class="flex items-center"><button class="md:hidden text-kyv-text hover:text-white mr-3" onclick="toggleMobileMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
-                <div><h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Diritti <span class="text-indigo-400">SIAE / IMAIE</span></h2><p class="text-kyv-text mt-1 text-xs sm:text-sm">Controllo repertorio, movimenti economici e copertura dei progetti pubblicati.</p></div></div>
+                <div><h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Diritti <span class="text-indigo-400">SIAE / IMAIE</span></h2><p class="text-kyv-text mt-1 text-xs sm:text-sm">Controllo repertorio, movimenti economici e copertura dei progetti pubblicati. Nell’estratto SIAE il segno − indica un valore positivo per noi; un importo senza − indica un valore negativo per noi.</p></div></div>
                 <button onclick="fetchSiaeDataForRendiconto()" class="flex items-center px-4 py-2 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg shadow-sm"><i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> <span class="hidden sm:inline">Aggiorna</span></button>
             </header>
             
@@ -105,7 +105,7 @@
             try {
                 const [siaeRes, estrattoRes] = await Promise.all([supabaseClient.from('EXPORT SIAE').select('*'), supabaseClient.from('ESTRATTO SIAE').select('IMPORTO, DATA')]);
                 const allSiaeData = siaeRes.data||[]; const estrattoData = estrattoRes.data||[]; let totEntrate = 0, entratePerAnno = {};
-                estrattoData.forEach(r => { let imp = parseKyvNumber(r.IMPORTO); if(imp>0){ totEntrate+=imp; let a = r.DATA ? new Date(r.DATA).getFullYear() : '-'; entratePerAnno[a] = (entratePerAnno[a]||0)+imp; }});
+                estrattoData.forEach(r => { let imp = window.KYV_SIAE_AMOUNT?.forUs(r.IMPORTO)??-parseKyvNumber(r.IMPORTO); if(imp>0){ totEntrate+=imp; let a = r.DATA ? new Date(r.DATA).getFullYear() : '-'; entratePerAnno[a] = (entratePerAnno[a]||0)+imp; }});
                 document.getElementById('val-siae-entrate').innerText = fmtEuro.format(totEntrate);
                 document.getElementById('siae-entrate-anni').innerHTML = Object.keys(entratePerAnno).sort((a,b)=>b-a).map(y => `<div class="flex justify-between items-center text-xs mt-2 border-t border-emerald-500/20 pt-2"><span class="text-emerald-500/70 font-semibold uppercase text-[9px]">${y}</span><span class="font-bold text-white">${fmtEuro.format(entratePerAnno[y])}</span></div>`).join('');
                 

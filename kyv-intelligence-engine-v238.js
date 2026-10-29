@@ -52,7 +52,7 @@ function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[],righ
  }
  let siaeRows=0,siaeParseable=0;
  for(const v of siaes){
-   siaeRows++;const val=parseAmount(v.IMPORTO),key=periodOf(v.DATA,mode);
+   siaeRows++;const original=parseAmount(v.IMPORTO),val=root.KYV_SIAE_AMOUNT?.forUs(v.IMPORTO)??(original===null?null:-original),key=periodOf(v.DATA,mode);
    if(val!==null&&key){bucket(key).siaeProvisional+=Math.round(val*100);siaeParseable++;}
  }
  const withSession=projects.filter(p=>positiveDate(p.Data_Sessione)).length,
@@ -68,7 +68,7 @@ function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[],righ
  const rows=[...map.values()].sort((a,b)=>a.period.localeCompare(b.period));
  return {rows,totals:{billed:totalBilled/100,received:totalReceived/100,legacyUndated:legacyNoDate/100,unlinked,invoiceCount:invoices.length,projectCount:projects.length,siaeRows,siaeParseable,verifiedCash:rows.reduce((s,b)=>s+b.verifiedCash,0)/100,rightsCash:rightsCash/100,rightsCount},
  coverage:{withSession,withRelease,withMaster,withFee,activeUnlinked:active.length,openWithNoFee:openWithNoFee.length},
- warnings:['Il fatturato è aggregato per data fattura.','Gli incassi storici PAGATA=SI non hanno una data bancaria verificata e non sono ripartiti nei mesi degli incassi.','Le voci ESTRATTO SIAE sono provvisorie e NON sono incluse negli incassi complessivi.','Le liquidazioni SIAE/IMAIE confermate sono registrate a parte, per data accredito; i movimenti ESTRATTO SIAE non sono conteggiati come bonifici.'],
+ warnings:['Il fatturato è aggregato per data fattura.','Gli incassi storici PAGATA=SI non hanno una data bancaria verificata e non sono ripartiti nei mesi degli incassi.','Le voci ESTRATTO SIAE sono normalizzate (segno − = positivo per noi), restano provvisorie e NON sono incluse negli incassi complessivi.','Le liquidazioni SIAE/IMAIE confermate sono registrate a parte, per data accredito; i movimenti ESTRATTO SIAE non sono conteggiati come bonifici.'],
  undatedInvoiceIds:unknownCash};
 }
 root.KYV_INTELLIGENCE_ENGINE=Object.freeze({parseAmount,periodOf,summarizeInvoice,compute});

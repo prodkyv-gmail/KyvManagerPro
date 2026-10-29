@@ -12,7 +12,8 @@ const euro=v=>window.KYV?.formatEuro?KYV.formatEuro(v):new Intl.NumberFormat('it
 const yearOf=v=>{const d=v?new Date(v):null;return d&&!Number.isNaN(d.getTime())?d.getFullYear():null;};
 const normTitle=v=>text(v).toLocaleUpperCase('it').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]/g,'');
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
-function credited(row){return num(row.IMPORTO)>0;}
+function amountForUs(row){return window.KYV_SIAE_AMOUNT?.forUs(row.IMPORTO)??-num(row.IMPORTO);}
+function credited(row){return amountForUs(row)>0;}
 function op(row){return text(row.OPERAZIONE).toLocaleUpperCase('it');}
 function payment(row){return /VERSATI A SALDO/.test(op(row));}
 function charge(row){return /RITENUT|BOLLO/.test(op(row));}
@@ -27,10 +28,10 @@ function groupWorks(vertical){
 }
 function compute(year='all'){
  const estratto=filterYear(data.estratto,year),works=groupWorks(data.vertical),mine=data.vertical.filter(ownRow);
- const credits=estratto.filter(credited).reduce((s,r)=>s+num(r.IMPORTO),0);
- const paid=estratto.filter(payment).reduce((s,r)=>s+Math.abs(num(r.IMPORTO)),0);
- const charges=estratto.filter(charge).reduce((s,r)=>s+Math.abs(num(r.IMPORTO)),0);
- const net=estratto.reduce((s,r)=>s+num(r.IMPORTO),0);
+ const credits=estratto.filter(credited).reduce((s,r)=>s+amountForUs(r),0);
+ const paid=estratto.filter(payment).reduce((s,r)=>s+Math.max(0,amountForUs(r)),0);
+ const charges=estratto.filter(charge).reduce((s,r)=>s+Math.max(0,-amountForUs(r)),0);
+ const net=estratto.reduce((s,r)=>s+amountForUs(r),0);
  const myWorkMap=new Map();mine.forEach(r=>{const key=text(r['Cod. Opera'])||normTitle(r.Titolo);if(!myWorkMap.has(key))myWorkMap.set(key,r);});
  const myWorks=[...myWorkMap.values()];
  const avgDem=myWorks.length?myWorks.reduce((s,r)=>s+num(r['Quota DEM']),0)/myWorks.length:0;
@@ -66,10 +67,10 @@ function render(year='all'){
  const r=compute(year),ys=years(data.estratto);
  root.innerHTML=`<div class="kyv-rights-head"><div><p class="text-[9px] uppercase tracking-[.14em] font-black text-violet-200">Diritti</p><h3 class="mt-1">Controllo SIAE / IMAIE</h3><p>Separazione tra diritti accreditati, pagamenti a saldo e trattenute. Le corrispondenze con i progetti sono solo per titolo normalizzato: un mancato match significa “da verificare”, non “opera non depositata”.</p></div><div class="flex gap-2"><a href="importexport.html" class="kyv-chip">Import controllato</a><select id="kyv-rights-year" class="kyv-rights-select"><option value="all">Tutto lo storico</option>${ys.map(y=>`<option value="${y}" ${String(year)===String(y)?'selected':''}>${y}</option>`).join('')}</select></div></div>
  <div class="kyv-rights-money">
-  <div class="kyv-rights-card good"><span>Diritti accreditati</span><strong>${H(euro(r.credits))}</strong><em>Movimenti positivi SIAE</em></div>
+  <div class="kyv-rights-card good"><span>Diritti accreditati</span><strong>${H(euro(r.credits))}</strong><em>Segno − nell’estratto = positivo per noi</em></div>
   <div class="kyv-rights-card"><span>Versati a saldo</span><strong>${H(euro(r.paid))}</strong><em>Pagamenti registrati nell’estratto</em></div>
   <div class="kyv-rights-card warn"><span>Ritenute / bolli</span><strong>${H(euro(r.charges))}</strong><em>Trattenute e oneri</em></div>
-  <div class="kyv-rights-card ${r.net<0?'warn':'good'}"><span>Movimento netto estratto</span><strong>${H(euro(r.net))}</strong><em>Non equivale al reddito per opera</em></div>
+  <div class="kyv-rights-card ${r.net<0?'warn':'good'}"><span>Movimento netto estratto</span><strong>${H(euro(r.net))}</strong><em>Segni invertiti rispetto all’estratto; non ricavo per opera</em></div>
  </div>
  <div class="kyv-rights-metrics">
   <div class="kyv-rights-card"><span>Opere SIAE</span><strong>${r.works.length}</strong><em>${data.vertical.length} righe aventi diritto</em></div>
