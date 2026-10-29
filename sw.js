@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-39-rights-liquidations-20261029';
+const CACHE_NAME = 'kyv-studio-v2-39-1-economy-toolbar-20261029';
 const APP_SHELL = [
     './',
     './index.html',

@@ -54,6 +54,91 @@
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         .custom-scrollbar { scrollbar-width: auto; scrollbar-color: #4b5563 rgba(255, 255, 255, 0.02); }
         .custom-scrollbar::-webkit-scrollbar { width: 16px; height: 16px; }
+        /* Economia: header e comandi adattabili anche quando la sidebar riduce lo spazio. */
+        main header.kyv-economy-header {
+            width: 100%;
+            min-width: 0;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+        .kyv-economy-header-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+            width: 100%;
+            min-width: 0;
+        }
+        .kyv-economy-heading { min-width: 0; max-width: 100%; }
+        .kyv-economy-heading > div:last-child { min-width: 0; }
+        .kyv-economy-toolbar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap !important;
+            overflow: visible !important;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            gap: .55rem;
+        }
+        .kyv-economy-search {
+            position: relative;
+            flex: 1 1 230px;
+            width: 100%;
+            max-width: 420px;
+            min-width: 0;
+        }
+        .kyv-economy-search input { display: block; width: 100%; min-width: 0; }
+        .kyv-economy-toolbar > a,
+        .kyv-economy-toolbar > button {
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 100%;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            text-align: center;
+            gap: .35rem;
+        }
+        .kyv-economy-toolbar > button[aria-label="Ricarica fatture"] {
+            flex: 0 0 42px;
+        }
+        @media (max-width: 767px) {
+            /* Il limite globale a 104px nascondeva i pulsanti aggiunti a Economia. */
+            main header.kyv-economy-header {
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            .kyv-economy-header-layout { gap: .7rem; }
+            .kyv-economy-toolbar {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: .5rem;
+                overflow: visible !important;
+            }
+            .kyv-economy-search {
+                grid-column: 1 / -1;
+                max-width: none;
+                width: 100%;
+            }
+            .kyv-economy-toolbar > a,
+            .kyv-economy-toolbar > button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                min-height: 42px !important;
+                max-width: 100% !important;
+                flex-shrink: 1 !important;
+                padding-inline: .65rem;
+            }
+            .kyv-economy-toolbar > button[aria-label="Ricarica fatture"] {
+                flex: 0 1 auto;
+                width: 100%;
+                min-width: 0;
+            }
+        }
     </style>
     <!-- PWA Setup -->
     <link rel="manifest" href="manifest.json">
@@ -81,9 +166,9 @@
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
         <section class="flex-1 flex flex-col h-full">
-            <header class="pt-8 px-4 md:px-8 pb-4 border-b border-kyv-border/50 shrink-0">
-                <div class="flex flex-col xl:flex-row items-start xl:items-end justify-between gap-5">
-                    <div class="flex items-center">
+            <header class="kyv-economy-header pt-8 px-4 md:px-8 pb-4 border-b border-kyv-border/50 shrink-0">
+                <div class="kyv-economy-header-layout">
+                    <div class="kyv-economy-heading flex items-center">
                         <button class="md:hidden kyv-icon-action mr-3" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
                         <div>
                             <p class="kyv-eyebrow mb-1">Amministrazione</p>
@@ -91,8 +176,8 @@
                             <p class="text-kyv-text mt-2 text-xs md:text-sm">Controlla fatturato, incassi e fee; sotto trovi il registro completo delle fatture.</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 w-full xl:w-auto">
-                        <div class="relative flex-1 xl:w-72">
+                    <div class="kyv-economy-toolbar" role="group" aria-label="Comandi Economia">
+                        <div class="kyv-economy-search">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-kyv-text"></i>
                             <input type="search" id="correlazione-search" placeholder="Numero, cliente, progetto…" class="w-full bg-kyv-bg border border-kyv-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:border-indigo-500 outline-none transition-colors" oninput="applyCorrelazioneFilters()">
                         </div>
