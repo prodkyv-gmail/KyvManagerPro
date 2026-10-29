@@ -4,7 +4,7 @@
         FATTURE: {
             pk: 'ID_FT',
             label: 'Fattura',
-            fields: ['Numero', 'Numero_Originale', 'Data', 'Denominazione', 'Descrizione', 'PrezzoUnitario', 'PrezzoTotale', 'PAGATA', 'ID_PROGETTO', 'TIPO FT']
+            fields: ['Numero', 'Numero_Originale', 'Data', 'DataScadenzaPagamento', 'Denominazione', 'Descrizione', 'PrezzoUnitario', 'PrezzoTotale', 'PAGATA', 'ID_PROGETTO', 'TIPO FT']
         },
         PROGETTI: {
             pk: 'ID',
