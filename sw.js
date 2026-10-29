@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-35-aruba-xml-import-20261028';
+const CACHE_NAME = 'kyv-studio-v2-36-reconciliation-20261029';
 const APP_SHELL = [
     './',
     './index.html',
@@ -19,6 +19,7 @@ const APP_SHELL = [
     './kyv-data-quality.js',
     './kyv-record-editor.js',
     './kyv-aruba-import.js',
+    './kyv-invoice-reconciliation-v236.js',
     './kyv-project-invoices.js',
     './kyv-project-finance-summary.js',
     './kyv-project-sheet-v2.js',
