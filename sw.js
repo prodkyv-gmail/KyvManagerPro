@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-36-reconciliation-20261029';
+const CACHE_NAME = 'kyv-studio-v2-37-reversals-20261029';
 const APP_SHELL = [
     './',
     './index.html',
