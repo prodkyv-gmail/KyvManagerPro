@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-38-intelligence-20261029';
+const CACHE_NAME = 'kyv-studio-v2-38-1-line-items-20261029';
 const APP_SHELL = [
     './',
     './index.html',
@@ -11,6 +11,7 @@ const APP_SHELL = [
     './fatture.html',
     './kyv_intelligence.html',
     './kyv-intelligence-engine-v238.js',
+    './kyv-invoice-line-amount.js',
     './rendiconto.html',
     './manifest.json',
     './kyv-theme.css',

@@ -20,7 +20,7 @@ const periodOf=(date,mode)=>{
  const s=positiveDate(date);return s?(mode==='monthly'?s.slice(0,7):s.slice(0,4)):null;
 };
 const paid=x=>/^(si|sì|yes|true|1|pagat|incassat)/i.test(asText(x));
-const amount=f=>Math.max(0,cents(f.ImportoTotaleDocumento??f.PrezzoTotale??f.PrezzoUnitario??f.ImportoPagamento));
+const amount=f=>root.KYV_INVOICE_LINE?.cents(f)??Math.max(0,cents(f.XML_SHA256?f.PrezzoTotale:f.PrezzoUnitario));
 function summarizeInvoice(inv,payments,reversals){
  const group=(payments||[]).filter(p=>asText(p.ID_FT)===asText(inv.ID_FT));
  const reversed=new Set((reversals||[]).map(x=>asText(x.ID_INCASSO)));

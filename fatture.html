@@ -151,7 +151,7 @@
         async function fetchFattureCorrelate() {
             document.getElementById('tbody-ft-nopag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; if(window.lucide) lucide.createIcons();
             try {
-                const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO, DataScadenzaPagamento').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
+                const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO, DataScadenzaPagamento, XML_SHA256').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
                 if(fatRes.error) throw fatRes.error;
                 correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
                 correlazioneFattureGlobal = fatRes.data || []; document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
@@ -167,7 +167,7 @@
                 if (searchTxt && !combinedStr.includes(searchTxt)) return;
                 const stat = window.KYV_COLLECTIONS_V236?.paymentState(f);
                 let isPagata = stat ? stat.kind === 'paid' : KYV.isPaid(f.PAGATA);
-                let numVal = stat ? stat.total : parseKyvNumber(f.ImportoTotaleDocumento || f.PrezzoTotale || f.PrezzoUnitario || f.ImportoPagamento);
+                let numVal = stat ? stat.total : (window.KYV_INVOICE_LINE?.amount(f) ?? Math.max(0,parseKyvNumber(f.XML_SHA256 ? f.PrezzoTotale : f.PrezzoUnitario)));
                 let received = stat ? stat.received : (isPagata ? numVal : 0);
                 let outstanding = stat ? stat.remaining : (isPagata ? 0 : numVal);
                 let imp = fmtEuro.format(numVal); let d = f.Data ? new Date(f.Data).toLocaleDateString('it-IT') : '-';
