@@ -1,3 +1,9 @@
+## Correzione interfaccia Economia — 29/10/2026 (v2.39.1)
+
+Nella schermata `fatture.html` (**Amministrazione → Economia**), la barra delle azioni è ora disposta sotto il titolo ed è responsive: ricerca che si adatta alla larghezza, pulsanti a capo su desktop/tablet stretti e griglia a due colonne su smartphone. Sono sempre disponibili collegamenti SIAE/IMAIE, KYV Intelligence, Correlazioni, Importa XML Aruba, Nuova, Ricarica e il pulsante dinamico **Riconciliazione e incassi**.
+
+La correzione è localizzata con le classi `kyv-economy-*`, senza modificare la barra delle altre pagine. Sovrascrive solo per Economia il limite mobile generale di 104px che nascondeva comandi. Nessuna modifica ai dati o alle logiche economiche. Test `npm run check:economy-toolbar`; cache `kyv-studio-v2-39-1-economy-toolbar-20261029`.
+
 ## v2.39 — Registro liquidazioni SIAE/IMAIE (29 ottobre 2026)
 
 Nuova pagina `kyv_liquidazioni.html`: registrazione **manuale**, con conferma esplicita, di bonifici SIAE o Nuovo IMAIE già ricevuti e **non fatturati**. Campi: ente, data accredito, importo netto, periodo di competenza facoltativo, riferimento bonifico/rendiconto, note. Tabella additiva `KYV_LIQUIDAZIONI_DIRITTI`, RLS proprietario, sola SELECT e INSERT per authenticated, senza update o delete da UI. Le liquidazioni sono **separate** dalle fatture, rappresentate nella dashboard KYV Intelligence in una serie autonoma per data di accredito, senza sommarle a fatturato o incassi fatturati. Le righe grezze `ESTRATTO SIAE` rimangono provvisorie, in sola lettura, senza conversione automatica a bonifici. Attenzione a non registrare importi già fatturati. Test `check:rights-liquidations`. Migrazione Supabase applicata il 29/10/2026.
