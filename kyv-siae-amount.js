@@ -13,6 +13,6 @@ function raw(value){
  else if((s.match(/\./g)||[]).length>1||/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');
  const n=Number(s);return Number.isFinite(n)?(neg?-Math.abs(n):n):null;
 }
-function forUs(value){const n=raw(value);return n===null?null:-n;}
+function forUs(value){const n=raw(value);return n===null?null:(n===0?0:-n);}
 root.KYV_SIAE_AMOUNT=Object.freeze({raw,forUs});
 })(typeof window!=='undefined'?window:globalThis);
