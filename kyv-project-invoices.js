@@ -31,11 +31,12 @@ function paid(row){
   return /^(SI|SÌ|YES|PAGAT|INCASSAT)/i.test(text(row?.PAGATA||row?.PAGAMENTO));
 }
 function amount(row){
-  const raw=row?.ImportoTotaleDocumento??row?.ImportoPagamento??row?.PrezzoTotale??row?.PrezzoUnitario??0;
-  if(window.KYV&&typeof KYV.parseNumber==='function')return KYV.parseNumber(raw)||0;
-  if(typeof raw==='number')return Number.isFinite(raw)?raw:0;
+  if(window.KYV_INVOICE_LINE?.amount)return window.KYV_INVOICE_LINE.amount(row);
+  const raw=row?.XML_SHA256?row?.PrezzoTotale:row?.PrezzoUnitario;
+  if(window.KYV&&typeof KYV.parseNumber==='function')return Math.max(0,KYV.parseNumber(raw)||0);
+  if(typeof raw==='number')return Number.isFinite(raw)?Math.max(0,raw):0;
   const n=Number(String(raw||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,''));
-  return Number.isFinite(n)?n:0;
+  return Number.isFinite(n)?Math.max(0,n):0;
 }
 function euro(value){
   if(window.KYV&&typeof KYV.formatEuro==='function')return KYV.formatEuro(value);
@@ -97,7 +98,7 @@ async function openNewInvoice(projectId,title='',artist=''){
 }
 async function openExistingInvoice(invoiceId){if(invoiceId===null||invoiceId===undefined||text(invoiceId)==='')return;try{const instance=await ensureEditor();await instance.open('FATTURE',invoiceId);}catch(error){console.error('[KYV Invoices] Apertura fattura non riuscita',error);if(window.KYV_TOAST)KYV_TOAST.show(error.message||'Impossibile aprire la fattura.','error');}}
 
-const invoiceFields='ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PAGATA,ID_PROGETTO';
+const invoiceFields='ID_FT,Numero,Data,Denominazione,Descrizione,PrezzoUnitario,PrezzoTotale,XML_SHA256,PAGATA,ID_PROGETTO';
 async function fetchDirectInvoices(projectId){const client=await ensureDb();const {data,error}=await client.from('FATTURE').select(invoiceFields).eq('ID_PROGETTO',projectId).order('Data',{ascending:false}).limit(200);if(error)throw error;return data||[];}
 async function fetchLegacyInvoices(projectId){
   const client=await ensureDb();const {data:project,error}=await client.from('PROGETTI').select('ID,IDFT').eq('ID',projectId).maybeSingle();if(error)throw error;if(!project||!text(project.IDFT))return[];
