@@ -6,10 +6,10 @@
 const MAX_ROWS=10000,PAGE_SIZE=500;
 const state={client:null,ready:false,busy:false,expanded:false,invoices:[],projects:[],payments:[],onChanged:null,loaded:false,error:null};
 const t=v=>String(v??'').trim();
-const H=v=>window.KYV?.safeHtml?KYV.safeHtml(v):t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money=v=>window.KYV?.parseNumber?KYV.parseNumber(v):Number(t(v).replace(/\./g,'').replace(',','.'))||0;
-const euro=v=>window.KYV?.formatEuro?KYV.formatEuro(v):new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(v)||0);
-const isPaid=v=>window.KYV?.isPaid?KYV.isPaid(v):/^(si|sì|yes|true|1|pagat|incassat)/i.test(t(v));
+const H=v=>window.KYV?.safeHtml?window.KYV.safeHtml(v):t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=v=>window.KYV?.parseNumber?window.KYV.parseNumber(v):Number(t(v).replace(/\./g,'').replace(',','.'))||0;
+const euro=v=>window.KYV?.formatEuro?window.KYV.formatEuro(v):new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(v)||0);
+const isPaid=v=>window.KYV?.isPaid?window.KYV.isPaid(v):/^(si|sì|yes|true|1|pagat|incassat)/i.test(t(v));
 const cents=v=>Math.round((Number(v)||0)*100);
 const dateOK=v=>/^\d{4}-\d{2}-\d{2}$/.test(t(v))&&!Number.isNaN(new Date(t(v)+'T12:00:00Z').getTime());
 const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'});
