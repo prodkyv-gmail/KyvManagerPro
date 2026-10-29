@@ -4,7 +4,7 @@
 (function(){
 'use strict';
 const MAX_ROWS=10000,PAGE_SIZE=500;
-const state={client:null,ready:false,busy:false,expanded:false,invoices:[],projects:[],payments:[],onChanged:null,loaded:false,error:null};
+const state={client:null,ready:false,busy:false,expanded:false,invoices:[],projects:[],payments:[],reversals:[],onChanged:null,loaded:false,error:null};
 const t=v=>String(v??'').trim();
 const H=v=>window.KYV?.safeHtml?window.KYV.safeHtml(v):t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>window.KYV?.parseNumber?window.KYV.parseNumber(v):Number(t(v).replace(/\./g,'').replace(',','.'))||0;
@@ -14,19 +14,22 @@ const cents=v=>Math.round((Number(v)||0)*100);
 const dateOK=v=>/^\d{4}-\d{2}-\d{2}$/.test(t(v))&&!Number.isNaN(new Date(t(v)+'T12:00:00Z').getTime());
 const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'});
 const invoiceAmount=inv=>Math.max(0,cents(money(inv?.ImportoTotaleDocumento??inv?.PrezzoTotale??inv?.PrezzoUnitario??inv?.ImportoPagamento??0)));
-function summarize(invoice,payments){
+function summarize(invoice,payments,reversals=[]){
   const total=invoiceAmount(invoice),movements=(payments||[]).filter(x=>t(x.ID_FT)===t(invoice.ID_FT));
-  const recorded=movements.reduce((s,p)=>s+cents(Number(p.Importo)),0);
+  const reversed=new Set((reversals||[]).map(x=>t(x.ID_INCASSO)));
+  const active=movements.filter(p=>!reversed.has(t(p.ID_INCASSO)));
+  const recorded=active.reduce((s,p)=>s+cents(Number(p.Importo)),0);
+  // Even if every movement was reversed, never fall back to a stale legacy PAGATA='SI'.
   const legacyPaid=!movements.length&&isPaid(invoice.PAGATA);
   const received=legacyPaid?total:Math.min(total,Math.max(0,recorded));
   const remaining=Math.max(0,total-received);
   const kind=remaining===0?'paid':received>0?'partial':'open';
   return {total:total/100,received:received/100,remaining:remaining/100,kind,
-    movementCount:movements.length,legacyPaid,overpaid:recorded>total,date:invoice.DataScadenzaPagamento||null,
+    movementCount:movements.length,activeMovementCount:active.length,reversedMovementCount:movements.length-active.length,legacyPaid,overpaid:recorded>total,date:invoice.DataScadenzaPagamento||null,
     overdue:remaining>0&&dateOK(invoice.DataScadenzaPagamento)&&invoice.DataScadenzaPagamento<today()};
 }
 function paymentState(invoice){
-  return state.loaded? summarize(invoice,state.payments):null;
+  return state.loaded? summarize(invoice,state.payments,state.reversals):null;
 }
 function legacyProjectIds(invoice,projects){
   return (projects||[]).filter(p=>/^\d+$/.test(t(p.IDFT))&&t(Number(p.IDFT))===t(Number(invoice.ID_FT))).map(p=>t(p.ID));
@@ -59,12 +62,13 @@ async function allRows(table,columns,orderBy){
   return data;
 }
 async function readAll(){
-  const [invoices,projects,payments]=await Promise.all([
+  const [invoices,projects,payments,reversals]=await Promise.all([
     allRows('FATTURE','ID_FT,Numero,Numero_Originale,Data,Denominazione,Descrizione,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento','ID_FT'),
     allRows('PROGETTI','ID,TITOLO,ARTISTA,STATO,SVILUPPO,FEE,IDFT','ID'),
-    allRows('FATTURE_INCASSI','ID_INCASSO,ID_FT,Data,Importo,Note','ID_INCASSO')
+    allRows('FATTURE_INCASSI','ID_INCASSO,ID_FT,Data,Importo,Note','ID_INCASSO'),
+    allRows('FATTURE_INCASSI_STORNI','ID_STORNO,ID_INCASSO,Data,Motivo,created_at','ID_STORNO')
   ]);
-  state.invoices=invoices;state.projects=projects;state.payments=payments;
+  state.invoices=invoices;state.projects=projects;state.payments=payments;state.reversals=reversals;
   state.loaded=true;state.error=null;
 }
 function notice(message,isError=false){const el=document.getElementById('kyv-recon-notice');if(el){el.textContent=message;el.hidden=!message;el.dataset.error=isError?'1':'0';}}
@@ -83,8 +87,8 @@ function render(){
   const noLinks=unlinked.filter(f=>legacyProjectIds(f,state.projects).length===0);
   const legacy=unlinked.filter(f=>legacyProjectIds(f,state.projects).length>0);
   const review=potentialUnbilled(state.projects,state.invoices);
-  const open=state.invoices.filter(f=>summarize(f,state.payments).remaining>0);
-  const overdue=open.filter(f=>summarize(f,state.payments).overdue);
+  const open=state.invoices.filter(f=>summarize(f,state.payments,state.reversals).remaining>0);
+  const overdue=open.filter(f=>summarize(f,state.payments,state.reversals).overdue);
   const overdueLabel=overdue.length?' · '+overdue.length+' scadute':'';
   if(openBtn)openBtn.textContent='Riconciliazione e incassi · '+unlinked.length+' senza link · '+open.length+' aperte'+overdueLabel;
   const head='<div class="kyv-recon-head"><div><h3>Riconciliazione e incassi</h3><p>Associazioni manuali · nessuna fattura attribuita automaticamente · le scadenze non vengono inventate.</p></div><button type="button" data-recon-reload>Ricarica dati</button></div>';
@@ -96,7 +100,7 @@ function render(){
   const legacyRows=legacy.slice(0,20).map(f=>'<div class="kyv-recon-row"><span>'+H(invoiceTitle(f))+' · riferimento storico: '+H(legacyProjectIds(f,state.projects).join(', '))+'</span><a href="fatture.html#invoice-'+H(f.ID_FT)+'">Verifica nell’editor</a></div>').join('');
   const reviewRows=review.slice(0,40).map(p=>'<div class="kyv-recon-row"><div><strong>'+H((p.TITOLO||'Progetto')+' · '+(p.ARTISTA||'Artista'))+'</strong><small>Fee indicata '+H(euro(money(p.FEE)))+' · stato '+H(p.STATO||'—')+'</small></div><a href="scheda_progetto.html?id='+encodeURIComponent(p.ID)+'">Apri progetto</a></div>').join('');
   const payRows=open.slice(0,90).map(f=>{
-    const s=summarize(f,state.payments);
+    const s=summarize(f,state.payments,state.reversals);
     return '<div class="kyv-recon-row kyv-recon-payment"><div><strong>'+H(invoiceTitle(f))+'</strong><small>Totale '+H(euro(s.total))+' · già incassato '+H(euro(s.received))+' · <b>residuo '+H(euro(s.remaining))+'</b></small>'+
       (s.kind==='partial'?'<small class="kyv-recon-warning">Incassata parzialmente</small>':'')+
       (s.overdue?'<small class="kyv-recon-warning">Scaduta il '+H(s.date)+'</small>':'')+'</div>'+
@@ -106,11 +110,21 @@ function render(){
       '<label>Data incasso<input type="date" data-recon-pay-date="'+H(f.ID_FT)+'" value="'+today()+'"></label>'+
       '<button type="button" data-recon-save-pay="'+H(f.ID_FT)+'">Registra incasso</button></div>';
   }).join('');
+  const reversedIds=new Set(state.reversals.map(x=>t(x.ID_INCASSO)));
+  const history=state.payments.slice().sort((a,b)=>Number(b.ID_INCASSO)-Number(a.ID_INCASSO)).slice(0,150).map(p=>{
+    const f=state.invoices.find(f=>t(f.ID_FT)===t(p.ID_FT));
+    const reversal=state.reversals.find(x=>t(x.ID_INCASSO)===t(p.ID_INCASSO));
+    return '<div class="kyv-recon-row"><div><strong>'+H(f?invoiceTitle(f):'Fattura #'+p.ID_FT)+' · '+H(euro(Number(p.Importo)))+'</strong>'+
+      '<small>Movimento #'+H(p.ID_INCASSO)+' · '+H(p.Data)+'</small>'+
+      (reversal?'<small class="kyv-recon-warning">Stornato il '+H(reversal.Data)+' · '+H(reversal.Motivo)+'</small>':'<small>Incasso registrato</small>')+
+      '</div>'+(reversal?'':'<button type="button" data-recon-reverse="'+H(p.ID_INCASSO)+'">Storna incasso</button>')+'</div>';
+  }).join('');
   const sections=[
     ['Senza progetto diretto',noLinks.length,linkRows||'<p class="kyv-recon-help">Nessuna fattura senza associazione o riferimento storico.</p>','Seleziona un progetto e premi Collega: non sono effettuati abbinamenti in base al solo numero di fattura.'],
     ['Riferimenti storici da verificare',legacy.length,legacyRows||'<p class="kyv-recon-help">Nessun riferimento storico pendente.</p>','Non modificati automaticamente: usa l’editor per i casi con relazione IDFT.'],
     ['Progetti con fee da verificare',review.length,reviewRows||'<p class="kyv-recon-help">Nessuna corrispondenza da controllare.</p>','Elenco di controllo, non un’affermazione che una fattura sia dovuta.'],
-    ['Scadenze e nuovi incassi',open.length,payRows||'<p class="kyv-recon-help">Non risultano fatture con saldo aperto. Le fatture storiche già pagate sono preservate.</p>','Una nuova registrazione di incasso è definitiva: verifica data e importo prima di confermare.']
+    ['Scadenze e nuovi incassi',open.length,payRows||'<p class="kyv-recon-help">Non risultano fatture con saldo aperto. Le fatture storiche già pagate sono preservate.</p>','Per correggere un movimento, stornalo dallo storico e registra quello corretto.'],
+    ['Storico incassi e storni',state.payments.length,history||'<p class="kyv-recon-help">Nessun movimento registrato.</p>','Lo storno è integrale e definitivo; motivazione obbligatoria, il movimento originale resta visibile.']
   ];
   root.innerHTML=head+cards+'<div id="kyv-recon-notice" hidden role="status"></div>'+
     sections.map(([title,count,rows,help],i)=>'<details class="kyv-recon-section" '+(i===0?'open':'')+'><summary>'+H(title)+' <span>('+count+')</span></summary><p class="kyv-recon-help">'+H(help)+'</p><div class="kyv-recon-list">'+rows+'</div></details>').join('');
@@ -159,24 +173,43 @@ async function savePayment(id,value,date){
     state.client.from('FATTURE_INCASSI').select('ID_FT,Importo').eq('ID_FT',id).limit(10000)
   ]);
   if(invoiceRes.error||ledgerRes.error)throw Error(invoiceRes.error?.message||ledgerRes.error?.message||'Verifica incassi non riuscita.');
-  const fresh=summarize(invoiceRes.data,ledgerRes.data||[]);
+  const fresh=summarize(invoiceRes.data,ledgerRes.data||[],state.reversals);
   if(amountCents>cents(fresh.remaining))throw Error('Importo superiore al residuo '+euro(fresh.remaining)+'.');
   if(fresh.legacyPaid)throw Error('Fattura già indicata come pagata nello storico. Verifica prima lo stato manualmente.');
   if(!window.confirm('Registrare un incasso di '+euro(amount)+' del '+date+' per '+invoiceTitle(f)+'? La registrazione non può essere modificata direttamente.'))return;
   const res=await state.client.from('FATTURE_INCASSI').insert({ID_FT:Number(id),Data:date,Importo:amountCents/100}).select('ID_INCASSO');
   if(res.error||res.data?.length!==1)throw Error(res.error?.message||'Incasso non registrato.');
 }
+async function reversePayment(id){
+  const movement=state.payments.find(p=>t(p.ID_INCASSO)===t(id));
+  if(!movement)throw Error('Movimento non presente nello storico.');
+  const reason=t(window.prompt('Motivo dello storno (da 10 a 500 caratteri):',''));
+  if(reason.length<10||reason.length>500)throw Error('Inserisci un motivo da 10 a 500 caratteri.');
+  // Fresh DB check; unique index prevents double reversal even between concurrent browsers.
+  const [pay,existing]=await Promise.all([
+    state.client.from('FATTURE_INCASSI').select('ID_INCASSO,ID_FT,Importo').eq('ID_INCASSO',id).single(),
+    state.client.from('FATTURE_INCASSI_STORNI').select('ID_STORNO').eq('ID_INCASSO',id).limit(1)
+  ]);
+  if(pay.error||existing.error||!pay.data)throw Error(pay.error?.message||existing.error?.message||'Verifica storno non riuscita.');
+  if(existing.data?.length)throw Error('Questo movimento è già stato stornato.');
+  const inv=invoiceById(pay.data.ID_FT);
+  if(!inv)throw Error('La fattura collegata non è visibile.');
+  if(!window.confirm('STORNO DEFINITIVO: annullare l’incasso di '+euro(Number(pay.data.Importo))+' per '+invoiceTitle(inv)+'? Il movimento originale resterà nello storico. Motivo: '+reason))return;
+  const insert=await state.client.from('FATTURE_INCASSI_STORNI').insert({ID_INCASSO:Number(id),Data:today(),Motivo:reason}).select('ID_STORNO');
+  if(insert.error||insert.data?.length!==1)throw Error(insert.error?.message||'Storno non salvato.');
+}
 function bind(){
   const root=document.getElementById('kyv-recon-panel');
   root.addEventListener('click',event=>{
     const el=event.target.closest('button');if(!el)return;
-    const id=el.dataset.reconSaveLink||el.dataset.reconSaveDue||el.dataset.reconSavePay;
+    const id=el.dataset.reconSaveLink||el.dataset.reconSaveDue||el.dataset.reconSavePay||el.dataset.reconReverse;
     if(el.hasAttribute('data-recon-reload')){refresh();return;}
     if(!id)return;
     const find=(prefix)=>root.querySelector('['+prefix+'="'+id+'"]');
     if(el.dataset.reconSaveLink)guarded(()=>linkInvoice(id,find('data-recon-link-select')?.value));
     if(el.dataset.reconSaveDue)guarded(()=>saveDue(id,find('data-recon-due')?.value));
     if(el.dataset.reconSavePay)guarded(()=>savePayment(id,find('data-recon-pay-amount')?.value,find('data-recon-pay-date')?.value));
+    if(el.dataset.reconReverse)guarded(()=>reversePayment(id));
   });
 }
 function boot(opts){
