@@ -141,7 +141,7 @@ async function enhanceInvoiceModal(){
   root.querySelectorAll('.dyn-input[data-key]').forEach(input=>{
     const key=input.dataset.key;
     const type=String(input.getAttribute('type')||'text').toLowerCase();
-    if(type==='date'||key==='Data'){
+    if(type==='date'||key==='Data'||key==='DataScadenzaPagamento'){
       if(input.tagName==='INPUT')input.type='date';
       input.title=input.title||'Scegli la data dal calendario';
       return;

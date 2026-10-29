@@ -1,5 +1,15 @@
 # KyvManagerPro v2.26 — Centro operativo
 
+## v2.36 — riconciliazione fatture, scadenze e incassi parziali (29/10/2026)
+
+Nella pagina **Economia → Fatture** è disponibile **Riconciliazione e incassi** (modulo `kyv-invoice-reconciliation-v236.js`): elenco delle fatture senza `FATTURE.ID_PROGETTO`, evidenza dei riferimenti storici `PROGETTI.IDFT` da controllare manualmente, progetti in uscita/chiusi con fee ma senza fattura riconciliata (solo *da verificare*, non automaticamente fatturabili), e fatture con saldo aperto. Il collegamento è esplicito e seleziona un ID progetto; non presume la relazione dal solo numero fattura. Il pannello non modifica in massa alcun dato esistente.
+
+**Schema Supabase:** campo data facoltativo `FATTURE.DataScadenzaPagamento`; nuova tabella append-only `FATTURE_INCASSI` (ID incasso, ID fattura, data, importo, note, proprietario, created_at), FK su fattura, importo positivo, RLS owner su SELECT/INSERT e filtro su proprietario della fattura. Nessun UPDATE/DELETE esposto al browser; le registrazioni sono definitive nella prima versione. Migrazione documentata in `docs/v236-invoice-collections.sql`.
+
+**Regole del registro incassi:** i 107 record di fattura preesistenti sono conservati; se una fattura non ha movimenti, il valore `PAGATA` storico continua a determinare l’incassato. Se ha movimenti, l’incassato si calcola dalla somma dei movimenti registrati e il residuo dal totale della fattura meno i movimenti (con segnalazione di eventuale eccesso); i movimenti NON modificano retroattivamente `PAGATA`. Prima di inserire un incasso, la UI rilegge saldo e movimenti, richiede conferma e rifiuta importi maggiori del residuo. Non attribuisce mai una scadenza basandosi solo sulla data di emissione: il campo deve essere salvato esplicitamente.
+
+**Interfacce preservate:** **Nuova** fattura, **Importa XML Aruba**, editor manuale e relazioni ID-based. I totali della schermata Fatture e di Economia utilizzano il registro incassi quando caricato, permettendo incassi parziali senza contare due volte il valore della fattura. Nessun aggiornamento automatico dello storico. Suite `npm run check:collections-v236`.
+
 ## Importazione fatture elettroniche Aruba XML (28/10/2026)
 
 La pagina **Fatture → Importa XML Aruba** permette di selezionare fino a 50 file **FatturaPA XML** da Aruba (massimo 5 MB ciascuno), leggerli localmente nel browser, visualizzarne una anteprima e registrare soltanto le righe nuove selezionate dall'utente. Sono supportati i campi già presenti in FATTURE: tipo documento, numero numerico, data, cliente, codice fiscale/partita IVA destinatario, descrizione, importi, progressivo e codice destinatario. Le fatture importate partono con `PAGATA=NO`: la presenza dei dati di pagamento non è prova d'incasso. Il file XML originale e l'IBAN non vengono copiati su Supabase.
