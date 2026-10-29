@@ -1,3 +1,13 @@
+## v2.38 — KYV Intelligence: analisi temporale e provenienza degli incassi (29 ottobre 2026)
+
+La pagina `kyv_intelligence.html` (link da **Fatture**) analizza mese per mese e su più anni l'emissione delle fatture, i movimenti di incasso con data esplicita non stornati e la qualità delle informazioni dei progetti. Il modulo `kyv-intelligence-engine-v238.js` effettua calcoli deterministici in sola lettura, senza creare movimenti o cambiare dati storici. Si può selezionare un anno oppure lo storico completo e passare da aggregazione mensile ad annuale.
+
+**Provenienza dei dati:** `FATTURE.Data` è data di fattura, NON data di accredito bancario. Le fatture storiche `PAGATA=SI` senza movimenti non hanno una data di incasso verificabile e sono riportate soltanto in un indicatore separato. Solo `FATTURE_INCASSI.Data` per movimenti non stornati entra nella serie degli incassi datati. Il valore SIAE in `ESTRATTO SIAE` è mostrato come movimento grezzo e provvisorio; NON è contato negli incassi bancari e non è automaticamente identificato come liquidazione. Nuovo IMAIE richiede una fase successiva di rendicontazione e registrazione bonifico. Non si sommano importi SIAE già fatturati due volte.
+
+I report di qualità indicano copertura delle date di sessione, pubblicazione e consegna e progetti non riconciliati. **Non viene calcolato un finto tempo medio di ritorno** senza date iniziali e incassi attribuiti. L'agente KYV Analyst e un registro liquidazioni SIAE/IMAIE sono previsti nelle fasi successive; non sono attivati in v2.38.
+
+Test: `npm run check:intelligence-v238`; integrato in `npm run check`. PWA cache: `kyv-studio-v2-38-intelligence-20261029`.
+
 # KyvManagerPro v2.26 — Centro operativo
 
 ## v2.37 — Storni e rettifiche incassi (29/10/2026)
