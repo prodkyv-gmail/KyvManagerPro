@@ -14,7 +14,7 @@ function H(v){if(window.KYV&&typeof KYV.safeHtml==='function')return KYV.safeHtm
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
 function paid(row){if(window.KYV&&typeof KYV.isPaid==='function')return KYV.isPaid(row?.PAGATA)||KYV.isPaid(row?.PAGAMENTO);return /^(SI|SÌ|YES|PAGAT|INCASSAT)/i.test(text(row?.PAGATA||row?.PAGAMENTO));}
 function numberValue(value){if(window.KYV&&typeof KYV.parseNumber==='function')return KYV.parseNumber(value)||0;if(typeof value==='number')return Number.isFinite(value)?value:0;const n=Number(String(value??'').replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0;}
-function amount(row){return numberValue(row?.ImportoTotaleDocumento??row?.PrezzoTotale??row?.PrezzoUnitario??row?.ImportoPagamento??0);}
+function amount(row){return window.KYV_INVOICE_LINE?.amount(row)??Math.max(0,numberValue(row?.XML_SHA256?row?.PrezzoTotale:row?.PrezzoUnitario));}
 function euro(value){return window.KYV?.formatEuro?KYV.formatEuro(value):new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(value)||0);}
 function date(value){return value?(window.KYV?.formatDate?KYV.formatDate(value,'-'):new Date(value).toLocaleDateString('it-IT')):'-';}
 function projectId(){const badge=text(document.getElementById('hero-badges')?.textContent).match(/\bID\s+(\d+)\b/i)?.[1];if(badge)return badge;return text(new URLSearchParams(location.search).get('id'));}
@@ -24,7 +24,7 @@ function completedProject(project){const status=text(project?.STATO).toLowerCase
 function awaitingInvoice(project,rows){return !!project&&Array.isArray(rows)&&rows.length===0&&completedProject(project);}
 function key(row){return text(row?.ID_FT);}
 function unique(rows){const map=new Map();(rows||[]).forEach((row,index)=>map.set(key(row)||`row-${index}`,row));return[...map.values()];}
-const fields='ID_FT,Numero,Data,Denominazione,Descrizione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO';
+const fields='ID_FT,Numero,Data,Denominazione,Descrizione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO,XML_SHA256';
 
 async function fetchInvoices(pid){
   if(!client())return null;
