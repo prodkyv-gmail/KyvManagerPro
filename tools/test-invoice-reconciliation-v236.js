@@ -32,7 +32,7 @@ assert.ok(economy.includes('KYV_COLLECTIONS_V236?.paymentState(f)'),'Financial d
 assert.ok(editor.includes("DataScadenzaPagamento"),'Manual due date editor preserved');
 assert.ok(sw.includes("'./kyv-invoice-reconciliation-v236.js'"),'PWA includes module');
 
-const row=(id,total,PAGATA='NO',date=null)=>({ID_FT:id,ImportoTotaleDocumento:total,PAGATA,DataScadenzaPagamento:date});
+const row=(id,total,PAGATA='NO',date=null)=>({ID_FT:id,ImportoTotaleDocumento:total,PrezzoUnitario:total,PAGATA,DataScadenzaPagamento:date});
 const partial=api.summarize(row(1,'1068,41'),[{ID_FT:1,Importo:'500.00',Data:'2026-10-01'}]);
 assert.equal(partial.total,1068.41);assert.equal(partial.received,500);assert.equal(partial.remaining,568.41);
 assert.equal(partial.kind,'partial');
