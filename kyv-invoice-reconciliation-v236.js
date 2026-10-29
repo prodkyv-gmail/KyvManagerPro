@@ -13,7 +13,7 @@ const isPaid=v=>window.KYV?.isPaid?window.KYV.isPaid(v):/^(si|sì|yes|true|1|pag
 const cents=v=>Math.round((Number(v)||0)*100);
 const dateOK=v=>/^\d{4}-\d{2}-\d{2}$/.test(t(v))&&!Number.isNaN(new Date(t(v)+'T12:00:00Z').getTime());
 const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'});
-const invoiceAmount=inv=>Math.max(0,cents(money(inv?.ImportoTotaleDocumento??inv?.PrezzoTotale??inv?.PrezzoUnitario??inv?.ImportoPagamento??0)));
+const invoiceAmount=inv=>window.KYV_INVOICE_LINE?.cents(inv)??Math.max(0,cents(money(inv?.XML_SHA256?inv?.PrezzoTotale:inv?.PrezzoUnitario)));
 function summarize(invoice,payments,reversals=[]){
   const total=invoiceAmount(invoice),movements=(payments||[]).filter(x=>t(x.ID_FT)===t(invoice.ID_FT));
   const reversed=new Set((reversals||[]).map(x=>t(x.ID_INCASSO)));
@@ -63,7 +63,7 @@ async function allRows(table,columns,orderBy){
 }
 async function readAll(){
   const [invoices,projects,payments,reversals]=await Promise.all([
-    allRows('FATTURE','ID_FT,Numero,Numero_Originale,Data,Denominazione,Descrizione,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento','ID_FT'),
+    allRows('FATTURE','ID_FT,Numero,Numero_Originale,Data,Denominazione,Descrizione,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento,XML_SHA256','ID_FT'),
     allRows('PROGETTI','ID,TITOLO,ARTISTA,STATO,SVILUPPO,FEE,IDFT','ID'),
     allRows('FATTURE_INCASSI','ID_INCASSO,ID_FT,Data,Importo,Note','ID_INCASSO'),
     allRows('FATTURE_INCASSI_STORNI','ID_STORNO,ID_INCASSO,Data,Motivo,created_at','ID_STORNO')
@@ -169,7 +169,7 @@ async function savePayment(id,value,date){
   if(!/^\d+(?:\.\d{1,2})?$/.test(str)||!Number.isFinite(amount)||amountCents<=0)throw Error('Importo non valido: usa euro e massimo due decimali.');
   // Read fresh ledger before every financial write; never use a stale amount from the rendered page.
   const [invoiceRes,ledgerRes]=await Promise.all([
-    state.client.from('FATTURE').select('ID_FT,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA').eq('ID_FT',id).single(),
+    state.client.from('FATTURE').select('ID_FT,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA,XML_SHA256').eq('ID_FT',id).single(),
     state.client.from('FATTURE_INCASSI').select('ID_INCASSO,ID_FT,Importo').eq('ID_FT',id).limit(10000)
   ]);
   if(invoiceRes.error||ledgerRes.error)throw Error(invoiceRes.error?.message||ledgerRes.error?.message||'Verifica incassi non riuscita.');
