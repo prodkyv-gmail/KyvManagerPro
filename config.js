@@ -64,6 +64,12 @@ window.KYV_CONFIG = KYV_CONFIG;
 (function loadKyvFeatureModules(){
     const page=(window.location.pathname.split('/').pop()||'index.html').toLowerCase();
     const producerViews=['progetti.html','scheda_progetto.html','ascolto.html','kyv_calendar.html','index.html',''];
+    // Canonical invoice-line amount helper for all dynamic economy/project modules.
+    const invoiceLines=document.createElement('script');
+    invoiceLines.src='kyv-invoice-line-amount.js';
+    invoiceLines.async=false;
+    invoiceLines.dataset.kyvInvoiceLineAmounts='1';
+    document.head.appendChild(invoiceLines);
 
     if(page==='progetti.html'||page==='editor.html'){
         const sheetControls=document.createElement('script');
