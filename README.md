@@ -1,3 +1,7 @@
+## v2.39 — Registro liquidazioni SIAE/IMAIE (29 ottobre 2026)
+
+Nuova pagina `kyv_liquidazioni.html`: registrazione **manuale**, con conferma esplicita, di bonifici SIAE o Nuovo IMAIE già ricevuti e **non fatturati**. Campi: ente, data accredito, importo netto, periodo di competenza facoltativo, riferimento bonifico/rendiconto, note. Tabella additiva `KYV_LIQUIDAZIONI_DIRITTI`, RLS proprietario, sola SELECT e INSERT per authenticated, senza update o delete da UI. Le liquidazioni sono **separate** dalle fatture, rappresentate nella dashboard KYV Intelligence in una serie autonoma per data di accredito, senza sommarle a fatturato o incassi fatturati. Le righe grezze `ESTRATTO SIAE` rimangono provvisorie, in sola lettura, senza conversione automatica a bonifici. Attenzione a non registrare importi già fatturati. Test `check:rights-liquidations`. Migrazione Supabase applicata il 29/10/2026.
+
 ## Correzione 29 ottobre 2026 — Fatturato per voce (v2.38.1)
 
 **Base gestionale per progetto:** la tabella `FATTURE` contiene *voci*, non necessariamente una riga per fattura distinta. Le righe storiche possono ripetere lo stesso `ImportoTotaleDocumento` per progetti diversi. La somma dei totali-documento gonfiava i report.
