@@ -37,7 +37,7 @@ assert.ok(html.includes('kyv-intelligence-engine-v238.js')&&html.includes('ESTRA
 assert.ok(html.includes('FATTURE_INCASSI_STORNI'));
 assert.ok(html.includes('allRows(')&&html.includes("count:'exact'"));
 assert.ok(html.includes("SIAE")&&html.includes("IMAIE"));
-assert.ok(sw.includes("kyv-studio-v2-39-rights-liquidations-20261029"));
+assert.ok(sw.includes("kyv-studio-v2-39-1-economy-toolbar-20261029"));
 assert.ok(sw.includes("'./kyv_intelligence.html'"));
 assert.equal(packageJson.scripts['check:intelligence-v238'],'node tools/test-intelligence-v238.js');
 console.log('OK: KYV Intelligence v2.38 month/year, cash provenance, SIAE separation and data coverage');
