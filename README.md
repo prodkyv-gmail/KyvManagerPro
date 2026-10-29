@@ -1,3 +1,18 @@
+## Correzione 29 ottobre 2026 — Fatturato per voce (v2.38.1)
+
+**Base gestionale per progetto:** la tabella `FATTURE` contiene *voci*, non necessariamente una riga per fattura distinta. Le righe storiche possono ripetere lo stesso `ImportoTotaleDocumento` per progetti diversi. La somma dei totali-documento gonfiava i report.
+
+Il modulo `kyv-invoice-line-amount.js` definisce un importo per riga:
+- Storico e righe collegate ai progetti: **`PrezzoUnitario`**, senza fallback a `ImportoTotaleDocumento`.
+- XML Aruba importati come **una riga aggregata** (individuabili da `XML_SHA256`): **`PrezzoTotale`**, che è già la somma delle `DettaglioLinee`; la sola `PrezzoUnitario` prenderebbe erroneamente la prima voce.
+- Valori assenti o negativi: non inventare ricavi, evidenziarli per verifica.
+
+La regola è applicata a **KYV Intelligence**, Economia, lista Fatture, riconciliazione/scadenze e riepiloghi nelle schede progetto. Il totale-documento rimane disponibile per verifiche fiscali e quadratura, non viene mai sommato per ogni riga. Le fatture e gli incassi storici nel database non sono stati modificati.
+
+Verifica SQL storica prima della correzione: 107 righe, con somma `PrezzoUnitario` €178.982,74 contro €310.939,89 di somma ingenua `ImportoTotaleDocumento`. Per il 2025: €51.095,11 di voci contro €167.753,11 di totali ripetuti. Questi importi sono ricavi gestionali *da verificare*, non certificazione del fatturato fiscale o della data di incasso.
+
+Regression test `npm run check:invoice-line-amounts`, cache PWA `kyv-studio-v2-38-1-line-items-20261029`. Le prossime fasi riguardano attribuzione delle liquidazioni SIAE/IMAIE e distinzione tra competenza ed effettivo accredito.
+
 ## v2.38 — KYV Intelligence: analisi temporale e provenienza degli incassi (29 ottobre 2026)
 
 La pagina `kyv_intelligence.html` (link da **Fatture**) analizza mese per mese e su più anni l'emissione delle fatture, i movimenti di incasso con data esplicita non stornati e la qualità delle informazioni dei progetti. Il modulo `kyv-intelligence-engine-v238.js` effettua calcoli deterministici in sola lettura, senza creare movimenti o cambiare dati storici. Si può selezionare un anno oppure lo storico completo e passare da aggregazione mensile ad annuale.
