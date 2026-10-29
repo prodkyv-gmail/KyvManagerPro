@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const s=fs.readFileSync('kyv-intelligence-engine-v238.js','utf8'),window={};
 vm.runInNewContext(s,{window});
 const a=window.KYV_INTELLIGENCE_ENGINE;
-const f=(id,date,total,PAGATA='NO',project=null)=>({ID_FT:id,Data:date,ImportoTotaleDocumento:total,PAGATA,ID_PROGETTO:project});
+const f=(id,date,total,PAGATA='NO',project=null)=>({ID_FT:id,Data:date,ImportoTotaleDocumento:total,PrezzoUnitario:total,PAGATA,ID_PROGETTO:project});
 const rows={
  invoices:[f(1,'2024-12-10','1.200,00','SI'),f(2,'2025-01-10','500,00','NO',7),f(3,'2026-01-03','200.50','NO')],
  projects:[{ID:7,STATO:'USCITA',FEE:'500',Data_Sessione:null},{ID:8,STATO:'BOZZA',FEE:'',Data_Sessione:'2026-01-01'}],
