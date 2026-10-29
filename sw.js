@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-37-reversals-20261029';
+const CACHE_NAME = 'kyv-studio-v2-38-intelligence-20261029';
 const APP_SHELL = [
     './',
     './index.html',
@@ -9,6 +9,8 @@ const APP_SHELL = [
     './kyv_calendar.html',
     './pipeline.html',
     './fatture.html',
+    './kyv_intelligence.html',
+    './kyv-intelligence-engine-v238.js',
     './rendiconto.html',
     './manifest.json',
     './kyv-theme.css',
