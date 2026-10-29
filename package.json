@@ -20,7 +20,7 @@
     "check:links": "node tools/test-link-audit.js",
     "check:v230": "node tools/test-v230-ui.js",
     "check:loading": "node tools/test-supabase-loading.js",
-    "check": "npm run check:js && npm run check:assets && npm run check:data-quality && npm run check:project-sheet && npm run check:project-hub-v3 && npm run check:project-timeline-v10 && npm run check:pipeline-v4 && npm run check:today-home-v5 && npm run check:economy-v6 && npm run check:invoice-relations && npm run check:aruba-import && npm run check:collections-v236 && npm run check:reversals-v237 && npm run check:rights-v7 && npm run check:global-search-v8 && npm run check:easy-ux-v9 && npm run check:easy-secondary-v9 && npm run check:integrations && npm run check:safety && npm run check:dropdowns && npm run check:editor-relations && npm run check:editor-project-ux && npm run check:editor-invoice-ux && npm run check:editor-primary-ux && npm run check:siae-import && npm run check:proxy && npm run check:intake && npm run check:links && npm run check:v230 && npm run check:loading",
+    "check": "npm run check:js && npm run check:assets && npm run check:data-quality && npm run check:project-sheet && npm run check:project-hub-v3 && npm run check:project-timeline-v10 && npm run check:pipeline-v4 && npm run check:today-home-v5 && npm run check:economy-v6 && npm run check:invoice-relations && npm run check:aruba-import && npm run check:collections-v236 && npm run check:reversals-v237 && npm run check:intelligence-v238 && npm run check:rights-v7 && npm run check:global-search-v8 && npm run check:easy-ux-v9 && npm run check:easy-secondary-v9 && npm run check:integrations && npm run check:safety && npm run check:dropdowns && npm run check:editor-relations && npm run check:editor-project-ux && npm run check:editor-invoice-ux && npm run check:editor-primary-ux && npm run check:siae-import && npm run check:proxy && npm run check:intake && npm run check:links && npm run check:v230 && npm run check:loading",
     "check:editor-primary-ux": "node tools/test-editor-primary-ux.js",
     "check:project-hub-v3": "node tools/test-project-hub-v3.js",
     "check:pipeline-v4": "node tools/test-pipeline-v4.js",
@@ -34,6 +34,7 @@
     "check:invoice-relations": "node tools/test-invoice-relations.js",
     "check:aruba-import": "node tools/test-aruba-import.js",
     "check:collections-v236": "node tools/test-invoice-reconciliation-v236.js",
-    "check:reversals-v237": "node tools/test-payment-reversals-v237.js"
+    "check:reversals-v237": "node tools/test-payment-reversals-v237.js",
+    "check:intelligence-v238": "node tools/test-intelligence-v238.js"
   }
 }
