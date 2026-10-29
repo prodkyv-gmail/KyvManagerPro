@@ -433,7 +433,7 @@
             const sort = currentSortColumn ? ` · Ordinamento: ${currentSortColumn} (${currentSortDesc ? 'decrescente' : 'crescente'})` : '';
             const filter = search ? ` · Filtro: “${search}”` : '';
             const totalCols = editorColumnKeys().length, shownCols = window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,editorColumnKeys()).length ?? totalCols;
-            status.textContent = `${visibleCount} righe visualizzate su ${currentEditorData.length} · Colonne ${shownCols}/${totalCols}${filter}${sort}`;
+            status.textContent = `${visibleCount} righe visualizzate su ${currentEditorData.length} · Colonne ${shownCols}/${totalCols}${filter}${sort}${currentEditorTable==='ESTRATTO SIAE'?' · SIAE: − nell’originale = entrata per noi; + = uscita per noi':''}`;
         }
 
         function refreshEditorView() {
