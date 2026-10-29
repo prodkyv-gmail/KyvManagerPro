@@ -170,10 +170,14 @@ async function savePayment(id,value,date){
   // Read fresh ledger before every financial write; never use a stale amount from the rendered page.
   const [invoiceRes,ledgerRes]=await Promise.all([
     state.client.from('FATTURE').select('ID_FT,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA').eq('ID_FT',id).single(),
-    state.client.from('FATTURE_INCASSI').select('ID_FT,Importo').eq('ID_FT',id).limit(10000)
+    state.client.from('FATTURE_INCASSI').select('ID_INCASSO,ID_FT,Importo').eq('ID_FT',id).limit(10000)
   ]);
   if(invoiceRes.error||ledgerRes.error)throw Error(invoiceRes.error?.message||ledgerRes.error?.message||'Verifica incassi non riuscita.');
-  const fresh=summarize(invoiceRes.data,ledgerRes.data||[],state.reversals);
+  const freshPayments=ledgerRes.data||[];
+  const paymentIds=freshPayments.map(p=>p.ID_INCASSO);
+  const reversalRes=paymentIds.length?await state.client.from('FATTURE_INCASSI_STORNI').select('ID_INCASSO').in('ID_INCASSO',paymentIds).limit(10000):{data:[],error:null};
+  if(reversalRes.error)throw Error('Verifica storni non riuscita: '+reversalRes.error.message);
+  const fresh=summarize(invoiceRes.data,freshPayments,reversalRes.data||[]);
   if(amountCents>cents(fresh.remaining))throw Error('Importo superiore al residuo '+euro(fresh.remaining)+'.');
   if(fresh.legacyPaid)throw Error('Fattura già indicata come pagata nello storico. Verifica prima lo stato manualmente.');
   if(!window.confirm('Registrare un incasso di '+euro(amount)+' del '+date+' per '+invoiceTitle(f)+'? La registrazione non può essere modificata direttamente.'))return;
