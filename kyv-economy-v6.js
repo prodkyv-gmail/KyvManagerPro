@@ -10,7 +10,7 @@ const num=v=>{if(window.KYV?.parseNumber)return KYV.parseNumber(v)||0;const n=Nu
 const euro=v=>window.KYV?.formatEuro?KYV.formatEuro(v):new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(v)||0);
 const paid=v=>window.KYV?.isPaid?KYV.isPaid(v):/^(si|sì|yes|true|1|pagat|incassat)/i.test(text(v));
 const done=p=>/uscita|pubblicat|completat|chius|finita/i.test(text(p?.STATO)+' '+text(p?.SVILUPPO));
-const invoiceAmount=f=>num(f?.ImportoTotaleDocumento??f?.PrezzoTotale??f?.PrezzoUnitario??f?.ImportoPagamento??0);
+const invoiceAmount=f=>window.KYV_INVOICE_LINE?.amount(f)??Math.max(0,num(f?.XML_SHA256?f?.PrezzoTotale:f?.PrezzoUnitario));
 const feeAmount=p=>num(p?.FEE);
 const yearOf=v=>{const d=v?new Date(v):null;return d&&!Number.isNaN(d.getTime())?d.getFullYear():null;};
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
@@ -79,7 +79,7 @@ async function load(){
  const c=client();if(!c)return;
  const [p,f,s]=await Promise.all([
   c.from('PROGETTI').select('ID,TITOLO,ARTISTA,FEE,STATO,SVILUPPO,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione').limit(1000),
-  c.from('FATTURE').select('ID_FT,Numero,Numero_Originale,Data,Denominazione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento').limit(2000),
+  c.from('FATTURE').select('ID_FT,Numero,Numero_Originale,Data,Denominazione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento,XML_SHA256').limit(2000),
   c.from('Spese Extra').select('ID_SPESE,Data,Descrizione,Categoria,Importo,ID_PROGETTO').limit(2000)
  ]);
  if(p.error||f.error||s.error){console.warn('[KYV Economy v6] lettura parziale',{projects:p.error,invoices:f.error,costs:s.error});}
