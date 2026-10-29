@@ -1,5 +1,11 @@
 # KyvManagerPro v2.26 — Centro operativo
 
+## v2.37 — Storni e rettifiche incassi (29/10/2026)
+
+Nella pagina Fatture → Riconciliazione e incassi è disponibile la sezione **Storico incassi e storni**. Un incasso già registrato può essere **stornato integralmente** con conferma esplicita e motivo obbligatorio (10–500 caratteri). Il movimento originale rimane visibile; lo storno viene salvato in `FATTURE_INCASSI_STORNI` con data e audit. L'indice UNIQUE su `ID_INCASSO` impedisce doppi storni. Le policies RLS autorizzano solo il proprietario dell'incasso e della fattura; non vengono concesse modifiche/cancellazioni delle righe storiche. SQL: `docs/v237-payment-reversals.sql`.
+
+Saldi e dashboard escludono gli incassi stornati. Se tutti i movimenti sono stornati, l'importo incassato è zero anche in presenza di un vecchio indicatore `PAGATA=SI`; solo le fatture senza movimenti continuano a rispettare lo stato storico. Per correggere data o importo, stornare il movimento errato e registrare un nuovo incasso corretto. Nessuno storno automatico, nessuna cancellazione, nessuna modifica massiva dello storico.
+
 ## v2.36 — riconciliazione fatture, scadenze e incassi parziali (29/10/2026)
 
 Nella pagina **Economia → Fatture** è disponibile **Riconciliazione e incassi** (modulo `kyv-invoice-reconciliation-v236.js`): elenco delle fatture senza `FATTURE.ID_PROGETTO`, evidenza dei riferimenti storici `PROGETTI.IDFT` da controllare manualmente, progetti in uscita/chiusi con fee ma senza fattura riconciliata (solo *da verificare*, non automaticamente fatturabili), e fatture con saldo aperto. Il collegamento è esplicito e seleziona un ID progetto; non presume la relazione dal solo numero fattura. Il pannello non modifica in massa alcun dato esistente.
