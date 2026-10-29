@@ -18,7 +18,7 @@ assert.ok(source.includes("count:'exact'")&&source.includes("MAX_ROWS"),'Full pa
 assert.ok(source.includes("if(res.data?.length!==1)"),'Relation update should check result count');
 assert.ok(source.includes(".is('ID_PROGETTO',null)"),'Do not overwrite previously linked invoice');
 assert.ok(source.includes("legacyProjectIds(invoice,state.projects).length"),'Legacy linked invoice must not be remapped blindly');
-assert.ok(source.includes("const fresh=summarize(invoiceRes.data,ledgerRes.data||[])"),'Always refresh amount before payment');
+assert.ok(source.includes("const fresh=summarize(invoiceRes.data,freshPayments,reversalRes.data||[])"),'Always refresh amount before payment');
 assert.ok(source.includes("if(amountCents>cents(fresh.remaining))"),'Overpayment guard');
 assert.ok(source.includes("if(fresh.legacyPaid)"),'Do not add movements to legacy paid invoice');
 assert.ok(source.includes("window.confirm("),'Manual confirmation before write');
