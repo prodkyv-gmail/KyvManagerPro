@@ -7,7 +7,7 @@ const sw=fs.readFileSync('sw.js','utf8');
 const window={KYV:{parseNumber(v){const t=String(v??'');return Number(t.includes(',')?t.replace(/\./g,'').replace(',','.'):t)||0;},formatEuro:n=>String(n),isPaid:v=>/^si$/i.test(v)}};
 vm.runInNewContext(source,{window,Intl,Date,Number,console});
 const a=window.KYV_COLLECTIONS_V236;
-const invoice=(paid='NO')=>({ID_FT:1,ImportoTotaleDocumento:'1000.00',PAGATA:paid});
+const invoice=(paid='NO')=>({ID_FT:1,ImportoTotaleDocumento:'1000.00',PrezzoUnitario:'1000.00',PAGATA:paid});
 const pay=[{ID_INCASSO:5,ID_FT:1,Importo:400},{ID_INCASSO:6,ID_FT:1,Importo:600}];
 const reversal=[{ID_STORNO:8,ID_INCASSO:5,Data:'2026-10-29',Motivo:'Movimento registrato sul cliente errato'}];
 let s=a.summarize(invoice(),pay,reversal);
