@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KYV Intelligence · Analisi economica</title>
+<meta name="theme-color" content="#10131b">
+<link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
+<style>
+body{margin:0;background:#0f111a;color:#f8fafc;font-family:Inter,system-ui,Arial,sans-serif}
+header{padding:20px 4%;background:#151923;border-bottom:1px solid #343b4c;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+a{color:#c7d2fe}h1{font-size:25px;margin:2px 0}h2{font-size:17px;margin:0 0 12px}main{max-width:1440px;padding:25px 4% 60px;margin:auto}
+p{color:#cbd5e1;line-height:1.6}label{font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px}
+select,button{border-radius:8px;padding:9px 12px;background:#1e293b;border:1px solid #64748b;color:white;font-size:14px}
+button{cursor:pointer}button:hover{background:#312e81}button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #818cf8}
+nav{display:flex;gap:9px;flex-wrap:wrap}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.tile,.panel{background:#151923;border:1px solid #30394b;border-radius:14px;padding:17px;min-width:0}
+.tile strong{display:block;font-size:23px;color:#f8fafc;margin:5px 0;overflow-wrap:anywhere}.tile small{display:block;color:#a8b5ca;font-size:12px}
+.group{margin-top:20px;display:grid;grid-template-columns:2fr 1fr;gap:14px}
+@media(max-width:800px){.group{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:10px;text-align:right;border-bottom:1px solid #30394b}td:first-child,th:first-child{text-align:left}
+th{color:#cbd5e1}tr:hover td{background:#1e293b}.scroll{overflow-x:auto}
+.bar{height:12px;background:#334155;border-radius:7px;overflow:hidden}.bar>span{height:100%;display:block;background:#818cf8}
+.good{color:#6ee7b7}.warn{color:#fbbf24}.muted{color:#94a3b8}
+.msg{margin:12px 0;padding:13px;border:1px solid #64748b;border-radius:9px;background:#1e293b}
+.msg.error{border-color:#f87171;color:#fecaca}.legend{font-size:12px;color:#cbd5e1;margin-bottom:12px}.legend b{color:white}
+footer{margin-top:24px;color:#94a3b8;font-size:12px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script>
+<script src="kyv-intelligence-engine-v238.js"></script>
+</head><body>
+<header><div><div class="muted">Economia · KYVManagerPro</div><h1>KYV Intelligence <small class="muted" style="font-size:14px">v2.38</small></h1></div>
+<nav><a href="fatture.html">← Fatture</a><a href="progetti.html">Progetti</a><a href="data_quality.html">Qualità dati</a></nav></header>
+<main>
+<p>Analisi economiche in sola lettura. <strong>Il fatturato non coincide con il denaro incassato</strong>: per gli incassi storici senza data bancaria il sistema segnala un valore non attribuibile a un mese. I movimenti SIAE esistenti sono visualizzati separatamente come dati provvisori; IMAIE non è ancora incluso.</p>
+<div class="controls"><label>Vista <select id="mode"><option value="monthly">Mensile</option><option value="annual" selected>Annuale / pluriennale</option></select></label>
+<label>Anno <select id="year"><option value="all">Tutti gli anni</option></select></label><button type="button" id="refresh">Ricarica analisi</button></div>
+<div id="message" class="msg" role="status">Lettura dei dati in corso…</div>
+<section id="content" hidden>
+<div class="grid" id="kpis"></div>
+<div class="group"><section class="panel"><h2>Andamento fatturazione e incassi con data verificata</h2><div class="legend">Barra indaco = fatturato per data di emissione. <b>Il valore degli incassi bancari datati è separato:</b> non ricostruiamo la data dai pagamenti storici.</div><div class="scroll"><table><thead><tr><th>Periodo</th><th>Fatturato</th><th>Incassi datati</th><th>Fatture</th><th>Andamento fatture</th></tr></thead><tbody id="period-rows"></tbody></table></div></section>
+<section class="panel"><h2>Completezza per progetti</h2><div id="coverage"></div><p class="muted">Un progetto senza fattura collegata non è necessariamente privo di ricavi: potrebbe generare SIAE, IMAIE, anticipi o altri compensi non ancora attribuiti.</p></section></div>
+<div class="group"><section class="panel"><h2>SIAE: estratto esistente, non ancora riconciliato</h2><p>I dati qui sotto derivano dalle righe presenti in ESTRATTO SIAE. Possono comprendere movimenti che non sono accrediti, addebiti o partite interne: <strong>non sono sommati agli incassi bancari.</strong></p>
+<div class="scroll"><table><thead><tr><th>Periodo</th><th>Movimenti SIAE grezzi (netto algebrico)</th></tr></thead><tbody id="siae-rows"></tbody></table></div></section>
+<section class="panel"><h2>Segnalazioni per KYV Analyst</h2><div id="flags"></div><p class="muted">Motore di regole verificabili, senza AI generativa né modifiche automatiche. Le analisi del primo ritorno richiederanno date di sessione, attribuzione economica e date di accredito effettivo.</p></section></div>
+</section><footer>Prima versione analitica · nessun dato esistente viene modificato. Anno corrente confrontabile con gli anni precedenti solo tenendo conto della diversa porzione di anno trascorsa.</footer>
+</main>
+<script>
+(function(){
+'use strict';
+const E=window.KYV_INTELLIGENCE_ENGINE;
+const $=id=>document.getElementById(id);
+const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n)||0);
+const H=v=>window.KYV?.safeHtml?window.KYV.safeHtml(v):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let source=null;
+async function allRows(client,table,fields,id){
+ const limit=500,cap=10000;
+ const first=await client.from(table).select(fields,{count:'exact'}).order(id,{ascending:false}).range(0,limit-1);
+ if(first.error)throw Error(table+': '+first.error.message);
+ if(first.count===null||first.count>cap)throw Error(table+': conteggio non completo o oltre '+cap+' righe.');
+ const rows=[...(first.data||[])];
+ while(rows.length<first.count){const next=await client.from(table).select(fields).order(id,{ascending:false}).range(rows.length,Math.min(rows.length+limit-1,first.count-1));if(next.error||!next.data?.length)throw Error(table+': dati incompleti');rows.push(...next.data);}
+ if(rows.length!==first.count)throw Error(table+': lettura incompleta');return rows;
+}
+async function load(){
+ $('message').className='msg';$('message').textContent='Caricamento e verifica degli archivi…';$('content').hidden=true;
+ try{
+ const c=window.KYV?.createSupabaseClient?.();if(!c)throw Error('Client autenticato non disponibile.');
+ const [invoices,projects,payments,reversals,siaes]=await Promise.all([
+ allRows(c,'FATTURE','ID_FT,Data,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA,ID_PROGETTO','ID_FT'),
+ allRows(c,'PROGETTI','ID,STATO,SVILUPPO,FEE,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione','ID'),
+ allRows(c,'FATTURE_INCASSI','ID_INCASSO,ID_FT,Importo,Data','ID_INCASSO'),
+ allRows(c,'FATTURE_INCASSI_STORNI','ID_STORNO,ID_INCASSO,Data','ID_STORNO'),
+ allRows(c,'ESTRATTO SIAE','ID_ECSIAE,DATA,OPERAZIONE,IMPORTO','ID_ECSIAE')]);
+ source={invoices,projects,payments,reversals,siaes};
+ const years=[...new Set([...invoices.map(i=>i.Data?.slice(0,4)),...siaes.map(s=>s.DATA?.slice(0,4))].filter(Boolean))].sort().reverse();
+ $('year').innerHTML='<option value="all">Tutti gli anni</option>'+years.map(y=>'<option value="'+H(y)+'">'+H(y)+'</option>').join('');
+ $('message').textContent='Dati caricati. Le attribuzioni non verificate restano segnalate separatamente.';$('content').hidden=false;render();
+ }catch(e){source=null;$('message').className='msg error';$('message').textContent='Analisi non disponibile: '+e.message;}
+}
+function render(){
+ if(!source)return;
+ const mode=$('mode').value,year=$('year').value,calc=E.compute(source,mode);
+ const period=calc.rows.filter(r=>year==='all'||r.period.startsWith(year));
+ const billed=period.reduce((a,r)=>a+r.billed,0)/100,dated=period.reduce((a,r)=>a+r.verifiedCash,0)/100;
+ const invoices=period.reduce((a,r)=>a+r.invoiceCount,0);
+ const legacy=year==='all'?calc.totals.legacyUndated:null;
+ const tiles=[['Fatturato periodo',euro(billed),invoices+' fatture emesse'],['Incassi con data verificata',euro(dated),'Somma movimenti non stornati, per data accredito registrata'],['Storico pagato senza data',legacy===null?'Non attribuibile':euro(legacy),'Storico PAGATA=SI: non è possibile ricostruire il mese bancario'],['Fatture senza progetto diretto',calc.totals.unlinked+' / '+calc.totals.invoiceCount,'Intero archivio · richiedono verifica'],['Progetti non riconciliati, non chiusi',calc.coverage.activeUnlinked,'Dato indicativo: comprende anche progetti senza ricavi fatturati'],['SIAE / IMAIE','Separati','SIAE provvisorio; IMAIE in preparazione']];
+ $('kpis').innerHTML=tiles.map(i=>'<div class="tile"><small>'+H(i[0])+'</small><strong>'+H(i[1])+'</strong><small>'+H(i[2])+'</small></div>').join('');
+ const max=Math.max(1,...period.map(r=>r.billed));
+ $('period-rows').innerHTML=period.length?period.map(r=>'<tr><td>'+H(r.period)+'</td><td>'+H(euro(r.billed/100))+'</td><td>'+H(euro(r.verifiedCash/100))+'</td><td>'+r.invoiceCount+'</td><td style="min-width:100px"><div class="bar"><span style="width:'+Math.min(100,r.billed/max*100).toFixed(2)+'%"></span></div></td></tr>').join(''):'<tr><td colspan="5">Nessun periodo con dati</td></tr>';
+ $('siae-rows').innerHTML=period.filter(r=>r.siaeProvisional!==0).map(r=>'<tr><td>'+H(r.period)+'</td><td>'+H(euro(r.siaeProvisional/100))+'</td></tr>').join('')||'<tr><td colspan="2">Nessun movimento valorizzato per la selezione</td></tr>';
+ const c=calc.coverage;
+ const ratios=[['Data sessione',c.withSession],['Consegna master',c.withMaster],['Data pubblicazione',c.withRelease],['Campo FEE compilato',c.withFee]];
+ $('coverage').innerHTML='<p>Campione: '+c.withFee+' schede FEE compilate su '+calc.totals.projectCount+' progetti. Il campo può contenere testo non monetario.</p>'+ratios.map(([name,n])=>'<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;gap:12px"><span>'+H(name)+'</span><strong>'+n+'/'+calc.totals.projectCount+'</strong></div><div class="bar"><span style="width:'+(calc.totals.projectCount?n/calc.totals.projectCount*100:0).toFixed(2)+'%"></span></div></div>').join('');
+ $('flags').innerHTML='<p class="warn">Attenzione: '+c.openWithNoFee+' progetti non chiusi e senza fee numerica riconoscibile (candidati alla verifica, non automaticamente insoluti).</p><p>'+calc.totals.unlinked+' fatture senza collegamento diretto.</p><p>'+calc.totals.siaeRows+' righe estratto SIAE; '+calc.totals.siaeParseable+' con data e valore leggibili, nessuna certificazione bancaria.</p><p class="warn">Tempo medio alla prima entrata: non calcolabile con affidabilità finché mancano date e attribuzioni.</p>';
+}
+$('mode').addEventListener('change',render);$('year').addEventListener('change',render);$('refresh').addEventListener('click',load);
+load();
+})();
+</script></body></html>
