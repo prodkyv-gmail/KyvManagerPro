@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-39-1-economy-toolbar-20261029';
+const CACHE_NAME = 'kyv-studio-v2-39-2-siae-editor-columns-20261029';
 const APP_SHELL = [
     './',
     './index.html',
@@ -13,6 +13,9 @@ const APP_SHELL = [
     './kyv_liquidazioni.html',
     './kyv-rights-liquidations-v239.js',
     './kyv-intelligence-engine-v238.js',
+    './kyv-siae-amount.js',
+    './kyv-editor-columns.js',
+    './editor.html',
     './kyv-invoice-line-amount.js',
     './rendiconto.html',
     './manifest.json',

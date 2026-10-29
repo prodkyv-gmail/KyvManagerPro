@@ -26,11 +26,13 @@
     <script src="config.js"></script>
     <script src="kyv-drive-bridge.js"></script>
     <script src="kyv-core.js"></script>
+    <script src="kyv-siae-amount.js"></script>
     <script src="kyv-toast.js"></script>
     <script src="kyv-helpers.js"></script>
     <script src="kyv-data-guard.js"></script>
     <script src="kyv-priority.js"></script>
     <script src="kyv-schema.js"></script>
+    <script src="kyv-editor-columns.js"></script>
     <script src="kyv-help.js"></script>
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
@@ -188,7 +190,7 @@
             </div>
 
             <!-- CONTENITORE RICERCA E AZIONI -->
-            <div class="flex space-x-3 w-full lg:w-auto shrink-0">
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto min-w-0">
                 <div class="relative flex-1 sm:w-64">
                     <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-kyv-text"></i>
                     <input type="text" id="editor-search" placeholder="Ricerca in tabella..." class="w-full bg-kyv-card border border-kyv-border rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors shadow-sm" oninput="debounceFilterEditorTable()">
@@ -199,6 +201,16 @@
                 <button data-action="export-csv" class="px-3 py-2 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg transition-colors flex items-center text-sm shadow-sm whitespace-nowrap">
                     <i data-lucide="download" class="w-4 h-4 sm:mr-2 text-kyv-text"></i> <span class="hidden sm:inline">Esporta</span>
                 </button>
+                <div id="editor-column-wrap" class="relative shrink-0">
+                    <button type="button" data-action="toggle-columns" id="editor-columns-toggle" aria-expanded="false" aria-controls="editor-column-panel" class="px-3 py-2 bg-kyv-card border border-indigo-500/60 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm whitespace-nowrap" title="Scegli le colonne da mostrare in questa tabella">
+                        <i data-lucide="list-filter" class="w-4 h-4 sm:mr-2 text-indigo-300"></i><span>Colonne</span>
+                    </button>
+                    <div id="editor-column-panel" class="hidden absolute right-0 top-full mt-2 z-50 w-[min(88vw,340px)] max-h-[65vh] overflow-y-auto p-3 rounded-xl border border-kyv-border bg-[#151923] shadow-2xl text-white">
+                        <div class="flex justify-between items-center gap-2 mb-2"><strong class="text-xs">Colonne visibili</strong><button type="button" data-action="show-all-columns" class="text-xs text-indigo-300 hover:text-white underline">Mostra tutte</button></div>
+                        <p id="editor-column-note" class="text-[11px] text-kyv-text mb-2">La scelta riguarda solo la visualizzazione. Ricerca, modifica record e CSV usano tutti i dati.</p>
+                        <div id="editor-column-list" class="grid gap-1.5"></div>
+                    </div>
+                </div>
                 <button data-action="toggle-density" id="density-toggle" class="px-3 py-2 bg-kyv-card border border-indigo-500/60 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm whitespace-nowrap density-btn-active" title="Alterna colonne compatte e visualizzazione larga">
                     <i data-lucide="columns-3" class="w-4 h-4 sm:mr-2 text-indigo-300"></i> <span class="hidden sm:inline" id="density-label">Compatta</span>
                 </button>
@@ -304,13 +316,29 @@
         let currentEditorTable = 'PROGETTI', currentEditorData = [], currentEditingRowId = null;
         const readOnlyTables = new Set(['AUDIO_VERSIONI']);
         let currentSortColumn = null, currentSortDesc = false;
+        const editorColumnKeys = () => currentEditorData.length ? Object.keys(currentEditorData[0]) : (tableColumnsFallback[currentEditorTable] || []);
+        function toggleColumnPanel(open) {
+            const panel = document.getElementById('editor-column-panel'),button=document.getElementById('editor-columns-toggle');
+            if (!panel || !button) return;
+            panel.classList.toggle('hidden', !open);
+            button.setAttribute('aria-expanded', String(!!open));
+        }
+        function renderColumnPicker() {
+            const list = document.getElementById('editor-column-list'); if (!list) return;
+            const keys = editorColumnKeys(),visible = window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable, keys) || keys;
+            document.getElementById('editor-column-note').textContent = currentEditorTable === 'ESTRATTO SIAE'
+                ? 'IMPORTO conserva il segno originale SIAE: − è un valore positivo per noi. Colonne nascoste solo nella griglia; ricerca ed esportazione includono tutte.'
+                : 'Colonne nascoste solo nella griglia. Ricerca, modifica record e CSV usano tutti i dati.';
+            list.innerHTML = keys.map(key => `<label class="flex items-center gap-2 py-1 px-2 rounded hover:bg-white/5 text-xs cursor-pointer"><input type="checkbox" data-editor-column="${KYV.safeHtml(key)}" ${visible.includes(key)?'checked':''} ${visible.length===1 && visible[0]===key?'disabled':''} class="accent-indigo-500 w-4 h-4"><span class="break-all">${KYV.safeHtml(key)}</span></label>`).join('') || '<p class="text-xs text-kyv-text">Nessuna colonna disponibile.</p>';
+        }
         
         // Array per Datalist (Autocompletamento)
         let globalProjectsList = []; 
         let globalInvoicesList = [];
 
         async function loadEditorTable(tableName) {
-            currentEditorTable = tableName; 
+            currentEditorTable = tableName;
+            toggleColumnPanel(false);
             currentSortColumn = null; // Reset sort
             const addButton = document.querySelector('[data-action="add-record"]');
             const readOnly = readOnlyTables.has(tableName);
@@ -360,7 +388,8 @@
                 const searchInput = document.getElementById('editor-search');
                 if (searchInput) searchInput.value = '';
                 
-                refreshEditorView(); 
+                refreshEditorView();
+                renderColumnPicker();
             } catch (error) { 
                 DOM.editorTbody.innerHTML = `<tr><td class="p-8 text-center text-red-400">Errore comunicazione Database: ${error.message}</td></tr>`; 
             }
@@ -403,7 +432,8 @@
             const search = document.getElementById('editor-search')?.value.trim();
             const sort = currentSortColumn ? ` · Ordinamento: ${currentSortColumn} (${currentSortDesc ? 'decrescente' : 'crescente'})` : '';
             const filter = search ? ` · Filtro: “${search}”` : '';
-            status.textContent = `${visibleCount} righe visualizzate su ${currentEditorData.length}${filter}${sort}`;
+            const totalCols = editorColumnKeys().length, shownCols = window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,editorColumnKeys()).length ?? totalCols;
+            status.textContent = `${visibleCount} righe visualizzate su ${currentEditorData.length} · Colonne ${shownCols}/${totalCols}${filter}${sort}${currentEditorTable==='ESTRATTO SIAE'?' · SIAE: − nell’originale = entrata per noi; + = uscita per noi':''}`;
         }
 
         function refreshEditorView() {
@@ -458,7 +488,7 @@
             const sourceRow = dataArray?.[0] || currentEditorData?.[0];
             if(!sourceRow) { const message=readOnlyTables.has(currentEditorTable)?'Nessuna versione presente. Usa Archivio Musicale per collegare i file.':'Nessun dato. Usa il pulsante "Aggiungi" per creare un record.'; DOM.editorThead.innerHTML = ''; DOM.editorTbody.innerHTML = `<tr><td class="p-8 text-center text-kyv-text">${message}</td></tr>`; return; }
 
-            const keys = Object.keys(sourceRow); 
+            const keys = window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,Object.keys(sourceRow)) || Object.keys(sourceRow);
             const pk = tablePKs[currentEditorTable] || 'id'; // default fallback a 'id'
             
             const isProgetti = currentEditorTable === 'PROGETTI'; 
@@ -614,6 +644,8 @@
                 refreshEditorView();
                 input?.focus();
             }
+            else if (action === 'toggle-columns') { toggleColumnPanel(document.getElementById('editor-column-panel').classList.contains('hidden')); renderColumnPicker(); }
+            else if (action === 'show-all-columns') { window.KYV_EDITOR_COLUMNS?.showAll(currentEditorTable); refreshEditorView(); renderColumnPicker(); }
             else if (action === 'toggle-density') setEditorDensity(document.body.classList.contains('editor-compact') ? 'comfort' : 'compact');
             else if (action === 'add-record') openDynamicModal(); 
             else if (action === 'edit-record') openDynamicModal(btn.dataset.id);
@@ -630,6 +662,14 @@
                 const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `${currentEditorTable}_Export.csv`; link.click(); showToast("Export CSV avviato");
             }
         });
+
+        document.getElementById('editor-column-list').addEventListener('change', e => {
+            const input = e.target.closest('input[data-editor-column]'); if (!input) return;
+            if (!window.KYV_EDITOR_COLUMNS?.set(currentEditorTable,input.dataset.editorColumn,input.checked,editorColumnKeys())) { renderColumnPicker(); return; }
+            refreshEditorView(); renderColumnPicker();
+        });
+        document.addEventListener('click',e=>{ if (!e.target.closest('#editor-column-wrap')) toggleColumnPanel(false); });
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('editor-column-panel').classList.contains('hidden'))toggleColumnPanel(false);});
 
         // Conferma eliminazione
         document.getElementById('btn-confirm-delete').addEventListener('click', async () => {

@@ -1,11 +1,11 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
 const engine=fs.readFileSync('kyv-intelligence-engine-v238.js','utf8');
-const w={};vm.runInNewContext(engine,{window:w,Number,Map,Set,Date,Math,Error});
+const w={};vm.runInNewContext(fs.readFileSync('kyv-siae-amount.js','utf8'),{window:w,Number,Map,Set,Date,Math,Error});vm.runInNewContext(engine,{window:w,Number,Map,Set,Date,Math,Error});
 const rows={invoices:[{ID_FT:1,Data:'2026-03-03',PrezzoUnitario:'1000',PAGATA:'SI'}],rightsLiquidations:[
 {Ente:'SIAE',DataAccredito:'2026-07-15',ImportoNetto:350.5},
 {Ente:'NUOVO IMAIE',DataAccredito:'2026-08-11',ImportoNetto:180},
 {Ente:'INVALID',DataAccredito:'2026-09-11',ImportoNetto:10000}
-],siaes:[{DATA:'2026-07-15',IMPORTO:'350,50'}]};
+],siaes:[{DATA:'2026-07-15',IMPORTO:'-350,50'}]};
 const result=w.KYV_INTELLIGENCE_ENGINE.compute(rows,'monthly');
 assert.equal(result.totals.billed,1000);
 assert.equal(result.totals.legacyUndated,1000);
@@ -26,6 +26,6 @@ assert.ok(!app.includes(".delete(")&&!app.includes(".update("));
 assert.ok(page.includes("NUOVO IMAIE")&&page.includes("SIAE"));
 assert.ok(dash.includes("KYV_LIQUIDAZIONI_DIRITTI")&&dash.includes("rightsCash"));
 assert.ok(dash.includes("kyv_liquidazioni.html"));
-assert.ok(sw.includes("kyv-studio-v2-39-1-economy-toolbar-20261029"));
+assert.ok(sw.includes("kyv-studio-v2-39-2-siae-editor-columns-20261029"));
 assert.ok(sw.includes("'./kyv_liquidazioni.html'"));
 console.log('OK: rights bank transfers separately tracked, provisional SIAE not duplicated');
