@@ -30,15 +30,15 @@ footer{margin-top:24px;color:#94a3b8;font-size:12px}
 <script src="kyv-intelligence-engine-v238.js"></script>
 </head><body>
 <header><div><div class="muted">Economia · KYVManagerPro</div><h1>KYV Intelligence <small class="muted" style="font-size:14px">v2.38</small></h1></div>
-<nav><a href="fatture.html">← Fatture</a><a href="progetti.html">Progetti</a><a href="data_quality.html">Qualità dati</a></nav></header>
+<nav><a href="kyv_liquidazioni.html">Liquidazioni SIAE / IMAIE</a><a href="fatture.html">← Fatture</a><a href="progetti.html">Progetti</a><a href="data_quality.html">Qualità dati</a></nav></header>
 <main>
-<p>Analisi economiche in sola lettura. <strong>Il fatturato non coincide con il denaro incassato</strong>: per gli incassi storici senza data bancaria il sistema segnala un valore non attribuibile a un mese. I movimenti SIAE esistenti sono visualizzati separatamente come dati provvisori; IMAIE non è ancora incluso.</p>
+<p>Analisi economiche in sola lettura. <strong>Il fatturato non coincide con il denaro incassato</strong>: per gli incassi storici senza data bancaria il sistema segnala un valore non attribuibile a un mese. I movimenti SIAE esistenti sono visualizzati separatamente come dati provvisori; Le liquidazioni SIAE/IMAIE confermate sono visualizzate in una serie separata.</p>
 <div class="controls"><label>Vista <select id="mode"><option value="monthly">Mensile</option><option value="annual" selected>Annuale / pluriennale</option></select></label>
 <label>Anno <select id="year"><option value="all">Tutti gli anni</option></select></label><button type="button" id="refresh">Ricarica analisi</button></div>
 <div id="message" class="msg" role="status">Lettura dei dati in corso…</div>
 <section id="content" hidden>
 <div class="grid" id="kpis"></div>
-<div class="group"><section class="panel"><h2>Andamento fatturazione e incassi con data verificata</h2><div class="legend">Barra indaco = somma delle voci per data di emissione (PrezzoUnitario storico; PrezzoTotale per XML Aruba aggregati). <b>Il valore degli incassi bancari datati è separato:</b> non ricostruiamo la data dai pagamenti storici.</div><div class="scroll"><table><thead><tr><th>Periodo</th><th>Fatturato</th><th>Incassi datati</th><th>Voci</th><th>Andamento fatture</th></tr></thead><tbody id="period-rows"></tbody></table></div></section>
+<div class="group"><section class="panel"><h2>Andamento fatturazione e incassi con data verificata</h2><div class="legend">Barra indaco = somma delle voci per data di emissione (PrezzoUnitario storico; PrezzoTotale per XML Aruba aggregati). <b>Il valore degli incassi bancari datati è separato:</b> non ricostruiamo la data dai pagamenti storici.</div><div class="scroll"><table><thead><tr><th>Periodo</th><th>Fatturato</th><th>Incassi fatture datati</th><th>Bonifici diritti</th><th>Voci</th><th>Andamento fatture</th></tr></thead><tbody id="period-rows"></tbody></table></div></section>
 <section class="panel"><h2>Completezza per progetti</h2><div id="coverage"></div><p class="muted">Un progetto senza fattura collegata non è necessariamente privo di ricavi: potrebbe generare SIAE, IMAIE, anticipi o altri compensi non ancora attribuiti.</p></section></div>
 <div class="group"><section class="panel"><h2>SIAE: estratto esistente, non ancora riconciliato</h2><p>I dati qui sotto derivano dalle righe presenti in ESTRATTO SIAE. Possono comprendere movimenti che non sono accrediti, addebiti o partite interne: <strong>non sono sommati agli incassi bancari.</strong></p>
 <div class="scroll"><table><thead><tr><th>Periodo</th><th>Movimenti SIAE grezzi (netto algebrico)</th></tr></thead><tbody id="siae-rows"></tbody></table></div></section>
@@ -66,14 +66,15 @@ async function load(){
  $('message').className='msg';$('message').textContent='Caricamento e verifica degli archivi…';$('content').hidden=true;
  try{
  const c=window.KYV?.createSupabaseClient?.();if(!c)throw Error('Client autenticato non disponibile.');
- const [invoices,projects,payments,reversals,siaes]=await Promise.all([
+ const [invoices,projects,payments,reversals,siaes,rightsLiquidations]=await Promise.all([
  allRows(c,'FATTURE','ID_FT,Data,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA,ID_PROGETTO,XML_SHA256','ID_FT'),
  allRows(c,'PROGETTI','ID,STATO,SVILUPPO,FEE,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione','ID'),
  allRows(c,'FATTURE_INCASSI','ID_INCASSO,ID_FT,Importo,Data','ID_INCASSO'),
  allRows(c,'FATTURE_INCASSI_STORNI','ID_STORNO,ID_INCASSO,Data','ID_STORNO'),
- allRows(c,'ESTRATTO SIAE','ID_ECSIAE,DATA,OPERAZIONE,IMPORTO','ID_ECSIAE')]);
- source={invoices,projects,payments,reversals,siaes};
- const years=[...new Set([...invoices.map(i=>i.Data?.slice(0,4)),...siaes.map(s=>s.DATA?.slice(0,4))].filter(Boolean))].sort().reverse();
+ allRows(c,'ESTRATTO SIAE','ID_ECSIAE,DATA,OPERAZIONE,IMPORTO','ID_ECSIAE'),
+  allRows(c,'KYV_LIQUIDAZIONI_DIRITTI','ID_LIQUIDAZIONE,Ente,DataAccredito,ImportoNetto','ID_LIQUIDAZIONE')]);
+ source={invoices,projects,payments,reversals,siaes,rightsLiquidations};
+ const years=[...new Set([...invoices.map(i=>i.Data?.slice(0,4)),...siaes.map(s=>s.DATA?.slice(0,4)),...rightsLiquidations.map(x=>x.DataAccredito?.slice(0,4))].filter(Boolean))].sort().reverse();
  $('year').innerHTML='<option value="all">Tutti gli anni</option>'+years.map(y=>'<option value="'+H(y)+'">'+H(y)+'</option>').join('');
  $('message').textContent='Dati caricati. Le attribuzioni non verificate restano segnalate separatamente.';$('content').hidden=false;render();
  }catch(e){source=null;$('message').className='msg error';$('message').textContent='Analisi non disponibile: '+e.message;}
@@ -82,13 +83,13 @@ function render(){
  if(!source)return;
  const mode=$('mode').value,year=$('year').value,calc=E.compute(source,mode);
  const period=calc.rows.filter(r=>year==='all'||r.period.startsWith(year));
- const billed=period.reduce((a,r)=>a+r.billed,0)/100,dated=period.reduce((a,r)=>a+r.verifiedCash,0)/100;
+ const billed=period.reduce((a,r)=>a+r.billed,0)/100,dated=period.reduce((a,r)=>a+r.verifiedCash,0)/100,rights=period.reduce((a,r)=>a+r.rightsCash,0)/100;
  const invoices=period.reduce((a,r)=>a+r.invoiceCount,0);
  const legacy=year==='all'?calc.totals.legacyUndated:null;
- const tiles=[['Fatturato periodo',euro(billed),invoices+' voci fattura'],['Incassi con data verificata',euro(dated),'Somma movimenti non stornati, per data accredito registrata'],['Storico pagato senza data',legacy===null?'Non attribuibile':euro(legacy),'Storico PAGATA=SI: non è possibile ricostruire il mese bancario'],['Voci senza progetto diretto',calc.totals.unlinked+' / '+calc.totals.invoiceCount,'Intero archivio · richiedono verifica'],['Progetti non riconciliati, non chiusi',calc.coverage.activeUnlinked,'Dato indicativo: comprende anche progetti senza ricavi fatturati'],['SIAE / IMAIE','Separati','SIAE provvisorio; IMAIE in preparazione']];
+ const tiles=[['Fatturato periodo',euro(billed),invoices+' voci fattura'],['Incassi con data verificata',euro(dated),'Somma movimenti non stornati, per data accredito registrata'],['Storico pagato senza data',legacy===null?'Non attribuibile':euro(legacy),'Storico PAGATA=SI: non è possibile ricostruire il mese bancario'],['Voci senza progetto diretto',calc.totals.unlinked+' / '+calc.totals.invoiceCount,'Intero archivio · richiedono verifica'],['Progetti non riconciliati, non chiusi',calc.coverage.activeUnlinked,'Dato indicativo: comprende anche progetti senza ricavi fatturati'],['Bonifici SIAE / IMAIE confermati',euro(rights),'Liquidazioni ricevute, non fatturate e registrate manualmente']];
  $('kpis').innerHTML=tiles.map(i=>'<div class="tile"><small>'+H(i[0])+'</small><strong>'+H(i[1])+'</strong><small>'+H(i[2])+'</small></div>').join('');
  const max=Math.max(1,...period.map(r=>r.billed));
- $('period-rows').innerHTML=period.length?period.map(r=>'<tr><td>'+H(r.period)+'</td><td>'+H(euro(r.billed/100))+'</td><td>'+H(euro(r.verifiedCash/100))+'</td><td>'+r.invoiceCount+'</td><td style="min-width:100px"><div class="bar"><span style="width:'+Math.min(100,r.billed/max*100).toFixed(2)+'%"></span></div></td></tr>').join(''):'<tr><td colspan="5">Nessun periodo con dati</td></tr>';
+ $('period-rows').innerHTML=period.length?period.map(r=>'<tr><td>'+H(r.period)+'</td><td>'+H(euro(r.billed/100))+'</td><td>'+H(euro(r.verifiedCash/100))+'</td><td>'+H(euro(r.rightsCash/100))+'</td><td>'+r.invoiceCount+'</td><td style="min-width:100px"><div class="bar"><span style="width:'+Math.min(100,r.billed/max*100).toFixed(2)+'%"></span></div></td></tr>').join(''):'<tr><td colspan="6">Nessun periodo con dati</td></tr>';
  $('siae-rows').innerHTML=period.filter(r=>r.siaeProvisional!==0).map(r=>'<tr><td>'+H(r.period)+'</td><td>'+H(euro(r.siaeProvisional/100))+'</td></tr>').join('')||'<tr><td colspan="2">Nessun movimento valorizzato per la selezione</td></tr>';
  const c=calc.coverage;
  const ratios=[['Data sessione',c.withSession],['Consegna master',c.withMaster],['Data pubblicazione',c.withRelease],['Campo FEE compilato',c.withFee]];

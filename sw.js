@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-38-1-line-items-20261029';
+const CACHE_NAME = 'kyv-studio-v2-39-rights-liquidations-20261029';
 const APP_SHELL = [
     './',
     './index.html',
@@ -10,6 +10,8 @@ const APP_SHELL = [
     './pipeline.html',
     './fatture.html',
     './kyv_intelligence.html',
+    './kyv_liquidazioni.html',
+    './kyv-rights-liquidations-v239.js',
     './kyv-intelligence-engine-v238.js',
     './kyv-invoice-line-amount.js',
     './rendiconto.html',

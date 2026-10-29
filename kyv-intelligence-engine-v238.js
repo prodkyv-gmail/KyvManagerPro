@@ -29,10 +29,10 @@ function summarizeInvoice(inv,payments,reversals){
  const legacy=!group.length&&paid(inv.PAGATA);
  return {total,received:legacy?total:Math.max(0,Math.min(total,verified)),historical:legacy,movements:active,anomaly:verified>total};
 }
-function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[]}={},mode='annual'){
+function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[],rightsLiquidations=[]}={},mode='annual'){
  if(!['monthly','annual'].includes(mode))throw Error('Periodo non valido');
  const map=new Map(),unknownCash=[];
- const bucket=k=>{if(!map.has(k))map.set(k,{period:k,billed:0,verifiedCash:0,legacyPaid:0,expenses:0,siaeProvisional:0,invoiceCount:0});return map.get(k)};
+ const bucket=k=>{if(!map.has(k))map.set(k,{period:k,billed:0,verifiedCash:0,legacyPaid:0,expenses:0,siaeProvisional:0,rightsCash:0,invoiceCount:0});return map.get(k)};
  let totalBilled=0,totalReceived=0,unlinked=0,legacyNoDate=0;
  for(const i of invoices){
    const a=summarizeInvoice(i,payments,reversals),key=periodOf(i.Data,mode);
@@ -41,6 +41,14 @@ function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[]}={},
    if(key){const b=bucket(key);b.billed+=a.total;b.invoiceCount++;}
    if(a.historical){legacyNoDate+=a.received;unknownCash.push(i.ID_FT);}
    else for(const p of a.movements){const dateKey=periodOf(p.Data,mode);if(dateKey)bucket(dateKey).verifiedCash+=Math.round(Number(p.Importo)*100);}
+ }
+ let rightsCash=0,rightsCount=0;
+ for(const liq of rightsLiquidations){
+   if(!['SIAE','NUOVO IMAIE'].includes(asText(liq.Ente)))continue;
+   const key=periodOf(liq.DataAccredito,mode),v=parseAmount(liq.ImportoNetto);
+   if(!key||v===null||v<=0)continue;
+   const amountCents=Math.round(v*100);
+   bucket(key).rightsCash+=amountCents;rightsCash+=amountCents;rightsCount++;
  }
  let siaeRows=0,siaeParseable=0;
  for(const v of siaes){
@@ -58,9 +66,9 @@ function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[]}={},
  const active=notLinked.filter(p=>!/uscita|pubblicat|completat|chius|finit/i.test(asText(p.STATO)+' '+asText(p.SVILUPPO)));
  const openWithNoFee=active.filter(p=>!asText(p.FEE)||cents(p.FEE)===0);
  const rows=[...map.values()].sort((a,b)=>a.period.localeCompare(b.period));
- return {rows,totals:{billed:totalBilled/100,received:totalReceived/100,legacyUndated:legacyNoDate/100,unlinked,invoiceCount:invoices.length,projectCount:projects.length,siaeRows,siaeParseable,verifiedCash:rows.reduce((s,b)=>s+b.verifiedCash,0)/100},
+ return {rows,totals:{billed:totalBilled/100,received:totalReceived/100,legacyUndated:legacyNoDate/100,unlinked,invoiceCount:invoices.length,projectCount:projects.length,siaeRows,siaeParseable,verifiedCash:rows.reduce((s,b)=>s+b.verifiedCash,0)/100,rightsCash:rightsCash/100,rightsCount},
  coverage:{withSession,withRelease,withMaster,withFee,activeUnlinked:active.length,openWithNoFee:openWithNoFee.length},
- warnings:['Il fatturato è aggregato per data fattura.','Gli incassi storici PAGATA=SI non hanno una data bancaria verificata e non sono ripartiti nei mesi degli incassi.','Le voci ESTRATTO SIAE sono provvisorie e NON sono incluse negli incassi complessivi.','IMAIE sarà integrata come liquidazione separata dopo conferma dei bonifici.'],
+ warnings:['Il fatturato è aggregato per data fattura.','Gli incassi storici PAGATA=SI non hanno una data bancaria verificata e non sono ripartiti nei mesi degli incassi.','Le voci ESTRATTO SIAE sono provvisorie e NON sono incluse negli incassi complessivi.','Le liquidazioni SIAE/IMAIE confermate sono registrate a parte, per data accredito; i movimenti ESTRATTO SIAE non sono conteggiati come bonifici.'],
  undatedInvoiceIds:unknownCash};
 }
 root.KYV_INTELLIGENCE_ENGINE=Object.freeze({parseAmount,periodOf,summarizeInvoice,compute});
