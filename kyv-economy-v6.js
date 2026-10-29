@@ -26,8 +26,10 @@ function compute(projects,invoices,costs,year){
  const inv=invoices.filter(f=>yearMatch(f,year,'Data'));
  const sp=costs.filter(s=>yearMatch(s,year,'Data'));
  const fatturato=inv.reduce((s,f)=>s+invoiceAmount(f),0);
- const paidRows=inv.filter(f=>paid(f.PAGATA)),incassato=paidRows.reduce((s,f)=>s+invoiceAmount(f),0);
- const openRows=inv.filter(f=>!paid(f.PAGATA)),daIncassare=openRows.reduce((s,f)=>s+invoiceAmount(f),0);
+ const paidRows=inv.filter(f=>{const v=window.KYV_COLLECTIONS_V236?.paymentState(f);return v?v.kind==='paid':paid(f.PAGATA);});
+ const incassato=inv.reduce((s,f)=>{const v=window.KYV_COLLECTIONS_V236?.paymentState(f);return s+(v?v.received:(paid(f.PAGATA)?invoiceAmount(f):0));},0);
+ const openRows=inv.filter(f=>{const v=window.KYV_COLLECTIONS_V236?.paymentState(f);return v?v.remaining>0:!paid(f.PAGATA);});
+ const daIncassare=openRows.reduce((s,f)=>{const v=window.KYV_COLLECTIONS_V236?.paymentState(f);return s+(v?v.remaining:invoiceAmount(f));},0);
  const costi=sp.reduce((s,r)=>s+num(r.Importo),0);
  const candidates=projects.filter(p=>feeAmount(p)>0&&projectYearMatch(p,year)&&projectInvoices(p,invoices).length===0);
  const closedMissing=candidates.filter(done),activeMissing=candidates.filter(p=>!done(p));
@@ -53,7 +55,7 @@ function availableYears(invoices,costs){
  return years;
 }
 function rowProject(p){return `<div class="kyv-econ-row"><a href="scheda_progetto.html?id=${encodeURIComponent(p.ID)}">${H((text(p.ARTISTA)||'Artista')+' · '+(text(p.TITOLO)||'Senza titolo'))}</a><span>${H(euro(feeAmount(p)))}</span></div>`;}
-function rowInvoice(f){return `<div class="kyv-econ-row"><a href="fatture.html#invoice-${H(f.ID_FT)}">${H('Fattura '+(text(f.Numero)||'#'+text(f.ID_FT))+' · '+(text(f.Denominazione)||'Cliente'))}</a><span>${H(euro(invoiceAmount(f)))}</span></div>`;}
+function rowInvoice(f){return `<div class="kyv-econ-row"><a href="fatture.html#invoice-${H(f.ID_FT)}">${H('Fattura '+(text(f.Numero_Originale)||text(f.Numero)||'#'+text(f.ID_FT))+' · '+(text(f.Denominazione)||'Cliente'))}</a><span>${H(euro(invoiceAmount(f)))}</span></div>`;}
 function render(year='all'){
  const root=mount();if(!root||!lastData)return;
  const {projects,invoices,costs}=lastData,r=compute(projects,invoices,costs,year),years=availableYears(invoices,costs);
@@ -77,7 +79,7 @@ async function load(){
  const c=client();if(!c)return;
  const [p,f,s]=await Promise.all([
   c.from('PROGETTI').select('ID,TITOLO,ARTISTA,FEE,STATO,SVILUPPO,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione').limit(1000),
-  c.from('FATTURE').select('ID_FT,Numero,Data,Denominazione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO').limit(2000),
+  c.from('FATTURE').select('ID_FT,Numero,Numero_Originale,Data,Denominazione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento').limit(2000),
   c.from('Spese Extra').select('ID_SPESE,Data,Descrizione,Categoria,Importo,ID_PROGETTO').limit(2000)
  ]);
  if(p.error||f.error||s.error){console.warn('[KYV Economy v6] lettura parziale',{projects:p.error,invoices:f.error,costs:s.error});}
