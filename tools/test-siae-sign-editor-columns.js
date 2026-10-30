@@ -52,5 +52,5 @@ const out=window.KYV_INTELLIGENCE_ENGINE.compute({
 assert.equal(out.rows[0].siaeProvisional,75000,'SIAE provisional: signed from our POV');
 assert.equal(out.totals.rightsCash,300,'verified transfer must not be inverted');
 assert.equal(out.totals.verifiedCash,0,'SIAE provisional must not be bank cash');
-assert.ok(read('sw.js').includes('kyv-studio-v2-42-1-version-sync-20261030'));
+assert.ok(read('sw.js').includes('kyv-studio-v2-42-2-admin-launcher-incassate-20261030'));
 console.log('OK: SIAE inverted in calculations only; local per-table column controls preserve data/export.');

@@ -11,7 +11,7 @@ assert.match(config,/kyv-release-desk\.js/,'La Scheda progetto deve caricare il 
 assert.match(config,/kyv-project-sheet-v2\.js/,'La Scheda progetto deve caricare la vista 2.0');
 assert.doesNotMatch(config,/kyv-project-hub-v227\.js/,'La Scheda progetto non deve caricare due hub concorrenti');
 assert.match(producer,/\['index\.html','Oggi'/);assert.match(producer,/\['kyv_calendar\.html','Agenda'/);assert.match(producer,/\['acquisisci_audio\.html','Nuovo'/);assert.match(producer,/\['progetti\.html','Progetti'/);assert.match(producer,/\['ascolto\.html','Ascolto'/);
-assert.match(producer,/details\('Controllo'/);assert.match(producer,/fatture\.html','Fatture e incassi'/);assert.match(producer,/rendiconto\.html','Rendiconto SIAE'/);
+assert.match(producer,/details\('Amministrazione'/);assert.match(producer,/fatture\.html','Fatture emesse'/);assert.match(producer,/rendiconto\.html','Rendiconto SIAE'/);
 assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.html','Studio Editor'/);assert.match(producer,/archivio_musicale\.html','Archivio musicale'/);
 assert.match(producer,/kyv-project-phase2\.js/,'La scheda progetto progressiva deve essere caricata dal Producer Mode');
 assert.match(producer,/kyv-projects-phase3\.js/,'La nuova lista Progetti deve essere caricata dal Producer Mode');

@@ -8,10 +8,15 @@ const primary=[
   ['kyv_calendar.html','Agenda','calendar-days','calendar'],
   ['acquisisci_audio.html','Nuovo','circle-plus','nuovo'],
   ['progetti.html','Progetti','music-2','progetti'],
-  ['ascolto.html','Ascolto','headphones','ascolto']
+  ['ascolto.html','Ascolto','headphones','ascolto'],
+  ['integrazioni.html','Tutte le app','grid-3x3','integrazioni']
 ];
 const control=[
-  ['fatture.html','Fatture e incassi','receipt','fatture'],
+  ['fatture.html','Fatture emesse','receipt','fatture'],
+  ['kyv_intelligence.html','KYV Intelligence','chart-no-axes-combined','intelligence'],
+  ['kyv_analyst.html','KYV Analyst','brain-circuit','analyst'],
+  ['kyv_ritorni_progetti.html','Ritorno dei progetti','chart-column','returns'],
+  ['kyv_liquidazioni.html','Liquidazioni SIAE / IMAIE','landmark','liquidazioni'],
   ['documenti.html?tab=spese','Spese','receipt-euro','spese'],
   ['documenti.html','Documenti','folder-lock','spese'],
   ['fisco.html','Piano fiscale','calculator','fisco'],
@@ -68,7 +73,7 @@ function currentKey(){
     'progetti.html':'progetti','scheda_progetto.html':'progetti','ascolto.html':'ascolto','fatture.html':'fatture',
     'correlazione.html':'fatture','documenti.html':'spese','fisco.html':'fisco','quote.html':'quote','autori.html':'quote',
     'rendiconto.html':'rendiconto','clienti.html':'clienti','editor.html':'editor','archivio_musicale.html':'archivio',
-    'assistente.html':'assistente','pipeline.html':'pipeline','integrazioni.html':'integrazioni','kyv_dropbox.html':'integrazioni',
+    'assistente.html':'assistente','pipeline.html':'pipeline','integrazioni.html':'integrazioni','kyv_intelligence.html':'intelligence','kyv_analyst.html':'analyst','kyv_ritorni_progetti.html':'returns','kyv_liquidazioni.html':'liquidazioni','kyv_dropbox.html':'integrazioni',
     'kyv_drive.html':'integrazioni','importexport.html':'importexport','diagnostica.html':'diagnostica','guida.html':'guida'
   };
   return map[page]||page.replace(/\.html$/,'');
@@ -86,7 +91,7 @@ function mountSimpleSidebar(){
   if(!nav||nav.dataset.producerMode==='1')return false;
   const key=currentKey();
   nav.dataset.producerMode='1';
-  nav.innerHTML=`<div><p class="px-3 text-[10px] font-black text-kyv-text uppercase tracking-wider mb-2">Produttore</p><ul class="space-y-1">${primary.map(item).join('')}</ul></div>${details('Controllo','landmark',control,control.some(x=>x[3]===key))}${details('Strumenti','wrench',tools,tools.some(x=>x[3]===key))}`;
+  nav.innerHTML=`<div><p class="px-3 text-[10px] font-black text-kyv-text uppercase tracking-wider mb-2">Produttore</p><ul class="space-y-1">${primary.map(item).join('')}</ul></div>${details('Amministrazione','landmark',control,control.some(x=>x[3]===key))}${details('Strumenti','wrench',tools,tools.some(x=>x[3]===key))}`;
   const brand=sidebar.querySelector('h1 + p');
   if(brand&&window.KYV_CONFIG)brand.textContent=`Manager Pro ${KYV_CONFIG.APP_VERSION}`;
   if(window.lucide)lucide.createIcons({root:sidebar});

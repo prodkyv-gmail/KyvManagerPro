@@ -167,6 +167,10 @@ function loadKyvSidebar(activePage = 'dashboard') {
         progetti: ['progetti'],
         clienti: ['clienti'],
         fatture: ['fatture', 'correlazione'],
+        intelligence: ['intelligence'],
+        analyst: ['analyst'],
+        returns: ['returns'],
+        liquidazioni: ['liquidazioni'],
         editor: ['editor'],
         fisco: ['fisco'],
         quote: ['quote', 'autori'],
@@ -224,16 +228,22 @@ function loadKyvSidebar(activePage = 'dashboard') {
                         ${navItem('clienti', 'clienti.html', 'users', 'Contatti', 'text-sky-300')}
                         ${navItem('fatture', 'fatture.html', 'receipt', 'Fatture', 'text-emerald-300')}
                         ${navItem('ascolto', 'ascolto.html', 'headphones', 'Ascolto', 'text-violet-300')}
+                        ${navItem('integrazioni', 'integrazioni.html', 'grid-3x3', 'Tutte le app', 'text-emerald-300')}
                     </ul>
                 </div>
 
-                <details class="kyv-nav-group" ${groupIsOpen(['spese', 'fisco', 'quote', 'rendiconto']) ? 'open' : ''}>
+                <details class="kyv-nav-group" ${groupIsOpen(['fatture', 'intelligence', 'analyst', 'returns', 'liquidazioni', 'spese', 'fisco', 'quote', 'rendiconto']) ? 'open' : ''}>
                     <summary>
                         <i data-lucide="landmark"></i>
                         <span>Amministrazione</span>
                         <i data-lucide="chevron-down" class="kyv-chevron w-4 h-4"></i>
                     </summary>
                     <ul class="space-y-1">
+                        ${navItem('fatture', 'fatture.html', 'receipt', 'Fatture emesse', 'text-emerald-300')}
+                        ${navItem('intelligence', 'kyv_intelligence.html', 'chart-no-axes-combined', 'KYV Intelligence')}
+                        ${navItem('analyst', 'kyv_analyst.html', 'brain-circuit', 'KYV Analyst')}
+                        ${navItem('returns', 'kyv_ritorni_progetti.html', 'chart-column', 'Ritorno dei progetti')}
+                        ${navItem('liquidazioni', 'kyv_liquidazioni.html', 'landmark', 'Liquidazioni SIAE / IMAIE')}
                         ${navItem('spese', 'documenti.html?tab=spese', 'receipt-euro', 'Spese', 'text-amber-300')}
                         ${navItem('fisco', 'fisco.html', 'calculator', 'Piano Fiscale', 'text-amber-400')}
                         ${navItem('quote', 'quote.html', 'pie-chart', 'Quote per Opera', 'text-violet-300')}
