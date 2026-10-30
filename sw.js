@@ -9,6 +9,7 @@ const APP_SHELL = [
     './kyv_calendar.html',
     './pipeline.html',
     './fatture.html',
+    './integrazioni.html',
     './kyv_intelligence.html',
     './kyv_liquidazioni.html',
     './kyv_ritorni_progetti.html',
