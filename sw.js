@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-41-analyst-rules-20261030';
+const CACHE_NAME = 'kyv-studio-v2-42-creative-funnel-20261030';
 const APP_SHELL = [
     './',
     './index.html',
@@ -14,6 +14,7 @@ const APP_SHELL = [
     './kyv_ritorni_progetti.html',
     './kyv_analyst.html',
     './kyv-analyst-engine-v241.js',
+    './kyv-creative-funnel-v242.js',
     './kyv-analyst-ui-v241.js',
     './kyv-project-returns-v240.js',
     './kyv-project-returns-ui-v240.js',
