@@ -123,7 +123,7 @@ function render(){
     ['Senza progetto diretto',noLinks.length,linkRows||'<p class="kyv-recon-help">Nessuna fattura senza associazione o riferimento storico.</p>','Seleziona un progetto e premi Collega: non sono effettuati abbinamenti in base al solo numero di fattura.'],
     ['Riferimenti storici da verificare',legacy.length,legacyRows||'<p class="kyv-recon-help">Nessun riferimento storico pendente.</p>','Non modificati automaticamente: usa l’editor per i casi con relazione IDFT.'],
     ['Progetti con fee da verificare',review.length,reviewRows||'<p class="kyv-recon-help">Nessuna corrispondenza da controllare.</p>','Elenco di controllo, non un’affermazione che una fattura sia dovuta.'],
-    ['Scadenze e nuovi incassi',open.length,payRows||'<p class="kyv-recon-help">Non risultano fatture con saldo aperto. Le fatture storiche già pagate sono preservate.</p>','Per correggere un movimento, stornalo dallo storico e registra quello corretto.'],
+    ['Scadenze e nuovi incassi',open.length,payRows||'<p class="kyv-recon-help">Non risultano fatture con saldo aperto. Le fatture storiche indicate come incassate sono preservate. La data bancaria resta sconosciuta se non registrata.</p>','Per correggere un movimento, stornalo dallo storico e registra quello corretto.'],
     ['Storico incassi e storni',state.payments.length,history||'<p class="kyv-recon-help">Nessun movimento registrato.</p>','Lo storno è integrale e definitivo; motivazione obbligatoria, il movimento originale resta visibile.']
   ];
   root.innerHTML=head+cards+'<div id="kyv-recon-notice" hidden role="status"></div>'+
