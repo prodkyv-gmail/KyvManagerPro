@@ -64,7 +64,7 @@ function analyze(raw=[]){
    conversion:conversionReliable?Math.round(100*completeDates.length/datedSessions.length):null,
    examples,
    caveats:[
-    'FEE=0 è una condizione frequente nelle sessioni di scrittura a rischio creativo; non indica una fattura insoluta.',
+    'FEE=0 è una condizione frequente nelle sessioni di scrittura a rischio creativo; non è un insoluto né un credito da riscuotere.',
     'Lo stato USCITA è una classificazione della scheda, non una data di pubblicazione verificata.',
     'BOZZA, DEMO o un brano proposto non dimostrano che il progetto sia definitivamente scartato.',
     'Senza date per tutte le sessioni e pubblicazioni non è possibile stimare in modo attendibile la conversione o il tempo investito.',
