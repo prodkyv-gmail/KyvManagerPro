@@ -1,3 +1,13 @@
+## KYV Analyst v2.42 — FEE=0 e fisiologia delle sessioni musicali (30/10/2026)
+
+Il campo `PROGETTI.FEE=0` identifica spesso sessioni di scrittura e progetti esplorativi senza un compenso a sessione, **non un insoluto**. Anche un brano non prodotto, non opzionato o non pubblicato è una componente normale della pipeline musicale; senza dati sul lavoro svolto e sull'esito confermato non va etichettato automaticamente come perdita economica. Questo upgrade non modifica i dati storici e non inventa ore o crediti.
+
+`kyv-creative-funnel-v242.js` suddivide le schede con fee zero in categorie osservabili e disgiunte: pubblicazione **datata**, stato `USCITA` dichiarato **senza data**, proposta/provinata/inviata, sviluppo/bozza/demo, non classificato. `USCITA` non è una certificazione di rilascio. La conversione sessione→pubblicazione viene indicata **non calcolabile** con copertura insufficiente delle date. Domanda guidata nuova su sessioni con fee zero; indicatori contestuali nella pagina KYV Analyst, senza trasformare le 119 fee zero in debiti o follow-up di recupero compensi.
+
+Dati verificati al 30/10/2026: 172 progetti, 119 FEE=0, 42 di questi con stato `USCITA` (senza inferire date), 2 date sessione complessive e 1 data pubblicazione complessiva. Nessuna statistica di conversione attendibile, nessuna stima di ore perse. Per la monetizzazione restano separati importo unitario per fattura, accrediti datati e diritti verificati.
+
+Test: `npm run check:creative-funnel-v242` e suite completa; cache PWA `kyv-studio-v2-42-creative-funnel-20261030`. Solo lettura, zero nuove migrazioni, un solo merge e deployment.
+
 ## KYV Analyst v2.41 — assistente economico a regole (30/10/2026)
 
 La pagina `kyv_analyst.html` espone sei domande guidate e una ricerca in linguaggio naturale limitata ad argomenti deterministici: fatturato per voce, concentrazione per artista, follow-up scaduti, royalties SIAE/IMAIE già attribuite, tempi al primo accredito verificabile e qualità dei dati. Il motore `kyv-analyst-engine-v241.js` lavora sui risultati `KYV_PROJECT_RETURNS_V240.analyze` e sulle schede progetti; `kyv-analyst-ui-v241.js` legge soltanto sette archivi Supabase con RLS tramite client autenticato e paginazione con conteggio verificato. **Non esiste integrazione con servizi AI esterni né API key**, non vengono generati suggerimenti automatici di accrediti e non viene eseguita alcuna scrittura in database.
