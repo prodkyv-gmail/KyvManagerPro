@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="it">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10131b"><title>KYV Analyst · KYV Intelligence</title>
+<link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
+<style>
+body{background:#0f111a;color:#f8fafc;font:15px Inter,system-ui,Arial,sans-serif;margin:0}
+header{padding:24px 4%;background:#151923;border-bottom:1px solid #30394b;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+main{max-width:1400px;padding:24px 4% 64px;margin:auto}h1{font-size:27px;margin:4px 0}h2{font-size:19px;margin:0 0 12px}p{color:#cbd5e1;line-height:1.6}
+a{color:#c7d2fe}nav{display:flex;flex-wrap:wrap;gap:12px}
+button,input{font:inherit;color:#f8fafc;border:1px solid #64748b;background:#1e293b;border-radius:9px;padding:11px 14px}
+button{cursor:pointer;font-weight:650}button:hover{background:#312e81}input{background:#0f172a}button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #a5b4fc;outline-offset:2px}
+.status{background:#1e293b;color:#cbd5e1;border:1px solid #475569;border-radius:10px;padding:12px;margin:16px 0}
+.status.error{background:#7f1d1d;color:#fee2e2}
+.card{padding:20px;background:#151923;border:1px solid #334155;border-radius:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px;margin:18px 0}
+.metric{min-width:0;border:1px solid #334155;background:#151923;border-radius:11px;padding:14px;text-align:left;overflow-wrap:anywhere}
+.metric strong{display:block;font-size:23px;color:#e0e7ff;margin:6px 0}
+.metric small{display:block;color:#cbd5e1;font-size:12px;font-weight:450}
+.pressable:hover{border-color:#818cf8;background:#1e293b}
+.columns{display:grid;grid-template-columns:1fr 1.25fr;gap:16px;margin-top:18px}
+@media(max-width:900px){.columns{grid-template-columns:1fr}}
+form{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}form input{flex:1 1 260px;min-width:0}form button{flex:0 0 auto;background:#4338ca}
+.examples{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.examples button{font-size:12px;padding:7px 10px}
+ul{margin:10px 0;padding:0}li{list-style:none;padding:11px 0;border-bottom:1px solid #30394b}
+li:last-child{border-bottom:0}.actions li,.result li{display:flex;justify-content:space-between;align-items:center;gap:12px}
+li strong,li span{display:block}li span{font-size:13px;color:#cbd5e1;margin-top:4px}
+li a{flex-shrink:0;font-size:13px}.note{font-size:12px;color:#94a3b8}
+#answer-notes li{font-size:13px;color:#cbd5e1;list-style:disc;list-style-position:inside;padding:5px 0}
+#answer-panel{scroll-margin-top:20px}.empty{color:#94a3b8}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script>
+<script src="kyv-invoice-line-amount.js"></script>
+<script src="kyv-project-returns-v240.js"></script>
+<script src="kyv-analyst-engine-v241.js"></script>
+<script src="kyv-analyst-ui-v241.js" defer></script>
+</head>
+<body>
+<header>
+<div><small class="note">Economia · KYV Intelligence</small><h1>KYV Analyst <small class="note">v2.41</small></h1></div>
+<nav><a href="kyv_intelligence.html">← Intelligence</a><a href="kyv_ritorni_progetti.html">Ritorno dei progetti</a><a href="fatture.html">Fatture</a><a href="progetti.html">Progetti</a></nav>
+</header>
+<main>
+<p>Il tuo primo analista economico e operativo. Esamina fatture per voce, progetti e diritti attribuiti, segnala lacune e risponde a domande frequenti. <strong>Questa versione usa regole esplicite, non un modello AI generativo</strong>: non invia dati finanziari a servizi AI esterni e non modifica i tuoi archivi.</p>
+<button type="button" id="analyst-reload">Rileggi e aggiorna i dati</button>
+<div id="analyst-status" class="status" role="status">Caricamento…</div>
+<section id="analyst-content" hidden>
+<h2>Situazione attuale</h2>
+<div id="analyst-metrics" class="grid" aria-label="Indicatori calcolati"></div>
+<div class="columns">
+<section class="card actions">
+<h2>Verifiche prioritarie</h2>
+<p class="note">Ordine determinato da date e dati mancanti. Le segnalazioni non dimostrano automaticamente insoluti o lavori in perdita.</p>
+<ul id="analyst-priorities"></ul>
+</section>
+<section class="card result" id="answer-panel">
+<h2>Fai una domanda a KYV Analyst</h2>
+<form id="analyst-form">
+<input id="analyst-query" type="text" maxlength="240" placeholder="Es. Quali artisti concentrano i ricavi?" aria-label="Domanda per KYV Analyst">
+<button type="submit">Analizza</button></form>
+<div class="examples" id="example-queries" aria-label="Domande suggerite"></div>
+<h2 id="answer-title">Analisi</h2><p id="answer-text"></p>
+<div id="answer-metrics" class="grid"></div>
+<ul id="answer-records" aria-label="Record che supportano la risposta"></ul>
+<ul id="answer-notes" aria-label="Limiti e avvertenze"></ul>
+<p class="note" id="answer-meta"></p>
+</section></div>
+<p class="note" id="analyst-footnote"></p>
+<p class="note">Per correggere i dati utilizza le schede originali. I movimenti SIAE grezzi, le fee ancora in trattativa e gli incassi senza data certa restano categorie distinte. Le risposte sono limitate alle domande supportate da questa prima versione.</p>
+</section></main></body></html>
