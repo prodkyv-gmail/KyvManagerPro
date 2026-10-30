@@ -1,3 +1,11 @@
+## Correzione etichetta versione PWA (30/10/2026 · v2.42)
+
+L'app pubblicata su Vercel era già alla v2.42, ma il numero **visibile sul telefono** era fermo a 2.32 perché `config.js` non aveva mai aggiornato `APP_VERSION` negli upgrade. Altre copie fisse erano `menu.js` (2.26), `progetti.html` (2.31), `package.json` (2.31.0) e `VERSION` (2.31). Questi numeri erano metadati UI, non prove di una vecchia build.
+
+Corretto: `config.js` espone `APP_VERSION=2.42` come fonte unica **per tutte le etichette visibili**; `menu.js` la legge dinamicamente e la pagina Progetti (safe mode) sincronizza il proprio testo al `DOMContentLoaded` senza introdurre observer. `VERSION` e `package.json` sono aggiornati, con CI `npm run check:version-sync` che ne impedisce la divergenza prima di ogni merge. Rotazione cache PWA `kyv-studio-v2-42-1-version-sync-20261030` per aggiornare le installazioni; nessuna modifica a Supabase, archivi, fatture o progetti.
+
+Su iPhone/iPad PWA: chiudi completamente l'app dalla schermata del multitasking, riaprila con rete attiva e naviga nella home per permettere l'attivazione del service worker. Se il testo resta vecchio, apri lo stesso URL in Safari e ricarica per confrontare la versione servita. Non disinstallare la PWA come primo tentativo, perché la rimozione può cancellare eventuali dati locali non sincronizzati.
+
 ## KYV Analyst v2.42 — FEE=0 e fisiologia delle sessioni musicali (30/10/2026)
 
 Il campo `PROGETTI.FEE=0` identifica spesso sessioni di scrittura e progetti esplorativi senza un compenso a sessione, **non un insoluto**. Anche un brano non prodotto, non opzionato o non pubblicato è una componente normale della pipeline musicale; senza dati sul lavoro svolto e sull'esito confermato non va etichettato automaticamente come perdita economica. Questo upgrade non modifica i dati storici e non inventa ore o crediti.

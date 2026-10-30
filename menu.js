@@ -205,7 +205,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
                     <div class="kyv-brand-mark w-9 h-9 rounded-xl flex items-center justify-center mr-3 font-black text-white shrink-0">K</div>
                     <div class="min-w-0">
                         <h1 class="font-bold text-lg leading-tight tracking-wide text-white truncate">KYV Studio</h1>
-                        <p class="text-[10px] text-indigo-300 font-semibold tracking-widest uppercase">Manager Pro 2.26</p>
+                        <p class="text-[10px] text-indigo-300 font-semibold tracking-widest uppercase">Manager Pro ${window.KYV_CONFIG?.APP_VERSION || ''}</p>
                     </div>
                 </a>
                 <button class="md:hidden text-kyv-text" onclick="toggleMobileMenu()"><i data-lucide="x" class="w-5 h-5"></i></button>
