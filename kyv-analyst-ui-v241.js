@@ -1,0 +1,96 @@
+/* KYV Analyst v2.41 browser-only read-only UI. No API keys, no third-party model calls. */
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const H=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const E=window.KYV_ANALYST_V241;
+const promptExamples=[
+  'Quali progetti sono senza entrate documentate?',
+  'Quali artisti concentrano i ricavi?',
+  'Quali follow-up sono scaduti?',
+  'Qual è il tempo medio al primo incasso?',
+  'Quali royalties devo ancora attribuire?',
+  'Quali dati mancano per analisi affidabili?'
+];
+const euro=x=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(x)||0);
+const now=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'});
+let report=null,working=false;
+async function allRows(c,table,fields,order){
+ const batch=500,max=10000;
+ const first=await c.from(table).select(fields,{count:'exact'}).order(order,{ascending:false}).range(0,batch-1);
+ if(first.error)throw Error('Lettura '+table+': '+first.error.message);
+ if(first.count===null||first.count>max)throw Error(table+': risultato troppo grande o non verificabile');
+ const data=[...(first.data||[])];
+ while(data.length<first.count){
+  const next=await c.from(table).select(fields).order(order,{ascending:false}).range(data.length,Math.min(first.count-1,data.length+batch-1));
+  if(next.error||!next.data?.length)throw Error(table+': lettura incompleta');
+  data.push(...next.data);
+ }
+ if(data.length!==first.count)throw Error(table+': numero di record incompleto');
+ return data;
+}
+function showAnswer(question){
+ if(!report)return;
+ const response=E.answer(report,question);
+ $('answer-title').textContent=response.title;
+ $('answer-text').textContent=response.summary;
+ $('answer-metrics').innerHTML=(response.metrics||[]).map(m=>'<div class="metric"><small>'+H(m.label)+'</small><strong>'+H(m.value)+'</strong></div>').join('');
+ const items=response.items||[];
+ $('answer-records').innerHTML=items.length?items.map(p=>'<li><div><strong>'+H(p.label)+'</strong><span>'+H(p.detail||'')+'</span></div>'+(p.url?'<a href="'+H(p.url)+'">Apri scheda</a>':'')+'</li>').join(''):'<li class="empty">Non ci sono elementi documentati da mostrare per questa risposta.</li>';
+ $('answer-notes').innerHTML=(response.notes||[]).map(n=>'<li>'+H(n)+'</li>').join('');
+ $('answer-meta').textContent='Situazione registrata al '+response.asOf+' · analisi basata solo sulle tabelle KYVManagerPro';
+ $('answer-panel').hidden=false;
+}
+function renderSuggestions(){
+ if(!report)return;
+ const stats=report.results.stats;
+ const cards=[
+ {title:'Follow-up da verificare',value:report.reasons.overdueFollowups,note:'Date di follow-up trascorse',q:promptExamples[2]},
+ {title:'Senza entrate attribuite',value:report.reasons.noBasis,note:'Non significa progetti in perdita',q:promptExamples[0]},
+ {title:'Compensi non attribuiti',value:stats.unallocatedInvoiceLines,note:'Voci da collegare agli ID dei progetti',q:'Quali dati mancano per analisi affidabili?'},
+ {title:'Royalties da attribuire',value:euro(stats.rightsNotAllocated),note:'Solo bonifici ricevuti e registrati',q:promptExamples[4]},
+ {title:'Tempo al primo accredito',value:stats.meanDaysToFirstCash===null?'Non disponibile':stats.meanDaysToFirstCash+' giorni',note:stats.withReturnDate+' progetti con entrambe le date',q:promptExamples[3]},
+ {title:'Copertura data sessione',value:report.reasons.noSession+' mancanti',note:'Su '+stats.projects+' progetti registrati',q:promptExamples[5]}
+ ];
+ $('analyst-metrics').innerHTML=cards.map(c=>'<button class="metric pressable" type="button" data-ask="'+H(c.q)+'"><small>'+H(c.title)+'</small><strong>'+H(c.value)+'</strong><small>'+H(c.note)+'</small></button>').join('');
+ const priority=report.recommendations.filter(x=>x.count>0).slice(0,6);
+ $('analyst-priorities').innerHTML=priority.length?priority.map(x=>'<li><div><strong>'+H(x.title)+'</strong><span>'+H(x.unit==='EUR'?euro(x.count):x.count)+' · '+H(x.why)+'</span><span>'+H(x.action)+'</span></div>'+(x.url?'<a href="'+H(x.url)+'">Verifica</a>':'')+'</li>').join(''):'<li>Nessuna criticità rilevata dalle regole disponibili.</li>';
+ $('analyst-footnote').textContent='Lettura completa: '+stats.projects+' progetti · '+stats.invoiceLines+' voci fattura · '+report.source.rights.length+' liquidazioni. Nessun dato è stato modificato.';
+}
+async function refresh(){
+ if(working)return;working=true;$('analyst-status').textContent='Lettura e verifica degli archivi…';$('analyst-status').className='status';
+ try{
+  const c=window.KYV?.createSupabaseClient?.();
+  if(!c)throw Error('Client autenticato non disponibile');
+  const [projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals]=await Promise.all([
+   allRows(c,'PROGETTI','ID,TITOLO,ARTISTA,STATO,SVILUPPO,FEE,Data_Sessione,Data_Pubblicazione,IDFT,Prossimo_Followup,Ultimo_Sollecito,Priorita_Followup','ID'),
+   allRows(c,'FATTURE','ID_FT,ID_PROGETTO,XML_SHA256,PrezzoUnitario,PrezzoTotale,Data,PAGATA','ID_FT'),
+   allRows(c,'FATTURE_INCASSI','ID_INCASSO,ID_FT,Data,Importo','ID_INCASSO'),
+   allRows(c,'FATTURE_INCASSI_STORNI','ID_STORNO,ID_INCASSO','ID_STORNO'),
+   allRows(c,'KYV_LIQUIDAZIONI_DIRITTI','ID_LIQUIDAZIONE,Ente,ImportoNetto,DataAccredito','ID_LIQUIDAZIONE'),
+   allRows(c,'KYV_ATTRIBUZIONI_DIRITTI','ID_ATTRIBUZIONE,ID_LIQUIDAZIONE,ID_PROGETTO,Importo','ID_ATTRIBUZIONE'),
+   allRows(c,'KYV_ATTRIBUZIONI_DIRITTI_STORNI','ID_STORNO,ID_ATTRIBUZIONE','ID_STORNO')
+  ]);
+  const payload={projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals};
+  report=E.build(payload,now());
+  renderSuggestions();
+  $('analyst-content').hidden=false;
+  $('analyst-status').textContent='Analisi completata · motore a regole, accesso in sola lettura.';
+  showAnswer($('analyst-query').value||promptExamples[5]);
+ }catch(e){
+  report=null;$('analyst-content').hidden=true;
+  $('analyst-status').className='status error';
+  $('analyst-status').textContent='Dati non completi o non disponibili. Nessuna conclusione mostrata: '+e.message;
+ }finally{working=false;}
+}
+function init(){
+ $('example-queries').innerHTML=promptExamples.map(q=>'<button type="button" data-ask="'+H(q)+'">'+H(q)+'</button>').join('');
+ const ask=e=>{const b=e.target.closest('[data-ask]');if(!b)return;const q=b.dataset.ask;$('analyst-query').value=q;showAnswer(q);$('answer-panel').scrollIntoView({block:'start',behavior:'smooth'});};
+ $('example-queries').addEventListener('click',ask);
+ $('analyst-metrics').addEventListener('click',ask);
+ $('analyst-form').addEventListener('submit',e=>{e.preventDefault();if(!report)return;showAnswer($('analyst-query').value);});
+ $('analyst-reload').addEventListener('click',refresh);
+ refresh();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
