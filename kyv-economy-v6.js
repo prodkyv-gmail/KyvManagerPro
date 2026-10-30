@@ -62,7 +62,7 @@ function render(year='all'){
  root.innerHTML=`<div class="kyv-econ-head"><div><p class="text-[9px] uppercase tracking-[.14em] font-black text-emerald-200">Economia</p><h3 class="mt-1">Controllo economico</h3><p>Vista gestionale in sola lettura. “Previsionale minimo” somma soltanto fatture ancora da incassare e fee registrate senza fattura: non stima royalties future.</p></div><select id="kyv-econ-year" class="kyv-econ-select"><option value="all">Tutto lo storico</option>${years.map(y=>`<option value="${y}" ${String(year)===String(y)?'selected':''}>${y}</option>`).join('')}</select></div>
  <div class="kyv-econ-grid">
   <div class="kyv-econ-card"><span>Fatturato</span><strong>${H(euro(r.fatturato))}</strong><em>${r.inv.length} fatture</em></div>
-  <div class="kyv-econ-card good"><span>Incassato</span><strong>${H(euro(r.incassato))}</strong><em>${r.inv.filter(f=>paid(f.PAGATA)).length} fatture pagate</em></div>
+  <div class="kyv-econ-card good"><span>Incassato</span><strong>${H(euro(r.incassato))}</strong><em>${r.inv.filter(f=>paid(f.PAGATA)).length} fatture incassate</em></div>
   <div class="kyv-econ-card ${r.daIncassare>0?'bad':'good'}"><span>Da incassare</span><strong>${H(euro(r.daIncassare))}</strong><em>${r.openRows.length} fatture aperte</em></div>
   <div class="kyv-econ-card"><span>Costi registrati</span><strong>${H(euro(r.costi))}</strong><em>${r.sp.length} movimenti</em></div>
   <div class="kyv-econ-card ${r.margine>=0?'good':'bad'}"><span>Margine incassato</span><strong>${H(euro(r.margine))}</strong><em>Incassato − costi</em></div>
