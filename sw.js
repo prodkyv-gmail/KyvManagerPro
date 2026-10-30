@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-39-2-siae-editor-columns-20261029';
+const CACHE_NAME = 'kyv-studio-v2-40-project-returns-20261030';
 const APP_SHELL = [
     './',
     './index.html',
@@ -11,6 +11,9 @@ const APP_SHELL = [
     './fatture.html',
     './kyv_intelligence.html',
     './kyv_liquidazioni.html',
+    './kyv_ritorni_progetti.html',
+    './kyv-project-returns-v240.js',
+    './kyv-project-returns-ui-v240.js',
     './kyv-rights-liquidations-v239.js',
     './kyv-intelligence-engine-v238.js',
     './kyv-siae-amount.js',
