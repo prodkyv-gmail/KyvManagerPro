@@ -88,7 +88,7 @@ async function refresh(){
   renderSuggestions();
   $('analyst-content').hidden=false;
   $('analyst-status').textContent='Analisi completata · motore a regole, accesso in sola lettura.';
-  showAnswer($('analyst-query').value||promptExamples[5]);
+  showAnswer($('analyst-query').value||'Quali dati mancano per analisi affidabili?');
  }catch(e){
   report=null;$('analyst-content').hidden=true;
   $('analyst-status').className='status error';
