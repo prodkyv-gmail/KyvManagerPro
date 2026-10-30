@@ -5,6 +5,7 @@ const $=id=>document.getElementById(id);
 const H=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const E=window.KYV_ANALYST_V241;
 const promptExamples=[
+  'Quante sessioni creative con fee zero sono ancora in sviluppo o uscite?',
   'Quali progetti sono senza entrate documentate?',
   'Quali artisti concentrano i ricavi?',
   'Quali follow-up sono scaduti?',
@@ -45,14 +46,25 @@ function renderSuggestions(){
  if(!report)return;
  const stats=report.results.stats;
  const cards=[
- {title:'Follow-up da verificare',value:report.reasons.overdueFollowups,note:'Date di follow-up trascorse',q:promptExamples[2]},
- {title:'Senza entrate attribuite',value:report.reasons.noBasis,note:'Non significa progetti in perdita',q:promptExamples[0]},
+ {title:'Follow-up da verificare',value:report.reasons.overdueFollowups,note:'Date di follow-up trascorse',q:'Quali follow-up sono scaduti?'},
+ {title:'Senza entrate attribuite',value:report.reasons.noBasis,note:'Non significa progetti in perdita',q:'Quali progetti sono senza entrate documentate?'},
  {title:'Compensi non attribuiti',value:stats.unallocatedInvoiceLines,note:'Voci da collegare agli ID dei progetti',q:'Quali dati mancano per analisi affidabili?'},
- {title:'Royalties da attribuire',value:euro(stats.rightsNotAllocated),note:'Solo bonifici ricevuti e registrati',q:promptExamples[4]},
- {title:'Tempo al primo accredito',value:stats.meanDaysToFirstCash===null?'Non disponibile':stats.meanDaysToFirstCash+' giorni',note:stats.withReturnDate+' progetti con entrambe le date',q:promptExamples[3]},
- {title:'Copertura data sessione',value:report.reasons.noSession+' mancanti',note:'Su '+stats.projects+' progetti registrati',q:promptExamples[5]}
+ {title:'Royalties da attribuire',value:euro(stats.rightsNotAllocated),note:'Solo bonifici ricevuti e registrati',q:'Quali royalties devo ancora attribuire?'},
+ {title:'Tempo al primo accredito',value:stats.meanDaysToFirstCash===null?'Non disponibile':stats.meanDaysToFirstCash+' giorni',note:stats.withReturnDate+' progetti con entrambe le date',q:'Qual è il tempo medio al primo incasso?'},
+ {title:'Copertura data sessione',value:report.reasons.noSession+' mancanti',note:'Su '+stats.projects+' progetti registrati',q:'Quali dati mancano per analisi affidabili?'}
  ];
  $('analyst-metrics').innerHTML=cards.map(c=>'<button class="metric pressable" type="button" data-ask="'+H(c.q)+'"><small>'+H(c.title)+'</small><strong>'+H(c.value)+'</strong><small>'+H(c.note)+'</small></button>').join('');
+ const f=report.funnel;
+ if(f){
+  const v=[
+   ['Progetti con fee zero',f.zeroFee,'Sessioni creative potenzialmente esplorative'],
+   ['Fee zero · stato USCITA',f.zeroByStage.releaseLabeled,'Stato dichiarato, data pubblicazione mancante'],
+   ['Fee zero · sviluppo/proposta',f.zeroByStage.developing+f.zeroByStage.pitched,'Non sono automaticamente progetti scartati'],
+   ['Conversione sessioni→uscite',f.conversionReliable?f.conversion+'%':'Non calcolabile',f.datedSessions+' sessioni datate su '+f.total+' progetti']
+  ];
+  $('creative-funnel-metrics').innerHTML=v.map(x=>'<button type="button" class="metric pressable" data-ask="'+H(promptExamples[0])+'"><small>'+H(x[0])+'</small><strong>'+H(x[1])+'</strong><small>'+H(x[2])+'</small></button>').join('');
+ }
+
  const priority=report.recommendations.filter(x=>x.count>0).slice(0,6);
  $('analyst-priorities').innerHTML=priority.length?priority.map(x=>'<li><div><strong>'+H(x.title)+'</strong><span>'+H(x.unit==='EUR'?euro(x.count):x.count)+' · '+H(x.why)+'</span><span>'+H(x.action)+'</span></div>'+(x.url?'<a href="'+H(x.url)+'">Verifica</a>':'')+'</li>').join(''):'<li>Nessuna criticità rilevata dalle regole disponibili.</li>';
  $('analyst-footnote').textContent='Lettura completa: '+stats.projects+' progetti · '+stats.invoiceLines+' voci fattura · '+report.source.rights.length+' liquidazioni. Nessun dato è stato modificato.';
