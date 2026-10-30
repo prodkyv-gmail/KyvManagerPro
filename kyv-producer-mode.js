@@ -12,7 +12,7 @@ const primary=[
   ['integrazioni.html','Tutte le app','grid-3x3','integrazioni']
 ];
 const control=[
-  ['fatture.html','Fatture e incassi','receipt','fatture'],
+  ['fatture.html','Fatture emesse','receipt','fatture'],
   ['kyv_intelligence.html','KYV Intelligence','chart-no-axes-combined','intelligence'],
   ['kyv_analyst.html','KYV Analyst','brain-circuit','analyst'],
   ['kyv_ritorni_progetti.html','Ritorno dei progetti','chart-column','returns'],
