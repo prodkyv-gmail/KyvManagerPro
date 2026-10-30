@@ -52,7 +52,7 @@ assert.equal(fr.items.length,1);
 assert.ok(fr.items[0].url.includes('id=1'));
 assert.ok(fr.notes.join(' ').includes('nessun messaggio')||fr.notes.join(' ').includes('Nessun messaggio'));
 const remaining=e.answer(a,'Quali royalties devo ancora attribuire?');
-assert.equal(remaining.metrics[1].value,'400,00 €'.replace(/\u00a0/g,' ')===remaining.metrics[1].value?'400,00 €':remaining.metrics[1].value); // locale spacing may vary
+assert.match(remaining.metrics[1].value,/400/,'Unattributed royalties must be visible');
 assert.equal(e.answer(a,'Come va la luna?').title,'Domanda non riconosciuta dalle regole');
 assert.throws(()=>e.build(source,'bad date'));
 const page=read('kyv_analyst.html'),ui=read('kyv-analyst-ui-v241.js'),sw=read('sw.js');
