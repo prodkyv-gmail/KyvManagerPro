@@ -1,3 +1,13 @@
+## Fix UX v2.42.2 — Amministrazione, Tutte le app e fatture incassate (30/10/2026)
+
+La barra laterale di `kyv-producer-mode.js` mostrava la categoria `Controllo` anziché **Amministrazione**, mentre il menu `menu.js` aveva le fatture fuori dal gruppo e non esponeva direttamente KYV Analyst. Entrambe le navigazioni ora riportano il gruppo **Amministrazione**, con Fatture emesse, KYV Intelligence, KYV Analyst, Ritorno dei progetti e Liquidazioni SIAE/IMAIE; `Tutte le app` è visibile anche come voce diretta senza aprire altri gruppi.
+
+La pagina `integrazioni.html` era priva del bootstrap Supabase (libreria client, `config.js`, `kyv-core.js`) prima di `kyv-auth.js`. Il controllo accessi poteva quindi considerare l'utente non autenticato e rimandarlo al login anziché aprire App Launcher. Ordine degli script corretto; presenti nuove schede Economia, Intelligence e Analyst; la pagina è inclusa anche nella cache PWA.
+
+**Fatture:** nella UI `FATTURE PAGATE` diventa **FATTURE INCASSATE** (il cliente ha saldato e noi abbiamo ricevuto il corrispettivo); in Studio Editor ed editor di riga il campo viene etichettato **Incassata dal cliente**. La colonna Supabase **`FATTURE.PAGATA`**, i valori storici **SI/NO**, la logica incassi parziali/storni e tutti i movimenti sono preservati. `PAGATA=SI` da storico non attribuisce una data bancaria, che resta ignota finché non registrata. I contatori `kyv-economy-v6.js` usano lo stato del registro incassi quando disponibile.
+
+Test `npm run check:navigation-invoices` incluso nella CI integrale. Cache PWA ruotata a `kyv-studio-v2-42-2-admin-launcher-incassate-20261030`. Nessuna migrazione dati né pubblicazione manuale intermedia. La verifica runtime dentro l'account su iPhone resta un collaudo utente separato.
+
 ## Correzione etichetta versione PWA (30/10/2026 · v2.42)
 
 L'app pubblicata su Vercel era già alla v2.42, ma il numero **visibile sul telefono** era fermo a 2.32 perché `config.js` non aveva mai aggiornato `APP_VERSION` negli upgrade. Altre copie fisse erano `menu.js` (2.26), `progetti.html` (2.31), `package.json` (2.31.0) e `VERSION` (2.31). Questi numeri erano metadati UI, non prove di una vecchia build.
