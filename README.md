@@ -1,3 +1,13 @@
+## KYV Intelligence v2.40 — ritorni economici per progetto (30/10/2026)
+
+La pagina `kyv_ritorni_progetti.html` collega progetti e compensi **per voce** tramite `FATTURE.ID_PROGETTO` o riferimento storico `PROGETTI.IDFT` solo se unico (nessun abbinamento per titolo o artista). Se una fattura ha più progetti possibili, non è duplicata: resta da riconciliare. Le somme di `PrezzoUnitario` e il valore aggregato XML Aruba (`PrezzoTotale`) rispettano la regola gestionale introdotta nella v2.38.1.
+
+Le liquidazioni SIAE/NUOVO IMAIE devono prima essere registrate come **bonifici ricevuti** nel registro v2.39, quindi possono essere ripartite manualmente tra più brani. Le tabelle additive `KYV_ATTRIBUZIONI_DIRITTI` e `KYV_ATTRIBUZIONI_DIRITTI_STORNI` con RLS e trigger su liquidazione impediscono che la somma delle attribuzioni attive superi il netto ricevuto, anche con inserimenti simultanei da due browser. Le attribuzioni sono append-only; gli errori si correggono con storno motivato, preservando l'audit. Il bonifico originale rimane sempre invariato. SQL in `docs/v240-rights-project-allocations.sql`.
+
+La dashboard separa compensi fatturati, incassi fatture con **data effettiva**, stato storico `PAGATA=SI` senza data bancaria e quote di liquidazioni SIAE/IMAIE attribuite. `ESTRATTO SIAE` non viene trasformato automaticamente in un accredito. Il tempo sessione→primo incasso viene calcolato solo con `Data_Sessione` e una data di accredito verificata; il numero di progetti nel campione è sempre visibile, e nessun valore mancante viene inventato. I report dei diritti non attribuiti sono separati dai ritorni per brano.
+
+Questa fase non calcola utili, fiscalità, ROI percentuale o rendimento orario senza costi/ore reali. Test: `npm run check:project-returns-v240`, incluso nella suite `npm run check`. Una sola PR/merge dopo tutti i test; preview Vercel automatiche disattivate per ridurre le build.
+
 ## Correzione interfaccia Economia — 29/10/2026 (v2.39.1)
 
 Nella schermata `fatture.html` (**Amministrazione → Economia**), la barra delle azioni è ora disposta sotto il titolo ed è responsive: ricerca che si adatta alla larghezza, pulsanti a capo su desktop/tablet stretti e griglia a due colonne su smartphone. Sono sempre disponibili collegamenti SIAE/IMAIE, KYV Intelligence, Correlazioni, Importa XML Aruba, Nuova, Ricarica e il pulsante dinamico **Riconciliazione e incassi**.

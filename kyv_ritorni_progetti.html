@@ -1,0 +1,58 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10131b">
+<title>Ritorno economico dei progetti — KYV Intelligence</title>
+<link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
+<style>
+body{background:#0f111a;color:#f8fafc;font:15px Inter,system-ui,Arial,sans-serif;margin:0;overflow-x:hidden}
+header{padding:22px 4%;background:#151923;border-bottom:1px solid #334155;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+main{max-width:1500px;margin:auto;padding:24px 4% 64px}
+nav{display:flex;flex-wrap:wrap;gap:12px}a{color:#c7d2fe}h1{font-size:26px;margin:8px 0}h2{font-size:19px;margin:0 0 12px}
+p{color:#cbd5e1;line-height:1.55}small{font-size:12px;color:#94a3b8}label{font-size:13px;color:#cbd5e1;font-weight:650}
+input,select,textarea,button{border:1px solid #64748b;border-radius:8px;color:#f8fafc;background:#0f172a;padding:10px;max-width:100%;font:inherit}
+button{background:#3730a3;cursor:pointer;font-weight:750}button:hover{background:#4338ca}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #a5b4fc;outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:11px;margin:18px 0}
+.tile,.panel{background:#151923;border:1px solid #334155;border-radius:13px;padding:17px;min-width:0}
+.tile small,.tile strong{display:block}.tile strong{font-size:23px;color:#e0e7ff;margin:6px 0;overflow-wrap:anywhere}
+.columns{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-top:16px}
+@media(max-width:900px){.columns{grid-template-columns:1fr}}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+form label{display:flex;flex-direction:column;gap:6px}.wide{grid-column:1/-1}
+.scroll{overflow:auto;max-height:540px}table{width:100%;border-collapse:collapse;min-width:670px}
+th,td{padding:10px 9px;border-bottom:1px solid #30394b;text-align:right;font-size:13px;vertical-align:middle}
+th:first-child,td:first-child{text-align:left}td small{display:block;margin-top:4px}td button{padding:7px 10px;font-size:12px}
+.warning{color:#fbbf24}.status{padding:11px 13px;background:#1e293b;border-radius:9px;color:#cbd5e1;margin:14px 0}.status.error{background:#7f1d1d;color:#fee2e2}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin:13px 0}.filters input{flex:1 1 220px}.filters select{flex:0 1 220px}
+.note{color:#94a3b8;font-size:12px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script>
+<script src="kyv-invoice-line-amount.js"></script><script src="kyv-project-returns-v240.js"></script>
+<script src="kyv-project-returns-ui-v240.js" defer></script>
+</head><body>
+<header><div><small>Economia · KYV Intelligence</small><h1>Ritorno economico dei progetti <small>v2.40</small></h1></div>
+<nav><a href="kyv_intelligence.html">← Intelligence</a><a href="kyv_liquidazioni.html">Bonifici SIAE/IMAIE</a><a href="fatture.html">Fatture</a><a href="progetti.html">Progetti</a></nav></header>
+<main>
+<p>Qui trovi le <strong>voci fatturate</strong> attribuite ai singoli lavori, i <strong>bonifici SIAE/IMAIE ricevuti e assegnati manualmente</strong> e, quando possibile, il tempo tra prima sessione e primo accredito datato. Nessuna royalty dell'estratto SIAE grezzo viene automaticamente considerata incassata.</p>
+<button type="button" id="returns-refresh">Ricarica dati</button>
+<div id="returns-status" class="status" role="status">Preparazione dell'analisi…</div>
+<div id="returns-content" hidden>
+<section class="grid" id="returns-stats" aria-label="Indicatori sintetici"></section>
+<div class="columns">
+<section class="panel"><h2>Attribuisci un bonifico a un progetto</h2>
+<p>Puoi suddividere una liquidazione tra più brani. Non stai creando una nuova entrata: stai specificando a quale progetto appartiene una quota già incassata. La somma attribuita non può superare l'importo netto del bonifico.</p>
+<form id="alloc-form">
+<label>Bonifico disponibile<select id="alloc-liquidation" required><option value="">Seleziona il bonifico</option></select></label>
+<label>Progetto musicale<select id="alloc-project" required><option value="">Seleziona il progetto</option></select></label>
+<label>Quota attribuita (€)<input id="alloc-amount" type="number" min="0.01" step="0.01" required></label>
+<label>Nota o riferimento al brano<input id="alloc-note" maxlength="500" placeholder="Facoltativo"></label>
+<div class="wide"><button type="submit">Attribuisci importo al progetto</button></div>
+</form><p id="returns-note" class="note"></p></section>
+<section class="panel"><h2>Storico delle attribuzioni</h2>
+<p>Se sbagli l'attribuzione puoi stornarla con motivazione obbligatoria: originale e storno restano consultabili. Il totale del bonifico non cambia.</p>
+<div class="scroll"><table><thead><tr><th>ID</th><th>Ente</th><th>Progetto</th><th>Quota</th><th>Gestione</th></tr></thead><tbody id="alloc-history"></tbody></table></div></section></div>
+<section class="panel" style="margin-top:16px"><h2>Ritorno per brano e progetto</h2>
+<div class="filters"><input id="project-search" placeholder="Cerca titolo, artista o ID" aria-label="Cerca progetti"><select id="project-filter" aria-label="Filtra progetti"><option value="all">Tutti</option><option value="without">Senza entrate attribuite</option><option value="returned">Con tempo al primo accredito calcolabile</option><option value="undated">Pagati ma senza data bancaria</option></select></div>
+<p class="note" id="project-count"></p>
+<div class="scroll"><table><thead><tr><th>Brano / progetto</th><th>Fatturato per voce</th><th>Incassi datati delle fatture</th><th>Pagato storico senza data</th><th>Diritti incassati attribuiti</th><th>Sessione → primo accredito</th></tr></thead><tbody id="returns-project-rows"></tbody></table></div>
+<p id="returns-issues" class="note"></p>
+<p class="warning">Un progetto senza entrate attribuite non è necessariamente privo di valore: potrebbero mancare fatture collegate, bonifici o informazioni di rendicontazione. La redditività oraria richiede anche le ore di lavoro e i costi sostenuti. Il tempo medio usa soltanto progetti con data sessione e primo accredito verificabile.</p></section>
+</div></main></body></html>
