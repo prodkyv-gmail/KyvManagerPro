@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-42-1-version-sync-20261030';
+const CACHE_NAME = 'kyv-studio-v2-42-2-admin-launcher-incassate-20261030';
 const APP_SHELL = [
     './',
     './index.html',
