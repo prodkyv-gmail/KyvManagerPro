@@ -21,6 +21,7 @@
     }[char]));
 
     function humanLabel(key) {
+        if (key === 'PAGATA') return 'Incassata dal cliente';
         return String(key).replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
     }
 
