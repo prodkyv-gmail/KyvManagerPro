@@ -1,7 +1,7 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
-    APP_VERSION: '2.32',
+    APP_VERSION: '2.42',
 
     // Chiavi Supabase pubblicabili (nessun service_role nel browser).
     SUPABASE_URL: 'https://vppqnolgxtegtxznmgqb.supabase.co',
@@ -45,6 +45,11 @@ window.KYV_CONFIG = KYV_CONFIG;
     // La pagina Progetti safe è intenzionalmente isolata da observer globali.
     if(window.KYV_SAFE_PROJECTS_PAGE){
         document.documentElement.dataset.kyvVersion=KYV_CONFIG.APP_VERSION;
+        // Pagina Progetti isolata: sincronizza soltanto il testo senza observer.
+        document.addEventListener('DOMContentLoaded',()=>{
+            const brand=document.querySelector('#sidebar .brand span');
+            if(brand)brand.textContent='Manager Pro '+KYV_CONFIG.APP_VERSION;
+        },{once:true});
         return;
     }
     let observer;
