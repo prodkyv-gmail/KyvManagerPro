@@ -18,6 +18,7 @@ function build(raw={},now='2026-10-30'){
  const results=root.KYV_PROJECT_RETURNS_V240.analyze(raw),pRaw=raw.projects||[];
  const byId=new Map(pRaw.map(p=>[str(p.ID),p]));
  const projects=results.projects.map(p=>({...p,raw:byId.get(str(p.ID))||{}}));
+ const funnel=root.KYV_CREATIVE_FUNNEL_V242?.analyze(pRaw);
  let missingSession=0,missingRelease=0,missingFee=0,zeroFee=0,feePromisedNotBilled=[];
  let overdueFollowups=[],futureFollowups=[],undatedPayments=[],oldUnbilled=[];
  for(const p of projects){
@@ -70,12 +71,13 @@ function build(raw={},now='2026-10-30'){
   {id:'start-dates',priority:missingSession?5:9,title:'Progetti senza data prima sessione',count:missingSession,why:'Impediscono di misurare con affidabilità il tempo al primo accredito.',action:'Integra soltanto le date che conosci con certezza.',url:'progetti.html'},
   {id:'cash-dates',priority:undatedPayments.length?6:9,title:'Pagamenti storici senza data bancaria',count:undatedPayments.length,why:'Lo stato PAGATA=SI non permette di ricostruire quando arrivò il bonifico.',action:'Verifica i movimenti bancari prima di completare le date.',url:'fatture.html'}
  ].sort((a,b)=>a.priority-b.priority||b.count-a.count);
- return Object.freeze({asOf:now,source:raw,results,projects,artistRanks,topShare,linkedTotal:linkedTotal/100,
+ return Object.freeze({asOf:now,source:raw,results,projects,artistRanks,topShare,linkedTotal:linkedTotal/100,funnel,
   byBilled,byReceived,returnSample,overdueFollowups,futureFollowups,oldUnbilled,feePromisedNotBilled,
   undatedPayments,reasons,recommendations,
   gaps:['Il valore fatturato deriva dalle voci e non dai totali-documento ripetuti.',
    'PAGATA=SI senza movimento datato non dimostra in quale mese è arrivato il denaro.',
    'Il valore SIAE degli estratti grezzi non coincide automaticamente con bonifici ricevuti.',
+   'FEE=0 è normale per molte sessioni creative che non arrivano a una produzione o pubblicazione; non è un insoluto.',
    'L’assenza di fee o ricavi attribuiti non dimostra che il brano non renderà.']});
 }
 function answer(report,query){
@@ -83,6 +85,17 @@ function answer(report,query){
  const r=report,stats=r.results.stats;
  const A=(title,summary,items=[],notes=[],metrics=[])=>({title,summary,items,notes,metrics,asOf:r.asOf});
  if(!q)return A('Come posso aiutarti?','Scegli una domanda suggerita oppure chiedi di ricavi, progetti, scadenze o qualità dei dati.',[],[],[]);
+ if(/(fee zero|fee a zero|fee 0|sessioni|sessione creativ|tempo perso|non uscit|non pubblicat|produzione.*uscit|conversione|esplorativ|brani scartat|tasso di uscita)/.test(q)){
+  if(!r.funnel)return A('Analisi delle sessioni creative non disponibile','Il motore di classificazione non è stato caricato.',[],[],[]);
+  const f=r.funnel,z=f.zeroByStage;
+  return A('Sessioni creative e progetti con fee zero',
+   'Sono presenti '+f.zeroFee+' progetti con fee pari a zero. '+z.publicationDated+' hanno una data di pubblicazione, '+z.releaseLabeled+' sono contrassegnati come USCITA senza data, '+z.pitched+' risultano proposti/in ascolto e '+z.developing+' risultano in sviluppo. Non sono automaticamente progetti scartati o insoluti.',
+   [...f.examples('pubblicazione_datata',6),...f.examples('uscita_dichiarata',6),...f.examples('proposta_o_ascolto',6),...f.examples('sviluppo',6)],
+   [...f.caveats,'Le categorie si basano soltanto sui valori STATO, SVILUPPO e sulle date effettivamente compilate.'],
+   [{label:'Fee zero',value:f.zeroFee},{label:'Stato USCITA senza data',value:z.releaseLabeled},
+    {label:'Date sessione compilate',value:f.datedSessions},
+    {label:'Conversione sessione→uscita',value:f.conversionReliable?f.conversion+'%':'Non calcolabile'}]);
+ }
  if(/(segu|sollecit|contatt|scadenz|follow.?up)/.test(q)){
   return A('Follow-up da verificare',
    r.overdueFollowups.length+' progetti hanno una data di follow-up precedente al '+r.asOf+'. Non significa che il contatto non sia già avvenuto.',
@@ -116,7 +129,7 @@ function answer(report,query){
   return A('Progetti da verificare economicamente',
    r.reasons.noBasis+' progetti non hanno fatturato né diritti già attribuiti. Di questi, '+r.reasons.feePromisedNotBilled+' riportano una fee positiva ma nessuna fattura attribuita.',
    r.oldUnbilled.slice(0,10).map(p=>item(p,'Fee dichiarata '+euros(num(p.raw.FEE))+' · sessione '+p.start+' · '+p.age+' giorni')),
-   ['FEE=0 o vuoto non equivale a progetto in perdita.','I progetti che non hanno date o collegamenti potrebbero non comparire nell’elenco prioritario.'],
+   ['Molte sessioni creative hanno FEE=0 perché non vengono poi prodotte o pubblicate: è una prassi, non un insoluto.','I progetti che non hanno date o collegamenti potrebbero non comparire nell’elenco prioritario.'],
    [{label:'Senza entrate attribuite',value:r.reasons.noBasis},{label:'Fee positiva senza fattura',value:r.reasons.feePromisedNotBilled}]);
  }
  if(/(mancan|completezz|qualita|affidabil|error|incoeren|verific)/.test(q)){
