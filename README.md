@@ -1,3 +1,11 @@
+## KYV Analyst v2.41 — assistente economico a regole (30/10/2026)
+
+La pagina `kyv_analyst.html` espone sei domande guidate e una ricerca in linguaggio naturale limitata ad argomenti deterministici: fatturato per voce, concentrazione per artista, follow-up scaduti, royalties SIAE/IMAIE già attribuite, tempi al primo accredito verificabile e qualità dei dati. Il motore `kyv-analyst-engine-v241.js` lavora sui risultati `KYV_PROJECT_RETURNS_V240.analyze` e sulle schede progetti; `kyv-analyst-ui-v241.js` legge soltanto sette archivi Supabase con RLS tramite client autenticato e paginazione con conteggio verificato. **Non esiste integrazione con servizi AI esterni né API key**, non vengono generati suggerimenti automatici di accrediti e non viene eseguita alcuna scrittura in database.
+
+Le proposte sono tracciabili: ogni priorità riporta il criterio che l'ha generata e, quando presente, il link alla scheda originale. La classifica per artista usa solo fatture collegate univocamente ai progetti, non è una classifica dei clienti; le voci non collegate sono esplicitamente escluse. Il numero `FEE=0,00` NON dimostra che un brano non possa generare diritti o compensi in futuro: l'analista distingue l'assenza di entrate documentate dalla mancanza di potenziale economico. Un follow-up con data trascorsa è una **verifica** e non prova che il contatto non sia stato eseguito. Nessuna data bancaria è inferita da `PAGATA=SI`.
+
+Limiti: non un modello linguistico generativo; query sconosciute restituiscono suggerimenti supportati. Nessun ranking di utile netto/ROI senza costi e ore. Tutti i test in `npm run check:analyst-v241`, inclusi nella suite completa. Nuova PWA cache `kyv-studio-v2-41-analyst-rules-20261030`; un solo merge dopo CI green e deployment automatico su `main`.
+
 ## KYV Intelligence v2.40 — ritorni economici per progetto (30/10/2026)
 
 La pagina `kyv_ritorni_progetti.html` collega progetti e compensi **per voce** tramite `FATTURE.ID_PROGETTO` o riferimento storico `PROGETTI.IDFT` solo se unico (nessun abbinamento per titolo o artista). Se una fattura ha più progetti possibili, non è duplicata: resta da riconciliare. Le somme di `PrezzoUnitario` e il valore aggregato XML Aruba (`PrezzoTotale`) rispettano la regola gestionale introdotta nella v2.38.1.

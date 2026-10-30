@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-40-project-returns-20261030';
+const CACHE_NAME = 'kyv-studio-v2-41-analyst-rules-20261030';
 const APP_SHELL = [
     './',
     './index.html',
@@ -12,6 +12,9 @@ const APP_SHELL = [
     './kyv_intelligence.html',
     './kyv_liquidazioni.html',
     './kyv_ritorni_progetti.html',
+    './kyv_analyst.html',
+    './kyv-analyst-engine-v241.js',
+    './kyv-analyst-ui-v241.js',
     './kyv-project-returns-v240.js',
     './kyv-project-returns-ui-v240.js',
     './kyv-rights-liquidations-v239.js',
