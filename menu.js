@@ -38,14 +38,22 @@ async function installPWA() {
     if (installBtn) installBtn.classList.add('hidden');
 }
 
-function toggleMobileMenu() {
+function toggleMobileMenu(force) {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-sidebar-overlay');
-    if (sidebar && overlay) {
-        sidebar.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
-    }
+    if (!sidebar || !overlay) return;
+    const open = typeof force === 'boolean' ? force : sidebar.classList.contains('-translate-x-full');
+    sidebar.classList.toggle('-translate-x-full', !open);
+    overlay.classList.toggle('hidden', !open);
+    overlay.setAttribute('aria-hidden', String(!open));
+    document.querySelectorAll('button[onclick="toggleMobileMenu()"]').forEach(button => {
+        button.setAttribute('aria-expanded', String(open));
+        button.setAttribute('aria-controls', 'sidebar');
+        if (!button.hasAttribute('aria-label')) button.setAttribute('aria-label', 'Apri o chiudi menu');
+    });
+    if (open) sidebar.querySelector('nav a')?.focus({ preventScroll: true });
 }
+
 
 function openHelpModal() {
     const modal = document.getElementById('kyv-help-modal');
@@ -203,7 +211,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
     const sidebarHTML = `
         <div id="mobile-sidebar-overlay" aria-hidden="true" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden" onclick="toggleMobileMenu()"></div>
 
-        <aside id="sidebar" class="w-64 bg-kyv-card border-r border-kyv-border flex flex-col flex-shrink-0 z-50 absolute md:relative h-full transition-transform duration-300 -translate-x-full md:translate-x-0">
+        <aside id="sidebar" aria-label="Menu principale KYV" class="w-64 bg-kyv-card border-r border-kyv-border flex flex-col flex-shrink-0 z-50 absolute md:relative h-full transition-transform duration-300 -translate-x-full md:translate-x-0">
             <div class="h-20 flex items-center px-5 border-b border-kyv-border justify-between shrink-0">
                 <a href="index.html" class="flex items-center min-w-0">
                     <div class="kyv-brand-mark w-9 h-9 rounded-xl flex items-center justify-center mr-3 font-black text-white shrink-0">K</div>
@@ -291,7 +299,13 @@ function loadKyvSidebar(activePage = 'dashboard') {
 }
 
 document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') closeHelpModal();
+    if (event.key !== 'Escape') return;
+    closeHelpModal();
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+        toggleMobileMenu(false);
+        document.querySelector('main button[onclick="toggleMobileMenu()"]')?.focus({ preventScroll: true });
+    }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
