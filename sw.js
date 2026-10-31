@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-44-creative-desk-20261031';
+const CACHE_NAME = 'kyv-studio-v2-45-audio-finder-20261031';
 const APP_SHELL = [
     './',
     './index.html',
@@ -15,6 +15,10 @@ const APP_SHELL = [
     './kyv_ritorni_progetti.html',
     './kyv_analyst.html',
     './kyv_scrivania_creativa.html',
+    './kyv_audio_finder.html',
+    './kyv-audio-finder-v245.js',
+    './kyv-audio-finder-ui-v245.js',
+    './kyv-drive-bridge.js',
     './kyv-creative-desk-v244.js',
     './kyv-creative-desk-ui-v244.js',
     './kyv-analyst-engine-v241.js',
