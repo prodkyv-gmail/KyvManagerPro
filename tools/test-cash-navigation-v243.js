@@ -87,7 +87,7 @@ assert.equal(el('tot-da-pagare').innerText,'EUR 200.00');
 assert.equal(pkg.version,'2.43.0');
 assert.equal(read('VERSION').trim(),'2.43');
 assert.match(read('config.js'),/APP_VERSION: '2\.43'/);
-assert.ok(sw.includes('kyv-studio-v2-43-mobile-nav-cash-summary-20261031'));
+assert.ok(sw.includes('kyv-studio-v2-44-creative-desk-20261031'));
 assert.ok(pkg.scripts.check.includes('check:cash-navigation-v243'));
 assert.equal(pkg.scripts['check:cash-navigation-v243'],'node tools/test-cash-navigation-v243.js');
 console.log('OK: v2.43 mobile sidebar accessibility; full receipts, partial advances and open invoice balances partitioned correctly');
