@@ -8,6 +8,7 @@ const primary=[
   ['kyv_calendar.html','Agenda','calendar-days','calendar'],
   ['acquisisci_audio.html','Nuovo','circle-plus','nuovo'],
   ['progetti.html','Progetti','music-2','progetti'],
+  ['kyv_scrivania_creativa.html','Scrivania creativa','calendar-range','creative'],
   ['ascolto.html','Ascolto','headphones','ascolto'],
   ['integrazioni.html','Tutte le app','grid-3x3','integrazioni']
 ];
@@ -70,7 +71,7 @@ function loadProjectsPhase3(){
 function currentKey(){
   const map={
     'index.html':'dashboard','':'dashboard','kyv_calendar.html':'calendar','acquisisci_audio.html':'nuovo',
-    'progetti.html':'progetti','scheda_progetto.html':'progetti','ascolto.html':'ascolto','fatture.html':'fatture',
+    'progetti.html':'progetti','scheda_progetto.html':'progetti','kyv_scrivania_creativa.html':'creative','ascolto.html':'ascolto','fatture.html':'fatture',
     'correlazione.html':'fatture','documenti.html':'spese','fisco.html':'fisco','quote.html':'quote','autori.html':'quote',
     'rendiconto.html':'rendiconto','clienti.html':'clienti','editor.html':'editor','archivio_musicale.html':'archivio',
     'assistente.html':'assistente','pipeline.html':'pipeline','integrazioni.html':'integrazioni','kyv_intelligence.html':'intelligence','kyv_analyst.html':'analyst','kyv_ritorni_progetti.html':'returns','kyv_liquidazioni.html':'liquidazioni','kyv_dropbox.html':'integrazioni',
