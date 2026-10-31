@@ -1,0 +1,104 @@
+<!DOCTYPE html><html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10131b">
+<title>KYV Audio Finder</title><link rel="manifest" href="manifest.json">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+<script src="https://unpkg.com/lucide@0.468.0"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
+<style>
+:root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
+.finder-head{background:#151923;border-bottom:1px solid #334155;padding:18px 4%;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.finder-head h1{font-size:24px;font-weight:850;margin:4px 0}.finder-head small{color:#cbd5e1}.finder-links{display:flex;gap:12px;flex-wrap:wrap}
+.finder-main{max-width:1400px;margin:0 auto;padding:20px 4% 72px;overflow-wrap:anywhere}
+.finder-main p{line-height:1.6;color:#cbd5e1}.finder-main a{color:#c7d2fe}
+.finder-status{padding:12px;background:#1e293b;border:1px solid #334155;border-radius:10px;margin:14px 0;color:#cbd5e1}
+.finder-status.error{background:#7f1d1d;border-color:#f87171;color:#fee2e2}
+.finder-sources{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
+.finder-card{min-width:0;background:#151923;border:1px solid #334155;border-radius:14px;padding:16px}
+.finder-card h2{font-size:17px;font-weight:800;margin:0 0 12px}
+.finder-card small{display:block;color:#cbd5e1;font-size:12px;margin:8px 0}
+.finder-card input,.finder-card select,.finder-controls input,.finder-controls select{width:100%;background:#0f172a;color:white;border:1px solid #64748b;border-radius:9px;padding:11px;min-width:0}
+.finder-main button{font:inherit;border:1px solid #64748b;border-radius:9px;padding:10px 12px;background:#312e81;color:#f8fafc;font-weight:700;cursor:pointer}
+.finder-main button:hover{background:#4338ca}.finder-main button:disabled{opacity:.5;cursor:wait}
+.finder-main input:focus-visible,.finder-main button:focus-visible,.finder-main a:focus-visible,.finder-main select:focus-visible{outline:3px solid #a5b4fc;outline-offset:2px}
+.finder-input-file{font:inherit;color:#cbd5e1;width:100%;margin-top:7px}
+.finder-input-file::file-selector-button{border:1px solid #64748b;border-radius:8px;background:#1e293b;color:white;padding:8px;margin-right:8px}
+.finder-column{display:grid;grid-template-columns:minmax(270px,1fr) minmax(270px,1fr);gap:14px;margin-top:14px}
+@media(max-width:850px){.finder-column{grid-template-columns:1fr}}
+.finder-file,.finder-suggestion{display:block;width:100%;margin:6px 0;text-align:left;background:#1e293b!important}
+.finder-file.selected{outline:2px solid #818cf8}.finder-file strong,.finder-file small,.finder-suggestion small{display:block}.finder-file small{color:#cbd5e1;font-weight:450;margin-top:4px;font-size:12px}
+.finder-link{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #334155;padding:10px 0}
+.finder-controls{display:flex;gap:9px;flex-wrap:wrap;margin:15px 0}
+.finder-controls input{flex:1 1 210px}.finder-controls select{max-width:190px}
+.finder-card h3{font-size:15px;font-weight:800;margin:17px 0 7px}
+.finder-form{display:grid;gap:12px}.finder-form label{display:grid;gap:5px;font-weight:700;font-size:12px}
+.finder-preview{border:1px solid #818cf8;border-radius:12px;padding:15px;background:#1e293b;margin-top:12px}
+.finder-preview[hidden],#link-panel[hidden],#project-wrap[hidden],#session-wrap[hidden]{display:none!important}
+.finder-note{color:#94a3b8;font-size:12px}
+</style></head>
+<body class="flex h-screen overflow-hidden">
+<div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+<main class="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+<header class="finder-head">
+<div class="flex items-center gap-3"><button class="md:hidden" type="button" onclick="toggleMobileMenu()" aria-label="Apri menu">☰</button><div><small>Studio & Career · <span id="finder-version"></span></small><h1>KYV Audio Finder</h1></div></div>
+<nav class="finder-links" aria-label="Navigazione"><a href="index.html">Home</a><a href="kyv_scrivania_creativa.html">Sessioni</a><a href="progetti.html">Progetti</a><a href="integrazioni.html">Tutte le app</a></nav>
+</header>
+<div class="overflow-y-auto flex-1">
+<div class="finder-main">
+<p>Scansiona solo quando vuoi i file audio nelle sorgenti autorizzate, poi salva i metadati nel catalogo. <strong>Non vengono caricati gli audio su Supabase</strong> e nessun progetto viene collegato automaticamente per somiglianza del nome.</p>
+<button data-finder-action id="finder-reload" type="button">Rileggi indice</button>
+<div id="finder-status" class="finder-status" role="status">Preparazione…</div>
+<section class="finder-sources" aria-label="Sorgenti">
+<div class="finder-card"><h2>Google Drive</h2>
+<label for="drive-account">Account</label><select id="drive-account"><option value="all">Tutti i Drive</option></select>
+<button type="button" data-finder-action id="finder-drive" style="margin-top:10px">Cerca audio su Drive</button>
+<small>Usa il connettore Drive attuale. La ricerca può essere limitata dal numero di pagine.</small>
+</div>
+<div class="finder-card"><h2>Dropbox</h2>
+<button type="button" data-finder-action id="finder-dropbox">Leggi archivio audio Dropbox</button>
+<small>Indicizza i file già registrati in KYV. L'esplorazione diretta di tutto il Dropbox richiede un connettore aggiuntivo.</small>
+<a href="kyv_dropbox.html">Apri Archivio Dropbox</a>
+</div>
+<div class="finder-card"><h2>Cartella Mac / PC</h2>
+<label for="local-label">Nome identificativo dell'archivio</label><input id="local-label" maxlength="180" value="Mac personale">
+<label for="finder-folder" style="display:block;margin-top:10px">Seleziona una cartella (browser compatibile)</label>
+<input id="finder-folder" class="finder-input-file" type="file" accept=".wav,.mp3,.aiff,.aif,.flac,.m4a,.aac,.ogg,.opus" webkitdirectory multiple>
+<label for="finder-files" style="display:block;margin-top:10px">Oppure seleziona file audio singoli</label>
+<input id="finder-files" class="finder-input-file" type="file" accept="audio/*,.wav,.aiff,.aif,.flac" multiple>
+<small>Funziona anche per una cartella OneDrive sincronizzata sul Mac. Il browser non accede al resto del disco.</small>
+</div>
+<div class="finder-card"><h2>OneDrive online</h2>
+<p>Collegamento diretto Microsoft non ancora attivo. Puoi già indicizzare file dalla cartella OneDrive sincronizzata e autorizzata sul computer.</p>
+<small>In una fase successiva sarà possibile collegare OneDrive con autorizzazione OAuth e Microsoft Graph.</small>
+</div>
+</section>
+<section id="finder-preview" class="finder-preview" hidden>
+<h2>Anteprima scansione — solo metadati</h2><p id="finder-preview-note"></p>
+<p class="finder-note" id="finder-preview-list"></p>
+<button id="finder-save" data-finder-action type="button">Salva metadati nell'indice</button>
+<button id="finder-cancel" type="button">Scarta anteprima</button>
+</section>
+<div class="finder-controls">
+<input type="search" id="finder-query" aria-label="Cerca file nell'indice" placeholder="Cerca titolo, nome file, sorgente, cartella…">
+<select id="finder-source" aria-label="Filtra per sorgente"><option value="">Tutte le sorgenti</option><option value="local">Locale</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+</div>
+<div class="finder-column">
+<section class="finder-card"><h2>Catalogo audio</h2><p id="finder-count" class="finder-note"></p><div id="finder-list"></div>
+<button id="finder-more" type="button" hidden>Mostra altri</button></section>
+<section class="finder-card"><h2>Dettaglio e collegamenti</h2><div id="finder-detail"></div>
+<section id="link-panel" hidden>
+<h3>Associa manualmente il file selezionato</h3>
+<form id="finder-link-form" class="finder-form">
+<label>Destinazione<select id="link-kind"><option value="project">Progetto / Brano</option><option value="session">Sessione</option></select></label>
+<label id="project-wrap">Progetto<select id="link-project"></select></label>
+<label id="session-wrap" hidden>Sessione<select id="link-session"></select></label>
+<button type="submit" data-finder-action>Conferma collegamento</button></form>
+<p class="finder-note">Il collegamento è reversibile: «Scollega» conserva il file nell'indice.</p>
+</section></section></div>
+<p class="finder-note">I file locali rimangono sul dispositivo. Non è un crawler invisibile: per aggiornare il catalogo dovrai avviare un'altra scansione. I suggerimenti di progetto non modificano i dati senza la tua conferma.</p>
+</div></div></main>
+<script>loadKyvSidebar('audiofinder');document.getElementById('finder-version').textContent='v'+(window.KYV_CONFIG?.APP_VERSION||'');if(window.lucide)lucide.createIcons();</script>
+</body></html>
