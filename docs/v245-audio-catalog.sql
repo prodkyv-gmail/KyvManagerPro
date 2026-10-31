@@ -28,6 +28,8 @@ create index kyv_audio_catalog_owner_project on public."KYV_AUDIO_CATALOGO"(owne
 create index kyv_audio_catalog_owner_session on public."KYV_AUDIO_CATALOGO"(owner_id,id_sessione);
 create index kyv_audio_catalog_owner_hash on public."KYV_AUDIO_CATALOGO"(owner_id,firma_sha256) where firma_sha256 is not null;
 
+alter table public."KYV_AUDIO_CATALOGO" add constraint kyv_audio_owner_id_pair unique(owner_id,id);
+
 create table public."KYV_AUDIO_ASSOCIAZIONI_EVENTI" (
  id uuid primary key default gen_random_uuid(),
  owner_id uuid not null default auth.uid(),
@@ -41,8 +43,6 @@ create table public."KYV_AUDIO_ASSOCIAZIONI_EVENTI" (
  created_at timestamptz not null default now(),
  foreign key(owner_id,id_audio) references public."KYV_AUDIO_CATALOGO"(owner_id,id) on delete restrict
 );
--- Required for composite ownership FK above
-alter table public."KYV_AUDIO_CATALOGO" add constraint kyv_audio_owner_id_pair unique(owner_id,id);
 create index kyv_audio_events_owner_audio on public."KYV_AUDIO_ASSOCIAZIONI_EVENTI"(owner_id,id_audio,created_at desc);
 
 create or replace function public.kyv_audio_v245_guard()
@@ -69,8 +69,11 @@ create trigger kyv_audio_v245_before before insert or update on public."KYV_AUDI
 for each row execute function public.kyv_audio_v245_guard();
 
 create or replace function public.kyv_audio_v245_audit()
-returns trigger language plpgsql security invoker set search_path=public,pg_temp as $$
+returns trigger language plpgsql security definer set search_path=public,pg_temp as $
 begin
+ if auth.uid() is null or new.owner_id is distinct from auth.uid() then
+  raise exception 'Audit non autorizzato';
+ end if;
  if new.id_progetto is distinct from old.id_progetto or
     new.id_sessione is distinct from old.id_sessione or new.stato is distinct from old.stato then
   insert into public."KYV_AUDIO_ASSOCIAZIONI_EVENTI"
@@ -79,8 +82,7 @@ begin
  end if;
  return new;
 end;$$;
-revoke all on function public.kyv_audio_v245_audit() from public;
-grant execute on function public.kyv_audio_v245_audit() to authenticated;
+revoke all on function public.kyv_audio_v245_audit() from public,anon,authenticated;
 create trigger kyv_audio_v245_after after update on public."KYV_AUDIO_CATALOGO"
 for each row execute function public.kyv_audio_v245_audit();
 
