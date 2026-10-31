@@ -72,7 +72,12 @@ async function refresh(){
   db=db||window.KYV?.createSupabaseClient?.();if(!db)throw Error('Client Supabase autenticato non disponibile');
   const u=await db.auth.getUser();if(u.error||!u.data?.user?.id)throw Error('Sessione scaduta');
   owner=u.data.user.id;info('Lettura completa dell’indice…');
-  await fetchAll();fillSelects();render();info(catalogue.length+' file indicizzati. Nessuna scansione automatica attiva.');
+  await fetchAll();fillSelects();
+  const params=new URLSearchParams(location.search);
+  const project=params.get('project'),session=params.get('session');
+  if(project&&projects.some(p=>String(p.ID)===project)){$('link-kind').value='project';kindChanged();$('link-project').value=project;}
+  if(session&&sessions.some(p=>p.id===session&&!p.archiviata)){$('link-kind').value='session';kindChanged();$('link-session').value=session;}
+  render();info(catalogue.length+' file indicizzati. Nessuna scansione automatica attiva.');
  });
 }
 function previewScan(rows,note){
@@ -129,7 +134,11 @@ async function local(files){
 async function savePreview(){
  if(!preview.length)throw Error('Nessuna anteprima da salvare');
  if(!confirm('Salvare i metadati di '+preview.length+' file? Non verranno caricati audio.'))return;
- const rows=preview.map(x=>({...x,owner_id:owner,ultimo_avvistamento:new Date().toISOString()}));
+ const rows=preview.map(x=>{
+  const old=catalogue.find(p=>p.provider===x.provider&&p.account_label===x.account_label&&p.external_key===x.external_key);
+  return {...x,content_hash:x.content_hash||old?.content_hash||null,
+    link_file:x.link_file||old?.link_file||null,owner_id:owner,ultimo_avvistamento:new Date().toISOString()};
+ });
  for(let i=0;i<rows.length;i+=100){
   const r=await db.from('KYV_AUDIO_INDICE').upsert(rows.slice(i,i+100),{onConflict:'owner_id,provider,account_label,external_key'}).select('id');
   if(r.error)throw Error('Indicizzazione interrotta dopo '+i+' file: '+r.error.message+'. Ripetere è sicuro: la chiave elimina i duplicati identici.');
