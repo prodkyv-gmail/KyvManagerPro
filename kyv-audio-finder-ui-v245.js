@@ -1,10 +1,10 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
-let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],preview=[],selected=null,busy=false,shown=120;
+let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],preview=[],selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80;
 const info=(v,error=false)=>{const el=$('finder-status');el.textContent=v;el.className='finder-status'+(error?' error':'')};
 const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v)};
 async function all(table,fields,sort){
@@ -36,8 +36,7 @@ function fillSelects(){
  $('link-session').innerHTML=make(sessions.filter(s=>!s.archiviata),p=>p.id,sn);
 }
 function render(){
- const q=F.norm($('finder-query').value),source=$('finder-source').value;
- const rows=catalogue.filter(f=>(!source||f.provider===source)&&(!q||F.norm([f.nome_file,f.percorso_relativo,f.account_label].join(' ')).includes(q)));
+ const rows=R.filterCatalogue(catalogue,links,{query:$('finder-query').value,source:$('finder-source').value,status:$('finder-link-status').value});
  $('finder-count').textContent=rows.length+' file trovati · '+catalogue.length+' nel catalogo';
  $('finder-list').innerHTML=rows.slice(0,shown).map(f=>
   '<button class="finder-file'+(selected===f.id?' selected':'')+'" type="button" data-audio="'+H(f.id)+'"><strong>'+H(f.nome_file)+'</strong>'+
@@ -72,7 +71,7 @@ async function refresh(){
   db=db||window.KYV?.createSupabaseClient?.();if(!db)throw Error('Client Supabase autenticato non disponibile');
   const u=await db.auth.getUser();if(u.error||!u.data?.user?.id)throw Error('Sessione scaduta');
   owner=u.data.user.id;info('Lettura completa dell’indice…');
-  await fetchAll();fillSelects();
+  await fetchAll();fillSelects();invalidateReview();
   const params=new URLSearchParams(location.search);
   const project=params.get('project'),session=params.get('session');
   if(project&&projects.some(p=>String(p.ID)===project)){$('link-kind').value='project';kindChanged();$('link-project').value=project;}
@@ -143,7 +142,7 @@ async function savePreview(){
   const r=await db.from('KYV_AUDIO_INDICE').upsert(rows.slice(i,i+100),{onConflict:'owner_id,provider,account_label,external_key'}).select('id');
   if(r.error)throw Error('Indicizzazione interrotta dopo '+i+' file: '+r.error.message+'. Ripetere è sicuro: la chiave elimina i duplicati identici.');
  }
- preview=[];$('finder-preview').hidden=true;await fetchAll();fillSelects();render();
+ preview=[];$('finder-preview').hidden=true;await fetchAll();fillSelects();invalidateReview();render();
  info('Metadati salvati. Associazioni a brani e sessioni ancora da confermare.');
 }
 async function associate(){
@@ -161,7 +160,7 @@ async function associate(){
  const r=await db.from('KYV_AUDIO_ASSOCIAZIONI').insert(payload).select('id').single();
  if(r.error||!r.data?.id)throw Error(r.error?.message||'Associazione non confermata');
  links=await all('KYV_AUDIO_ASSOCIAZIONI','id,id_audio,id_progetto,id_sessione,confermata,annullata,metodo,created_at','created_at');
- render();info('Collegamento registrato.');
+ invalidateReview();render();info('Collegamento registrato.');
 }
 async function unlink(id){
  const x=links.find(a=>a.id===id&&!a.annullata);if(!x)throw Error('Collegamento non trovato');
@@ -169,8 +168,53 @@ async function unlink(id){
  const q=await db.from('KYV_AUDIO_ASSOCIAZIONI').update({annullata:true}).eq('id',id).select('id').single();
  if(q.error||!q.data?.id)throw Error(q.error?.message||'Scollegamento non registrato');
  links=await all('KYV_AUDIO_ASSOCIAZIONI','id,id_audio,id_progetto,id_sessione,confermata,annullata,metodo,created_at','created_at');
- render();info('Collegamento annullato. File originale intatto.');
+ invalidateReview();render();info('Collegamento annullato. File originale intatto.');
 }
+
+function invalidateReview(){
+ reviewItems=[];reviewShown=80;
+ $('review-panel').hidden=true;$('review-list').innerHTML='';
+ $('review-status').textContent='Genera nuovamente le proposte dopo un aggiornamento.';
+}
+function generateReview(){
+ if(!owner)throw Error('Prima effettua la lettura autenticata');
+ reviewItems=R.queue(catalogue,projects,links);
+ reviewShown=80;$('review-panel').hidden=false;renderReview();
+ info('Proposte generate in sola lettura: nessun collegamento è stato creato.');
+}
+function renderReview(){
+ const visible=reviewItems.slice(0,reviewShown);
+ $('review-status').textContent=reviewItems.length+' file con corrispondenze · '+
+ reviewItems.filter(x=>x.status==='ambigua').length+' ambigui. Le caselle di conferma sono tutte vuote.';
+ $('review-list').innerHTML=visible.map(({file,candidates,status,proposedId})=>{
+  const opts='<option value="">Seleziona progetto…</option>'+
+   candidates.map(p=>'<option value="'+H(p.id)+'"'+(proposedId===String(p.id)?' selected':'')+'>'+
+   H((p.artist?p.artist+' · ':'')+p.title+' #'+p.id+' ('+p.reason+')')+'</option>').join('');
+  return '<div class="review-row"><label><input type="checkbox" data-review-check="'+H(file.id)+
+   '" aria-label="Conferma '+H(file.nome_file)+'"> <strong>'+H(file.nome_file)+'</strong></label>'+
+   '<small>'+H(file.provider+' · '+file.account_label)+' · '+H(status==='ambigua'?'Ambiguo: scegliere manualmente':status==='forte'?'Titolo + artista':'Da verificare')+'</small>'+
+   '<select data-review-project="'+H(file.id)+'" aria-label="Progetto per '+H(file.nome_file)+'">'+opts+'</select></div>';
+ }).join('')||'<p>Nessuna corrispondenza: per un file senza suggerimenti usa il collegamento manuale nel dettaglio.</p>';
+ $('review-more').hidden=reviewShown>=reviewItems.length;
+}
+async function saveReviewed(){
+ const selections=Array.from(document.querySelectorAll('[data-review-check]:checked')).map(input=>{
+  const audioId=input.dataset.reviewCheck;
+  const target=Array.from(document.querySelectorAll('[data-review-project]')).find(x=>x.dataset.reviewProject===audioId);
+  return {audioId,projectId:target?.value||''};
+ });
+ const ready=R.planLinks(selections,catalogue,projects,links,owner);
+ if(!confirm('Confermi '+ready.length+' associazioni audio → progetto, scelte esplicitamente? Non verrà caricato alcun audio.'))return;
+ info('Controllo dei collegamenti aggiornati prima del salvataggio…');
+ await fetchAll();
+ const payload=R.planLinks(selections,catalogue,projects,links,owner);
+ const saved=await db.from('KYV_AUDIO_ASSOCIAZIONI').insert(payload).select('id');
+ if(saved.error)throw Error('Associazioni non confermate: '+saved.error.message);
+ if(saved.data?.length!==payload.length)throw Error('Esito incerto: rileggi l’indice prima di riprovare.');
+ await fetchAll();fillSelects();invalidateReview();render();
+ info(payload.length+' collegamenti confermati; puoi annullare singolarmente dal dettaglio.');
+}
+
 function kindChanged(){
  const isProject=$('link-kind').value==='project';
  $('project-wrap').hidden=!isProject;$('session-wrap').hidden=isProject;
@@ -179,6 +223,10 @@ function boot(){
  $('finder-reload').addEventListener('click',refresh);
  $('finder-query').addEventListener('input',()=>{shown=120;render()});
  $('finder-source').addEventListener('change',()=>{shown=120;render()});
+ $('finder-link-status').addEventListener('change',()=>{shown=120;render()});
+ $('review-generate').addEventListener('click',()=>run(async()=>generateReview()));
+ $('review-more').addEventListener('click',()=>{reviewShown+=80;renderReview()});
+ $('review-save').addEventListener('click',()=>run(saveReviewed));
  $('finder-more').addEventListener('click',()=>{shown+=120;render()});
  $('finder-drive').addEventListener('click',()=>run(drive));
  $('finder-dropbox').addEventListener('click',()=>run(dropbox));

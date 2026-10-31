@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
@@ -38,6 +38,10 @@
 .finder-preview{border:1px solid #818cf8;border-radius:12px;padding:15px;background:#1e293b;margin-top:12px}
 .finder-preview[hidden],#link-panel[hidden],#project-wrap[hidden],#session-wrap[hidden]{display:none!important}
 .finder-note{color:#94a3b8;font-size:12px}
+.review-row{border:1px solid #334155;border-radius:10px;background:#151923;padding:12px;display:grid;grid-template-columns:minmax(170px,1fr) minmax(180px,1.5fr);gap:9px;align-items:center;margin:8px 0}
+.review-row small{grid-column:1/-1;color:#cbd5e1}.review-row select{background:#0f172a;color:#f8fafc;border:1px solid #64748b;border-radius:8px;padding:10px;min-width:0;width:100%}
+.review-row label{display:flex;align-items:center;gap:8px}.review-row input{width:19px;height:19px;flex:none}
+@media(max-width:800px){.review-row{grid-template-columns:1fr}}
 </style></head>
 <body class="flex h-screen overflow-hidden">
 <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
@@ -81,9 +85,19 @@
 <button id="finder-save" data-finder-action type="button">Salva metadati nell'indice</button>
 <button id="finder-cancel" type="button">Scarta anteprima</button>
 </section>
+<section class="finder-card" style="margin:18px 0" aria-label="Coda di revisione audio">
+<h2>Coda proposte · v2.46</h2>
+<p>Trova i possibili brani nei file già indicizzati. <strong>Nessuna associazione viene creata automaticamente.</strong> I titoli ambigui richiedono una scelta esplicita.</p>
+<button id="review-generate" type="button" data-finder-action>Genera proposte da revisionare</button>
+<section id="review-panel" hidden><p id="review-status" role="status"></p><div id="review-list"></div>
+<button id="review-more" type="button" hidden>Mostra altre proposte</button>
+<button id="review-save" type="button" data-finder-action>Conferma associazioni selezionate (max 25)</button>
+<p class="finder-note">Spunta solo i file verificati. Il salvataggio usa un unico inserimento per il gruppo; «Scollega» annulla poi i singoli legami.</p></section>
+</section>
 <div class="finder-controls">
 <input type="search" id="finder-query" aria-label="Cerca file nell'indice" placeholder="Cerca titolo, nome file, sorgente, cartella…">
 <select id="finder-source" aria-label="Filtra per sorgente"><option value="">Tutte le sorgenti</option><option value="local">Locale</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+<select id="finder-link-status" aria-label="Filtra file collegati"><option value="all">Tutti i file</option><option value="linked">Già collegati</option><option value="unlinked">Non collegati</option></select>
 </div>
 <div class="finder-column">
 <section class="finder-card"><h2>Catalogo audio</h2><p id="finder-count" class="finder-note"></p><div id="finder-list"></div>

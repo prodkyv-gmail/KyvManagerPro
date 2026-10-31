@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-45-guide-sync-20261031';
+const CACHE_NAME = 'kyv-studio-v2-46-audio-review-20261031';
 const APP_SHELL = [
     './',
     './index.html',
@@ -19,6 +19,7 @@ const APP_SHELL = [
     './kyv_scrivania_creativa.html',
     './kyv_audio_finder.html',
     './kyv-audio-finder-v245.js',
+    './kyv-audio-review-v246.js',
     './kyv-audio-finder-ui-v245.js',
     './kyv-audio-finder-linked-v245.js',
     './kyv-drive-bridge.js',

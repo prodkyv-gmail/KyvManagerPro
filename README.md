@@ -1,3 +1,11 @@
+## KYVManagerPro v2.46 — Audio Finder: revisione degli abbinamenti (31/10/2026)
+
+- Modulo `kyv-audio-review-v246.js`: classificazione spiegabile di corrispondenze per titolo/artista; titolo ambiguo = nessuna preselezione.
+- La nuova **Coda proposte** permette di selezionare manualmente fino a 25 file, scegliere il progetto e confermare tutti i collegamenti in un unico `insert` su `KYV_AUDIO_ASSOCIAZIONI` con rilettura dei dati prima dell'invio. Non aggiorna direttamente PROGETTI o KYV_SESSIONI.
+- Ricerca con parole multiple e filtro **Già collegati / Non collegati**. Restano le associazioni manuali, lo scollegamento reversibile e la scansione on-demand di Drive configurati, Dropbox già registrato e cartelle locali selezionate.
+- **Limiti:** nessuna autorizzazione cloud OneDrive/Microsoft Graph, nessun crawler permanente e nessun audio binario su Supabase. Nessuna migrazione SQL: mantiene le policy RLS e gli indici v2.45.
+- Guida contestuale, manuale HTML e test `check:audio-review-v246` aggiornati nello stesso rilascio; versione PWA sincronizzata.
+
 ## KYVManagerPro — Guida sincronizzata con gli upgrade (31/10/2026)
 
 **Regola permanente:** ogni nuovo upgrade deve aggiornare **nella stessa PR** la guida contestuale delle pagine cambiate (`kyv-help.js`), il manuale completo (`guida.html`), i link diretti dalle pagine autonome, la documentazione tecnica e la suite di test. Checklist dettagliata in [docs/GUIDE_SYNC_POLICY.md](docs/GUIDE_SYNC_POLICY.md).
