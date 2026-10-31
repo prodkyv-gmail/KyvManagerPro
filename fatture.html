@@ -200,14 +200,29 @@
                         <a id="kyv-manual-invoice-back" class="inline-flex items-center justify-center rounded-xl border border-indigo-400/30 px-4 py-2 text-sm font-bold text-indigo-100 hover:bg-indigo-500/10" href="scheda_progetto.html">Torna al progetto</a>
                     </div>
                 </div>
+                <div id="kyv-invoice-load-error" class="hidden rounded-xl border border-red-400/50 bg-red-950/40 p-4 text-red-100 text-sm" role="alert"></div>
+                <section id="kyv-invoice-cash-summary" class="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-label="Riepilogo incassi delle fatture emesse">
+                    <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4">
+                        <span class="block text-xs text-emerald-200">Incassato complessivo (anche acconti)</span>
+                        <strong class="block text-xl font-black text-white mt-1" id="tot-incassato-complessivo">€ 0,00</strong>
+                        <small class="block text-xs text-slate-300 mt-1">Include anche gli importi incassati su fatture ancora aperte. Non assegna date ai pagamenti storici.</small>
+                    </div>
+                    <div class="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4">
+                        <span class="block text-xs text-amber-200">Di cui acconti su fatture ancora aperte</span>
+                        <strong class="block text-xl font-black text-white mt-1" id="tot-acconti-aperti">€ 0,00</strong>
+                        <small class="block text-xs text-slate-300 mt-1">Gli acconti riducono il saldo residuo, ma non rendono la fattura completamente incassata.</small>
+                    </div>
+                </section>
                 <!-- DA INCASSARE -->
                 <div>
                     <h3 class="text-red-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> FATTURE DA INCASSARE</span><span class="text-lg bg-red-900/30 px-4 py-1 rounded-lg border border-red-500/30 font-black tracking-wide" id="tot-da-pagare">€ 0,00</span></h3>
+                    <p class="text-xs text-slate-300 mb-3">Include fatture mai incassate e fatture parzialmente incassate: il totale è il <strong>saldo residuo</strong>.</p>
                     <div class="bg-red-900/10 rounded-xl border border-red-500/20 overflow-hidden shadow-lg"><div class="overflow-x-auto"><table class="kyv-card-mode w-full text-left text-sm whitespace-nowrap"><thead class="bg-red-900/20 text-red-300 uppercase tracking-wider text-[10px] border-b border-red-500/20"><tr><th class="px-6 py-3 font-semibold">N° / Data</th><th class="px-6 py-3 font-semibold">Denominazione</th><th class="px-6 py-3 font-semibold">Descrizione & Progetto</th><th class="px-6 py-3 font-semibold">Importo</th></tr></thead><tbody class="divide-y divide-red-500/10" id="tbody-ft-nopag"></tbody></table></div></div>
                 </div>
                 <!-- INCASSATE: storico PAGATA=SI letto come cliente ha saldato -->
                 <div>
                     <h3 class="text-emerald-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="check-circle-2" class="w-5 h-5 mr-2"></i> FATTURE INCASSATE</span><span class="text-lg bg-emerald-900/30 px-4 py-1 rounded-lg border border-emerald-500/30 font-black tracking-wide" id="tot-pagate">€ 0,00</span></h3>
+                    <p class="text-xs text-slate-300 mb-3">Qui compaiono solo le fatture interamente saldate. Gli acconti delle fatture ancora aperte sono mostrati nel riepilogo superiore.</p>
                     <div class="bg-emerald-900/10 rounded-xl border border-emerald-500/20 overflow-hidden shadow-lg"><div class="overflow-x-auto"><table class="kyv-card-mode w-full text-left text-sm whitespace-nowrap"><thead class="bg-emerald-900/20 text-emerald-300 uppercase tracking-wider text-[10px] border-b border-emerald-500/20"><tr><th class="px-6 py-3 font-semibold">N° / Data</th><th class="px-6 py-3 font-semibold">Denominazione</th><th class="px-6 py-3 font-semibold">Descrizione & Progetto</th><th class="px-6 py-3 font-semibold">Importo</th></tr></thead><tbody class="divide-y divide-emerald-500/10" id="tbody-ft-pag"></tbody></table></div></div>
                 </div>
             </div>
@@ -236,17 +251,30 @@
 
         async function fetchFattureCorrelate() {
             document.getElementById('tbody-ft-nopag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; if(window.lucide) lucide.createIcons();
+            const errorNode = document.getElementById('kyv-invoice-load-error');
+            errorNode?.classList.add('hidden');
             try {
                 const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO, DataScadenzaPagamento, XML_SHA256').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
-                if(fatRes.error) throw fatRes.error;
+                if(fatRes.error || projRes.error) throw (fatRes.error || projRes.error);
                 correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
                 correlazioneFattureGlobal = fatRes.data || []; document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
-            } catch(e) {}
+            } catch(e) {
+                console.error('[KYV Fatture] Caricamento non riuscito', e);
+                if(errorNode){
+                    errorNode.textContent='Impossibile leggere tutte le fatture o i progetti. Verifica la connessione e usa Ricarica: i totali non sono attendibili fino al completamento della lettura.';
+                    errorNode.classList.remove('hidden');
+                }
+                document.getElementById('tbody-ft-nopag').innerHTML='<tr><td colspan="4" class="p-4 text-red-200">Lettura non completata: riprova.</td></tr>';
+                document.getElementById('tbody-ft-pag').innerHTML='<tr><td colspan="4" class="p-4 text-red-200">Lettura non completata: riprova.</td></tr>';
+                for(const id of ['tot-pagate','tot-da-pagare','tot-incassato-complessivo','tot-acconti-aperti']){
+                    const el=document.getElementById(id);if(el)el.textContent='—';
+                }
+            }
         }
 
         window.applyCorrelazioneFilters = function() {
             const searchTxt = (document.getElementById('correlazione-search')?.value || '').toLowerCase();
-            let hNopag = [], hPag = [], sumDaIncassare = 0, sumPagate = 0;
+            let hNopag = [], hPag = [], sumDaIncassare = 0, sumPagate = 0, sumIncassatoTutti = 0, sumAccontiAperti = 0;
             correlazioneFattureGlobal.forEach(f => {
                 let linkedProj = f.ID_PROGETTO ? correlazioneProjMapGlobal[f.ID_PROGETTO] : null;
                 let combinedStr = `${f.Numero} ${f.Numero_Originale||''} ${f.Denominazione} ${f.Descrizione} ${linkedProj}`.toLowerCase();
@@ -257,7 +285,11 @@
                 let received = stat ? stat.received : (isPagata ? numVal : 0);
                 let outstanding = stat ? stat.remaining : (isPagata ? 0 : numVal);
                 let imp = fmtEuro.format(numVal); let d = f.Data ? new Date(f.Data).toLocaleDateString('it-IT') : '-';
-                let payBadge = stat?.kind === 'partial' ? '<span class="block text-xs text-amber-200 mt-1">Incassato '+H(fmtEuro.format(received))+' · residuo '+H(fmtEuro.format(outstanding))+'</span>' : (stat?.overdue ? '<span class="block text-xs text-red-300 mt-1">Scaduta '+H(stat.date)+'</span>' : '');
+                let payBadge = stat?.kind === 'partial'
+                    ? '<span class="block text-xs text-amber-200 mt-1">Incassata parzialmente: '+H(fmtEuro.format(received))+' · residuo '+H(fmtEuro.format(outstanding))+'</span>'
+                    : (isPagata && (!stat || stat.legacyPaid)
+                        ? '<span class="block text-xs text-emerald-200 mt-1">Incassata (storico): data bancaria non documentata</span>'
+                        : (stat?.overdue ? '<span class="block text-xs text-red-300 mt-1">Scaduta '+H(stat.date)+'</span>' : ''));
                 let projBadge = linkedProj ? `<span class="mt-2 inline-flex px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-200 border border-indigo-500/20"><i data-lucide="folder" class="w-3 h-3 mr-1"></i>${H(linkedProj)}</span>` : '<span class="mt-2 text-[10px] text-amber-200">Progetto non collegato</span>';
                 let tr = `<tr class="kyv-editable-row hover:bg-kyv-border/30 transition-colors border-b border-kyv-border/30 cursor-pointer group" data-kyv-edit-table="FATTURE" data-kyv-edit-id="${H(f.ID_FT)}" title="Apri e modifica la fattura">
                     <td data-label="Numero / Data" class="px-6 py-3 font-medium group-hover:text-indigo-300 transition-colors"><i data-lucide="pencil" class="w-3 h-3 inline mr-2 opacity-60"></i>N° ${H(f.Numero_Originale || f.Numero || '-')}<br><span class="text-xs opacity-60 ml-5">${H(d)}</span></td>
@@ -266,10 +298,15 @@
                     <td data-label="Importo" class="px-6 py-3 font-black">${H(imp)}</td>
                 </tr>`;
                 if(isPagata) hPag.push(tr); else hNopag.push(tr);
-                sumPagate += received;
+                sumPagate += isPagata ? received : 0;
+                sumIncassatoTutti += received;
+                sumAccontiAperti += isPagata ? 0 : received;
                 sumDaIncassare += outstanding;
             });
-            document.getElementById('tot-da-pagare').innerText = fmtEuro.format(sumDaIncassare); document.getElementById('tot-pagate').innerText = fmtEuro.format(sumPagate);
+            document.getElementById('tot-da-pagare').innerText = fmtEuro.format(sumDaIncassare);
+            document.getElementById('tot-pagate').innerText = fmtEuro.format(sumPagate);
+            document.getElementById('tot-incassato-complessivo').innerText = fmtEuro.format(sumIncassatoTutti);
+            document.getElementById('tot-acconti-aperti').innerText = fmtEuro.format(sumAccontiAperti);
             document.getElementById('tbody-ft-nopag').innerHTML = hNopag.length ? hNopag.join('') : '<tr><td colspan="4" class="p-4 text-center opacity-50">Nessuna fattura trovata</td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = hPag.length ? hPag.join('') : '<tr><td colspan="4" class="p-4 text-center opacity-50">Nessuna fattura trovata</td></tr>';
             if(window.lucide) lucide.createIcons();
         }
