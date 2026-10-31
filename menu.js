@@ -296,7 +296,9 @@ function loadKyvSidebar(activePage = 'dashboard') {
     renderKyvMobileBottomNav(activePage);
     if (deferredPrompt) showInstallButton();
 
+    window.KYV_ACTIVE_HELP_PAGE = activePage;
     mountKyvContextHelp(activePage);
+    ensureKyvHelpLoaded();
 
     if (window.lucide) lucide.createIcons();
     if (window.KYV_AUTH && typeof KYV_AUTH.bindSidebar === 'function') KYV_AUTH.bindSidebar();
@@ -312,6 +314,25 @@ document.addEventListener('keydown', event => {
     }
 });
 
+// Carica il manuale contestuale una sola volta anche nelle pagine che includono solo menu.js.
+function ensureKyvHelpLoaded() {
+    if (window.KYV_HELP?.getContent) return;
+    if (document.querySelector('script[data-kyv-help-loader]')) return;
+    const script = document.createElement('script');
+    script.src = 'kyv-help.js';
+    script.async = true;
+    script.dataset.kyvHelpLoader = '1';
+    script.onload = () => {
+        mountKyvContextHelp(window.KYV_ACTIVE_HELP_PAGE || inferKyvPageFromPath());
+    };
+    script.onerror = () => {
+        console.warn('[KYV] Guida contestuale non disponibile: apri guida.html');
+    };
+    document.head.appendChild(script);
+}
 document.addEventListener('DOMContentLoaded', () => {
-    if (!document.getElementById('kyv-context-help-fab')) mountKyvContextHelp();
+    if (!document.getElementById('kyv-context-help-fab')) {
+        mountKyvContextHelp(window.KYV_ACTIVE_HELP_PAGE || inferKyvPageFromPath());
+    }
+    ensureKyvHelpLoaded();
 });
