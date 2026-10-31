@@ -62,7 +62,7 @@ assert.ok(read('kyv-creative-desk-ui-v244.js').includes('kyv_audio_finder.html?s
 assert.ok(read('integrazioni.html').includes('href="kyv_audio_finder.html"'));
 assert.ok(read('kyv-producer-mode.js').includes("'kyv_audio_finder.html','Audio Finder'"));
 assert.ok(read('menu.js').includes("navItem('audiofinder'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-45-audio-finder-20261031'));
+assert.ok(read('sw.js').includes('kyv-studio-v2-45-guide-sync-20261031'));
 for(const x of ['kyv_audio_finder.html','kyv-audio-finder-v245.js','kyv-audio-finder-ui-v245.js','kyv-audio-finder-linked-v245.js'])
  assert.ok(read('sw.js').includes("'./"+x+"'"));
 const pkg=JSON.parse(read('package.json'));
