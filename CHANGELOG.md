@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-31 — v2.46 Audio Finder
+
+- Coda abbinamenti: suggerimenti titolo/artista spiegabili, conflitti ambigui senza selezione predefinita, selezione e conferma multipla (massimo 25) con un unico salvataggio dopo rilettura.
+- Filtri per stato del file collegato e ricerca per parole, conservate associazioni manuali e reversibilità.
+- Nessun file audio caricato, nessuna nuova integrazione Microsoft Graph/Dropbox full crawl, nessun cambiamento allo schema o allo storico.
+- Aggiornati versione, cache PWA, guida contestuale/manuale HTML, documentazione e CI.
+
+
 ## 2026-10-29 — SIAE: polarità estratto + colonne Studio Editor
 
 - Corretto il verso di ESTRATTO SIAE nei calcoli: IMPORTO con segno meno è a nostro favore, senza meno è a nostro sfavore. La conversione è solo in lettura/calcolo tramite `kyv-siae-amount.js`; archivio, deduplica import e importi grezzi non vengono modificati.
