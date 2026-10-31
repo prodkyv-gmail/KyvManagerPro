@@ -1,3 +1,13 @@
+## KYVManagerPro — Guida sincronizzata con gli upgrade (31/10/2026)
+
+**Regola permanente:** ogni nuovo upgrade deve aggiornare **nella stessa PR** la guida contestuale delle pagine cambiate (`kyv-help.js`), il manuale completo (`guida.html`), i link diretti dalle pagine autonome, la documentazione tecnica e la suite di test. Checklist dettagliata in [docs/GUIDE_SYNC_POLICY.md](docs/GUIDE_SYNC_POLICY.md).
+
+**Intervento su v2.45:** manuale prima fermo a v2.24, ora con intestazione dinamica collegata a `KYV_CONFIG.APP_VERSION`, nuovi capitoli su sessioni/piazzamenti v2.44, Audio Finder v2.45, KYV Analyst e fatture incassate. Allineate nove guide contestuali per Audio Finder, Scrivania creativa, Analyst, Fatture, Progetti, Scheda Progetto, Tutte le app, Drive e Dropbox. Le pagine standalone includono link diretti al capitolo. Il menu carica in modo differito `kyv-help.js` dove mancava, mantiene il contesto della pagina e ripresenta il contenuto specifico nel popup ?. I capitoli storici del manuale rimangono consultabili e sono esplicitamente indicati come storico.
+
+**CI:** nuovo `tools/test-guide-coverage.js` lanciato da `npm run check:guide-coverage` e incluso nella suite completa. Verifica nove guide contestuali con istruzioni reali, capitoli, link da pagine, caricamento tramite menu e supporto PWA. Cache offline ruotata a `kyv-studio-v2-45-guide-sync-20261031`; `guida.html` e `kyv-help.js` aggiunti all'app shell. L'app resta alla release funzionale **2.45** (non si tratta di una nuova funzione del database). Nessun cambiamento al database, a progetti, fee, fatture o audio; nessun accesso a Vercel.
+
+**Collaudo manuale:** aprire Scrivania creativa, Audio Finder, Fatture, Progetti e Scheda Progetto; premere il pulsante flottante ? in ciascuna; controllare che il titolo e il contenuto siano quelli della pagina. Aprire KYV Analyst e usare il link Guida ? nella navigazione. Verificare il manuale su iPhone dopo la cache aggiornata.
+
 ## KYV Audio Finder v2.45 — indice metadati audio su richiesta (31/10/2026)
 
 ### Funzioni implementate
