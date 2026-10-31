@@ -25,7 +25,7 @@ const su=F.suggestions(r,projects);
 assert.equal(su.length,2,'Two title matches require human confirmation');
 assert.equal(su[0].id,11,'Artist + title suggested before title-only');
 assert.ok(su[0].reason.includes('Titolo e artista'));
-assert.deepEqual(F.suggestions(r,[{ID:15,TITOLO:'Notte al mare'}]),[],'No invented match by artist only');
+assert.equal(F.suggestions(r,[{ID:15,TITOLO:'Notte al mare'}]).length,0,'No invented match by artist only');
 assert.equal(F.suggestions({nome_file:'a.wav'},projects).length,0,'Short names should not match');
 const duplicates=F.duplicates({...r,content_hash:'a'.repeat(64)},[
  {...r,content_hash:'a'.repeat(64)},{...r,external_key:'altro',content_hash:'a'.repeat(64)},
