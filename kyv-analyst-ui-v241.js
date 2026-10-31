@@ -117,6 +117,7 @@ async function refresh(){
  }finally{working=false;}
 }
 function init(){
+ const release=$('kyv-analyst-app-version');if(release)release.textContent='v'+(window.KYV_CONFIG?.APP_VERSION||'');
  $('example-queries').innerHTML=promptExamples.map(q=>'<button type="button" data-ask="'+H(q)+'">'+H(q)+'</button>').join('');
  const ask=e=>{const b=e.target.closest('[data-ask]');if(!b)return;const q=b.dataset.ask;$('analyst-query').value=q;showAnswer(q);$('answer-panel').scrollIntoView({block:'start',behavior:'smooth'});};
  $('example-queries').addEventListener('click',ask);
