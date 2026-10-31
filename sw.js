@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-43-mobile-nav-cash-summary-20261031';
+const CACHE_NAME = 'kyv-studio-v2-44-creative-desk-20261031';
 const APP_SHELL = [
     './',
     './index.html',
@@ -14,6 +14,9 @@ const APP_SHELL = [
     './kyv_liquidazioni.html',
     './kyv_ritorni_progetti.html',
     './kyv_analyst.html',
+    './kyv_scrivania_creativa.html',
+    './kyv-creative-desk-v244.js',
+    './kyv-creative-desk-ui-v244.js',
     './kyv-analyst-engine-v241.js',
     './kyv-creative-funnel-v242.js',
     './kyv-analyst-ui-v241.js',

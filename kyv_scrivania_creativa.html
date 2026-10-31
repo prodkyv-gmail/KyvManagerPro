@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10131b"><link rel="manifest" href="manifest.json">
+<title>Scrivania creativa — KYVManagerPro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+<script src="https://unpkg.com/lucide@0.468.0"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
+<script src="kyv-creative-desk-v244.js"></script>
+<script src="kyv-creative-desk-ui-v244.js" defer></script>
+<link rel="stylesheet" href="kyv-responsive.css"><link rel="stylesheet" href="kyv-theme.css">
+<style>
+:root{color-scheme:dark}html,body{background:#0f111a;color:#f8fafc;font:15px Inter,system-ui,Arial,sans-serif}
+body{margin:0}.desk-content{width:100%;max-width:1380px;margin:0 auto;padding:20px 3% 100px}
+.desk-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid #334155;padding:15px 18px;background:#151923}
+.desk-header h1{font-size:23px;font-weight:850;margin:0}.desk-header a{color:#c7d2fe;font-size:13px}
+.desk-quicklinks{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.desk-status{padding:12px 15px;border:1px solid #475569;border-radius:11px;background:#1e293b;color:#cbd5e1;margin:14px 0}
+.desk-status.error{background:#7f1d1d;color:#fee2e2;border-color:#f87171}
+.desk-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;margin:16px 0}
+.desk-stat,.desk-panel{border-radius:14px;border:1px solid #334155;background:#151923;padding:16px;min-width:0}
+.desk-stat strong,.desk-stat small{display:block}.desk-stat strong{font-size:26px;color:#e0e7ff;margin:7px 0}.desk-stat small{font-size:12px;color:#94a3b8}
+.desk-panel h2{font-size:18px;font-weight:850;margin-bottom:12px}
+.desk-method{font-size:12px;color:#cbd5e1;line-height:1.6;padding:12px 0}
+.desk-tabs{display:flex;gap:9px;margin:17px 0}.desk-tabs button[aria-selected="true"]{background:#4338ca;border-color:#a5b4fc}
+.desk-cols{display:grid;grid-template-columns:minmax(280px,0.88fr) minmax(320px,1.25fr);gap:14px;align-items:start}
+@media(max-width:960px){.desk-cols{grid-template-columns:1fr}}
+.desk-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.desk-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#cbd5e1}
+.desk-form .wide{grid-column:1/-1}
+@media(max-width:590px){.desk-form{grid-template-columns:1fr}}
+.desk-form input,.desk-form select,.desk-form textarea,.desk-tools input{width:100%;background:#0f172a;border:1px solid #64748b;color:#f8fafc;border-radius:9px;padding:11px;min-width:0;font:inherit}
+button{font:inherit;font-weight:750;background:#312e81;color:#f8fafc;border:1px solid #818cf8;padding:9px 13px;border-radius:9px;cursor:pointer}
+button:hover{background:#4338ca}button.quiet{background:#1e293b;border-color:#475569;color:#cbd5e1}
+a{color:#c7d2fe}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #a5b4fc;outline-offset:2px}
+.desk-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}.desk-tools input{flex:1 1 220px}.desk-tools label{display:flex;gap:7px;align-items:center;font-size:13px}
+.desk-entry{padding:13px 0;border-bottom:1px solid #334155;display:flex;align-items:start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.desk-entry-body{flex:1;min-width:210px}.desk-entry-body b,.desk-entry-body small{display:block}
+.desk-entry-body small{color:#cbd5e1;font-size:12px;margin-top:5px}.desk-entry-body>a{display:block;margin-top:7px;font-size:13px}
+.desk-entry-body details{font-size:12px;margin-top:9px;color:#cbd5e1}.desk-entry-body summary{cursor:pointer}
+.desk-entry-body details p{margin-top:5px;padding-left:8px;border-left:2px solid #64748b}
+.desk-links{font-size:13px;margin-top:8px}.desk-links span{color:#94a3b8}
+.desk-actions{display:flex;gap:7px;flex-wrap:wrap}.desk-actions button{font-size:12px;padding:7px 10px}
+.desk-empty{padding:12px;color:#94a3b8}small{color:#94a3b8}
+#desk-link-dialog{border:1px solid #818cf8;padding:16px;margin:15px 0;border-radius:12px;background:#1e293b}
+#desk-link-dialog[hidden],section[hidden],#desk-content[hidden]{display:none!important}
+</style>
+</head><body class="flex h-screen overflow-hidden">
+<div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+<main class="flex flex-col flex-1 h-screen overflow-hidden min-w-0">
+<header class="desk-header">
+<div class="flex items-center gap-3"><button type="button" class="md:hidden" onclick="toggleMobileMenu()" aria-label="Apri menu">☰</button>
+<div><small>Studio & Career Management · <span id="desk-app-version"></span></small><h1>Scrivania creativa</h1></div></div>
+<nav class="desk-quicklinks" aria-label="Collegamenti"><a href="index.html">Home</a><a href="progetti.html">Progetti</a><a href="kyv_analyst.html">KYV Analyst</a><a href="fatture.html">Economia</a></nav>
+</header>
+<div class="overflow-y-auto flex-1">
+<div class="desk-content">
+<p class="desk-method">Le sessioni sono eventi creativi distinti dai brani. Un brano può attraversare più sessioni e una sessione può generare più progetti. Fee pari a zero non significa credito non pagato; gli esiti e le pubblicazioni non vengono inventati dall'archivio storico.</p>
+<button id="desk-refresh" type="button">Ricarica archivio</button>
+<div id="desk-status" role="status" class="desk-status">Caricamento dati…</div>
+<div id="desk-content" hidden>
+<div id="desk-summary" class="desk-stats" aria-label="Indicatori creativi"></div>
+<p id="desk-method" class="desk-method"></p>
+<div class="desk-tools">
+<input id="desk-search" type="search" placeholder="Cerca sessione, artista, destinatario o brano…" aria-label="Cerca nell'archivio creativo">
+<label><input id="desk-archived" type="checkbox"> Mostra archiviati</label>
+</div>
+<div class="desk-tabs" role="tablist" aria-label="Aree della scrivania">
+<button id="tab-sessions" type="button" aria-selected="true" role="tab" aria-controls="desk-sessions">Sessioni</button>
+<button id="tab-pitches" type="button" aria-selected="false" role="tab" aria-controls="desk-pitches">Piazzamenti</button>
+</div>
+<section id="desk-sessions" role="tabpanel" aria-labelledby="tab-sessions">
+<div class="desk-cols">
+<section class="desk-panel"><h2>Registra o modifica una sessione</h2>
+<form id="session-form" class="desk-form">
+<input id="session-id" type="hidden">
+<label class="wide">Titolo della sessione<input id="session-title" required maxlength="180" placeholder="Es. Scrittura con artista / produzione demo"></label>
+<label>Data effettiva<input id="session-date" type="date" required></label>
+<label>Tipologia<select id="session-type"><option value="scrittura">Scrittura</option><option value="produzione">Produzione</option><option value="registrazione">Registrazione</option><option value="revisione">Revisione</option><option value="altro">Altro</option></select></label>
+<label class="wide">Partecipanti<input id="session-people" maxlength="1000" placeholder="Autori, artisti, produttori"></label>
+<label>Luogo / Studio<input id="session-place" maxlength="200" placeholder="Studio Milano"></label>
+<label>Durata (minuti, facoltativa)<input id="session-minutes" type="number" min="1" max="1440"></label>
+<label class="wide">Esito registrato<select id="session-outcome"><option value="in_lavorazione">In lavorazione</option><option value="demo">Demo</option><option value="proposta">Proposta</option><option value="produzione">Produzione</option><option value="pubblicazione">Pubblicazione dichiarata</option><option value="accantonato">Accantonato</option></select></label>
+<label class="wide">Note<textarea id="session-notes" maxlength="4000" rows="3" placeholder="Cosa avete lavorato, eventuali idee e prossime azioni"></textarea></label>
+<div class="wide desk-actions"><button id="session-submit" type="submit">Registra sessione</button><button id="session-reset" type="button" class="quiet">Nuova / Annulla modifica</button></div>
+</form><p class="desk-method">La data è obbligatoria; la durata è facoltativa, mai stimata automaticamente. Un brano si collega successivamente tramite «Collega brano».</p>
+</section>
+<section class="desk-panel"><h2>Sessioni presenti</h2><p id="desk-session-count" class="desk-method"></p>
+<div id="desk-link-dialog" hidden>
+<form id="session-link-form" class="desk-form"><input type="hidden" id="session-link-id">
+<label class="wide">Collega un brano dell'archivio<select id="session-link-project" required></select></label>
+<div class="wide desk-actions"><button type="submit">Salva collegamento</button><button type="button" id="desk-link-cancel" class="quiet">Annulla</button></div></form>
+</div>
+<div id="session-rows"></div></section>
+</div></section>
+<section id="desk-pitches" role="tabpanel" aria-labelledby="tab-pitches" hidden>
+<div class="desk-cols">
+<section class="desk-panel"><h2>Registra proposta e follow-up</h2>
+<form id="pitch-form" class="desk-form">
+<input id="pitch-id" type="hidden">
+<label class="wide">Brano / Progetto<select id="pitch-project" required></select></label>
+<label class="wide">Destinatario<input id="pitch-recipient" required maxlength="200" placeholder="Nome artista, etichetta o publisher"></label>
+<label>Tipologia destinatario<select id="pitch-recipient-type"><option value="artista">Artista</option><option value="a_r">A&R</option><option value="etichetta">Etichetta</option><option value="publisher">Publisher</option><option value="management">Management</option><option value="altro">Altro</option></select></label>
+<label>Referente<input id="pitch-contact" maxlength="200" placeholder="Persona che ha ascoltato"></label>
+<label>Data invio<input id="pitch-sent" type="date"></label>
+<label>Stato<select id="pitch-stage"><option value="da_proporre">Da proporre</option><option value="inviato">Inviato</option><option value="in_ascolto">In ascolto</option><option value="interessato">Interessato</option><option value="opzionato">Opzionato</option><option value="confermato">Confermato</option><option value="rifiutato">Rifiutato</option><option value="accantonato">Accantonato</option></select></label>
+<label>Prossimo follow-up<input id="pitch-followup" type="date"></label>
+<label>Data risposta<input id="pitch-response" type="date"></label>
+<label class="wide">Note<textarea id="pitch-notes" maxlength="4000" rows="3" placeholder="Risposta, condizioni, prossimi passi…"></textarea></label>
+<div class="wide desk-actions"><button id="pitch-submit" type="submit">Registra proposta</button><button id="pitch-reset" type="button" class="quiet">Nuova / Annulla modifica</button></div>
+</form>
+<p class="desk-method">Stati e follow-up vengono storicizzati sul server quando cambiano. Nessun invio automatico di messaggi o brani.</p></section>
+<section class="desk-panel"><h2>Piazzamenti registrati</h2><p id="desk-pitch-count" class="desk-method"></p>
+<div id="pitch-rows"></div></section>
+</div>
+<section class="desk-panel" style="margin-top:16px"><h2>Follow-up con data trascorsa</h2><ul id="desk-followups" class="desk-method"></ul></section>
+</section>
+</div>
+</div></div></main>
+<script>
+  loadKyvSidebar('creative');
+  if(window.lucide)lucide.createIcons();
+</script></body></html>

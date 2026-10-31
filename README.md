@@ -1,3 +1,18 @@
+## KYVManagerPro v2.44 — Scrivania creativa e piazzamenti (31/10/2026)
+
+### Stato tecnico
+- Database Supabase: migrazioni additive `docs/v244-creative-sessions-pitches.sql` e `docs/v244-session-audit.sql` applicate. Cinque tabelle nuove con RLS basata su `owner_id=auth.uid()`; nessuna ALTER/UPDATE ai 172 record storici PROGETTI. Trigger attivi verificano che ogni proposta o relazione sessione→progetto faccia riferimento a una scheda dello stesso proprietario, registrano modifiche dello stato delle proposte, dei follow-up e degli esiti delle sessioni.
+- Dati iniziali delle nuove tabelle: **zero record**. Non ricostruire sessioni, ore o pitch dalle singole schede progetto; una sessione può includere più brani e un brano attraversare molte sessioni.
+- Frontend: `kyv_scrivania_creativa.html` più `kyv-creative-desk-v244.js` e `kyv-creative-desk-ui-v244.js`. Inserimento/modifica/archiviazione reversibile di sessioni, collegamento manuale molti-a-molti a PROGETTI, piazzamenti a destinatari multipli, note di follow-up e storico eventi. Nessuna cancellazione. Tutte le letture di tabelle sono paginabili e richiedono un conteggio verificabile; in caso di dati incompleti non si visualizzano indicatori come se fossero completi.
+- Navigazione: accesso da menu laterale e da `Tutte le app`; KYV Analyst carica separatamente gli indicatori basati sulle nuove sessioni e i nuovi piazzamenti. Le analisi economiche esistenti su fatture/incassi, royalties e fee restano intatte.
+- Versioni: config `APP_VERSION=2.44`, package `2.44.0`, `VERSION=2.44` e PWA cache `kyv-studio-v2-44-creative-desk-20261031`.
+- Test: `npm run check:creative-desk-v244` incorporato nella suite integrale `npm run check`. Non sono stati eseguiti inserimenti fittizi nel database reale.
+- Regole operative: `FEE=0` è normale nelle sessioni esplorative e non comporta alcun credito. Il termine *pubblicazione dichiarata* non certifica un'uscita discografica; non elaborare tassi di conversione finché il campione di sessioni reali non è completo. Le scadenze dei pitch segnalano verifiche possibili, non mancati contatti accertati.
+- Deployment: branch `feature/v244-creative-sessions-pitches`, un'unica PR/merge dopo CI verde, Vercel non viene interrogato direttamente come richiesto.
+
+### Collaudo funzionale autenticato consigliato
+Aprire Scrivania creativa nel proprio account; inserire una sessione reale, collegare un progetto storico e verificare che il collegamento porti alla scheda corretta. Registrare un pitch reale, cambiare stato, verificare il log automatico e ripristinare un elemento archiviato. Verificare infine KYV Analyst e la navigazione su iPhone. Questo collaudo manuale non è sostituibile dai soli test CI.
+
 ## KYVManagerPro v2.43 — accesso mobile e contabilità degli acconti (31/10/2026)
 
 **Navigazione:** in `menu.js` il drawer mobile sincronizza `aria-expanded`, overlay e posizione della sidebar e può essere chiuso con Escape; si porta il focus sul primo link quando viene aperto. Le quattro pagine di analisi autonome (`kyv_intelligence.html`, `kyv_analyst.html`, `kyv_ritorni_progetti.html`, `kyv_liquidazioni.html`) mostrano link diretti a **Home** e **Tutte le app**: non obbligano più a tornare da una sequenza di pagine finanziarie. Nessuna nuova dipendenza JS o lettura dati.

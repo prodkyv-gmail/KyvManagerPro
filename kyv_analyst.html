@@ -34,12 +34,13 @@ li a{flex-shrink:0;font-size:13px}.note{font-size:12px;color:#94a3b8}
 <script src="kyv-invoice-line-amount.js"></script>
 <script src="kyv-project-returns-v240.js"></script>
 <script src="kyv-creative-funnel-v242.js"></script>
+<script src="kyv-creative-desk-v244.js"></script>
 <script src="kyv-analyst-engine-v241.js"></script>
 <script src="kyv-analyst-ui-v241.js" defer></script>
 </head>
 <body>
 <header>
-<div><small class="note">Economia · KYV Intelligence</small><h1>KYV Analyst <small class="note">v2.42</small></h1></div>
+<div><small class="note">Economia · KYV Intelligence</small><h1>KYV Analyst <small class="note" id="kyv-analyst-app-version"></small></h1></div>
 <nav aria-label="Navigazione amministrativa"><a href="index.html">Home</a><a href="integrazioni.html">Tutte le app</a><a href="kyv_intelligence.html">← Intelligence</a><a href="kyv_ritorni_progetti.html">Ritorno dei progetti</a><a href="fatture.html">Fatture</a><a href="progetti.html">Progetti</a></nav>
 </header>
 <main>
@@ -49,6 +50,10 @@ li a{flex-shrink:0;font-size:13px}.note{font-size:12px;color:#94a3b8}
 <section id="analyst-content" hidden>
 <h2>Situazione attuale</h2>
 <div id="analyst-metrics" class="grid" aria-label="Indicatori calcolati"></div>
+<h2>Sessioni e piazzamenti documentati <small class="note">v2.44</small></h2>
+<p>Le nuove sessioni e proposte sono registrate separatamente dai brani storici. Il tempo investito viene conteggiato soltanto se hai inserito la durata; nessun tasso di conversione viene dedotto automaticamente.</p>
+<div id="analyst-creative-desk" class="grid" aria-label="Nuovi indicatori creativi"></div>
+<p class="note"><a href="kyv_scrivania_creativa.html">Apri Scrivania creativa per registrare sessioni e piazzamenti</a></p>
 <h2>Sessioni creative e progetti con fee zero</h2>
 <p>Nel lavoro di scrittura musicale una sessione può non essere retribuita e il pezzo può non essere prodotto o pubblicato. È parte dell'attività creativa, <strong>non un insoluto</strong>. Gli stati indicati nelle schede non sostituiscono la verifica delle pubblicazioni.</p>
 <div id="creative-funnel-metrics" class="grid" aria-label="Indicatori sulle sessioni creative"></div>

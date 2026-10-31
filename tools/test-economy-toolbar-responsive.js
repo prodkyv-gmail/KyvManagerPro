@@ -27,5 +27,5 @@ assert.match(css,/@media\s*\(max-width:\s*767px\)[\s\S]*?\.kyv-economy-toolbar\s
 assert.match(css,/@media\s*\(max-width:\s*767px\)[\s\S]*?\.kyv-economy-search\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/,'Mobile search occupies an entire row');
 assert.match(css,/\.kyv-economy-toolbar > button\s*\{[^}]*white-space:\s*normal\s*!important;/,'Long dynamic and static button labels can wrap');
 assert.match(css,/\.kyv-economy-toolbar > button\[aria-label="Ricarica fatture"\]/,'Reload action is not forgotten');
-assert.ok(sw.includes("kyv-studio-v2-43-mobile-nav-cash-summary-20261031"),'Updated PWA cache is required');
+assert.ok(sw.includes("kyv-studio-v2-44-creative-desk-20261031"),'Updated PWA cache is required');
 console.log('OK: Economy toolbar keeps search, seven actions, and dynamic reconciliation button visible at narrow widths');
