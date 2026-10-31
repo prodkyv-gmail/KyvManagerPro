@@ -22,6 +22,7 @@
 
     function humanLabel(key) {
         if (key === 'PAGATA') return 'Incassata dal cliente';
+        // PAGAMENTO nei PROGETTI conserva il significato originario: non è lo stato della fattura.
         return String(key).replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
     }
 

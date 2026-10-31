@@ -34,7 +34,7 @@ assert.ok(editor.includes("currentEditorTable === 'FATTURE' && key === 'PAGATA' 
 assert.ok(editor.includes('data-col='),'Studio Editor retains original column keys');
 assert.ok(editor.includes('data-sort='),'Sorting retains original column keys');
 assert.ok(read('kyv_ritorni_progetti.html').includes('Incassato storico senza data'),'Bank dates still acknowledged as unknown');
-assert.ok(sw.includes('kyv-studio-v2-42-2-admin-launcher-incassate-20261030'));
+assert.ok(sw.includes('kyv-studio-v2-43-mobile-nav-cash-summary-20261031'));
 assert.ok(sw.includes("'./integrazioni.html'"),'Offline PWA shell must include launcher');
 assert.equal(pkg.scripts['check:navigation-invoices'],'node tools/test-navigation-invoice-labels.js');
 assert.ok(pkg.scripts.check.includes('check:navigation-invoices'));
