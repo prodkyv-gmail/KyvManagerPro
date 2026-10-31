@@ -33,14 +33,15 @@ async function refresh(){
   client=client||window.KYV?.createSupabaseClient?.();
   if(!client)throw Error('Sessione autenticata non disponibile');
   status('Lettura completa delle sessioni, dei pitch e dei progetti…');
-  const [sessions,links,pitches,events,projects]=await Promise.all([
+  const [sessions,links,pitches,events,sessionEvents,projects]=await Promise.all([
    read('KYV_SESSIONI','id,data_sessione,titolo,tipo,partecipanti,luogo,durata_minuti,esito,note,archiviata,created_at,updated_at','data_sessione'),
    read('KYV_SESSIONI_PROGETTI','id,id_sessione,id_progetto,note,annullato,created_at','created_at'),
    read('KYV_PIAZZAMENTI','id,id_progetto,destinatario,tipo_destinatario,referente,data_invio,stato,prossimo_followup,data_risposta,note,archiviata,created_at,updated_at','created_at'),
    read('KYV_PIAZZAMENTI_EVENTI','id,id_piazzamento,tipo,nota,created_at','created_at'),
+   read('KYV_SESSIONI_EVENTI','id,id_sessione,tipo,nota,created_at','created_at'),
    read('PROGETTI','ID,TITOLO,ARTISTA,STATO,FEE,Data_Pubblicazione','ID')
   ]);
-  data={sessions,links,pitches,events,projects};
+  data={sessions,links,pitches,events,sessionEvents,projects};
   fillProjects();render();$('desk-content').hidden=false;
   status('Dati aggiornati. Sessioni e piazzamenti restano distinti dalle fatture e dai diritti incassati.');
  }catch(e){data=null;status('Impossibile verificare l’archivio: '+e.message,true);}
@@ -79,8 +80,9 @@ function render(){
   const projectLinks=data.links.filter(l=>l.id_sessione===s.id&&!l.annullato);
   const names=projectLinks.map(l=>'<a href="scheda_progetto.html?id='+encodeURIComponent(l.id_progetto)+'">'+H(projectName(l.id_progetto))+'</a>').join(' · ');
   const pending=data.links.filter(l=>l.id_sessione===s.id&&!l.annullato);
+  const history=data.sessionEvents.filter(e=>e.id_sessione===s.id);
   const actions='<div class="desk-actions"><button type="button" data-edit-session="'+H(s.id)+'">Modifica</button><button type="button" data-link-session="'+H(s.id)+'">Collega brano</button><button type="button" data-archive-session="'+H(s.id)+'">'+(s.archiviata?'Ripristina':'Archivia')+'</button></div>';
-  return '<article class="desk-entry"><div class="desk-entry-body"><b>'+H(s.titolo)+'</b><small>'+H(s.data_sessione)+' · '+H(label(s.tipo))+' · '+H(label(s.esito))+(s.archiviata?' · Archiviata':'')+'</small><small>'+H(s.partecipanti||'Partecipanti non indicati')+(s.durata_minuti?' · '+s.durata_minuti+' min':' · Durata non registrata')+'</small><small>'+H(s.luogo||'')+'</small><div class="desk-links">'+(names||'<span>Non collegata a un progetto</span>')+'</div><div class="desk-actions">'+pending.map(l=>'<button type="button" class="quiet" data-unlink-id="'+H(l.id)+'" title="Scollega senza cancellare il progetto">Scollega #'+H(l.id_progetto)+'</button>').join('')+'</div></div>'+actions+'</article>';
+  return '<article class="desk-entry"><div class="desk-entry-body"><b>'+H(s.titolo)+'</b><small>'+H(s.data_sessione)+' · '+H(label(s.tipo))+' · '+H(label(s.esito))+(s.archiviata?' · Archiviata':'')+'</small><small>'+H(s.partecipanti||'Partecipanti non indicati')+(s.durata_minuti?' · '+s.durata_minuti+' min':' · Durata non registrata')+'</small><small>'+H(s.luogo||'')+'</small><div class="desk-links">'+(names||'<span>Non collegata a un progetto</span>')+'</div><details><summary>Storico esiti ('+history.length+')</summary>'+history.slice(0,8).map(e=>'<p>'+H(e.created_at.slice(0,10))+' · '+H(e.nota)+'</p>').join('')+'</details><div class="desk-actions">'+pending.map(l=>'<button type="button" class="quiet" data-unlink-id="'+H(l.id)+'" title="Scollega senza cancellare il progetto">Scollega #'+H(l.id_progetto)+'</button>').join('')+'</div></div>'+actions+'</article>';
  }).join('')||'<p class="desk-empty">Nessuna sessione trovata. Inseriscila soltanto se è stata effettivamente svolta.</p>';
  const pitches=data.pitches.filter(p=>shownArchived||!p.archiviata).filter(p=>!search||[p.destinatario,p.referente,projectName(p.id_progetto)].join(' ').toLocaleLowerCase('it-IT').includes(search));
  $('pitch-rows').innerHTML=pitches.map(p=>{
