@@ -203,6 +203,7 @@ async function notePitch(id){
  if(r.error||!r.data?.id)throw Error(r.error?.message||'Nota non registrata');
 }
 function bind(){
+ $('desk-app-version').textContent='v'+(window.KYV_CONFIG?.APP_VERSION||'');
  $('desk-refresh').addEventListener('click',refresh);
  $('tab-sessions').addEventListener('click',()=>showTab('sessions'));
  $('tab-pitches').addEventListener('click',()=>showTab('pitches'));
