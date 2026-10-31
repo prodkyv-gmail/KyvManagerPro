@@ -77,7 +77,7 @@
 
     function isPaid(value) {
         const v = normalize(value);
-        return ['si', 'yes', 'pagata', 'pagato', 'paid', 'true', '1'].includes(v);
+        return ['si', 'yes', 'pagata', 'pagato', 'paid', 'incassata', 'incassato', 'true', '1'].includes(v);
     }
 
     function pickField(row, names, fallback = '') {
