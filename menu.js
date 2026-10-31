@@ -184,6 +184,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
         quote: ['quote', 'autori'],
         rendiconto: ['rendiconto'],
         calendar: ['calendar'],
+        creative: ['creative'],
         nuovo: ['nuovo'],
         integrazioni: ['integrazioni', 'dropbox', 'drive'],
         ascolto: ['ascolto'],
@@ -233,6 +234,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
                         ${navItem('assistente', 'assistente.html', 'route', 'Percorso brano', 'text-violet-300')}
                         ${navItem('archivio', 'archivio_musicale.html', 'folder-search-2', 'Archivio musicale', 'text-cyan-300')}
                         ${navItem('progetti', 'progetti.html', 'music-2', 'Progetti', 'text-indigo-300')}
+                        ${navItem('creative', 'kyv_scrivania_creativa.html', 'calendar-range', 'Scrivania creativa', 'text-cyan-300')}
                         ${navItem('clienti', 'clienti.html', 'users', 'Contatti', 'text-sky-300')}
                         ${navItem('fatture', 'fatture.html', 'receipt', 'Fatture', 'text-emerald-300')}
                         ${navItem('ascolto', 'ascolto.html', 'headphones', 'Ascolto', 'text-violet-300')}
