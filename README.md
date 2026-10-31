@@ -1,3 +1,13 @@
+## KYVManagerPro v2.43 — accesso mobile e contabilità degli acconti (31/10/2026)
+
+**Navigazione:** in `menu.js` il drawer mobile sincronizza `aria-expanded`, overlay e posizione della sidebar e può essere chiuso con Escape; si porta il focus sul primo link quando viene aperto. Le quattro pagine di analisi autonome (`kyv_intelligence.html`, `kyv_analyst.html`, `kyv_ritorni_progetti.html`, `kyv_liquidazioni.html`) mostrano link diretti a **Home** e **Tutte le app**: non obbligano più a tornare da una sequenza di pagine finanziarie. Nessuna nuova dipendenza JS o lettura dati.
+
+**Distinzione tra incasso completo e acconto:** `fatture.html` mantiene le liste **FATTURE DA INCASSARE** (contiene anche i saldi parziali) e **FATTURE INCASSATE** (soltanto saldate). Il totale accanto alla seconda lista ora somma **solo fatture completamente incassate**; prima comprendeva anche gli acconti delle fatture ancora aperte. Due nuove schede mostrano **Incassato complessivo, inclusi acconti** e **Di cui acconti su fatture aperte**, preservando il saldo residuo da incassare. Le righe parziali riportano ricevuto e residuo; le fatture storiche `PAGATA=SI` senza movimenti evidenziano che la **data bancaria non è verificata**. Una lettura Supabase incompleta produce un errore visibile e azzera il riepilogo invece di lasciare dati parziali, senza modificarli.
+
+`kyv-core.js` interpreta anche eventuali valori testuali storici `incassata/incassato`, pur preservando integralmente `FATTURE.PAGATA`, `SI/NO`, `FATTURE_INCASSI` e storni. Non vengono inseriti pagamenti, ricostruite date o modificate fatture. Nuovo test `npm run check:cash-navigation-v243` incluso nella CI: esegue in VM il vero codice dei totali su quattro fatture campione con saldo completo, pagamento parziale e nessun incasso. Testa inoltre apertura/chiusura del drawer mobile.
+
+Versioni `config.js=2.43`, `package.json=2.43.0`, `VERSION=2.43`, cache offline `kyv-studio-v2-43-mobile-nav-cash-summary-20261031`. Il rilascio segue un'unica PR GitHub e un solo merge dopo CI verde: nessun accesso diretto a Vercel.
+
 ## Fix UX v2.42.2 — Amministrazione, Tutte le app e fatture incassate (30/10/2026)
 
 La barra laterale di `kyv-producer-mode.js` mostrava la categoria `Controllo` anziché **Amministrazione**, mentre il menu `menu.js` aveva le fatture fuori dal gruppo e non esponeva direttamente KYV Analyst. Entrambe le navigazioni ora riportano il gruppo **Amministrazione**, con Fatture emesse, KYV Intelligence, KYV Analyst, Ritorno dei progetti e Liquidazioni SIAE/IMAIE; `Tutte le app` è visibile anche come voce diretta senza aprire altri gruppi.
