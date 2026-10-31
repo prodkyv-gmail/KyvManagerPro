@@ -2,7 +2,7 @@
 -- MIGRAZIONE ADDITIVA. Non aggiorna PROGETTI né FATTURE; non importa sessioni storiche presunte.
 create table if not exists public."KYV_SESSIONI" (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null default (select auth.uid()),
+  owner_id uuid not null default auth.uid(),
   data_sessione date not null,
   titolo text not null check (length(btrim(titolo)) between 2 and 180),
   tipo text not null default 'scrittura'
@@ -21,10 +21,11 @@ create table if not exists public."KYV_SESSIONI" (
 
 create table if not exists public."KYV_SESSIONI_PROGETTI" (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null default (select auth.uid()),
+  owner_id uuid not null default auth.uid(),
   id_sessione uuid not null,
   id_progetto bigint not null references public."PROGETTI"("ID") on delete restrict,
   note text check (length(note)<=1000),
+  annullato boolean not null default false,
   created_at timestamptz not null default now(),
   unique(owner_id,id_sessione,id_progetto),
   foreign key (owner_id,id_sessione) references public."KYV_SESSIONI"(owner_id,id) on delete restrict
@@ -32,7 +33,7 @@ create table if not exists public."KYV_SESSIONI_PROGETTI" (
 
 create table if not exists public."KYV_PIAZZAMENTI" (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null default (select auth.uid()),
+  owner_id uuid not null default auth.uid(),
   id_progetto bigint not null references public."PROGETTI"("ID") on delete restrict,
   destinatario text not null check (length(btrim(destinatario)) between 2 and 200),
   tipo_destinatario text not null default 'artista'
@@ -52,7 +53,7 @@ create table if not exists public."KYV_PIAZZAMENTI" (
 
 create table if not exists public."KYV_PIAZZAMENTI_EVENTI" (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null default (select auth.uid()),
+  owner_id uuid not null default auth.uid(),
   id_piazzamento uuid not null,
   tipo text not null check(tipo in ('nota','stato','followup')),
   nota text not null check(length(btrim(nota)) between 2 and 2000),
