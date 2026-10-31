@@ -10,6 +10,7 @@ const primary=[
   ['progetti.html','Progetti','music-2','progetti'],
   ['kyv_scrivania_creativa.html','Scrivania creativa','calendar-range','creative'],
   ['ascolto.html','Ascolto','headphones','ascolto'],
+  ['kyv_audio_finder.html','Audio Finder','search-check','audiofinder'],
   ['integrazioni.html','Tutte le app','grid-3x3','integrazioni']
 ];
 const control=[
@@ -75,7 +76,7 @@ function currentKey(){
     'correlazione.html':'fatture','documenti.html':'spese','fisco.html':'fisco','quote.html':'quote','autori.html':'quote',
     'rendiconto.html':'rendiconto','clienti.html':'clienti','editor.html':'editor','archivio_musicale.html':'archivio',
     'assistente.html':'assistente','pipeline.html':'pipeline','integrazioni.html':'integrazioni','kyv_intelligence.html':'intelligence','kyv_analyst.html':'analyst','kyv_ritorni_progetti.html':'returns','kyv_liquidazioni.html':'liquidazioni','kyv_dropbox.html':'integrazioni',
-    'kyv_drive.html':'integrazioni','importexport.html':'importexport','diagnostica.html':'diagnostica','guida.html':'guida'
+    'kyv_drive.html':'integrazioni','kyv_audio_finder.html':'audiofinder','importexport.html':'importexport','diagnostica.html':'diagnostica','guida.html':'guida'
   };
   return map[page]||page.replace(/\.html$/,'');
 }

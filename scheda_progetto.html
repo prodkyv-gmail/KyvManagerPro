@@ -31,6 +31,7 @@
     <script src="kyv-help.js"></script>
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
+    <script src="kyv-audio-finder-linked-v245.js" defer></script>
     <script src="kyv-responsive.js" defer></script>
     <script src="kyv-searchable-select.js" defer></script>
     <script src="kyv-field-memory.js" defer></script>
@@ -145,6 +146,7 @@
                     <button class="tab-btn" data-tab="checklist" onclick="setTab('checklist')"><i data-lucide="list-checks" class="w-4 h-4"></i>Controlli</button>
                 </nav>
 
+                <section id="kyv-project-audio-finder" class="kyv-card p-4" hidden></section>
                 <section id="tab-sintesi" class="tab-panel grid grid-cols-1 xl:grid-cols-3 gap-4"></section>
                 <section id="tab-timeline" class="tab-panel hidden"></section>
                 <section id="tab-audio" class="tab-panel hidden"></section>
@@ -245,7 +247,7 @@
             if(!rows.length){ el.innerHTML='<div class="p-4 text-center text-kyv-text text-xs">Nessun progetto trovato.</div>'; return; }
             el.innerHTML=rows.map(p=>`<button class="project-result w-full text-left p-3 flex items-start justify-between gap-3 transition-colors ${state.current && String(state.current.ID)===String(p.ID)?'bg-indigo-500/10':''}" onclick="selectProject('${String(p.ID).replaceAll("'","\\'")}')"><span class="min-w-0"><strong class="block text-white truncate">${H(p.TITOLO || 'Senza titolo')}</strong><em class="not-italic block text-cyan-200 text-xs font-bold truncate mt-0.5">${H(p.ARTISTA || 'Artista non indicato')}</em><small class="block text-kyv-text truncate mt-1">${H([p.MANAGEMENT,p.Label,p.STATO].filter(Boolean).join(' · ') || 'Nessun referente/stato')}</small></span><span class="kyv-chip shrink-0">#${H(p.ID)}</span></button>`).join('');
         }
-        window.selectProject = async function(id){ const p=state.projects.find(x=>String(x.ID)===String(id)); if(!p) return; const token=++state.loadToken; const shouldEdit=new URLSearchParams(location.search).get('edit')==='1'; state.current=p; setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden'); try{ const related=await loadProjectData(p); if(token!==state.loadToken) return; Object.assign(state,related); buildCurrentView(); renderProjectResults(); document.getElementById('project-view').classList.remove('hidden'); const picker=document.getElementById('project-picker'); if(picker) picker.removeAttribute('open'); if(shouldEdit) window.openQuickEdit(); } finally{ if(token===state.loadToken){ setLoading(false); if(window.lucide) lucide.createIcons(); } } }
+        window.selectProject = async function(id){ const p=state.projects.find(x=>String(x.ID)===String(id)); if(!p) return; const token=++state.loadToken; const shouldEdit=new URLSearchParams(location.search).get('edit')==='1'; state.current=p; setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden'); try{ const related=await loadProjectData(p); if(token!==state.loadToken) return; Object.assign(state,related); buildCurrentView(); renderProjectResults(); document.getElementById('project-view').classList.remove('hidden'); if(window.KYV_AUDIO_LINKED_V245) window.KYV_AUDIO_LINKED_V245.showProject(p.ID); const picker=document.getElementById('project-picker'); if(picker) picker.removeAttribute('open'); if(shouldEdit) window.openQuickEdit(); } finally{ if(token===state.loadToken){ setLoading(false); if(window.lucide) lucide.createIcons(); } } }
 
         function matchByProjectId(rows, p){ return (rows||[]).filter(r=>has(r.ID_PROGETTO) && String(r.ID_PROGETTO)===String(p.ID)); }
         function matchByTitle(rows, p, titleFields=['Titolo','TITOLO_OPERA','Progetto']){ const pt=N(p.TITOLO); if(!pt) return []; return (rows||[]).filter(r=>titleFields.some(f=>N(r[f]).includes(pt)||pt.includes(N(r[f])))); }

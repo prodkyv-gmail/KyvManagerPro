@@ -26,7 +26,7 @@ assert.ok(source.includes('existing.data?.length'));
 assert.ok(source.includes('window.confirm('));
 assert.ok(source.includes('state.reversals'));
 assert.ok(html.includes('kyv-invoice-reconciliation-v236.js'),'Existing invoice page must include module');
-assert.ok(sw.includes('kyv-studio-v2-44-creative-desk-20261031'));
+assert.ok(sw.includes('kyv-studio-v2-45-audio-finder-20261031'));
 assert.match(sql,/unique references public\."FATTURE_INCASSI"/i,'Only one reversal per payment');
 assert.match(sql,/char_length\(btrim\("Motivo"\)\) between 10 and 500/);
 assert.match(sql,/enable row level security/i);
