@@ -18,6 +18,7 @@ const APP_SHELL = [
     './kyv_audio_finder.html',
     './kyv-audio-finder-v245.js',
     './kyv-audio-finder-ui-v245.js',
+    './kyv-audio-finder-linked-v245.js',
     './kyv-drive-bridge.js',
     './kyv-creative-desk-v244.js',
     './kyv-creative-desk-ui-v244.js',
