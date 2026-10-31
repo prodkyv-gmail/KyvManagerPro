@@ -44,7 +44,7 @@ assert.ok(html.includes('Incassata (storico): data bancaria non documentata'));
 assert.ok(html.includes("if(fatRes.error || projRes.error) throw (fatRes.error || projRes.error)"));
 assert.ok(html.includes('Caricamento non riuscito'));
 assert.ok(html.includes("correlazioneFattureGlobal = [];"),'Read errors must clear stale invoice list');
-const functionMatch=html.match(/window\.applyCorrelazioneFilters = function\(\) \{([\s\S]*?)\n        \};/);
+const functionMatch=html.match(/window\.applyCorrelazioneFilters = function\(\) \{([\s\S]*?)\n        \}\n        document\.addEventListener\('DOMContentLoaded'/);
 assert.ok(functionMatch,'Fatture filtering/cash summary function must exist');
 const states={
   1:{kind:'paid',total:100,received:100,remaining:0,legacyPaid:true},
