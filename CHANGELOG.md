@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-31 — guide sincronizzate v2.45
+
+- Manuali HTML/Markdown aggiornati a Audio Finder, Scrivania, Analyst, Intelligence, ritorni e liquidazioni.
+- Attivato help contestuale sulle pagine nuove e link alla guida nelle pagine autonome.
+- Documentati incassi, fee zero, polarità SIAE e limiti OneDrive/Dropbox; cache PWA ruotata, controllo CI dedicato; nessuna modifica DB.
+
+
 ## 2026-10-29 — SIAE: polarità estratto + colonne Studio Editor
 
 - Corretto il verso di ESTRATTO SIAE nei calcoli: IMPORTO con segno meno è a nostro favore, senza meno è a nostro sfavore. La conversione è solo in lettura/calcolo tramite `kyv-siae-amount.js`; archivio, deduplica import e importi grezzi non vengono modificati.

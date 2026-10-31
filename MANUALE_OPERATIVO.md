@@ -1,4 +1,15 @@
-# KyvManagerPro — Manuale Operativo Super Esteso v2.24
+# KyvManagerPro — Manuale Operativo Super Esteso (aggiornato alla v2.45)
+
+## Aggiornamento 31 ottobre 2026 — v2.36–v2.45
+
+- **Fatture:** Incassato indica denaro ricevuto; anticipo su fattura aperta diverso dal saldo. Stato storico PAGATA non riscritto.
+- **KYV Analyst:** `kyv_analyst.html` propone domande e prove in sola lettura; fee 0 per una sessione di scrittura non equivale a credito scaduto.
+- **Scrivania creativa:** `kyv_scrivania_creativa.html` per sessioni, progetti e piazzamenti reali, con collegamenti documentati.
+- **Audio Finder:** `kyv_audio_finder.html`: scegli sorgente Drive configurata/Dropbox registrato/cartella locale (anche OneDrive sincronizzata); avvia scansione; verifica anteprima; conferma salvataggio di soli metadati; scegli file e associa esplicitamente a progetto o sessione. Scollega non cancella il file. Nessun crawler in background o connettore Microsoft Graph, nessun upload di audio su Supabase.
+- **KYV Intelligence / ritorni / liquidazioni:** distinguere fatturato, incassato e rendiconti SIAE/IMAIE; importo negativo in ESTRATTO SIAE grezzo favorevole a KYV, positivo sfavorevole; conversione solo nei calcoli, senza cambiare il dato storico.
+- **Studio Editor:** menu Colonne per mostrare/nascondere campi senza modificare il database.
+
+**Collaudo Audio Finder:** prova con una cartella volontariamente scelta; verifica anteprima, indice, collegamento reale in Scheda Progetto/Scrivania e operazione Scollega. Nessuna modifica ai dati storici o allo schema senza richiesta specifica.
 
 Questo manuale descrive KyvManagerPro come **assistente operativo per KYV / Vincenzo Centrella**, produttore musicale che deve seguire molti brani, artisti, manager, label, autori, sessioni, file audio, contratti, quote, diritti, fatture, incassi e spese.
 
