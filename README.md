@@ -1,3 +1,19 @@
+## KYV Audio Finder v2.45 — indice metadati audio su richiesta (31/10/2026)
+
+### Funzioni implementate
+- Nuova pagina `kyv_audio_finder.html`, disponibile da **menu principale** e **Tutte le app**, con motore `kyv-audio-finder-v245.js` e UI `kyv-audio-finder-ui-v245.js`.
+- **Google Drive**: al clic su «Cerca audio su Drive», riusa il bridge attuale `kyv-drive-bridge.js` e i due account configurati. La chiamata legge al massimo 12 pagine per account e può non essere esaustiva su archivi enormi. Errori di un account bloccano il salvataggio dell'anteprima parziale. Non sono state modificate credenziali o proxy.
+- **Dropbox**: al clic legge soltanto i file già registrati nella tabella esistente `DROPBOX_AUDIO_FILES`; non è ancora una scansione ricorsiva dell'intero account.
+- **Mac/PC**: selezione esplicita di cartella (browser con supporto `webkitdirectory`) o file singoli. Il browser legge solo nome, dimensione, timestamp e sottocartelle relative autorizzate; calcola un hash dell'identità percorso relativo/dimensione/modifica, **non** l'hash del contenuto audio, e non trasmette percorsi assoluti. La scansione non prosegue a browser chiuso. La selezione è anche utilizzabile per cartelle OneDrive sincronizzate localmente, non è una connessione Microsoft Graph.
+- I risultati restano in **anteprima** finché l'utente non sceglie «Salva metadati nell'indice». Upsert sull'identità stabile `owner_id + provider + account_label + external_key` e conservazione di eventuali hash verificati e URL originali già presenti. Nessun upload WAV/MP3/AIFF/FLAC, nessuna cancellazione o spostamento file.
+- **Collegamenti espliciti** a `PROGETTI` o `KYV_SESSIONI`: suggerimenti da nome file **mai associati automaticamente**; conferma obbligatoria. Correzione tramite `annullata=true`, non con cancellazione. La scheda Progetto visualizza gli audio confermati; la Scrivania creativa mostra i file associati a ogni sessione e rimanda al Finder.
+- **OneDrive online via OAuth/Microsoft Graph e scanner locale persistente**: non implementati in questa versione; richiedono ulteriori autorizzazioni o un helper installato localmente e non sono presentati come già attivi.
+- SQL additivo `docs/v245-audio-finder.sql` applicato a Supabase: `KYV_AUDIO_INDICE` e `KYV_AUDIO_ASSOCIAZIONI`, RLS `owner_id=auth.uid()`, guardia FK verso progetti dello stesso utente e sessioni con proprietario corrispondente, nessuna migrazione ai progetti o agli archivi storici.
+- Test automatici `npm run check:audio-finder-v245` inclusi in `npm run check`. Versioni `config.js=2.45`, `package.json=2.45.0`, `VERSION=2.45` e cache PWA `kyv-studio-v2-45-audio-finder-20261031`.
+
+### Collaudo operativo necessario
+Dal proprio account: scansione di una cartella locale contenente pochi WAV/MP3, anteprima, conferma salvataggio, ricerca, collegamento a un progetto e a una sessione e verifica dei nuovi pannelli nelle due schede. Provare quindi i due Drive configurati e l'archivio Dropbox; la presenza del pulsante non certifica che i rispettivi servizi rispondano correttamente. Su iPhone la selezione ricorsiva delle cartelle potrebbe non essere supportata; usare il Mac per le scansioni locali. Nessun accesso diretto a Vercel per verifica o pubblicazione.
+
 ## KYVManagerPro v2.44 — Scrivania creativa e piazzamenti (31/10/2026)
 
 ### Stato tecnico
