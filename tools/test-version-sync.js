@@ -8,7 +8,7 @@ const configured=config.match(/APP_VERSION:\s*'(\d+\.\d+)'/);
 assert.ok(configured,'APP_VERSION must exist in config.js');
 assert.equal(configured[1],expected,'Published version must match package.json');
 assert.equal(version,expected,'VERSION file must match displayed version');
-assert.equal(expected,'2.42','The current released feature set is v2.42');
+assert.equal(expected,'2.43','The current released feature set is v2.43');
 assert.ok(menu.includes('window.KYV_CONFIG?.APP_VERSION'),
   'Sidebar must use dynamic version from config, not stale literal copy');
 assert.ok(projects.includes('<span>Manager Pro</span>'),
