@@ -179,7 +179,7 @@ async function savePayment(id,value,date){
   if(reversalRes.error)throw Error('Verifica storni non riuscita: '+reversalRes.error.message);
   const fresh=summarize(invoiceRes.data,freshPayments,reversalRes.data||[]);
   if(amountCents>cents(fresh.remaining))throw Error('Importo superiore al residuo '+euro(fresh.remaining)+'.');
-  if(fresh.legacyPaid)throw Error('Fattura già indicata come pagata nello storico. Verifica prima lo stato manualmente.');
+  if(fresh.legacyPaid)throw Error('Fattura già indicata come incassata nello storico (PAGATA=SI). Verifica prima di registrare nuovi incassi.');
   if(!window.confirm('Registrare un incasso di '+euro(amount)+' del '+date+' per '+invoiceTitle(f)+'? La registrazione non può essere modificata direttamente.'))return;
   const res=await state.client.from('FATTURE_INCASSI').insert({ID_FT:Number(id),Data:date,Importo:amountCents/100}).select('ID_INCASSO');
   if(res.error||res.data?.length!==1)throw Error(res.error?.message||'Incasso non registrato.');
