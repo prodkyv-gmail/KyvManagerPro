@@ -259,6 +259,8 @@
                 correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
                 correlazioneFattureGlobal = fatRes.data || []; document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
             } catch(e) {
+                correlazioneFattureGlobal = [];
+                correlazioneProjMapGlobal = {};
                 console.error('[KYV Fatture] Caricamento non riuscito', e);
                 if(errorNode){
                     errorNode.textContent='Impossibile leggere tutte le fatture o i progetti. Verifica la connessione e usa Ricarica: i totali non sono attendibili fino al completamento della lettura.';
