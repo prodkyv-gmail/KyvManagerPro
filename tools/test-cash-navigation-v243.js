@@ -87,7 +87,7 @@ assert.equal(el('tot-da-pagare').innerText,'EUR 200.00');
 assert.equal(pkg.version,'2.45.0');
 assert.equal(read('VERSION').trim(),'2.45');
 assert.match(read('config.js'),/APP_VERSION: '2\.45'/);
-assert.ok(sw.includes('kyv-studio-v2-45-audio-finder-20261031'));
+assert.ok(sw.includes('kyv-studio-v2-45-guide-sync-20261031'));
 assert.ok(pkg.scripts.check.includes('check:cash-navigation-v243'));
 assert.equal(pkg.scripts['check:cash-navigation-v243'],'node tools/test-cash-navigation-v243.js');
 console.log('OK: v2.43 mobile sidebar accessibility; full receipts, partial advances and open invoice balances partitioned correctly');
