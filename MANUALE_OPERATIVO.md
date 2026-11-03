@@ -1,3 +1,13 @@
+## v2.50 — Progetti semplici, ricerca completa e grafici verificabili (3 novembre 2026)
+
+La pagina **Progetti** continua a lavorare in modalità sicura/sola lettura ed espone una **Vista rapida** in popup: titolo, artista, stato e fase registrati, ultima attività datata, sessione, follow-up e uscita. Il popup non carica altri archivi e offre pulsanti per scheda completa, Audio Finder e collegamento fattura. Le modifiche si effettuano soltanto nella scheda. La pagina legge ora l'intero elenco PROGETTI a blocchi paginati con conteggio completo: se i dati non sono leggibili integralmente, mostra un errore e non risultati parziali. La ricerca non è limitata alle prime 40 schede recenti.
+
+**Filtri:** ricerca titolo, artista, stato, fase, note; filtri indipendenti/combinabili per artista, stato, fase e modalità Recenti/Da fare/In attesa/Usciti/Tutti; ordinamento per attività, artista, titolo, follow-up o attività meno recente. Vista compatta/dettagliata, 50 righe alla volta, Azzera filtri. Il grafico **Panoramica archivio** è indipendente dalla selezione della tabella e mostra il numero di progetti per STATO o SVILUPPO, compresi i valori **Non indicato**; un clic su una barra applica un filtro esplicito alla tabella. Non si inventano stati, date o somme economiche.
+
+La Home ha nuovi grafici **indipendenti**, ognuno con i propri filtri: fatturato emesso per anno/tipologia **solo PrezzoUnitario**, conteggio dei progetti per stato o fase, conteggio per artista (top 10, 20 o tutti). Il vecchio grafico **Top Artisti — fatturato** basato su `ID_PROGETTO` e flag `PAGATA` non è più utilizzato, perché le fatture possono ripartirsi fra più progetti. Ogni grafico espone copertura e dati mancanti. I riepiloghi incasso della Home ancora basati sullo storico `PAGATA` sono espressamente indicati come **stima da flag**; per gli incassi bancari verificati si usa Fatture/KYV Intelligence.
+
+Nessuna migrazione del database, nessuna scrittura ai dati storici e nessun caricamento autonomo di audio, file esterni o credenziali. I grafici sono calcolati dai record già letti dalla Home.
+
 ## v2.49 — Gruppi proposti di demo, mix e master
 
 Apri **Audio Finder** e carica/approva come **miei** solo i lavori propri tramite la coda v2.48. Nella nuova sezione **Brani e versioni**, i file di più sorgenti sono riuniti in gruppi possibili in base ai nomi. Usa i filtri **Più versioni / Tutti i brani / Da collegare**, la ricerca libera e il filtro sorgente. Se due artisti hanno brani omonimi, verranno separati quando i nomi dei file permettono di riconoscerli; le versioni senza artista possono restare in un gruppo ambiguo. Il sistema **non analizza l'audio** e non può garantire che la somiglianza di nome indichi lo stesso brano.
