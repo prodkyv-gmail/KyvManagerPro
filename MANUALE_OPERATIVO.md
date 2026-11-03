@@ -1,3 +1,9 @@
+## v2.56 — Filtrare davvero le versioni per archivio (3 novembre 2026)
+
+In **Audio Finder → Brani e versioni** apri il gruppo di un brano già approvato come **Mio**. Nel menu **Sorgente** scegli **Drive**, **Dropbox**, **Dispositivo locale** oppure **Tutte le sorgenti**. Se scegli ad esempio Drive, compariranno nella scheda soltanto file Drive e potrai spuntare e collegare soltanto quelli. Per vedere gli altri file della stessa canzone devi tornare a **Tutte le sorgenti**. Cambiare la sorgente cancella le spunte e il progetto selezionato (non cambia alcun dato salvato).
+
+Scegli versioni singole oppure al massimo 25 file distinti, scegli un progetto esistente e premi **Collega solo le versioni selezionate**. Il popup mostra il progetto di destinazione e i file selezionati: verifica entrambi prima di confermare. Una seconda verifica contro il database e i filtri in uso blocca collegamenti obsoleti o non più visibili. La scansione non carica audio, non crea progetti e non decide per te.
+
 ## v2.55 — Separazione prudente dei brani omonimi (3 novembre 2026)
 
 Apri **Audio Finder → Brani e versioni** dopo aver confermato i file come **Mio**. Se due file riportano lo stesso titolo ma solo uno specifica l'artista, appaiono in gruppi **separati**: non attribuire il file senza artista a un progetto soltanto perché il titolo coincide. I gruppi senza artista riportano un avviso; sono ipotesi da controllare ascoltando o verificando i nomi, non prove di proprietà.
