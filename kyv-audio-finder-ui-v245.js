@@ -397,6 +397,7 @@ function boot(){
   if(b.dataset.newProject)run(async()=>{
    const f=personalCatalogue().find(x=>String(x.id)===String(b.dataset.newProject));
    if(!f)throw Error('Prima devi approvare il file come tuo');
+   if(active(f.id).some(l=>l.id_progetto!=null))throw Error('Versione già collegata: apri il collegamento esistente per verificarlo.');
    if(!window.KYV_AUDIO_PROJECT?.createFromItem)throw Error('Modulo progetti non disponibile');
    // Only a direct, human-initiated click may open the project creation workflow.
    const result=await KYV_AUDIO_PROJECT.createFromItem({
@@ -407,7 +408,20 @@ function boot(){
     link:f.link_file||'',fileId:f.external_key,providerId:f.external_key,
     modifiedTime:f.modificato_il||null,content_hash:f.content_hash||null
    },{db,projects});
-   if(result?.ID){await fetchAll();fillSelects();render();info('Progetto/verifica conclusa per '+f.nome_file+'.');}
+   if(result?.ID){
+    // The user's modal confirmed both creation/linking of this selected file.
+    // Keep the Finder association in sync with the audio-version project.
+    await fetchAll();
+    if(!personalCatalogue().some(x=>String(x.id)===String(f.id)))
+     throw Error('Il file non risulta più autorizzato. Progetto/versione salvati, collegamento Finder da verificare.');
+    const verified=R.planLinks([{audioId:f.id,projectId:String(result.ID)}],
+      personalCatalogue(),projects,links,owner);
+    const linkRes=await db.from('KYV_AUDIO_ASSOCIAZIONI').insert(verified).select('id');
+    if(linkRes.error||linkRes.data?.length!==1)
+     throw Error('Progetto/versione salvati, ma il collegamento Finder è da completare: '+(linkRes.error?.message||'nessuna conferma'));
+    await fetchAll();fillSelects();invalidateReview();render();
+    info('Versione personale collegata al progetto #'+result.ID+' dopo la tua conferma.');
+   }
   });
  });
  $('link-kind').addEventListener('change',kindChanged);
