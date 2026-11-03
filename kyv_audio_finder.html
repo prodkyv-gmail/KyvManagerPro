@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-incremental-v252.js"></script><script src="kyv-audio-batch-v253.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-incremental-v252.js"></script><script src="kyv-audio-batch-v253.js"></script><script src="kyv-audio-review-batch-v254.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
@@ -97,6 +97,25 @@
 .batch-warning{font-size:12px;white-space:pre-wrap;color:#fcd34d;line-height:1.6;margin-top:6px}
 .batch-scan button{background:#4338ca;color:#fff;padding:11px 16px;border-radius:9px;border:1px solid #a5b4fc;font-weight:800}
 .batch-scan button:disabled{opacity:.5;cursor:wait}
+.scan-groups{margin:14px 0;padding:14px;border:1px solid #65748f;border-radius:13px;background:#111827}
+.scan-groups h3{font-size:16px;font-weight:850;margin:0 0 8px}
+.scan-groups-controls{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:10px}
+.scan-groups-controls input,.scan-groups-controls select{min-width:0;flex:1 1 165px;background:#0f172a;border:1px solid #64748b;border-radius:8px;padding:9px;color:white}
+.scan-group-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:7px}
+.scan-group-list button{min-width:0;background:#202b42!important;text-align:left;white-space:normal}
+.scan-group-list button[aria-pressed="true"]{outline:2px solid #c4b5fd}
+.scan-group-list strong,.scan-group-list small{display:block;overflow-wrap:anywhere}
+.scan-group-list small{font-size:11px;color:#cbd5e1;margin-top:5px}
+.scan-bulk{border:1px solid #64748b;border-radius:12px;padding:12px;background:#131e32;margin:12px 0}
+.scan-bulk p{margin:2px 0 9px}
+.scan-bulk input[type=checkbox]{width:19px;height:19px;flex:none;accent-color:#818cf8}
+.scan-bulk-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.scan-bulk-actions button{font-size:12px}
+.scan-bulk-count{font-size:12px;color:#ddd6fe;font-weight:800}
+.scan-selection-label{display:flex;align-items:center;gap:8px}
+.scan-selection-label input{width:20px;height:20px;flex:none;accent-color:#a5b4fc}
+.scan-selection-label input:disabled{opacity:.4}
+@media(max-width:650px){.scan-group-list{grid-template-columns:1fr}}
 </style></head>
 <body class="flex h-screen overflow-hidden">
 <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
@@ -167,14 +186,33 @@
 </div>
 </section>
 <section id="finder-preview" class="finder-preview" hidden>
-<h2>Verifica unificata e incrementale · v2.53</h2><p id="finder-preview-note"></p>
+<h2>Revisione guidata dei brani · v2.54</h2><p id="finder-preview-note"></p>
 <p id="finder-sync-summary" class="finder-sync-note" role="status"></p>
 <p class="finder-note">I file già esaminati vengono riconosciuti tramite identità sorgente. I metadati diversi sono proposti per aggiornamento; quelli senza informazioni sufficienti restano «revisione non verificabile». Nessun aggiornamento, eliminazione o collegamento è automatico.</p>
 <div class="explorer-filters"><input id="finder-preview-query" type="search" placeholder="Filtra i risultati prima di classificare" aria-label="Cerca nella selezione temporanea">
 <select id="finder-preview-state" aria-label="Filtra classificazione"><option value="all">Tutte le classificazioni</option><option value="mio">Miei selezionati</option><option value="reference">Reference</option><option value="da_verificare">Da verificare</option></select>
 <select id="finder-sync-state" aria-label="Stato scansione incrementale"><option value="attention">Nuovi e da verificare</option><option value="new">Nuovi</option><option value="changed">Metadati modificati</option><option value="unverified">Revisione non verificabile</option><option value="pending">Classificazione sospesa</option><option value="unchanged">Già indicizzati, invariati nei metadati</option><option value="excluded">Reference già escluse</option><option value="all">Tutti i risultati</option></select></div>
 <p class="finder-note">Per ciascun file scegli se è un tuo lavoro, una reference/brano di altri oppure da verificare. Solo gli audio marcati esplicitamente come tuoi entreranno nel catalogo. Non presumo che un file sia tuo dal nome o dalla cartella.</p>
-<div class="finder-intake-actions"><button type="button" id="preview-mark-mine" data-finder-action>Segna come miei i primi 100 visibili</button><button type="button" id="preview-mark-reference" data-finder-action>Escludi i primi 100 visibili</button></div>
+<section class="scan-groups" aria-label="Raggruppamenti da revisionare">
+<h3>Gruppi suggeriti · solo nomi e artisti</h3>
+<p class="finder-note">Demo, mix e master con titolo compatibile sono affiancati per aiutarti a revisionarli. Non è riconoscimento audio e non dimostra che i file appartengano allo stesso brano.</p>
+<div class="scan-groups-controls">
+<input id="scan-group-query" type="search" placeholder="Cerca gruppi per titolo o artista" aria-label="Cerca gruppi">
+<select id="scan-group-source" aria-label="Sorgente gruppi"><option value="">Tutte le sorgenti</option><option value="local">Dispositivo</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+<select id="scan-group-mode" aria-label="Tipo gruppi"><option value="review">Da esaminare</option><option value="multi">Con più versioni</option><option value="all">Tutti i gruppi</option></select>
+</div>
+<p id="scan-group-summary" class="finder-note" role="status"></p>
+<div id="scan-group-list" class="scan-group-list"></div>
+<div class="finder-intake-actions"><button id="scan-group-more" type="button" hidden>Mostra altri gruppi</button><button id="scan-group-clear" type="button" hidden>Mostra di nuovo tutti i file</button></div>
+</section>
+<section class="scan-bulk" aria-label="Revisione multipla manuale">
+<p><strong>Selezione mirata</strong> — spunta solo i file che hai verificato. Le reference già escluse e i brani già approvati non possono essere riclassificati in massa; per correggerli usa la scelta individuale.</p>
+<div class="scan-bulk-actions">
+<button id="scan-select-visible" type="button">Seleziona fino a 100 file da verificare, visibili</button>
+<button id="scan-clear-selected" type="button">Deseleziona</button>
+<span id="scan-selected-count" class="scan-bulk-count" role="status">0 file selezionati</span>
+</div></section>
+<div class="finder-intake-actions"><button type="button" id="preview-mark-mine" data-finder-action>Conferma come miei solo i file spuntati</button><button type="button" id="preview-mark-reference" data-finder-action>Escludi come reference solo i file spuntati</button></div>
 <p id="finder-preview-count" class="finder-note" role="status"></p>
 <div id="finder-preview-list"></div><button id="finder-preview-more" type="button" hidden>Mostra altri</button>
 <div class="finder-intake-actions"><button id="finder-save" data-finder-action type="button">Salva le classificazioni e gli aggiornamenti confermati</button></div>

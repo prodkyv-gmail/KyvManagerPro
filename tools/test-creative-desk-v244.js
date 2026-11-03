@@ -77,10 +77,10 @@ assert.ok(read('integrazioni.html').includes('href="kyv_scrivania_creativa.html"
 assert.ok(read('kyv_analyst.html').includes('id="analyst-creative-desk"'));
 assert.ok(read('kyv-analyst-ui-v241.js').includes("allRows(c,'KYV_SESSIONI'"));
 const sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-assert.ok(sw.includes("kyv-studio-v2-53-cloud-batch-20261103"));
+assert.ok(sw.includes("kyv-studio-v2-54-guided-review-20261103"));
 for(const asset of ['kyv_scrivania_creativa.html','kyv-creative-desk-v244.js','kyv-creative-desk-ui-v244.js'])
  assert.ok(sw.includes("'./"+asset+"'"),'PWA must cache '+asset);
-assert.equal(pkg.version,'2.53.0');
+assert.equal(pkg.version,'2.54.0');
 assert.equal(pkg.scripts['check:creative-desk-v244'],'node tools/test-creative-desk-v244.js');
 assert.ok(pkg.scripts.check.includes('check:creative-desk-v244'));
 console.log('OK: KYV creative desk v2.44, zero imaginary sessions, owner safeguards, audit, navigation and analyst integration');

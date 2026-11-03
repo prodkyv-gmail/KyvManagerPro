@@ -1,3 +1,6 @@
+### v2.54 — Revisione a gruppi senza approvazione implicita
+Raggruppamenti da nomi di file solo informativi: non equivalgono a identità acustica, proprietà del brano o associazione di progetto. Separare esplicitamente artisti diversi e quelli non dichiarati. Un bulk può toccare fino a 100 **caselle spuntate e visibili**, e non deve alterare reference già escluse, lavori approvati, aggiornamenti metadati da riconfermare o decisioni individuali già prese. Cambio filtro/gruppo azzera la selezione, ma mantiene decisioni manuali non salvate fino a scarto volontario. La classificazione è sempre seguita da conferma separata di persistenza, senza creare progetti.
+
 ### v2.53 — Scansioni cloud selezionate e indipendenti
 Il comando batch parte solo su clic ed enumera soltanto Drive già configurati e/o il Dropbox registrato nel database. Non equivale a crawler dell'intero account, e non include dispositivi locali senza file picker. Se una fonte è incompleta o fallisce, segnalare la copertura della fonte e mantenere i risultati disponibili senza inferire cancellazioni. Non unire titoli omonimi: deduplicare solo provider+account+external_key. Suggerimenti di SHA-256 identico e titoli compatibili restano separati dalle decisioni manuali di proprietà e dai collegamenti ai progetti.
 
