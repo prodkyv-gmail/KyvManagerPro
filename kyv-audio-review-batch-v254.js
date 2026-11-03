@@ -55,7 +55,7 @@ function narrowIndices(indices=[],groups=[],selectedGroup=''){
  return indices.filter(i=>allowed.has(i));
 }
 function bulkEligible(f){
- if(!f)return false;
+ if(!f||f._explicit)return false;
  const existing=f._sync?.previousDecision||'da_verificare';
  // Never bulk-reclassify past references or already approved productions;
  // never silently approve changed metadata without its dedicated v2.52 action.
