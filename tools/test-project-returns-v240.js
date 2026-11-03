@@ -59,5 +59,5 @@ assert.ok(ui.includes('window.confirm(')&&ui.includes('window.prompt('));
 assert.ok(ui.includes("count:'exact'")&&ui.includes('rows('));
 assert.ok(page.includes('Ritorno economico dei progetti')&&page.includes('kyv-project-returns-v240.js'));
 assert.ok(read('kyv_intelligence.html').includes('kyv_ritorni_progetti.html'));
-assert.ok(sw.includes('kyv-studio-v2-51-audio-workspace-20261103')&&sw.includes("'./kyv_ritorni_progetti.html'"));
+assert.ok(sw.includes('kyv-studio-v2-52-incremental-audio-20261103')&&sw.includes("'./kyv_ritorni_progetti.html'"));
 console.log('OK: v2.40 project fees, royalty shares, partial/storno, unknown dates and safe allocation guards');
