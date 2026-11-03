@@ -207,31 +207,39 @@ function invalidateReview(){
 }
 function generateReview(){
  if(!owner)throw Error('Prima effettua la lettura autenticata');
- reviewItems=R.queue(personalCatalogue(),projects,links);
+ reviewChoices.clear();reviewItems=R.queue(personalCatalogue(),projects,links);
  reviewShown=80;$('review-panel').hidden=false;renderReview();
  info('Proposte generate in sola lettura: nessun collegamento è stato creato.');
 }
+function rememberReview(){
+ $('review-list').querySelectorAll('[data-review-check]').forEach(input=>{
+  const audioId=input.dataset.reviewCheck;
+  const target=Array.from($('review-list').querySelectorAll('[data-review-project]'))
+   .find(x=>x.dataset.reviewProject===audioId);
+  reviewChoices.set(audioId,{checked:input.checked,projectId:target?.value||''});
+ });
+}
 function renderReview(){
+ if($('review-list').children.length)rememberReview();
  const visible=reviewItems.slice(0,reviewShown);
  $('review-status').textContent=reviewItems.length+' file con corrispondenze · '+
- reviewItems.filter(x=>x.status==='ambigua').length+' ambigui. Le caselle di conferma sono tutte vuote.';
+ reviewItems.filter(x=>x.status==='ambigua').length+' ambigui · '+Array.from(reviewChoices.values()).filter(x=>x.checked).length+' selezionati.';
  $('review-list').innerHTML=visible.map(({file,candidates,status,proposedId})=>{
+  const prior=reviewChoices.get(String(file.id));const projectId=prior?.projectId??proposedId;
   const opts='<option value="">Seleziona progetto…</option>'+
-   candidates.map(p=>'<option value="'+H(p.id)+'"'+(proposedId===String(p.id)?' selected':'')+'>'+
+   candidates.map(p=>'<option value="'+H(p.id)+'"'+(projectId===String(p.id)?' selected':'')+'>'+
    H((p.artist?p.artist+' · ':'')+p.title+' #'+p.id+' ('+p.reason+')')+'</option>').join('');
   return '<div class="review-row"><label><input type="checkbox" data-review-check="'+H(file.id)+
-   '" aria-label="Conferma '+H(file.nome_file)+'"> <strong>'+H(file.nome_file)+'</strong></label>'+
+   '" aria-label="Conferma '+H(file.nome_file)+'" '+(prior?.checked?'checked':'')+'> <strong>'+H(file.nome_file)+'</strong></label>'+
    '<small>'+H(file.provider+' · '+file.account_label)+' · '+H(status==='ambigua'?'Ambiguo: scegliere manualmente':status==='forte'?'Titolo + artista':'Da verificare')+'</small>'+
    '<select data-review-project="'+H(file.id)+'" aria-label="Progetto per '+H(file.nome_file)+'">'+opts+'</select></div>';
  }).join('')||'<p>Nessuna corrispondenza: per un file senza suggerimenti usa il collegamento manuale nel dettaglio.</p>';
  $('review-more').hidden=reviewShown>=reviewItems.length;
 }
 async function saveReviewed(){
- const selections=Array.from(document.querySelectorAll('[data-review-check]:checked')).map(input=>{
-  const audioId=input.dataset.reviewCheck;
-  const target=Array.from(document.querySelectorAll('[data-review-project]')).find(x=>x.dataset.reviewProject===audioId);
-  return {audioId,projectId:target?.value||''};
- });
+ rememberReview();
+ const selections=Array.from(reviewChoices.entries()).filter(([,x])=>x.checked)
+  .map(([audioId,x])=>({audioId,projectId:x.projectId}));
  const ready=R.planLinks(selections,personalCatalogue(),projects,links,owner);
  if(!confirm('Confermi '+ready.length+' associazioni audio → progetto, scelte esplicitamente? Non verrà caricato alcun audio.'))return;
  info('Controllo dei collegamenti aggiornati prima del salvataggio…');
@@ -256,6 +264,7 @@ function boot(){
  $('review-generate').addEventListener('click',()=>run(async()=>generateReview()));
  $('review-more').addEventListener('click',()=>{reviewShown+=80;renderReview()});
  $('review-save').addEventListener('click',()=>run(saveReviewed));
+ $('review-list').addEventListener('change',rememberReview);
  $('finder-more').addEventListener('click',()=>{shown+=120;render()});
  $('finder-drive').addEventListener('click',()=>run(drive));
  $('finder-dropbox').addEventListener('click',()=>run(dropbox));
