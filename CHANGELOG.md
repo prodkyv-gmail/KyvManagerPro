@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-03 — v2.49 Raggruppamento versioni personale e assistito
+
+- Catalogo multi-source: gruppi probabili per titolo e artista, riconoscimento demo/mix/master/stems, duplicati verificati solo per hash identico.
+- Filtri di gruppi, ricerca per titolo/versione, selezione e conferma di massimo 25 versioni per un progetto esistente senza creazioni implicite.
+- Popup per creare un progetto da audio: scelta destinazione obbligatoria, conferma esplicita, gestione corretta del provider locale e associazione Finder verificata.
+- Nessuna tabella nuova, nessun audio binario trasferito; ricerca limitata agli audio personali confermati.
+- Migliorata la velocità dei filtri grazie alle identità approvate indicizzate, PWA e manuale aggiornati.
+
+
 ## v2.48 — Audio personali, PC/Mac e smartphone (3 novembre 2026)
 
 KYV Audio Finder non presume più che qualsiasi audio letto da una cartella autorizzata sia un tuo brano. Dopo aver scelto una cartella su PC/Mac o file da PC, Android o dall'app File su iPhone, compare la coda **Mio / Reference / Da verificare**. Ogni file è inizialmente da verificare; soltanto i file marcati **esplicitamente** "È un mio lavoro" vengono indicizzati e potranno essere collegati a progetti. Le reference vengono ricordate soltanto per identità sorgente (non sono archiviate le loro tracce audio, nomi, URL o percorsi), così la scansione successiva le riconosce come escluse. I file in attesa non entrano nel catalogo.

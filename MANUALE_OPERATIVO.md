@@ -1,3 +1,13 @@
+## v2.49 — Gruppi proposti di demo, mix e master
+
+Apri **Audio Finder** e carica/approva come **miei** solo i lavori propri tramite la coda v2.48. Nella nuova sezione **Brani e versioni**, i file di più sorgenti sono riuniti in gruppi possibili in base ai nomi. Usa i filtri **Più versioni / Tutti i brani / Da collegare**, la ricerca libera e il filtro sorgente. Se due artisti hanno brani omonimi, verranno separati quando i nomi dei file permettono di riconoscerli; le versioni senza artista possono restare in un gruppo ambiguo. Il sistema **non analizza l'audio** e non può garantire che la somiglianza di nome indichi lo stesso brano.
+
+Apri un gruppo, controlla i file, scegli fino a 25 versioni non collegate, seleziona **manualmente** un progetto già esistente e premi **Collega solo le versioni selezionate**. Conferma nel popup: il sistema rilegge le associazioni ed evita doppioni. Puoi ripetere per le altre versioni.
+
+Per creare un progetto usa il pulsante **Dettaglio** di un singolo file personale, poi **Apri proposta progetto / versione**. Nel popup devi scegliere fra progetto esistente o **Crea un nuovo progetto**; la scelta non è mai precompilata dal sistema. Dopo il salvataggio atomico della versione viene associato il file al catalogo Finder, con avviso se il secondo passaggio non riesce. Nessun progetto viene creato dagli algoritmi di raggruppamento o dalla scansione.
+
+Sono supportati gli audio locali **selezionati** da PC/Mac/Android o da File su iPhone, e i provider cloud già disponibili nel Finder. Accesso completo e continuativo ai dischi, ricerca Dropbox sull'intero account e OneDrive online richiedono passaggi futuri separati.
+
 ## v2.48 — Audio personali, PC/Mac e smartphone (3 novembre 2026)
 
 KYV Audio Finder non presume più che qualsiasi audio letto da una cartella autorizzata sia un tuo brano. Dopo aver scelto una cartella su PC/Mac o file da PC, Android o dall'app File su iPhone, compare la coda **Mio / Reference / Da verificare**. Ogni file è inizialmente da verificare; soltanto i file marcati **esplicitamente** "È un mio lavoro" vengono indicizzati e potranno essere collegati a progetti. Le reference vengono ricordate soltanto per identità sorgente (non sono archiviate le loro tracce audio, nomi, URL o percorsi), così la scansione successiva le riconosce come escluse. I file in attesa non entrano nel catalogo.

@@ -1,10 +1,10 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
-let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map();
+let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='';
 const info=(v,error=false)=>{const el=$('finder-status');el.textContent=v;el.className='finder-status'+(error?' error':'')};
 const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v)};
 async function all(table,fields,sort){
@@ -21,17 +21,18 @@ async function all(table,fields,sort){
 }
 async function fetchAll(){
  [catalogue,links,projects,sessions,decisions]=await Promise.all([
-  all('KYV_AUDIO_INDICE','id,provider,account_label,external_key,nome_file,percorso_relativo,mime_type,size_bytes,content_hash,link_file,origine,ultimo_avvistamento','ultimo_avvistamento'),
+  all('KYV_AUDIO_INDICE','id,provider,account_label,external_key,nome_file,percorso_relativo,mime_type,size_bytes,modificato_il,content_hash,link_file,origine,ultimo_avvistamento','ultimo_avvistamento'),
   all('KYV_AUDIO_ASSOCIAZIONI','id,id_audio,id_progetto,id_sessione,confermata,annullata,metodo,created_at','created_at'),
   all('PROGETTI','ID,TITOLO,ARTISTA','ID'),
   all('KYV_SESSIONI','id,titolo,data_sessione,archiviata','data_sessione'),
   all('KYV_AUDIO_DECISIONI','provider,account_label,external_key,decision','updated_at')
  ]);
+ approvedKeys=new Set(decisions.filter(d=>d.decision==='mio').map(C.key));
 }
 const pn=p=>(p.ARTISTA?p.ARTISTA+' · ':'')+(p.TITOLO||'Senza titolo')+' #'+p.ID;
 const sn=p=>(p.titolo||'Sessione')+' · '+(p.data_sessione||'');
 const active=id=>links.filter(l=>l.id_audio===id&&!l.annullata);
-const personalCatalogue=()=>catalogue.filter(f=>C.isAllowed(f,decisions));
+const personalCatalogue=()=>catalogue.filter(f=>approvedKeys.has(C.key(f)));
 function fillSelects(){
  const make=(arr,id,name)=>'<option value="">Seleziona</option>'+arr.map(p=>'<option value="'+H(id(p))+'">'+H(name(p))+'</option>').join('');
  $('link-project').innerHTML=make(projects,p=>p.ID,pn);
@@ -47,6 +48,7 @@ function render(){
   '<small>'+active(f.id).length+' collegamenti verificati</small></button>').join('')||'<p>Nessun file corrispondente.</p>';
  $('finder-more').hidden=rows.length<=shown;
  renderDetail();
+ renderGroups();
 }
 function renderDetail(){
  const f=personalCatalogue().find(x=>x.id===selected);$('link-panel').hidden=!f;
@@ -54,7 +56,7 @@ function renderDetail(){
  const a=active(f.id),suggest=F.suggestions(f,projects);
  const url=f.link_file?F.safeUrl(f.link_file):null;
  const link=url?'<a href="'+H(url)+'" target="_blank" rel="noopener noreferrer">Apri file nella sorgente</a>':'<small>File locale: per aprirlo devi riselezionarlo dal computer.</small>';
- const same=F.duplicates(f,catalogue).sameHash.filter(x=>x.id!==f.id);
+ const same=F.duplicates(f,personalCatalogue()).sameHash.filter(x=>x.id!==f.id);
  $('finder-detail').innerHTML='<h3>'+H(f.nome_file)+'</h3><p>'+H(f.provider+' · '+f.account_label)+'</p><p>'+H(f.percorso_relativo)+'</p>'+link+
  '<p>Dimensione: '+(f.size_bytes===null?'non disponibile':Number(f.size_bytes).toLocaleString('it-IT')+' byte')+
  ' · Hash verificato: '+(f.content_hash?'sì':'no')+'</p><h3>Collegamenti confermati</h3>'+
@@ -65,6 +67,91 @@ function renderDetail(){
  (same.length?'<p>Possibili duplicati da hash identico: '+H(same.slice(0,8).map(x=>x.nome_file).join(' · '))+'</p>':'')+
  '<p><button type="button" data-new-project="'+H(f.id)+'">Apri proposta progetto / versione (solo su mia scelta)</button></p>';
 }
+// v2.49 — all grouping is read-only and uses approved personal audio only.
+function groupList(){
+ return G.groups(personalCatalogue(),links);
+}
+function renderGroups(){
+ const all=groupList();
+ const filtered=G.filter(all,{query:$('finder-group-query').value,source:$('finder-group-source').value,mode:$('finder-group-mode').value});
+ const multi=all.filter(x=>x.files.length>1).length;
+ $('finder-group-count').textContent=all.length+' possibili brani · '+multi+' con più versioni · '+
+  filtered.length+' gruppi nella vista. Raggruppamenti da verificare, nessuna associazione automatica.';
+ $('finder-group-list').innerHTML=filtered.slice(0,groupShown).map((g,i)=>
+  '<button type="button" class="finder-group-tile'+(groupKey===g.key?' active':'')+'" data-group-index="'+i+'">'+
+  '<strong>'+H(g.artist?g.artist+' · '+g.title:g.title)+'</strong>'+
+  '<small>'+g.files.length+' file · '+H(g.versionKinds.join(', '))+'</small>'+
+  '<small>'+H(g.providers.join(' + '))+(g.ambiguousArtist?' · artista ambiguo':'')+'</small>'+
+  '</button>').join('')||'<p class="finder-note">Nessun gruppo in questa ricerca. Prova «Tutti i brani» oppure indica un altro termine.</p>';
+ $('finder-group-more').hidden=filtered.length<=groupShown;
+ if(groupKey&&!all.some(g=>g.key===groupKey)){groupKey='';groupSelected.clear();groupProject='';}
+ renderGroupDetail(all);
+}
+function renderGroupDetail(all=groupList()){
+ const el=$('finder-group-detail'),g=all.find(x=>x.key===groupKey);
+ if(!g){el.hidden=true;el.innerHTML='';return;}
+ el.hidden=false;
+ const available=new Set(G.allowedForLink(g,links).map(f=>String(f.id)));
+ // If a saved link or source changed, a previous checkbox is never silently reused.
+ groupSelected=new Set([...groupSelected].filter(id=>available.has(id)));
+ const sorted=[...g.files].sort((a,b)=>a.version.kind.localeCompare(b.version.kind,'it')||
+  a.file.nome_file.localeCompare(b.file.nome_file,'it'));
+ const rows=sorted.slice(0,groupFileShown);
+ const opts='<option value="">Scegli un progetto esistente</option>'+
+  [...projects].sort((a,b)=>pn(a).localeCompare(pn(b),'it')).map(p=>
+   '<option value="'+H(p.ID)+'"'+(String(p.ID)===groupProject?' selected':'')+'>'+H(pn(p))+'</option>').join('');
+ el.innerHTML='<h3>'+H(g.artist?g.artist+' · '+g.title:g.title)+'</h3>'+
+  '<p class="finder-note">Queste versioni sono accostate solo per somiglianza del nome: verifica che siano davvero dello stesso lavoro prima di associarle.'+
+  (g.ambiguousArtist?' Il nome dell’artista non è sufficiente per attribuirle.':'')+
+  (g.exactHashDuplicates?' · '+g.exactHashDuplicates+' hash identici verificati fra le versioni.':'')+'</p>'+
+  '<div class="finder-group-approve"><button type="button" data-group-action="select">Seleziona fino a 25 versioni non collegate</button>'+
+  '<button type="button" data-group-action="clear">Deseleziona</button><span class="finder-note" id="finder-group-selected-count">'+groupSelected.size+' selezionate</span></div>'+
+  rows.map(({file,version})=>{
+   const eligible=available.has(String(file.id)),checked=groupSelected.has(String(file.id));
+   return '<div class="finder-group-file"><input type="checkbox" data-group-file="'+H(file.id)+'"'+
+    (checked?' checked':'')+(eligible?'':' disabled')+' aria-label="Seleziona versione '+H(file.nome_file)+'">'+
+    '<div style="min-width:0;flex:1"><strong>'+H(file.nome_file)+'</strong><small>'+
+    H(version.label+' · '+file.provider+' · '+file.account_label)+
+    (eligible?'':' · già collegato a un progetto')+'</small></div>'+
+    '<button type="button" data-group-open-file="'+H(file.id)+'">Dettaglio</button></div>';
+  }).join('')+
+  (sorted.length>groupFileShown?'<button type="button" data-group-action="more">Mostra altre versioni</button>':'')+
+  '<div class="finder-group-approve"><select id="finder-group-project" aria-label="Progetto di destinazione">'+opts+'</select>'+
+  '<button type="button" data-finder-action data-group-action="save">Collega solo le versioni selezionate</button></div>'+
+  '<p class="finder-note">Per creare invece un nuovo progetto, apri il Dettaglio di un file selezionato e scegli «Apri proposta progetto / versione». Il popup richiede una seconda conferma. Gli altri file del gruppo non saranno collegati automaticamente.</p>';
+}
+function showGroup(key){
+ const match=groupList().find(g=>g.key===key);if(!match)return;
+ groupKey=key;groupShown=Math.max(24,groupShown);groupFileShown=35;groupSelected.clear();
+ groupProject=''; // Never preselect a destination from filename matching or past group links.
+ renderGroups();
+}
+function groupSelection(action){
+ const g=groupList().find(x=>x.key===groupKey);if(!g)return;
+ if(action==='clear'){groupSelected.clear();renderGroupDetail();return}
+ if(action==='select'){
+  const candidates=G.allowedForLink(g,links).sort((a,b)=>G.versionOf(a).kind.localeCompare(G.versionOf(b).kind,'it')||a.nome_file.localeCompare(b.nome_file,'it')).slice(0,Math.min(25,groupFileShown));
+  groupSelected=new Set(candidates.map(f=>String(f.id)));renderGroupDetail();
+ }
+ if(action==='more'){groupFileShown+=35;renderGroupDetail();}
+}
+async function saveGroup(){
+ const g=groupList().find(x=>x.key===groupKey);if(!g)throw Error('Scegli un gruppo');
+ const chosen=[...groupSelected],projectId=groupProject;
+ const plan=G.planVersionLinks({group:g,selectedIds:chosen,projectId,files:personalCatalogue(),projects,links,owner,review:R});
+ if(!confirm('Confermi '+plan.length+' versioni selezionate per il progetto #'+projectId+
+  '? Hai verificato che appartengano al tuo brano? Nessun nuovo progetto sarà creato.'))return;
+ info('Controllo dell’indice e dei collegamenti prima del salvataggio…');
+ await fetchAll();
+ const refreshed=groupList().find(x=>x.key===g.key);
+ const verified=G.planVersionLinks({group:refreshed,selectedIds:chosen,projectId,files:personalCatalogue(),projects,links,owner,review:R});
+ const result=await db.from('KYV_AUDIO_ASSOCIAZIONI').insert(verified).select('id');
+ if(result.error||result.data?.length!==verified.length)
+  throw Error('Collegamento non completamente verificato: '+(result.error?.message||'rileggi il catalogo prima di ripetere'));
+ await fetchAll();fillSelects();invalidateReview();groupSelected.clear();render();
+ info(verified.length+' versioni collegate al progetto scelto dopo conferma. Nessun progetto creato.');
+}
+
 async function run(task){
  if(busy)return;lock(true);
  try{await task()}catch(e){info('Operazione non completata: '+(e?.message||e),true)}
@@ -258,6 +345,28 @@ function kindChanged(){
 }
 function boot(){
  $('finder-reload').addEventListener('click',refresh);
+ $('finder-group-query').addEventListener('input',()=>{groupShown=24;renderGroups()});
+ $('finder-group-source').addEventListener('change',()=>{groupShown=24;renderGroups()});
+ $('finder-group-mode').addEventListener('change',()=>{groupShown=24;renderGroups()});
+ $('finder-group-more').addEventListener('click',()=>{groupShown+=24;renderGroups()});
+ $('finder-group-list').addEventListener('click',e=>{
+  const b=e.target.closest('[data-group-index]');if(!b)return;
+  const groups=G.filter(groupList(),{query:$('finder-group-query').value,source:$('finder-group-source').value,mode:$('finder-group-mode').value});
+  const g=groups[Number(b.dataset.groupIndex)];if(g)showGroup(g.key);
+ });
+ $('finder-group-detail').addEventListener('change',e=>{
+  if(e.target.id==='finder-group-project'){groupProject=e.target.value;return;}
+  const x=e.target.closest('[data-group-file]');if(!x)return;
+  if(x.checked){if(groupSelected.size>=25){x.checked=false;info('Massimo 25 versioni per conferma, poi ripeti con le successive.',true);return;}groupSelected.add(x.dataset.groupFile);}
+  else groupSelected.delete(x.dataset.groupFile);
+  const count=$('finder-group-selected-count');if(count)count.textContent=groupSelected.size+' selezionate';
+ });
+ $('finder-group-detail').addEventListener('click',e=>{
+  const b=e.target.closest('[data-group-action],[data-group-open-file]');if(!b)return;
+  if(b.dataset.groupOpenFile){selected=b.dataset.groupOpenFile;renderDetail();$('finder-detail').scrollIntoView({behavior:'smooth',block:'nearest'});return;}
+  if(b.dataset.groupAction==='save')return run(saveGroup);
+  groupSelection(b.dataset.groupAction);
+ });
  $('finder-query').addEventListener('input',()=>{shown=120;render()});
  $('finder-source').addEventListener('change',()=>{shown=120;render()});
  $('finder-link-status').addEventListener('change',()=>{shown=120;render()});
@@ -288,14 +397,31 @@ function boot(){
   if(b.dataset.newProject)run(async()=>{
    const f=personalCatalogue().find(x=>String(x.id)===String(b.dataset.newProject));
    if(!f)throw Error('Prima devi approvare il file come tuo');
+   if(active(f.id).some(l=>l.id_progetto!=null))throw Error('Versione già collegata: apri il collegamento esistente per verificarlo.');
    if(!window.KYV_AUDIO_PROJECT?.createFromItem)throw Error('Modulo progetti non disponibile');
    // Only a direct, human-initiated click may open the project creation workflow.
    const result=await KYV_AUDIO_PROJECT.createFromItem({
     fileName:f.nome_file,name:f.nome_file,title:f.nome_file,
+    mimeType:f.mime_type||'audio/unknown',type:f.mime_type||'audio/unknown',
+    provider:f.provider,
     source:f.provider==='drive'?'Google Drive':f.provider==='dropbox'?'Dropbox':'Archivio locale',
-    link:f.link_file||'',fileId:f.external_key,providerId:f.external_key
+    link:f.link_file||'',fileId:f.external_key,providerId:f.external_key,
+    modifiedTime:f.modificato_il||null,content_hash:f.content_hash||null
    },{db,projects});
-   if(result?.ID){await fetchAll();fillSelects();render();info('Progetto/verifica conclusa per '+f.nome_file+'.');}
+   if(result?.ID){
+    // The user's modal confirmed both creation/linking of this selected file.
+    // Keep the Finder association in sync with the audio-version project.
+    await fetchAll();
+    if(!personalCatalogue().some(x=>String(x.id)===String(f.id)))
+     throw Error('Il file non risulta più autorizzato. Progetto/versione salvati, collegamento Finder da verificare.');
+    const verified=R.planLinks([{audioId:f.id,projectId:String(result.ID)}],
+      personalCatalogue(),projects,links,owner);
+    const linkRes=await db.from('KYV_AUDIO_ASSOCIAZIONI').insert(verified).select('id');
+    if(linkRes.error||linkRes.data?.length!==1)
+     throw Error('Progetto/versione salvati, ma il collegamento Finder è da completare: '+(linkRes.error?.message||'nessuna conferma'));
+    await fetchAll();fillSelects();invalidateReview();render();
+    info('Versione personale collegata al progetto #'+result.ID+' dopo la tua conferma.');
+   }
   });
  });
  $('link-kind').addEventListener('change',kindChanged);

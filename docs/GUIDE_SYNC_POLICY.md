@@ -1,3 +1,6 @@
+### v2.49 — Gruppi di versioni non confermati
+Per ogni raggruppamento esporre chiaramente che l'accostamento avviene da nomi dei file e non dal contenuto audio. Non preimpostare destinazioni di progetto, non creare progetti e non scrivere associazioni senza scelta e conferma esplicite. Gli hash reali possono segnalare duplicati, ma non sostituiscono verifica del brano. Aggiornare insieme Audio Finder, PWA, guide e test.
+
 ### Regola v2.48 — audio non necessariamente dell'utente
 Ogni nuovo file da PC/smartphone/Drive/Dropbox entra nel catalogo KYV soltanto dopo approvazione esplicita come lavoro proprio. Le reference restano escluse, senza dati personali o audio copiati. La creazione del progetto richiede un secondo clic e il popup di conferma; mai auto-creare dalla scansione. Preservare la scelta nei test, nella guida contestuale e nel manuale. La scansione mobile è solo su file/cartelle selezionate e non è persistente.
 

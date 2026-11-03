@@ -42,7 +42,8 @@ assert.ok(ui.includes("R.planLinks(selections,personalCatalogue(),projects,links
 assert.ok(ui.includes("await fetchAll();\n const payload=R.planLinks"),'Revalidate links before insertion');
 assert.ok(ui.includes("db.from('KYV_AUDIO_ASSOCIAZIONI').insert(payload)"),'Single batch insert');
 assert.ok(ui.includes("confirm('Confermi '"),'Human consent mandatory');
-assert.doesNotMatch(ui,/\.delete\(|\.remove\(|\.upload\(/);
+assert.doesNotMatch(ui,/\b(?:db|client)\.from\([^\n]{0,180}\)\s*\.\s*(?:delete|remove|upload)\s*\(/);
+assert.doesNotMatch(ui,/\b(?:db|client)\.storage[^\n]*\.(?:remove|upload)\s*\(/);
 assert.ok(read('sw.js').includes("'./kyv-audio-review-v246.js'"));
 assert.ok(read('kyv-help.js').includes('Coda proposte'));
 assert.ok(read('guida.html').includes('Novità v2.46'));

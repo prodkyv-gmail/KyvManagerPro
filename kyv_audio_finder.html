@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
@@ -48,6 +48,20 @@
 .finder-intake-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:10px 0}
 .finder-intake-actions button{font-size:12px}
 @media(max-width:650px){.finder-intake-row{grid-template-columns:1fr}}
+.finder-group-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:12px 0}
+.finder-group-tile{display:block;text-align:left;min-width:0;width:100%;background:#1e293b!important}
+.finder-group-tile strong,.finder-group-tile small{display:block}.finder-group-tile small{color:#cbd5e1;margin-top:5px}
+.finder-group-tile.active{outline:2px solid #a5b4fc}
+.finder-group-controls{display:flex;flex-wrap:wrap;gap:10px}
+.finder-group-controls input,.finder-group-controls select{min-width:0;background:#0f172a;border:1px solid #64748b;border-radius:9px;padding:10px;color:#fff}
+.finder-group-controls input{flex:1 1 180px}
+.finder-group-detail{padding:13px;border:1px solid #64748b;border-radius:10px;background:#111827}
+.finder-group-detail[hidden]{display:none!important}
+.finder-group-file{display:flex;align-items:center;gap:10px;border-bottom:1px solid #334155;padding:10px 0;overflow-wrap:anywhere}
+.finder-group-file input{flex:none;min-width:19px;min-height:19px}
+.finder-group-file small{color:#cbd5e1;display:block}
+.finder-group-approve{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:10px 0}
+.finder-group-approve select{flex:1 1 180px;min-width:0;background:#0f172a;color:#fff;border:1px solid #64748b;border-radius:9px;padding:10px}
 </style></head>
 <body class="flex h-screen overflow-hidden">
 <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
@@ -102,6 +116,19 @@
 <button id="review-more" type="button" hidden>Mostra altre proposte</button>
 <button id="review-save" type="button" data-finder-action>Conferma associazioni selezionate (max 25)</button>
 <p class="finder-note">Spunta solo i file verificati. Il salvataggio usa un unico inserimento per il gruppo; «Scollega» annulla poi i singoli legami.</p></section>
+</section>
+<section class="finder-card" id="finder-version-groups" aria-label="Gruppi di versioni proposte">
+<h2>Brani e versioni · v2.49</h2>
+<p>I file che hai approvato come tuoi vengono raggruppati per nomi simili, per vedere demo, mix, master e altre versioni insieme. <strong>È solo una proposta, non una conferma che appartengano allo stesso brano.</strong> Non vengono creati nuovi progetti o collegamenti automaticamente.</p>
+<div class="finder-group-controls">
+<input type="search" id="finder-group-query" placeholder="Cerca brano o versione in tutte le sorgenti" aria-label="Cerca gruppi audio">
+<select id="finder-group-source" aria-label="Sorgente gruppo"><option value="">Tutte le sorgenti</option><option value="local">Dispositivo locale</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+<select id="finder-group-mode" aria-label="Mostra gruppi"><option value="multi">Più versioni</option><option value="all">Tutti i brani</option><option value="unlinked">Da collegare</option></select>
+</div>
+<p id="finder-group-count" class="finder-note" role="status"></p>
+<div id="finder-group-list" class="finder-group-tiles"></div>
+<button id="finder-group-more" type="button" hidden>Mostra altri gruppi</button>
+<div id="finder-group-detail" class="finder-group-detail" hidden></div>
 </section>
 <div class="finder-controls">
 <input type="search" id="finder-query" aria-label="Cerca file nell'indice" placeholder="Cerca titolo, nome file, sorgente, cartella…">
