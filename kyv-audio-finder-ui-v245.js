@@ -660,22 +660,44 @@ function boot(){
  $('finder-files').addEventListener('change',e=>run(()=>local(Array.from(e.target.files||[]))));
  $('finder-save').addEventListener('click',()=>run(savePreview));
  $('finder-preview-list').addEventListener('change',e=>{
+  const checked=e.target.closest('[data-preview-select]');
+  if(checked){
+   const index=Number(checked.dataset.previewSelect);
+   if(checked.checked){
+    if(scanChecked.size>=100){checked.checked=false;info('Massimo 100 file spuntati. Esamina il resto separatamente.',true);return;}
+    if(!J.bulkEligible(preview[index])){checked.checked=false;info('Il file richiede la classificazione individuale.',true);return;}
+    scanChecked.add(index);
+   }else scanChecked.delete(index);
+   updateScanSelected();return;
+  }
   const x=e.target.closest('[data-preview-choice]');if(!x)return;
-  preview=C.mark(preview,Number(x.dataset.previewChoice),x.value);
-  renderPreview();
+  const index=Number(x.dataset.previewChoice);scanChecked.delete(index);
+  preview=C.mark(preview,index,x.value);renderPreview();
  });
  $('finder-preview-more').addEventListener('click',()=>{previewShown+=60;renderPreview()});
- $('finder-preview-query').addEventListener('input',()=>{previewShown=60;renderPreview()});
- $('finder-preview-state').addEventListener('change',()=>{previewShown=60;renderPreview()});
- $('finder-sync-state').addEventListener('change',()=>{previewShown=60;renderPreview()});
+ $('finder-preview-query').addEventListener('input',()=>{previewShown=60;resetScanSelection();renderPreview()});
+ $('finder-preview-state').addEventListener('change',()=>{previewShown=60;resetScanSelection();renderPreview()});
+ $('finder-sync-state').addEventListener('change',()=>{previewShown=60;resetScanSelection();renderPreview()});
  $('finder-preview-list').addEventListener('click',e=>{
   const update=e.target.closest('[data-confirm-update]');
   if(update){confirmMetadataUpdate(Number(update.dataset.confirmUpdate));return;}
   const b=e.target.closest('[data-preview-play]');if(b)run(()=>listenPreview(Number(b.dataset.previewPlay)));
  });
- $('preview-mark-mine').addEventListener('click',()=>bulkPreview('mio'));
- $('preview-mark-reference').addEventListener('click',()=>bulkPreview('reference'));
- $('finder-cancel').addEventListener('click',()=>{preview=[];$('finder-preview').hidden=true;closeExplorerPlayer();transientFiles.clear();renderExplorer();info('Anteprima scartata, nulla salvato.')});
+ $('scan-group-query').addEventListener('input',()=>{scanReviewGroupShown=24;resetScanSelection();renderScanGroups()});
+ $('scan-group-source').addEventListener('change',()=>{scanReviewGroupShown=24;resetScanSelection();renderScanGroups()});
+ $('scan-group-mode').addEventListener('change',()=>{scanReviewGroupShown=24;resetScanSelection();renderScanGroups()});
+ $('scan-group-more').addEventListener('click',()=>{scanReviewGroupShown+=24;renderScanGroups()});
+ $('scan-group-clear').addEventListener('click',()=>{scanReviewGroup='';resetScanSelection();previewShown=60;renderPreview()});
+ $('scan-group-list').addEventListener('click',e=>{
+  const button=e.target.closest('[data-scan-group]');if(!button)return;
+  const group=filteredScanGroups()[Number(button.dataset.scanGroup)];
+  if(group)activateScanGroup(group.id);
+ });
+ $('scan-select-visible').addEventListener('click',batchSelectVisible);
+ $('scan-clear-selected').addEventListener('click',()=>{resetScanSelection();renderPreview()});
+ $('preview-mark-mine').addEventListener('click',()=>run(()=>bulkPreview('mio')));
+ $('preview-mark-reference').addEventListener('click',()=>run(()=>bulkPreview('reference')));
+ $('finder-cancel').addEventListener('click',()=>{preview=[];scanReviewGroup='';resetScanSelection();$('finder-preview').hidden=true;closeExplorerPlayer();transientFiles.clear();renderExplorer();info('Anteprima scartata, nulla salvato.')});
  $('finder-list').addEventListener('click',e=>{const b=e.target.closest('[data-audio]');if(b){selected=b.dataset.audio;render()}});
  $('finder-detail').addEventListener('click',e=>{
   const b=e.target.closest('[data-suggest],[data-unlink],[data-new-project]');if(!b)return;
