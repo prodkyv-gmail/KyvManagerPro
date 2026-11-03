@@ -1,3 +1,11 @@
+## 2026-11-03 — Hotfix import XML Aruba (base v2.46)
+
+**Diagnosi verificata sul database KYV:** 107 righe FATTURE, massimo `ID_FT=107`, ma la sequence identity `FATTURE_ID_FT_seq` era a 5. Gli inserimenti XML fallivano con conflitto sulla primary key `FATTURE1_pkey`, erroneamente etichettato «Duplicato XML». La sequenza è stata riallineata a 107 senza cancellare o modificare fatture; la fattura del caso non era stata importata e richiede un nuovo tentativo con il file XML originale.
+
+**Correzione applicativa:** `kyv-aruba-import.js` distingue il conflitto `ID_FT` da `fatture_owner_xml_sha256_unique` (vero XML già importato), permessi/RLS e altri errori. Mantiene verifica preventiva di duplicati, conferma e import non pagato. Regole di recovery nel manuale HTML e nella guida contestuale; test di regressione `tools/test-aruba-import.js`.
+
+**Manutenzione:** dopo eventuali restore con ID espliciti, controllare allineamento sequence/ultimo ID. Solo per amministratori, sotto lock e dopo verifica, usare `setval(pg_get_serial_sequence('public."FATTURE"','ID_FT'),greatest(max(ID_FT),last_value),true)` nella query SQL appropriata. Non riassegnare le chiavi storiche e non interpretare qualunque `23505` come fattura XML duplicata.
+
 ## KYVManagerPro v2.46 — Audio Finder: revisione degli abbinamenti (31/10/2026)
 
 - Modulo `kyv-audio-review-v246.js`: classificazione spiegabile di corrispondenze per titolo/artista; titolo ambiguo = nessuna preselezione.
