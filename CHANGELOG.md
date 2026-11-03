@@ -1,5 +1,12 @@
 # Changelog
 
+### v2.50 · 2026-11-03
+- Progetti: popup rapido in sola lettura, ricerca completa con paginazione, filtri combinabili e ordinamenti, vista compatta.
+- Panoramica grafica del database PROGETTI con conteggi verificabili per stato/fase e dati non indicati.
+- Home: grafici indipendenti per fatturato emesso basato su PrezzoUnitario, stati registrati e numero di progetti per artista. Incassi da PAGATA indicati come stime.
+- Guida, test e PWA aggiornati senza migrazioni o alterazioni dei dati storici.
+
+
 ## 2026-11-03 — v2.49 Raggruppamento versioni personale e assistito
 
 - Catalogo multi-source: gruppi probabili per titolo e artista, riconoscimento demo/mix/master/stems, duplicati verificati solo per hash identico.

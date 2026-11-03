@@ -29,6 +29,9 @@
     <script src="kyv-core.js"></script>
     <script src="kyv-toast.js"></script>
     <script src="kyv-helpers.js"></script>
+    <script src="kyv-invoice-line-amount.js"></script>
+    <script src="kyv-home-charts-v250.js"></script>
+    <script src="kyv-home-charts-ui-v250.js"></script>
     <script src="kyv-data-guard.js"></script>
     <script src="kyv-priority.js"></script>
     <script src="kyv-help.js"></script>
@@ -105,11 +108,11 @@
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(180,122,255,.16)">
                     <div class="flex items-center"><i data-lucide="receipt" class="w-4 h-4 text-purple-300 mr-2"></i><p class="kyv-metric-label">Fatturato</p></div>
-                    <div><h3 class="kyv-metric-value text-purple-100" id="val-fatturato">€ 0,00</h3><p class="text-[10px] text-amber-300/80 font-medium mt-2" id="val-da-incassare">Da incassare: € 0,00</p></div>
+                    <div><h3 class="kyv-metric-value text-purple-100" id="val-fatturato">€ 0,00</h3><p class="text-[10px] text-amber-300/80 font-medium mt-2" id="val-da-incassare">Da incassare (flag): € 0,00</p></div>
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(68,215,182,.16)">
-                    <div class="flex items-center"><i data-lucide="banknote" class="w-4 h-4 text-emerald-300 mr-2"></i><p class="kyv-metric-label">Incassato</p></div>
-                    <h3 class="kyv-metric-value text-emerald-300" id="val-incassato">€ 0,00</h3>
+                    <div class="flex items-center"><i data-lucide="banknote" class="w-4 h-4 text-emerald-300 mr-2"></i><p class="kyv-metric-label">Incassato (flag)</p></div>
+                    <h3 class="kyv-metric-value text-emerald-300" id="val-incassato">€ 0,00</h3><p class="text-[10px] text-kyv-text mt-2">Stima dal flag PAGATA. Incassi bancari verificati in Fatture.</p>
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(255,114,133,.15)">
                     <div class="flex items-center"><i data-lucide="trending-down" class="w-4 h-4 text-rose-300 mr-2"></i><p class="kyv-metric-label">Uscite</p></div>
@@ -121,7 +124,7 @@
             <div class="mb-6">
                 <div class="flex items-center mb-3">
                     <i data-lucide="wallet" class="w-5 h-5 text-emerald-400 mr-2"></i>
-                    <h3 class="kyv-section-title text-white">Entrate incassate per tipologia</h3>
+                    <h3 class="kyv-section-title text-white">Fatture segnate incassate per tipologia (PAGATA)</h3>
                 </div>
                 <div class="flex space-x-3 overflow-x-auto custom-scrollbar pb-2" id="tipo-ft-cards">
                     <div class="text-kyv-text text-xs italic">Calcolo in corso...</div>
@@ -166,7 +169,7 @@
                 <div class="lg:col-span-2 bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[400px]">
                     <div class="flex items-center mb-4">
                         <i data-lucide="bar-chart-big" class="w-5 h-5 text-sky-400 mr-2"></i>
-                        <h3 class="font-semibold text-white text-sm">Andamento Entrate (Tipo FT / Anno)</h3>
+                        <h3 class="font-semibold text-white text-sm">Fatturato emesso per anno · PrezzoUnitario</h3>
                     </div>
                     <div class="flex-1 relative w-full">
                         <canvas id="chartAndamento"></canvas>
@@ -177,7 +180,7 @@
                 <div class="bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[400px]">
                     <div class="flex items-center mb-4">
                         <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-400 mr-2"></i>
-                        <h3 class="font-semibold text-white text-sm">Ripartizione Stati</h3>
+                        <h3 class="font-semibold text-white text-sm">Progetti per stato o fase</h3>
                     </div>
                     <div class="flex-1 relative w-full flex justify-center">
                         <canvas id="chartStati"></canvas>
@@ -189,7 +192,7 @@
                 <div class="bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[350px]">
                     <div class="flex items-center mb-4">
                         <i data-lucide="bar-chart-3" class="w-5 h-5 text-purple-400 mr-2"></i>
-                        <h3 class="font-semibold text-white text-sm">Top Artisti (Fatturato Totale)</h3>
+                        <h3 class="font-semibold text-white text-sm">Artisti · numero di progetti</h3>
                     </div>
                     <div class="flex-1 relative w-full">
                         <canvas id="chartTopArtisti"></canvas>
@@ -223,17 +226,16 @@
                     supabaseClient.from('DOCUMENTI_PROGETTO').select('*'),
                     supabaseClient.from('DROPBOX_AUDIO_FILES').select('*')
                 ]);
+                if([projRes,fatRes,speseRes,docsRes,audioRes].some(x=>x.error))throw Error('Almeno un archivio non è leggibile: dati dashboard non aggiornati');
                 const projData = projRes.data || []; const fatData = fatRes.data || []; const speseData = speseRes.data || []; const docsData = docsRes.data || []; const audioData = audioRes.data || [];
                 let totFee = 0, totFatturato = 0, totIncassato = 0, totUscite = 0;
                 
                 projData.forEach(p => totFee += parseKyvNumber(p.FEE));
                 
                 let tipoFtData = {}; 
-                let tipoFtPerAnno = {}; 
-                let tipiUnici = new Set();
 
                 fatData.forEach(f => {
-                    let numVal = parseKyvNumber(f.PrezzoUnitario || f.IMPORTO || f.PrezzoTotale); 
+                    let numVal = window.KYV_INVOICE_LINE.amount(f); 
                     totFatturato += numVal;
                     let isPagata = f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI');
                     
@@ -241,22 +243,10 @@
                         totIncassato += numVal;
                         
                         // Estrai Tipologia
-                        let tipo = f['TIPO FT'] || f.TipoFT || f['Tipo FT'] || f.TIPO_FT || 'ALTRO';
-                        tipo = tipo.trim().toUpperCase();
-                        tipiUnici.add(tipo);
-                        
-                        // Somma per le piccole Cards in alto
+                        let tipo = String(f['TIPO FT'] || f.TipoFT || f['Tipo FT'] || f.TIPO_FT || 'ALTRO').trim().toUpperCase();
+                        // Only the explicit PAGATA flag informs this *estimated* card.
+                        // Verified cash payments are shown in Fatture / KYV Intelligence.
                         tipoFtData[tipo] = (tipoFtData[tipo] || 0) + numVal;
-                        
-                        // Somma per il grafico a barre (raggruppato per anno)
-                        let dataFattura = f.Data || f.DATA_EMISSIONE || f.created_at;
-                        if(dataFattura) {
-                            let anno = new Date(dataFattura).getFullYear().toString();
-                            if(!isNaN(anno)) {
-                                if(!tipoFtPerAnno[anno]) tipoFtPerAnno[anno] = {};
-                                tipoFtPerAnno[anno][tipo] = (tipoFtPerAnno[anno][tipo] || 0) + numVal;
-                            }
-                        }
                     }
                 });
                 speseData.forEach(s => totUscite += parseKyvNumber(s.Importo));
@@ -264,17 +254,18 @@
                 document.getElementById('val-fee').innerText = fmtEuro.format(totFee); 
                 document.getElementById('val-fatturato').innerText = fmtEuro.format(totFatturato);
                 document.getElementById('val-incassato').innerText = fmtEuro.format(totIncassato); 
-                document.getElementById('val-da-incassare').innerText = `Da incassare: ${fmtEuro.format(totFatturato - totIncassato)}`;
+                document.getElementById('val-da-incassare').innerText = `Da incassare (flag): ${fmtEuro.format(totFatturato - totIncassato)}`;
                 document.getElementById('val-uscite').innerText = fmtEuro.format(totUscite); 
                 
                 // RENDER CARDS TIPO FT
                 const cardsContainer = document.getElementById('tipo-ft-cards');
+                const safeType=x=>String(x).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
                 if (Object.keys(tipoFtData).length > 0) {
                     cardsContainer.innerHTML = Object.entries(tipoFtData)
                         .sort((a,b) => b[1] - a[1]) // Ordina per incasso decrescente
                         .map(([tipo, val]) => `
                         <div class="bg-kyv-card border border-kyv-border rounded-xl p-4 min-w-[150px] shrink-0 border-l-4 border-l-emerald-500 shadow-sm">
-                            <p class="text-[10px] font-bold text-kyv-text uppercase truncate mb-1" title="${tipo}">${tipo}</p>
+                            <p class="text-[10px] font-bold text-kyv-text uppercase truncate mb-1" title="${safeType(tipo)}">${safeType(tipo)}</p>
                             <h4 class="text-xl font-black text-white">${fmtEuro.format(val)}</h4>
                         </div>
                     `).join('');
@@ -283,7 +274,7 @@
                 }
 
                 renderStudioPulse(projData, fatData, docsData, audioData);
-                updateDashboardCharts(projData, fatData, tipoFtPerAnno, Array.from(tipiUnici));
+                updateDashboardCharts(projData, fatData);
             } catch (err) { console.error("Errore dashboard:", err); }
         }
         let dashboardActivities = [];
@@ -446,7 +437,7 @@
                     type: 'fatture',
                     priority: invoiceAge !== null && invoiceAge < -30 ? 99 : 86,
                     title: `Incasso fattura ${f.Numero || 'senza numero'}`,
-                    subtitle: [f.Denominazione, linked ? projectLabel(linked) : null, fmtEuro.format(parseKyvNumber(f.PrezzoUnitario || f.PrezzoTotale || f.IMPORTO))].filter(Boolean).join(' · '),
+                    subtitle: [f.Denominazione, linked ? projectLabel(linked) : null, fmtEuro.format(window.KYV_INVOICE_LINE.amount(f))].filter(Boolean).join(' · '),
                     href: 'fatture.html'
                 });
             });
@@ -484,60 +475,14 @@
             if(window.lucide) lucide.createIcons();
         }
 
-        function updateDashboardCharts(progettiData, fattureData, tipoFtPerAnno, tipiUnici) {
-            if (progettiData && chartStatiInstance) {
-                const statiCount = {}; progettiData.forEach(p => { const stato = p.STATO ? p.STATO.trim().toUpperCase() : 'NON DEFINITO'; statiCount[stato] = (statiCount[stato] || 0) + 1; });
-                chartStatiInstance.data.labels = Object.keys(statiCount); chartStatiInstance.data.datasets[0].data = Object.values(statiCount);
-                
-                // COLORI VIVIDI/NEON PER GLI STATI DEI PROGETTI
-                chartStatiInstance.data.datasets[0].backgroundColor = Object.keys(statiCount).map((label, index) => {
-                    let l = label.toUpperCase();
-                    if(l.includes('BOZZA') || l.includes('DEMO')) return '#FF1744'; // Rosso Acceso
-                    if(l.includes('REGISTR')) return '#FFEA00'; // Giallo Lampante
-                    if(l.includes('MIX')) return '#2979FF'; // Blu Elettrico
-                    if(l.includes('MASTER')) return '#D500F9'; // Viola/Fucsia
-                    if(l.includes('COMPLETAT') || l.includes('USCITA')) return '#00E676'; // Verde Neon
-                    
-                    // Palette fallback per eventuali stati sconosciuti
-                    const paletteExtra = ['#FF9100', '#00E5FF', '#F50057', '#651FFF', '#76FF03'];
-                    return paletteExtra[index % paletteExtra.length];
-                });
-                chartStatiInstance.update();
+        function updateDashboardCharts(projects,invoices) {
+            // The v2.50 renderer deliberately replaces the old PAGATA-based artist charts.
+            // Missing renderer must not silently fall back to misleading financial figures.
+            if(!window.KYV_HOME_CHARTS_UI_V250){
+                console.error('[KYV Home] Grafici v2.50 non disponibili: la fonte non è verificata');
+                return;
             }
-            if (fattureData && progettiData && chartTopArtistiInstance) {
-                const fatturatoPerArtista = {};
-                fattureData.forEach(f => {
-                    if(f.PrezzoUnitario && f.ID_PROGETTO) {
-                        const p = progettiData.find(x => String(x.ID) === String(f.ID_PROGETTO)); const nome = p && p.ARTISTA ? p.ARTISTA.toUpperCase() : 'SCONOSCIUTO';
-                        let num = parseKyvNumber(f.PrezzoUnitario || f.IMPORTO); let isPagata = f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI');
-                        if (!fatturatoPerArtista[nome]) fatturatoPerArtista[nome] = { incassato: 0, daIncassare: 0, totale: 0 };
-                        if (isPagata) fatturatoPerArtista[nome].incassato += num; else fatturatoPerArtista[nome].daIncassare += num;
-                        fatturatoPerArtista[nome].totale += num;
-                    }
-                });
-                const sorted = Object.entries(fatturatoPerArtista).sort(([, a], [, b]) => b.totale - a.totale).slice(0, 10);
-                chartTopArtistiInstance.data.labels = sorted.map(e => e[0]);
-                chartTopArtistiInstance.data.datasets[0].data = sorted.map(e => e[1].incassato); chartTopArtistiInstance.data.datasets[1].data = sorted.map(e => e[1].daIncassare); chartTopArtistiInstance.update();
-            }
-
-            // GRAFICO ANDAMENTO ENTRATE (Stacked Bar)
-            if (tipoFtPerAnno && tipiUnici && chartAndamentoInstance) {
-                const anni = Object.keys(tipoFtPerAnno).sort();
-                const colors = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#f43f5e', '#14b8a6', '#84cc16'];
-                
-                const datasets = tipiUnici.map((tipo, idx) => {
-                    return {
-                        label: tipo,
-                        data: anni.map(anno => tipoFtPerAnno[anno][tipo] || 0),
-                        backgroundColor: colors[idx % colors.length],
-                        borderRadius: 4
-                    };
-                });
-
-                chartAndamentoInstance.data.labels = anni;
-                chartAndamentoInstance.data.datasets = datasets;
-                chartAndamentoInstance.update();
-            }
+            window.KYV_HOME_CHARTS_UI_V250.update(projects,invoices);
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -553,8 +498,7 @@
                 data: { 
                     labels: [], 
                     datasets: [
-                        { label: 'Incassato', data: [], backgroundColor: '#00E676', borderRadius: 4 }, 
-                        { label: 'Da incassare', data: [], backgroundColor: '#FF1744', borderRadius: 4 }
+                        { label: 'Numero progetti', data: [], backgroundColor: '#818cf8', borderRadius: 4 }
                     ] 
                 }, 
                 options: { 
