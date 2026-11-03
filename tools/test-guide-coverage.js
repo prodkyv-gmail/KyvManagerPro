@@ -41,7 +41,7 @@ assert.ok(menu.includes("script.src = 'kyv-help.js';"));
 assert.ok(menu.includes('window.KYV_ACTIVE_HELP_PAGE = activePage'),'Help must use the actual active page');
 assert.ok(menu.includes('script.onload = () => {'),'Help must remount after loading');
 assert.ok(sw.includes("'./guida.html'")&&sw.includes("'./kyv-help.js'"),'PWA must cache manual and contextual guide');
-assert.ok(sw.includes('kyv-studio-v2-46-audio-review-20261031'),'Refresh guide offline cache');
+assert.ok(sw.includes('kyv-studio-v2-46-aruba-id-hotfix-20261103'),'Refresh guide offline cache');
 assert.ok(pkg.scripts.check.includes('check:guide-coverage'),'Guide verification must gate full CI');
 assert.equal(pkg.scripts['check:guide-coverage'],'node tools/test-guide-coverage.js');
 const policy=read('docs/GUIDE_SYNC_POLICY.md');

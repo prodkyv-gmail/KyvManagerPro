@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-46-audio-review-20261031';
+const CACHE_NAME = 'kyv-studio-v2-46-aruba-id-hotfix-20261103';
 const APP_SHELL = [
     './',
     './index.html',

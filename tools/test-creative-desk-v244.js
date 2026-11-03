@@ -77,7 +77,7 @@ assert.ok(read('integrazioni.html').includes('href="kyv_scrivania_creativa.html"
 assert.ok(read('kyv_analyst.html').includes('id="analyst-creative-desk"'));
 assert.ok(read('kyv-analyst-ui-v241.js').includes("allRows(c,'KYV_SESSIONI'"));
 const sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-assert.ok(sw.includes("kyv-studio-v2-46-audio-review-20261031"));
+assert.ok(sw.includes("kyv-studio-v2-46-aruba-id-hotfix-20261103"));
 for(const asset of ['kyv_scrivania_creativa.html','kyv-creative-desk-v244.js','kyv-creative-desk-ui-v244.js'])
  assert.ok(sw.includes("'./"+asset+"'"),'PWA must cache '+asset);
 assert.equal(pkg.version,'2.46.0');

@@ -79,4 +79,20 @@ assert.equal(check(incoming,[{...hist,Numero_Originale:'FPR 14/26'}]),'duplicate
 assert.equal(check(incoming,[{...hist,Numero_Originale:'ALT 14/26'}]),'review','Ambiguous number aliases in same year must block automatic import');
 assert.equal(check({...incoming,TipoDocumento:'TD04'},[{...hist,Numero_Originale:'FPR 14/26'}]),'review','Historic number conflict must still be reviewed');
 
-console.log('OK: Aruba XML parsing, invoice mapping, SHA256, deduplication and manual linking safeguards');
+// Regression: a primary key conflict does not prove duplicate FatturaPA XML.
+assert.match(api.explainInsertError({
+ code:'23505',message:'duplicate key value violates unique constraint "FATTURE1_pkey"',
+ details:'Key ("ID_FT")=(6) already exists.'
+}),/ID interno fattura.*contatore automatico/);
+assert.doesNotMatch(api.explainInsertError({
+ code:'23505',message:'duplicate key value violates unique constraint "FATTURE1_pkey"'
+}),/Impronta XML già presente/);
+assert.match(api.explainInsertError({
+ code:'23505',message:'duplicate key value violates unique constraint "fatture_owner_xml_sha256_unique"',
+ details:'Key (owner_id, "XML_SHA256") already exists.'
+}),/Impronta XML già presente/);
+assert.match(api.explainInsertError({code:'23505',message:'duplicate key value violates unique constraint "other_key"'}),/non necessariamente XML duplicato/);
+assert.match(api.explainInsertError({code:'42501',message:'new row violates row-level security policy'}),/Autorizzazione insufficiente/);
+assert.match(api.explainInsertError({code:'23502',message:'null value in column "ID_FT"'}),/Identificativo interno/);
+assert.equal(api.classify({Numero_Originale:'FPR 12\/26',Numero:12,Data:'2026-10-23',TipoDocumento:'TD01',XML_SHA256:'b'.repeat(64)},[]).kind,'ok');
+console.log('OK: Aruba XML parsing, invoice mapping, SHA256, deduplication manual linking and precise database error diagnostics');

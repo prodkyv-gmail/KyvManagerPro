@@ -21,7 +21,7 @@ assert.ok(config.includes("document.addEventListener('DOMContentLoaded'"),
   'Safe-mode version update is delayed until DOM is loaded');
 assert.doesNotMatch(menu,/Manager Pro 2\.\d/,'The normal menu must have no stale literal version');
 assert.doesNotMatch(projects,/Manager Pro 2\.\d/,'Progetti must have no stale literal version');
-assert.ok(sw.includes('kyv-studio-v2-46-audio-review-20261031'),
+assert.ok(sw.includes('kyv-studio-v2-46-aruba-id-hotfix-20261103'),
   'The service worker cache must rotate to refresh installed PWA assets');
 assert.ok(sw.includes("await self.skipWaiting()"),'New service worker should activate without waiting for all tabs to close');
 assert.ok(sw.includes("await clients.claim()"),'Active service worker should control subsequent loads');
