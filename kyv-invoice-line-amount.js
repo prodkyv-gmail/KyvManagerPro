@@ -1,8 +1,7 @@
 /* KYV invoice row amounts — one row = one billable item or project.
    Legacy: PrezzoUnitario is the project's fee; never sum ImportoTotaleDocumento per row.
-   Imported Aruba XML: currently stored as ONE aggregated row (XML_SHA256), so
-   PrezzoTotale is the sum of DettaglioLinee, unlike its first-line PrezzoUnitario.
-   Amounts here are managerial, not necessarily fiscal/tax inclusive.
+   Importo gestionale = PrezzoUnitario for every invoice, including XML. The other fields
+   are source/document amounts, not replacements for unit-fee calculations.
 */
 (function(root){
 'use strict';
@@ -19,7 +18,7 @@ function parse(v){
 }
 function info(row){
  const xml=!!t(row?.XML_SHA256);
- const source=xml?'PrezzoTotale':'PrezzoUnitario';
+ const source='PrezzoUnitario';
  const value=parse(row?.[source]);
  // No fallback to document totals: that would duplicate the same invoice across projects.
  // Flag absent or negative row values, instead of making undocumented assumptions.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-46-aruba-id-hotfix-20261103';
+const CACHE_NAME = 'kyv-studio-v2-47-invoice-split-20261103';
 const APP_SHELL = [
     './',
     './index.html',
@@ -36,6 +36,7 @@ const APP_SHELL = [
     './kyv-editor-columns.js',
     './editor.html',
     './kyv-invoice-line-amount.js',
+    './kyv-invoice-split-v247.js',
     './rendiconto.html',
     './manifest.json',
     './kyv-theme.css',

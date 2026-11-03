@@ -37,6 +37,7 @@
     <script src="kyv-table-tools.js" defer></script>
     <script src="kyv-record-editor.js" defer></script>
     <script src="kyv-aruba-import.js" defer></script>
+    <script src="kyv-invoice-split-v247.js" defer></script>
     <script src="kyv-invoice-reconciliation-v236.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } } }</script>
@@ -185,6 +186,7 @@
                         <a href="kyv_intelligence.html" class="kyv-row-primary whitespace-nowrap" aria-label="Apri KYV Intelligence" title="Analisi mensili e pluriennali">KYV Intelligence</a>
                         <a href="correlazione.html" class="kyv-row-primary whitespace-nowrap" aria-label="Apri correlazioni fatture" title="Correlazioni"><i data-lucide="git-merge" class="w-4 h-4"></i><span class="hidden sm:inline">Correlazioni</span></a>
                         <button type="button" id="kyv-aruba-open" class="kyv-primary-action whitespace-nowrap" title="Importa fatture elettroniche XML Aruba"><i data-lucide="file-up" class="w-4 h-4 mr-2"></i>Importa XML Aruba</button>
+                        <button type="button" id="kyv-split-new" class="kyv-primary-action whitespace-nowrap" title="Una fattura con più progetti"><i data-lucide="copy-plus" class="w-4 h-4 mr-2"></i>Nuova multi-progetto</button>
                         <button type="button" data-kyv-new-table="FATTURE" class="kyv-primary-action whitespace-nowrap"><i data-lucide="plus" class="w-4 h-4 mr-2"></i>Nuova</button>
                         <button onclick="fetchFattureCorrelate()" class="kyv-icon-action shrink-0" aria-label="Ricarica fatture" title="Ricarica"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                     </div>
@@ -195,7 +197,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
                             <strong class="block text-white font-black text-base">Collegamento manuale · <span id="kyv-manual-invoice-project"></span></strong>
-                            <p class="text-sm text-slate-200 mt-2 leading-relaxed">Se la fattura è già registrata, clicca sulla sua riga qui sotto, scegli il progetto nel campo <strong>ID_PROGETTO</strong> e salva. Per crearne una manualmente usa <strong>Nuova</strong> e seleziona il progetto. Nulla viene collegato senza il tuo salvataggio.</p>
+                            <p class="text-sm text-slate-200 mt-2 leading-relaxed">Per più progetti sulla stessa fattura usa <strong>Nuova multi-progetto</strong> oppure <strong>Ripartisci / Duplica riga</strong> su una fattura esistente. Ogni riga ha un PrezzoUnitario gestionale distinto; il documento fiscale resta unico. Per una fattura semplice resta il pulsante <strong>Nuova</strong>.</p>
                         </div>
                         <a id="kyv-manual-invoice-back" class="inline-flex items-center justify-center rounded-xl border border-indigo-400/30 px-4 py-2 text-sm font-bold text-indigo-100 hover:bg-indigo-500/10" href="scheda_progetto.html">Torna al progetto</a>
                     </div>
@@ -257,7 +259,7 @@
                 const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO, DataScadenzaPagamento, XML_SHA256').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
                 if(fatRes.error || projRes.error) throw (fatRes.error || projRes.error);
                 correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
-                correlazioneFattureGlobal = fatRes.data || []; document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
+                correlazioneFattureGlobal = fatRes.data || []; await window.KYV_INVOICE_SPLIT_V247?.refresh?.(); document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
             } catch(e) {
                 correlazioneFattureGlobal = [];
                 correlazioneProjMapGlobal = {};
@@ -278,12 +280,13 @@
             const searchTxt = (document.getElementById('correlazione-search')?.value || '').toLowerCase();
             let hNopag = [], hPag = [], sumDaIncassare = 0, sumPagate = 0, sumIncassatoTutti = 0, sumAccontiAperti = 0;
             correlazioneFattureGlobal.forEach(f => {
-                let linkedProj = f.ID_PROGETTO ? correlazioneProjMapGlobal[f.ID_PROGETTO] : null;
+                const multi = window.KYV_INVOICE_SPLIT_V247?.names(f.ID_FT);
+                let linkedProj = multi?.length ? multi.map(x=>x.title).join(' · ') : (f.ID_PROGETTO ? correlazioneProjMapGlobal[f.ID_PROGETTO] : null);
                 let combinedStr = `${f.Numero} ${f.Numero_Originale||''} ${f.Denominazione} ${f.Descrizione} ${linkedProj}`.toLowerCase();
                 if (searchTxt && !combinedStr.includes(searchTxt)) return;
                 const stat = window.KYV_COLLECTIONS_V236?.paymentState(f);
                 let isPagata = stat ? stat.kind === 'paid' : KYV.isPaid(f.PAGATA);
-                let numVal = stat ? stat.total : (window.KYV_INVOICE_LINE?.amount(f) ?? Math.max(0,parseKyvNumber(f.XML_SHA256 ? f.PrezzoTotale : f.PrezzoUnitario)));
+                let numVal = stat ? stat.total : (window.KYV_INVOICE_LINE?.amount(f) ?? Math.max(0,parseKyvNumber(f.PrezzoUnitario)));
                 let received = stat ? stat.received : (isPagata ? numVal : 0);
                 let outstanding = stat ? stat.remaining : (isPagata ? 0 : numVal);
                 let imp = fmtEuro.format(numVal); let d = f.Data ? new Date(f.Data).toLocaleDateString('it-IT') : '-';
@@ -296,7 +299,7 @@
                 let tr = `<tr class="kyv-editable-row hover:bg-kyv-border/30 transition-colors border-b border-kyv-border/30 cursor-pointer group" data-kyv-edit-table="FATTURE" data-kyv-edit-id="${H(f.ID_FT)}" title="Apri e modifica la fattura">
                     <td data-label="Numero / Data" class="px-6 py-3 font-medium group-hover:text-indigo-300 transition-colors"><i data-lucide="pencil" class="w-3 h-3 inline mr-2 opacity-60"></i>N° ${H(f.Numero_Originale || f.Numero || '-')}<br><span class="text-xs opacity-60 ml-5">${H(d)}</span></td>
                     <td data-label="Denominazione" class="px-6 py-3 truncate max-w-[200px]">${H(f.Denominazione || '-')}</td>
-                    <td data-label="Descrizione / Progetto" class="px-6 py-3 whitespace-normal opacity-90"><span class="block truncate max-w-[300px]">${H(f.Descrizione || '-')}</span>${projBadge}${payBadge}</td>
+                    <td data-label="Descrizione / Progetto" class="px-6 py-3 whitespace-normal opacity-90"><span class="block truncate max-w-[300px]">${H(f.Descrizione || '-')}</span>${projBadge}${payBadge}<button type="button" class="ml-2 mt-2 rounded-lg border border-indigo-400/60 px-2 py-1 text-[11px] text-indigo-200" data-split-invoice="${H(f.ID_FT)}" title="Ripartisci la stessa fattura fra più progetti">Ripartisci / Duplica riga</button></td>
                     <td data-label="Importo" class="px-6 py-3 font-black">${H(imp)}</td>
                 </tr>`;
                 if(isPagata) hPag.push(tr); else hNopag.push(tr);
@@ -317,6 +320,7 @@
             KYV_RECORD_EDITOR.create({ client: supabaseClient, onSaved: async () => { await fetchFattureCorrelate(); window.KYV_COLLECTIONS_V236?.refresh?.(); window.KYV_ECONOMY_V6?.refresh?.(); } });
             window.KYV_COLLECTIONS_V236?.boot({ client: supabaseClient, onChanged: async () => { await fetchFattureCorrelate(); } });
             window.KYV_ARUBA_IMPORT?.boot({ client: supabaseClient, onImported: async () => { await fetchFattureCorrelate(); window.KYV_ECONOMY_V6?.refresh?.(); } });
+            window.KYV_INVOICE_SPLIT_V247?.boot({client:supabaseClient,onSaved:async()=>{await fetchFattureCorrelate();window.KYV_COLLECTIONS_V236?.refresh?.();window.KYV_ECONOMY_V6?.refresh?.();}});
             fetchFattureCorrelate();
         });
     </script>

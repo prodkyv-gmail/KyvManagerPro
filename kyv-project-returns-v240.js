@@ -14,10 +14,10 @@ const money=v=>{
  const n=Number(s);return Number.isFinite(n)?n:0;
 };
 const cents=v=>Math.round(money(v)*100);
-const amount=f=>root.KYV_INVOICE_LINE?.cents(f)??Math.max(0,cents(f.XML_SHA256?f.PrezzoTotale:f.PrezzoUnitario));
+const amount=f=>root.KYV_INVOICE_LINE?.cents(f)??Math.max(0,cents(f.PrezzoUnitario));
 const paid=x=>/^(si|sì|yes|true|1|pagat|incassat)/i.test(text(x));
 const difference=(start,end)=>Math.round((Date.parse(end+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/86400000);
-function analyze({projects=[],invoices=[],payments=[],paymentReversals=[],rights=[],allocations=[],allocationReversals=[]}={}){
+function analyze({projects=[],invoices=[],payments=[],paymentReversals=[],rights=[],allocations=[],allocationReversals=[],invoiceSplits=[]}={}){
  const result=new Map(projects.map(p=>[id(p.ID),{
    ID:p.ID,title:text(p.TITOLO)||'Senza titolo',artist:text(p.ARTISTA)||'—',
    state:text(p.STATO),start:day(p.Data_Sessione),release:day(p.Data_Pubblicazione),
@@ -30,7 +30,9 @@ function analyze({projects=[],invoices=[],payments=[],paymentReversals=[],rights
   const key=String(Number(legacy));
   const matches=refs.get(key)||[];matches.push(id(p.ID));refs.set(key,matches);
  }
- let unallocatedInvoiceLines=0,ambiguousInvoiceLines=0,invoiceTotal=0,feeCash=0,unknownFeeCash=0;
+ let unallocatedInvoiceLines=0,ambiguousInvoiceLines=0,invoiceTotal=0,feeCash=0,unknownFeeCash=0,unallocatedMultiCash=0;
+ const splitsByInvoice=new Map();
+ for(const r of invoiceSplits){const k=id(r.id_ft),arr=splitsByInvoice.get(k)||[];arr.push(r);splitsByInvoice.set(k,arr);}
  const reversePayments=new Set(paymentReversals.map(r=>id(r.ID_INCASSO)));
  const paymentByInvoice=new Map();
  for(const p of payments){
@@ -39,6 +41,25 @@ function analyze({projects=[],invoices=[],payments=[],paymentReversals=[],rights
  const setFirst=(p,field,date)=>{if(date&&(!p[field]||date<p[field]))p[field]=date;};
  for(const f of invoices){
   const amountCents=amount(f);invoiceTotal+=amountCents;
+  const split=splitsByInvoice.get(id(f.ID_FT))||[];
+  if(split.length){
+   const grouped=new Map();
+   for(const r of split)grouped.set(id(r.id_progetto),(grouped.get(id(r.id_progetto))||0)+Math.max(0,cents(r.prezzo_unitario)));
+   let remaining=amountCents,acceptedShares=0;
+   for(const [pid,value] of grouped){
+    const p=result.get(pid);
+    if(!p)continue;
+    const accepted=Math.min(remaining,value);if(accepted<=0)continue;
+    p.billed+=accepted;p.invoiceCount++;setFirst(p,'firstBilled',day(f.Data));
+    remaining-=accepted;acceptedShares+=accepted;
+   }
+   if(remaining>0||!acceptedShares)unallocatedInvoiceLines++;
+   // Shared invoice cash is NOT attributed to projects without a chosen cash allocation.
+   const movements=paymentByInvoice.get(id(f.ID_FT))||[];
+   if(!movements.length){if(paid(f.PAGATA))unallocatedMultiCash+=amountCents;}
+   else unallocatedMultiCash+=Math.min(amountCents,movements.filter(x=>!reversePayments.has(id(x.ID_INCASSO))).reduce((s,x)=>s+Math.max(0,cents(x.Importo)),0));
+   continue;
+  }
   const direct=id(f.ID_PROGETTO),legacyMatches=refs.get(id(f.ID_FT))||[];
   let key=null;
   if(direct){if(result.has(direct))key=direct;}
@@ -103,7 +124,7 @@ function analyze({projects=[],invoices=[],payments=[],paymentReversals=[],rights
   projects:list,stats:{
    projects:list.length,invoiceLines:invoices.length,
    invoiceTotal:invoiceTotal/100,unallocatedInvoiceLines,ambiguousInvoiceLines,
-   datedInvoiceCash:feeCash/100,legacyPaidUndated:unknownFeeCash/100,
+   datedInvoiceCash:feeCash/100,legacyPaidUndated:unknownFeeCash/100,sharedInvoiceCashAwaitingAllocation:unallocatedMultiCash/100,
    rightsAllocated:allocatedRights/100,rightsNotAllocated:unallocatedRights/100,
    rightsAttributions:rightsCount,unusableAttributions:unknownProjects,
    noKnownEconomicBasis:noBasis,withInvoice:withAnyBill,

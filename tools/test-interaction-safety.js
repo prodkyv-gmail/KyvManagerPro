@@ -45,8 +45,8 @@ assert.match(invoices, /return null;/, 'Un errore di lettura fatture deve essere
 assert.match(invoices, /Fatture non disponibili/, 'L’interfaccia deve mostrare esplicitamente gli errori di lettura fatture');
 assert.match(invoices, /Collegamento al progetto non impostato/, 'La creazione fattura deve fallire chiusa se ID_PROGETTO non viene precompilato');
 assert.match(invoices, /kyv:invoice-updated/, 'Il salvataggio fattura deve notificare gli altri moduli senza chiamate circolari');
-assert.ok(invoices.includes('if(direct.length)return uniqueInvoices(direct);'), 'In caso di conflitto prevale FATTURE.ID_PROGETTO e IDFT viene usato solo senza collegamento diretto');
-assert.ok(invoices.includes('direct.length?direct:byInvoiceId.filter'), 'La lista Progetti deve usare ID_PROGETTO prima del fallback IDFT e ignorare link ad altri progetti');
+assert.ok(invoices.includes('if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect]);'), 'In caso di conflitto prevale FATTURE.ID_PROGETTO e IDFT viene usato solo senza collegamento diretto');
+assert.ok(invoices.includes('if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct]);'), 'La lista Progetti deve usare ID_PROGETTO prima del fallback IDFT e ignorare link ad altri progetti');
 assert.doesNotMatch(invoices,/legacy\.FT|eq\('Numero',project\.FT\)/,'FT/Numero non deve essere usato come relazione fattura/progetto');
 assert.ok(invoices.includes("projectInput.disabled=true"), 'Durante una nuova fattura contestuale ID_PROGETTO deve restare bloccato');
 assert.ok(invoices.includes('listCoverageLimited'), 'I limiti di lettura non devono diventare falsi “nessuna fattura”');
@@ -56,7 +56,7 @@ assert.doesNotMatch(finance, /KYV_PROJECT_INVOICES\?\.refresh/, 'Il riepilogo ec
 assert.match(finance, /kyv:invoice-updated/, 'Il riepilogo economico deve aggiornarsi tramite evento');
 assert.match(finance, /rows===null/, 'Il riepilogo deve distinguere errore di lettura da assenza di fatture');
 assert.match(finance, /Stato non disponibile/, 'Il riepilogo deve rendere visibile l’errore senza suggerire dati assenti');
-assert.ok(finance.includes('if((direct.data||[]).length)return unique(direct.data);'), 'I totali economici devono evitare unioni cieche di fatture in conflitto');
+assert.ok(finance.includes('if(explicit.length||legacyDirect.length)return unique([...explicit,...legacyDirect]);'), 'I totali economici devono evitare unioni cieche di fatture in conflitto');
 
 // Release: la chiusura non deve distruggere note o sovrascrivere modifiche concorrenti.
 assert.match(closeout, /update\(\{STATO:'Pubblicato'\}\)/, 'La chiusura release deve aggiornare soltanto STATO');
@@ -99,7 +99,7 @@ assert.ok(responsiveMenus.includes('.kyv-sheet-values label'), 'I valori nei men
 assert.ok(responsiveMenus.includes('.kyv-cell-editor input'), 'Anche i menu/campi intelligenti dello Studio Editor devono essere ridimensionati');
 
 // PWA: gli asset di sicurezza devono essere nello stesso ciclo cache del deploy.
-assert.match(sw, /kyv-studio-v2-46-aruba-id-hotfix-20261103/, 'Il service worker deve ruotare la cache per l’UX Progetti dello Studio Editor');
+assert.match(sw, /kyv-studio-v2-47-invoice-split-20261103/, 'Il service worker deve ruotare la cache per l’UX Progetti dello Studio Editor');
 for (const asset of ['kyv-record-editor.js','kyv-project-invoices.js','kyv-project-finance-summary.js','kyv-project-hub-v3.js','kyv-project-timeline-v10.js','kyv-pipeline-v4.js','kyv-today-home-v5.js','kyv-economy-v6.js','kyv-rights-v7.js','kyv-siae-import-guard.js','kyv-global-search-v8.js','kyv-easy-ux-v9.js','kyv-easy-secondary-v9.js','kyv-release-closeout.js','kyv-project-edit-safety.js','kyv-sheet-controls.js','kyv-sheet-responsive-menus.js','kyv-sheet-dropdown-fix.js','kyv-editor-relations.js','kyv-editor-project-fields.js','kyv-editor-primary-fields.js','kyv-nav-order.js']) {
   assert.ok(sw.includes(`'./${asset}'`), `${asset} deve essere incluso nell’APP_SHELL`);
 }

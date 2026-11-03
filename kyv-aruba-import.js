@@ -41,7 +41,12 @@ function parseInvoiceDocument(doc){
   if(!sellerVat&&!val(seller,'CodiceFiscale'))throw Error('Identificativo dell’emittente non disponibile.');
   const lines=children(path(body,'DatiBeniServizi')).filter(x=>x.localName==='DettaglioLinee');
   const summary=lines.map(x=>val(x,'Descrizione')).filter(Boolean).join(' | ')||val(general,'Causale');
-  const firstLine=lines.find(x=>!(/bollo/i.test(val(x,'Descrizione')))&&val(x,'PrezzoUnitario'))||lines[0];
+  // The managerial unit amount is the sum of the explicitly declared fee-line unit prices.
+  // Exclude bollo/tax items; never substitute ImportoTotaleDocumento.
+  const feeLines=lines.filter(x=>!/\b(?:bollo|imposta di bollo|ritenuta|marca da bollo)\b/i.test(val(x,'Descrizione')));
+  const unitPrices=feeLines.map(x=>normMoney(val(x,'PrezzoUnitario')));
+  const unitAmount=feeLines.length&&unitPrices.every(Number.isFinite)
+    ?unitPrices.reduce((sum,n)=>sum+n,0).toFixed(2):null;
   const payments=children(body).filter(x=>x.localName==='DatiPagamento').flatMap(x=>children(x).filter(y=>y.localName==='DettaglioPagamento'));
   const prices=lines.map(x=>normMoney(val(x,'PrezzoTotale'))).filter(Number.isFinite);
   const docTotal=normMoney(total).toFixed(2);
@@ -52,7 +57,7 @@ function parseInvoiceDocument(doc){
     CodiceFiscale6:val(buyer,'CodiceFiscale'),CodiceDestinatario:val(header,'DatiTrasmissione','CodiceDestinatario'),
     ProgressivoInvio:val(header,'DatiTrasmissione','ProgressivoInvio'),
     Descrizione:summary,ImportoTotaleDocumento:docTotal,
-    PrezzoUnitario:firstLine?val(firstLine,'PrezzoUnitario'):null,
+    PrezzoUnitario:unitAmount,
     PrezzoTotale:prices.length?prices.reduce((sum,n)=>sum+n,0).toFixed(2):null,
     ImportoPagamento:payments.length===1?val(payments[0],'ImportoPagamento'):null,
     PAGATA:'NO'

@@ -10,7 +10,7 @@ const num=v=>{if(window.KYV?.parseNumber)return KYV.parseNumber(v)||0;const n=Nu
 const euro=v=>window.KYV?.formatEuro?KYV.formatEuro(v):new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(v)||0);
 const paid=v=>window.KYV?.isPaid?KYV.isPaid(v):/^(si|sì|yes|true|1|pagat|incassat)/i.test(text(v));
 const done=p=>/uscita|pubblicat|completat|chius|finita/i.test(text(p?.STATO)+' '+text(p?.SVILUPPO));
-const invoiceAmount=f=>window.KYV_INVOICE_LINE?.amount(f)??Math.max(0,num(f?.XML_SHA256?f?.PrezzoTotale:f?.PrezzoUnitario));
+const invoiceAmount=f=>window.KYV_INVOICE_LINE?.amount(f)??Math.max(0,num(f?.PrezzoUnitario));
 const feeAmount=p=>num(p?.FEE);
 const yearOf=v=>{const d=v?new Date(v):null;return d&&!Number.isNaN(d.getTime())?d.getFullYear():null;};
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
@@ -22,7 +22,7 @@ function projectInvoices(p,invoices){
 }
 function yearMatch(row,year,field){return year==='all'||yearOf(row?.[field])===Number(year);}
 function projectYearMatch(p,year){if(year==='all')return true;return [p.Data_Pubblicazione,p.Data_Consegna_Master,p.Data_Sessione].some(v=>yearOf(v)===Number(year));}
-function compute(projects,invoices,costs,year){
+function compute(projects,invoices,costs,year,invoiceSplits=[]){
  const inv=invoices.filter(f=>yearMatch(f,year,'Data'));
  const sp=costs.filter(s=>yearMatch(s,year,'Data'));
  const fatturato=inv.reduce((s,f)=>s+invoiceAmount(f),0);
@@ -31,9 +31,18 @@ function compute(projects,invoices,costs,year){
  const openRows=inv.filter(f=>{const v=window.KYV_COLLECTIONS_V236?.paymentState(f);return v?v.remaining>0:!paid(f.PAGATA);});
  const daIncassare=openRows.reduce((s,f)=>{const v=window.KYV_COLLECTIONS_V236?.paymentState(f);return s+(v?v.remaining:invoiceAmount(f));},0);
  const costi=sp.reduce((s,r)=>s+num(r.Importo),0);
- const candidates=projects.filter(p=>feeAmount(p)>0&&projectYearMatch(p,year)&&projectInvoices(p,invoices).length===0);
+ const splitIds=new Set(invoiceSplits.map(x=>text(x.id_ft)));
+ const billed=new Map();
+ for(const x of invoiceSplits){const id=text(x.id_progetto);billed.set(id,(billed.get(id)||0)+num(x.prezzo_unitario));}
+ for(const f of invoices){
+  if(splitIds.has(text(f.ID_FT)))continue;
+  if(text(f.ID_PROGETTO)){const id=text(f.ID_PROGETTO);billed.set(id,(billed.get(id)||0)+invoiceAmount(f));}
+ }
+ const candidates=projects.filter(p=>feeAmount(p)>0&&projectYearMatch(p,year))
+  .map(p=>({...p,feePending:Math.max(0,Math.round((feeAmount(p)-(billed.get(text(p.ID))||0))*100)/100)}))
+  .filter(p=>p.feePending>0);
  const closedMissing=candidates.filter(done),activeMissing=candidates.filter(p=>!done(p));
- const feeDaFatturare=candidates.reduce((s,p)=>s+feeAmount(p),0);
+ const feeDaFatturare=candidates.reduce((s,p)=>s+p.feePending,0);
  return{inv,sp,fatturato,incassato,openRows,daIncassare,costi,margine:incassato-costi,candidates,closedMissing,activeMissing,feeDaFatturare,previsionale:daIncassare+feeDaFatturare};
 }
 function ensureStyles(){
@@ -54,11 +63,11 @@ function availableYears(invoices,costs){
  const years=[...new Set([...invoices.map(x=>yearOf(x.Data)),...costs.map(x=>yearOf(x.Data))].filter(Boolean))].sort((a,b)=>b-a);
  return years;
 }
-function rowProject(p){return `<div class="kyv-econ-row"><a href="scheda_progetto.html?id=${encodeURIComponent(p.ID)}">${H((text(p.ARTISTA)||'Artista')+' · '+(text(p.TITOLO)||'Senza titolo'))}</a><span>${H(euro(feeAmount(p)))}</span></div>`;}
+function rowProject(p){return `<div class="kyv-econ-row"><a href="scheda_progetto.html?id=${encodeURIComponent(p.ID)}">${H((text(p.ARTISTA)||'Artista')+' · '+(text(p.TITOLO)||'Senza titolo'))}</a><span>${H(euro(p.feePending??feeAmount(p)))}</span></div>`;}
 function rowInvoice(f){return `<div class="kyv-econ-row"><a href="fatture.html#invoice-${H(f.ID_FT)}">${H('Fattura '+(text(f.Numero_Originale)||text(f.Numero)||'#'+text(f.ID_FT))+' · '+(text(f.Denominazione)||'Cliente'))}</a><span>${H(euro(invoiceAmount(f)))}</span></div>`;}
 function render(year='all'){
  const root=mount();if(!root||!lastData)return;
- const {projects,invoices,costs}=lastData,r=compute(projects,invoices,costs,year),years=availableYears(invoices,costs);
+ const {projects,invoices,costs,invoiceSplits}=lastData,r=compute(projects,invoices,costs,year,invoiceSplits),years=availableYears(invoices,costs);
  root.innerHTML=`<div class="kyv-econ-head"><div><p class="text-[9px] uppercase tracking-[.14em] font-black text-emerald-200">Economia</p><h3 class="mt-1">Controllo economico</h3><p>Vista gestionale in sola lettura. “Previsionale minimo” somma soltanto fatture ancora da incassare e fee registrate senza fattura: non stima royalties future.</p></div><select id="kyv-econ-year" class="kyv-econ-select"><option value="all">Tutto lo storico</option>${years.map(y=>`<option value="${y}" ${String(year)===String(y)?'selected':''}>${y}</option>`).join('')}</select></div>
  <div class="kyv-econ-grid">
   <div class="kyv-econ-card"><span>Fatturato</span><strong>${H(euro(r.fatturato))}</strong><em>${r.inv.length} fatture</em></div>
@@ -77,13 +86,14 @@ function render(year='all'){
 }
 async function load(){
  const c=client();if(!c)return;
- const [p,f,s]=await Promise.all([
+ const [p,f,s,a]=await Promise.all([
   c.from('PROGETTI').select('ID,TITOLO,ARTISTA,FEE,STATO,SVILUPPO,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione').limit(1000),
   c.from('FATTURE').select('ID_FT,Numero,Numero_Originale,Data,Denominazione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento,XML_SHA256').limit(2000),
-  c.from('Spese Extra').select('ID_SPESE,Data,Descrizione,Categoria,Importo,ID_PROGETTO').limit(2000)
+  c.from('Spese Extra').select('ID_SPESE,Data,Descrizione,Categoria,Importo,ID_PROGETTO').limit(2000),
+  c.from('FATTURE_RIPARTIZIONI').select('id,id_ft,id_progetto,prezzo_unitario').limit(5000)
  ]);
- if(p.error||f.error||s.error){console.warn('[KYV Economy v6] lettura parziale',{projects:p.error,invoices:f.error,costs:s.error});}
- lastData={projects:p.data||[],invoices:f.data||[],costs:s.data||[]};render('all');
+ if(p.error||f.error||s.error||a.error){console.warn('[KYV Economy v6] lettura incompleta',{projects:p.error,invoices:f.error,costs:s.error,allocations:a.error});const root=mount();if(root)root.textContent='Analisi non disponibile: una fonte non è leggibile. Ricarica dopo la verifica.';return;}
+ lastData={projects:p.data||[],invoices:f.data||[],costs:s.data||[],invoiceSplits:a.data||[]};render('all');
 }
 function boot(){ensureStyles();let n=0;const t=setInterval(()=>{n++;if(mount()){clearInterval(t);load();}else if(n>=25)clearInterval(t);},120);setTimeout(()=>clearInterval(t),3500);}
 window.KYV_ECONOMY_V6={refresh:load};

@@ -14,7 +14,7 @@ function H(v){if(window.KYV&&typeof KYV.safeHtml==='function')return KYV.safeHtm
 function client(){if(db)return db;db=window.KYV?.createSupabaseClient?.()||null;return db;}
 function paid(row){if(window.KYV&&typeof KYV.isPaid==='function')return KYV.isPaid(row?.PAGATA)||KYV.isPaid(row?.PAGAMENTO);return /^(SI|SÌ|YES|PAGAT|INCASSAT)/i.test(text(row?.PAGATA||row?.PAGAMENTO));}
 function numberValue(value){if(window.KYV&&typeof KYV.parseNumber==='function')return KYV.parseNumber(value)||0;if(typeof value==='number')return Number.isFinite(value)?value:0;const n=Number(String(value??'').replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0;}
-function amount(row){return window.KYV_INVOICE_LINE?.amount(row)??Math.max(0,numberValue(row?.XML_SHA256?row?.PrezzoTotale:row?.PrezzoUnitario));}
+function amount(row){return window.KYV_INVOICE_LINE?.amount(row)??Math.max(0,numberValue(row?.PrezzoUnitario));}
 function euro(value){return window.KYV?.formatEuro?KYV.formatEuro(value):new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(value)||0);}
 function date(value){return value?(window.KYV?.formatDate?KYV.formatDate(value,'-'):new Date(value).toLocaleDateString('it-IT')):'-';}
 function projectId(){const badge=text(document.getElementById('hero-badges')?.textContent).match(/\bID\s+(\d+)\b/i)?.[1];if(badge)return badge;return text(new URLSearchParams(location.search).get('id'));}
@@ -31,7 +31,24 @@ async function fetchInvoices(pid){
   try{
     const direct=await client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(200);
     if(direct.error)throw direct.error;
-    if((direct.data||[]).length)return unique(direct.data);
+    // v2.47: explicit allocation rows take precedence over the historical single ID_PROGETTO.
+    const shares=await client().from('FATTURE_RIPARTIZIONI').select('id_ft,prezzo_unitario')
+      .eq('id_progetto',pid).limit(1000);
+    if(shares.error)throw shares.error;
+    const shareById=new Map();
+    for(const r of shares.data||[])shareById.set(text(r.id_ft),(shareById.get(text(r.id_ft))||0)+Number(r.prezzo_unitario));
+    const ids=[...shareById.keys()];
+    const shared=ids.length?await client().from('FATTURE').select(fields).in('ID_FT',ids).limit(1000):{data:[],error:null};
+    if(shared.error)throw shared.error;
+    if((shared.data||[]).length!==ids.length)throw Error('Fatture ripartite non leggibili interamente');
+    const relevantDirect=direct.data||[];
+    const directIds=relevantDirect.map(r=>r.ID_FT);
+    const allShare=directIds.length?await client().from('FATTURE_RIPARTIZIONI').select('id_ft').in('id_ft',directIds).limit(1000):{data:[],error:null};
+    if(allShare.error)throw allShare.error;
+    const splitIds=new Set((allShare.data||[]).map(a=>text(a.id_ft)));
+    const explicit=(shared.data||[]).map(f=>({...f,PrezzoUnitario:String(shareById.get(text(f.ID_FT))),PrezzoTotale:String(shareById.get(text(f.ID_FT))),XML_SHA256:null,_v247_shared:true}));
+    const legacyDirect=relevantDirect.filter(f=>!splitIds.has(text(f.ID_FT)));
+    if(explicit.length||legacyDirect.length)return unique([...explicit,...legacyDirect]);
     const project=await client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle();
     if(project.error)throw project.error;
     if(!project.data||!text(project.data.IDFT))return [];
@@ -52,11 +69,11 @@ function host(){const view=document.getElementById('project-view');if(!view)retu
 function stateFor(rows){
   rows=unique(rows).sort((a,b)=>new Date(b.Data||0)-new Date(a.Data||0));
   if(!rows.length)return{rows,total:0,paidTotal:0,openTotal:0,paidCount:0,invoice:'Non emessa',invoiceMeta:'Nessuna fattura collegata al progetto',payment:'Da emettere',kind:'none'};
-  const total=rows.reduce((s,row)=>s+amount(row),0);const paidRows=rows.filter(paid);const paidTotal=paidRows.reduce((s,row)=>s+amount(row),0);const openTotal=Math.max(0,total-paidTotal);const latest=rows[0];
+  const total=rows.reduce((s,row)=>s+amount(row),0);const shared=rows.some(row=>row._v247_shared);const paidRows=rows.filter(row=>!row._v247_shared&&paid(row));const paidTotal=paidRows.reduce((s,row)=>s+amount(row),0);const openTotal=Math.max(0,total-paidTotal);const latest=rows[0];
   const invoice=rows.length===1?`Fattura ${text(latest.Numero)||text(latest.ID_FT)||'—'}`:`${rows.length} fatture`;
   const invoiceMeta=rows.length===1?`${date(latest.Data)} · ${euro(amount(latest))}`:`Totale ${euro(total)} · ultima ${text(latest.Numero)||text(latest.ID_FT)||'—'} del ${date(latest.Data)}`;
-  const allPaid=paidRows.length===rows.length;const payment=allPaid?(rows.length===1?'Incassata':'Tutte incassate'):(paidRows.length?`${paidRows.length}/${rows.length} incassate`:'Da incassare');
-  return{rows,total,paidTotal,openTotal,paidCount:paidRows.length,invoice,invoiceMeta,payment,kind:allPaid?'paid':'open'};
+  const allPaid=!shared&&paidRows.length===rows.length;const payment=shared?'Quote incasso da attribuire':allPaid?(rows.length===1?'Incassata':'Tutte incassate'):(paidRows.length?`${paidRows.length}/${rows.length} incassate`:'Da incassare');
+  return{rows,total,paidTotal,openTotal,paidCount:paidRows.length,invoice,invoiceMeta,payment,kind:allPaid?'paid':'open',shared};
 }
 function fingerprint(pid,rows){const status=text(currentProject(pid)?.STATO);return rows===null?`${pid}|${status}|read-error`:JSON.stringify([pid,status,unique(rows).map(row=>[row.ID_FT,row.Numero,row.Data,row.ImportoTotaleDocumento,row.PrezzoTotale,row.PrezzoUnitario,row.ImportoPagamento,row.PAGATA,row.ID_PROGETTO])]);}
 function mount(rows,pid){
@@ -65,10 +82,10 @@ function mount(rows,pid){
   if(rows===null){
     panel.innerHTML='<div class="kyv-finance-block"><span class="kyv-finance-label">Fattura</span><strong class="kyv-finance-value">Stato non disponibile</strong><span class="kyv-finance-meta">La lettura delle fatture non è riuscita. Non viene dedotto che la fattura sia assente.</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-error">⚠ Da verificare</span><span class="kyv-finance-meta">Riprova l’aggiornamento prima di registrare nuovi documenti.</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Amministrazione</button></div>';
   }else{
-    const data=stateFor(rows),pending=awaitingInvoice(currentProject(pid),rows);const paymentMeta=data.kind==='none'?'Quando la emetti, registrala direttamente da qui.':data.kind==='paid'?`Incassato ${euro(data.paidTotal)}`:`Residuo da incassare ${euro(data.openTotal)}`;
+    const data=stateFor(rows),pending=awaitingInvoice(currentProject(pid),rows);const paymentMeta=data.kind==='none'?'Quando la emetti, registrala direttamente da qui.':data.shared?'Incasso della fattura non attribuito ai singoli progetti.':data.kind==='paid'?`Incassato ${euro(data.paidTotal)}`:`Residuo da incassare ${euro(data.openTotal)}`;
     const reminder=pending?`<div class="kyv-finance-reminder" role="status"><div><span class="kyv-finance-reminder-label">Da fatturare</span><strong>Progetto completato · Fattura da emettere</strong><p>Nessuna fattura collegata. Puoi registrarla con il progetto già selezionato, oppure collegare manualmente una fattura esistente. Nessun invio allo SdI viene eseguito da questa schermata.</p></div><button type="button" class="kyv-finance-btn" data-kyv-finance-new>Crea fattura collegata</button></div>`:'';
     const register=pending?'':'<button type="button" class="kyv-finance-btn secondary" data-kyv-finance-new>＋ Registra fattura</button>';
-    panel.innerHTML=`${reminder}<div class="kyv-finance-block"><span class="kyv-finance-label">Fattura</span><strong class="kyv-finance-value">${H(data.invoice)}</strong><span class="kyv-finance-meta">${H(data.invoiceMeta)}</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-${data.kind}">${data.kind==='paid'?'✓':data.kind==='open'?'●':'○'} ${H(data.payment)}</span><span class="kyv-finance-meta">${H(paymentMeta)}</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Apri amministrazione</button>${register}<a class="kyv-finance-manual" data-kyv-finance-manual href="fatture.html?collegaProgetto=${encodeURIComponent(pid)}">Collega fattura esistente (manuale)</a></div>`;
+    panel.innerHTML=`${reminder}<div class="kyv-finance-block"><span class="kyv-finance-label">Fattura</span><strong class="kyv-finance-value">${H(data.invoice)}</strong><span class="kyv-finance-meta">${H(data.invoiceMeta)}</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-${data.kind}">${data.kind==='paid'?'✓':data.kind==='open'?'●':'○'} ${H(data.payment)}</span><span class="kyv-finance-meta">${H(paymentMeta)}</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Apri amministrazione</button>${register}<a class="kyv-finance-manual" data-kyv-finance-manual href="fatture.html?ripartizione_progetto=${encodeURIComponent(pid)}">Aggiungi quota a fattura esistente / Duplica riga</a></div>`;
   }
   panel.querySelector('[data-kyv-finance-admin]')?.addEventListener('click',()=>{if(typeof window.setTab==='function')window.setTab('amministrazione');setTimeout(()=>document.getElementById('tab-admin')?.scrollIntoView({behavior:'smooth',block:'start'}),60);});
   panel.querySelector('[data-kyv-finance-new]')?.addEventListener('click',()=>{const meta=projectMeta();if(window.KYV_PROJECT_INVOICES?.openNew)KYV_PROJECT_INVOICES.openNew(pid,meta.title,meta.artist);else location.href=`scheda_progetto.html?id=${encodeURIComponent(pid)}&tab=amministrazione&newInvoice=1`;});
