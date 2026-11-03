@@ -56,7 +56,7 @@ assert.ok(!sql.includes('alter table public."PROGETTI"')&&!sql.includes('drop ta
 assert.ok(read('progetti.html').includes("state.filter==='RECENTI'&&!text(search.value)"));
 assert.ok(read('sw.js').includes("'./kyv-audio-consent-v248.js'"));
 assert.equal(JSON.parse(read('package.json')).version,'2.49.0');
-assert.equal(read('VERSION').trim(),'2.49');
+assert.equal(read('VERSION').trim(),'2.50');
 assert.ok(read('kyv-help.js').includes('v2.48'));
 assert.ok(read('guida.html').includes('v2.48'));
 console.log('OK: approved-only personal audio, persistent reference exclusions, explicit project creation and mobile picker');
