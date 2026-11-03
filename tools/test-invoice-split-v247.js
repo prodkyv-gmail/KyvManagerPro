@@ -1,0 +1,55 @@
+// v2.47: one fiscal invoice, many approved project fee lines, no duplicate totals.
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const read=p=>fs.readFileSync(p,'utf8');
+const w={},ctx={window:w,Intl,Number,Date,Math,Map,Set,Error,Object};
+vm.runInNewContext(read('kyv-invoice-line-amount.js'),ctx);
+vm.runInNewContext(read('kyv-invoice-split-v247.js'),ctx);
+const M=w.KYV_INVOICE_SPLIT_V247;
+assert.ok(M?.open&&M?.validate&&M?.refresh&&M?.names);
+const projects=[{ID:1,TITOLO:'Brano A'},{ID:2,TITOLO:'Brano B'}];
+const selected=[
+ {projectId:'1',amount:'2000',fee:'2400',description:'Produzione A'},
+ {projectId:'2',amount:'1500',fee:'',description:'Produzione B'}];
+const p=M.validate(selected,3500,projects);
+assert.equal(p.items.length,2);assert.equal(p.remaining,0);
+assert.equal(p.items[0].prezzo_unitario,2000);
+assert.equal(p.items[0].fee_riferimento,2400);
+assert.equal(p.items[1].fee_riferimento,null);
+assert.equal(M.validate([{projectId:'1',amount:'0',fee:'0',description:''}],3500,projects).remaining,3500);
+assert.throws(()=>M.validate(selected,3400,projects),/Quote/);
+assert.throws(()=>M.validate([{projectId:'500',amount:'10',fee:'',description:''}],3500,projects),/Progetto/);
+assert.throws(()=>M.validate([{projectId:'1',amount:'abc',fee:'',description:''}],3500,projects),/PrezzoUnitario/);
+assert.throws(()=>M.validate([{projectId:'1',amount:'-10',fee:'',description:''}],3500,projects),/PrezzoUnitario/);
+const ui=read('fatture.html'),module=read('kyv-invoice-split-v247.js'),sql=read('docs/v247-fatture-ripartizioni.sql');
+for(const t of ['id="kyv-split-new"','data-split-invoice','KYV_INVOICE_SPLIT_V247?.boot'])assert.ok(ui.includes(t),t);
+for(const t of ['Duplica riga','Riporta fee',"client.rpc('kyv_v247_save_invoice'","description:rows[i].description"])assert.ok(module.includes(t),t);
+assert.ok(!module.includes("client.from('FATTURE').insert"),'Only RPC creates a single fiscal invoice atomically');
+assert.ok(sql.includes('create table if not exists public."FATTURE_RIPARTIZIONI"'));
+assert.ok(sql.includes('enable row level security')&&sql.includes('auth.uid()'));
+assert.ok(sql.includes('security invoker')&&sql.includes('pg_advisory_xact_lock'));
+assert.ok(sql.includes('if round(assigned,2)>round(inv_total,2)'));
+assert.ok(sql.includes('delete from public."FATTURE_RIPARTIZIONI"'));
+assert.doesNotMatch(sql,/delete from public\."FATTURE"\b/i);
+assert.ok(sql.includes('from public."PROGETTI" p where p."ID"=pid and p.owner_id=uid'));
+assert.ok(read('sw.js').includes("'./kyv-invoice-split-v247.js'"));
+assert.ok(read('guida.html').includes('v2.47 — Inserire più progetti'));
+assert.ok(read('kyv-help.js').includes('Duplica riga'));
+assert.equal(JSON.parse(read('package.json')).version,'2.47.0');
+assert.equal(read('VERSION').trim(),'2.47');
+assert.ok(JSON.parse(read('package.json')).scripts.check.includes('check:invoice-split-v247'));
+// One invoice is counted once globally, yet billed shares go to each project.
+const inv={ID_FT:100,ID_PROGETTO:1,PrezzoUnitario:'3500',Data:'2026-10-10',PAGATA:'NO'};
+const projectList=[{ID:1,TITOLO:'A',FEE:'2500'},{ID:2,TITOLO:'B',FEE:'2000'}];
+const invoiceSplits=[{id_ft:100,id_progetto:1,prezzo_unitario:2000},{id_ft:100,id_progetto:2,prezzo_unitario:1500}];
+vm.runInNewContext(read('kyv-project-returns-v240.js'),ctx);
+const returns=w.KYV_PROJECT_RETURNS_V240.analyze({invoices:[inv],projects:projectList,invoiceSplits});
+assert.equal(returns.stats.invoiceTotal,3500);
+assert.equal(returns.projects.find(p=>p.ID===1).billed,2000);
+assert.equal(returns.projects.find(p=>p.ID===2).billed,1500);
+assert.equal(returns.stats.datedInvoiceCash,0);
+vm.runInNewContext(read('kyv-intelligence-engine-v238.js'),ctx);
+const intelligence=w.KYV_INTELLIGENCE_ENGINE.compute({invoices:[inv],projects:projectList,invoiceSplits},'annual');
+assert.equal(intelligence.totals.billed,3500);
+assert.equal(intelligence.totals.invoiceCount,1);
+assert.equal(intelligence.totals.unlinked,0);
+console.log('OK: multi-project invoice rows, atomic RPC, fee allocation, no fiscal duplication and unit-only reporting');
