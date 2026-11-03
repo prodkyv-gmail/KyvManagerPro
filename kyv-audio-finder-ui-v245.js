@@ -227,34 +227,59 @@ async function refresh(){
   render();info(personalCatalogue().length+' audio personali confermati. Nessuna scansione automatica attiva.');
  });
 }
-function renderPreview(){
- const visible=preview.slice(0,previewShown);
- const changed=preview.filter(x=>x._explicit);
- const mine=changed.filter(x=>x.decision==='mio').length;
- const references=changed.filter(x=>x.decision==='reference').length;
- $('finder-preview-count').textContent=preview.length+' audio trovati · '+mine+' tuoi selezionati · '+references+' reference escluse · '+changed.length+' decisioni esplicite';
- $('finder-preview-list').innerHTML=visible.map((f,i)=>
- '<div class="finder-intake-row"><div><strong>'+H(f.nome_file)+'</strong><small>'+H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'File selezionato'))+'</small></div>'+
- '<label>È una mia produzione?<select data-preview-choice="'+i+'">'+
- '<option value="da_verificare"'+(f.decision==='da_verificare'?' selected':'')+'>Da verificare</option>'+
- '<option value="mio"'+(f.decision==='mio'?' selected':'')+'>Sì, è un mio brano / collaborazione</option>'+
- '<option value="reference"'+(f.decision==='reference'?' selected':'')+'>No, reference o brano di altri</option>'+
- '</select></label></div>').join('');
- $('finder-preview-more').hidden=previewShown>=preview.length;
+function previewIndices(){
+ const q=F.norm($('finder-preview-query').value),status=$('finder-preview-state').value;
+ return preview.map((file,index)=>({file,index})).filter(x=>
+  (status==='all'||x.file.decision===status)&&
+  (!q||F.norm([x.file.nome_file,x.file.percorso_relativo,x.file.provider,x.file.account_label].join(' ')).includes(q)))
+ .map(x=>x.index);
 }
-function previewScan(rows,note){
+function renderPreview(){
+ const indices=previewIndices(),visible=indices.slice(0,previewShown);
+ const classified=preview.filter(x=>x._explicit);
+ $('finder-preview-count').textContent=preview.length+' file · '+indices.length+' nella ricerca · '+
+ classified.filter(x=>x.decision==='mio').length+' miei · '+
+ classified.filter(x=>x.decision==='reference').length+' reference · '+classified.length+' decisioni';
+ $('finder-preview-list').innerHTML=visible.map(i=>{
+  const f=preview[i],listen=f.provider==='local'&&transientFiles.has(W.KEY(f));
+  return '<div class="finder-intake-row"><div><strong>'+H(f.nome_file)+'</strong><small>'+
+   H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'File selezionato'))+'</small>'+
+   (listen?'<button type="button" class="explorer-small-btn" data-preview-play="'+i+'">Ascolta file locale</button>':'')+
+   '</div><label>È una mia produzione?<select data-preview-choice="'+i+'">'+
+   '<option value="da_verificare"'+(f.decision==='da_verificare'?' selected':'')+'>Da verificare</option>'+
+   '<option value="mio"'+(f.decision==='mio'?' selected':'')+'>Sì, mio brano o collaborazione</option>'+
+   '<option value="reference"'+(f.decision==='reference'?' selected':'')+'>No, reference o brano di altri</option>'+
+   '</select></label></div>';
+ }).join('')||'<p class="explorer-desc">Nessun file corrisponde al filtro. Le scelte precedenti restano memorizzate.</p>';
+ $('finder-preview-more').hidden=visible.length>=indices.length;
+}
+function previewScan(rows,note,localRefs=null){
  if(!rows.length)throw Error('Nessun file audio nella selezione');
  if(rows.length>MAX)throw Error('Oltre '+MAX+' file: restringi la selezione');
+ closeExplorerPlayer();transientFiles.clear();
+ if(localRefs)for(const [key,file] of localRefs)transientFiles.set(key,file);
  preview=C.preview(rows,decisions);previewShown=60;
+ $('finder-preview-query').value='';$('finder-preview-state').value='all';
  $('finder-preview').hidden=false;
- $('finder-preview-note').textContent=preview.length+' file audio rilevati. '+note+' Nessun file o progetto viene creato prima della tua scelta.';
- renderPreview();info('Ricerca completata. Classifica solo le tue produzioni prima di salvare.');
+ $('finder-preview-note').textContent=preview.length+' audio rilevati. '+note+
+  ' Sono soltanto candidati: nessun progetto o collegamento viene creato.';
+ renderPreview();info('Scansione completata. Classifica soltanto le tue produzioni.');
 }
 function bulkPreview(decision){
- const indices=preview.slice(0,Math.min(100,previewShown)).map((_,i)=>i);
+ const indices=previewIndices().slice(0,Math.min(100,previewShown));
  if(!indices.length)return;
- if(!confirm('Confermi la classificazione di '+indices.length+' file come '+(decision==='mio'?'tuoi lavori':'reference da escludere')+'?'))return;
+ if(!confirm('Confermi la classificazione di '+indices.length+' file VISIBILI come '+
+ (decision==='mio'?'tuoi lavori':'reference da escludere')+'?'))return;
  preview=C.markMany(preview,indices,decision);renderPreview();
+}
+function listenPreview(index){
+ const f=preview[index];if(!f||f.provider!=='local')throw Error('Anteprima disponibile solo per audio selezionato localmente');
+ const file=transientFiles.get(W.KEY(f));if(!file)throw Error('Riseleziona il file per ascoltarlo');
+ closeExplorerPlayer();playerObjectUrl=URL.createObjectURL(file);
+ $('explorer-player').src=playerObjectUrl;
+ $('explorer-player-title').textContent='Ascolto temporaneo · '+f.nome_file;
+ $('explorer-player-wrap').hidden=false;
+ $('explorer-player-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function drive(){
  if(!window.KYV_DRIVE?.listFiles)throw Error('Connettore Google Drive non disponibile');
