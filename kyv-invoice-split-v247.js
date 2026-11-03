@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id),t=v=>String(v??'').trim();
 const H=v=>t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const parse=v=>root.KYV_INVOICE_LINE?.parse(v)??(Number(t(v).replace(',','.'))||null);
+const parse=v=>{const n=root.KYV_INVOICE_LINE?.parse(v);if(n!==null&&n!==undefined)return n;const raw=t(v);if(!raw)return null;const value=Number(raw.replace(',','.'));return Number.isFinite(value)?value:null;};
 const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n||0);
 let client=null,onSaved=null,projects=[],invoices=[],allocations=[],invoice=null,rows=[],prefill='',draft={},busy=false,token=0;
 const row=()=>({projectId:'',amount:'',fee:'',description:''});
@@ -13,11 +13,11 @@ const splits=id=>allocations.filter(x=>t(x.id_ft)===t(id));
 const forProject=id=>allocations.filter(x=>t(x.id_progetto)===t(id));
 function names(id){const r=splits(id);return r.length?r.map(a=>({id:a.id_progetto,amount:Number(a.prezzo_unitario),title:label(a.id_progetto)})):null;}
 function label(id){const p=projects.find(x=>t(x.ID)===t(id));return p?((p.ARTISTA?p.ARTISTA+' · ':'')+(p.TITOLO||'Progetto')):'Progetto #'+id;}
-function validate(items,max){
+function validate(items,max,available=projects){
  if(!items.length||items.length>100)throw Error('Inserisci da 1 a 100 righe');
  let cents=0;
  const packed=items.map((r,i)=>{
-  if(!projects.some(p=>t(p.ID)===t(r.projectId)))throw Error('Progetto non valido alla riga '+(i+1));
+  if(!available.some(p=>t(p.ID)===t(r.projectId)))throw Error('Progetto non valido alla riga '+(i+1));
   const raw=parse(r.amount);if(raw===null||!Number.isFinite(raw)||raw<0||Math.abs(raw*100-Math.round(raw*100))>1e-5)throw Error('PrezzoUnitario non valido alla riga '+(i+1));
   const fee=parse(r.fee);if(r.fee!==''&&(fee===null||fee<0))throw Error('Fee non valida alla riga '+(i+1));
   cents+=Math.round(raw*100);
