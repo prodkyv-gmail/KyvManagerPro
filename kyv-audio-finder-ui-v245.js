@@ -256,7 +256,7 @@ function resetScanSelection(){
 function activateScanGroup(id){
  if(!scanGroups().some(g=>g.id===id))throw Error('Gruppo non più disponibile');
  scanReviewGroup=id;resetScanSelection();
- $('finder-preview-state').value='all';$('finder-sync-state').value='all';
+ $('finder-preview-query').value='';$('finder-preview-state').value='all';$('finder-sync-state').value='all';
  previewShown=60;renderPreview();
 }
 function batchSelectVisible(){
@@ -323,6 +323,7 @@ function previewScan(rows,note,localRefs=null,checkedUnsaved=false){
  if(!checkedUnsaved&&preview.some(x=>x._explicit)&&!confirm('Ci sono classificazioni non ancora salvate. Vuoi scartarle e iniziare una nuova scansione?'))return;
  closeExplorerPlayer();transientFiles.clear();
  scanReviewGroup='';scanReviewGroupShown=24;resetScanSelection();
+ $('scan-group-query').value='';$('scan-group-source').value='';$('scan-group-mode').value='review';
  if(localRefs)for(const [key,file] of localRefs)transientFiles.set(key,file);
  const compared=I.compare(rows,catalogue,decisions);
  preview=C.preview(compared,decisions);previewShown=60;
@@ -683,9 +684,9 @@ function boot(){
   if(update){confirmMetadataUpdate(Number(update.dataset.confirmUpdate));return;}
   const b=e.target.closest('[data-preview-play]');if(b)run(()=>listenPreview(Number(b.dataset.previewPlay)));
  });
- $('scan-group-query').addEventListener('input',()=>{scanReviewGroupShown=24;resetScanSelection();renderScanGroups()});
- $('scan-group-source').addEventListener('change',()=>{scanReviewGroupShown=24;resetScanSelection();renderScanGroups()});
- $('scan-group-mode').addEventListener('change',()=>{scanReviewGroupShown=24;resetScanSelection();renderScanGroups()});
+ $('scan-group-query').addEventListener('input',()=>{scanReviewGroup='';scanReviewGroupShown=24;previewShown=60;resetScanSelection();renderPreview()});
+ $('scan-group-source').addEventListener('change',()=>{scanReviewGroup='';scanReviewGroupShown=24;previewShown=60;resetScanSelection();renderPreview()});
+ $('scan-group-mode').addEventListener('change',()=>{scanReviewGroup='';scanReviewGroupShown=24;previewShown=60;resetScanSelection();renderPreview()});
  $('scan-group-more').addEventListener('click',()=>{scanReviewGroupShown+=24;renderScanGroups()});
  $('scan-group-clear').addEventListener('click',()=>{scanReviewGroup='';resetScanSelection();previewShown=60;renderPreview()});
  $('scan-group-list').addEventListener('click',e=>{
