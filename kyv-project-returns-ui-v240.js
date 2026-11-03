@@ -22,7 +22,7 @@ async function rows(table,fields,order){
  return data;
 }
 async function readAll(){
- const [projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals]=await Promise.all([
+ const [projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals,invoiceSplits]=await Promise.all([
   rows('PROGETTI','ID,TITOLO,ARTISTA,STATO,SVILUPPO,FEE,Data_Sessione,Data_Pubblicazione,IDFT','ID'),
   rows('FATTURE','ID_FT,ID_PROGETTO,XML_SHA256,PrezzoUnitario,PrezzoTotale,Data,PAGATA','ID_FT'),
   rows('FATTURE_INCASSI','ID_INCASSO,ID_FT,Data,Importo','ID_INCASSO'),
@@ -31,7 +31,7 @@ async function readAll(){
   rows('KYV_ATTRIBUZIONI_DIRITTI','ID_ATTRIBUZIONE,ID_LIQUIDAZIONE,ID_PROGETTO,Importo,Note,created_at','ID_ATTRIBUZIONE'),
   rows('KYV_ATTRIBUZIONI_DIRITTI_STORNI','ID_STORNO,ID_ATTRIBUZIONE,Motivo,created_at','ID_STORNO')
  ]);
- records={projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals};
+ records={projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals,invoiceSplits};
 }
 function status(message,error=false){const el=$('returns-status');el.textContent=message;el.className='status'+(error?' error':'');}
 async function load(){
