@@ -20,7 +20,7 @@ const periodOf=(date,mode)=>{
  const s=positiveDate(date);return s?(mode==='monthly'?s.slice(0,7):s.slice(0,4)):null;
 };
 const paid=x=>/^(si|sì|yes|true|1|pagat|incassat)/i.test(asText(x));
-const amount=f=>root.KYV_INVOICE_LINE?.cents(f)??Math.max(0,cents(f.XML_SHA256?f.PrezzoTotale:f.PrezzoUnitario));
+const amount=f=>root.KYV_INVOICE_LINE?.cents(f)??Math.max(0,cents(f.PrezzoUnitario));
 function summarizeInvoice(inv,payments,reversals){
  const group=(payments||[]).filter(p=>asText(p.ID_FT)===asText(inv.ID_FT));
  const reversed=new Set((reversals||[]).map(x=>asText(x.ID_INCASSO)));
@@ -29,14 +29,15 @@ function summarizeInvoice(inv,payments,reversals){
  const legacy=!group.length&&paid(inv.PAGATA);
  return {total,received:legacy?total:Math.max(0,Math.min(total,verified)),historical:legacy,movements:active,anomaly:verified>total};
 }
-function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[],rightsLiquidations=[]}={},mode='annual'){
+function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[],rightsLiquidations=[],invoiceSplits=[]}={},mode='annual'){
  if(!['monthly','annual'].includes(mode))throw Error('Periodo non valido');
  const map=new Map(),unknownCash=[];
  const bucket=k=>{if(!map.has(k))map.set(k,{period:k,billed:0,verifiedCash:0,legacyPaid:0,expenses:0,siaeProvisional:0,rightsCash:0,invoiceCount:0});return map.get(k)};
+ const explicitIds=new Set(invoiceSplits.map(r=>asText(r.id_ft)));
  let totalBilled=0,totalReceived=0,unlinked=0,legacyNoDate=0;
  for(const i of invoices){
    const a=summarizeInvoice(i,payments,reversals),key=periodOf(i.Data,mode);
-   if(!asText(i.ID_PROGETTO))unlinked++;
+   if(!asText(i.ID_PROGETTO)&&!explicitIds.has(asText(i.ID_FT)))unlinked++;
    totalBilled+=a.total;totalReceived+=a.received;
    if(key){const b=bucket(key);b.billed+=a.total;b.invoiceCount++;}
    if(a.historical){legacyNoDate+=a.received;unknownCash.push(i.ID_FT);}
@@ -59,7 +60,7 @@ function compute({invoices=[],projects=[],payments=[],reversals=[],siaes=[],righ
    withRelease=projects.filter(p=>positiveDate(p.Data_Pubblicazione)).length,
    withMaster=projects.filter(p=>positiveDate(p.Data_Consegna_Master)).length,
    withFee=projects.filter(p=>asText(p.FEE)).length;
- const linked=new Set(invoices.map(i=>asText(i.ID_PROGETTO)).filter(Boolean));
+ const linked=new Set([...invoices.filter(i=>!explicitIds.has(asText(i.ID_FT))).map(i=>asText(i.ID_PROGETTO)),...invoiceSplits.map(r=>asText(r.id_progetto))].filter(Boolean));
  const oldRefs=new Set(projects.filter(p=>asText(p.IDFT)).map(p=>asText(Number(p.IDFT))));
  const invoiceIds=new Set(invoices.map(i=>asText(i.ID_FT)));
  const notLinked=projects.filter(p=>!linked.has(asText(p.ID))&&(!asText(p.IDFT)||!invoiceIds.has(asText(Number(p.IDFT)))));
