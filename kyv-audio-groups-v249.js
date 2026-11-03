@@ -82,7 +82,7 @@ function groups(files=[],links=[]){
     key:title+'::'+(splitByArtist?artistKey:'*'),title:representative?.title||title,
     artist:splitByArtist?(artists.get(artistKey)||'Artista da identificare'):(artists.values().next().value||''),
     ambiguousArtist:splitByArtist&&artistKey==='__unknown__',
-    files:unique,versionKinds:names,providers,linkedProjectIds:targetIds,
+    files:unique,versionKinds:names,providers,linkedProjectIds:targetIds,unlinkedCount:unique.filter(x=>active(x.file.id).length===0).length,
     exactHashDuplicates:verifiedTwins(unique.map(e=>e.file)),
     needsReview:true
    });
@@ -93,7 +93,7 @@ function groups(files=[],links=[]){
 function filter(groupsList=[],{query='',source='',mode='all'}={}){
  const terms=normalize(query).split(' ').filter(Boolean);
  return groupsList.filter(g=>
-  (mode==='all'||mode==='multi'&&g.files.length>1||mode==='unlinked'&&g.files.some(e=>!g.linkedProjectIds.length))&&
+  (mode==='all'||mode==='multi'&&g.files.length>1||mode==='unlinked'&&g.unlinkedCount>0)&&
   (!source||g.providers.includes(source))&&
   terms.every(term=>normalize([g.title,g.artist,...g.files.map(e=>e.file.nome_file)].join(' ')).includes(term)));
 }
