@@ -1,7 +1,7 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
-    APP_VERSION: '2.51',
+    APP_VERSION: '2.52',
 
     // Chiavi Supabase pubblicabili (nessun service_role nel browser).
     SUPABASE_URL: 'https://vppqnolgxtegtxznmgqb.supabase.co',
