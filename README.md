@@ -1,3 +1,11 @@
+## v2.56 — Filtro fonte realmente applicato alle versioni selezionabili (3 novembre 2026)
+
+La sezione **Audio Finder → Brani e versioni**, che include soltanto file approvati dall'utente come **Mio**, ora applica la sorgente selezionata **anche al dettaglio** del gruppo e al piano di collegamento. Il motore `G.scopedToProvider(group,source,links)` genera una vista delle sole versioni della fonte, con i relativi stati e conteggi senza modificare il gruppo originale. **Tutte le sorgenti** consente di lavorare ancora su file locale, Drive e Dropbox insieme. La ricerca e la scelta del progetto rimangono azioni manuali.
+
+Il cambio del filtro sorgente azzera checkbox e progetto selezionato. `groupSelection` e `saveGroup` usano esclusivamente la stessa vista ridotta; il salvataggio riapplica il filtro dopo rilettura del database e rifiuta modifiche a gruppo/sorgente durante il controllo. Nel popup di conferma compaiono titolo/artista del progetto e nomi dei file selezionati (fino a 6 più conteggio degli altri). Sono vietati collegamenti a file nascosti dal filtro della fonte e resta la protezione contro duplicati, modifica concorrente e creazione automatica.
+
+**Verifica:** `npm run check:audio-source-scope-v256` aggiunto a `npm run check`, regressioni v2.49-v2.55 aggiornate per la versione. Manuale `guida.html`, guida contestuale `kyv-help.js`, policy e PWA ruotati insieme. Nessuna nuova migrazione SQL, nessun accesso Vercel o integrazione OneDrive online; collaudo manuale autenticato distinto dai test CI.
+
 ## v2.55 — Raggruppamento sicuro degli audio personali (3 novembre 2026)
 
 In **Audio Finder → Brani e versioni** il raggruppamento degli audio già classificati `mio` isola i file **senza artista dichiarato** anche quando nell'archivio esiste **un solo artista con lo stesso titolo**. Prima venivano separati soltanto se erano presenti due artisti dichiarati diversi, quindi una versione non attribuita poteva apparire sotto il nome del solo artista noto. Rimangono suggerimenti basati sui nomi; nessuna identità musicale viene dedotta dal titolo.
