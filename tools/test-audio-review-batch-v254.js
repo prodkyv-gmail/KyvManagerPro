@@ -14,7 +14,7 @@ const rows=[
  f('c','Giorgia - Luce blu master.wav'),
  f('d','Luce blu master.wav'),
  f('e','audio.wav'),
- f('r','Emma - Luce blu reference.wav',{decision:'reference',_sync:{state:'excluded',previousDecision:'reference'}}),
+ f('r','Emma - Luce blu demo.wav',{decision:'reference',_sync:{state:'excluded',previousDecision:'reference'}}),
  f('m','Emma - Luce blu MASTER.wav',{decision:'mio',_sync:{state:'unchanged',previousDecision:'mio'}}),
  f('u','Emma - Luce blu v5.wav',{decision:'mio',_sync:{state:'changed',previousDecision:'mio'}}),
  f('p','Emma - Luce blu demo v6.wav',{_explicit:true,decision:'mio'})
