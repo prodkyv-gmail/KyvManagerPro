@@ -1,5 +1,13 @@
 # Changelog
 
+### v2.53 · 2026-11-03
+- Nuovo pulsante manuale **Analizza sorgenti cloud insieme** per Drive configurati e archivio Dropbox registrato, con rapporto distinto per fonte.
+- Errori e scansioni parziali non nascondono i risultati delle altre sorgenti; nessuna cancellazione di file non trovati.
+- Deduplicazione dei risultati solo per identità completa della sorgente, non per titolo; anomalie dei metadati indicate.
+- Suggerimenti di possibili copie fra sorgenti basati su veri hash SHA-256 o somiglianze dichiarate come indizi, senza creazione automatica di progetti.
+- Manuale, guida contestuale, versioni, PWA e test aggiornati. Nessuna migrazione DB né accesso Vercel.
+
+
 ### v2.52 · 2026-11-03
 - Audio Finder: confronto incrementale per identità sorgente, vista «Nuovi / modificati / invariati / reference / da verificare».
 - Gli aggiornamenti di metadati di un proprio brano richiedono conferma esplicita; scansioni senza modifiche non scrivono sul database.
