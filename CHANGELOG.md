@@ -1,5 +1,11 @@
 # Changelog
 
+### v2.57 · 2026-11-04
+- Audio Finder: introdotto «Controllo archivio audio», solo in lettura e dai metadati autenticati già caricati.
+- Indicatori per file ancora da classificare nella scansione corrente, audio personali senza progetto, gruppi con SHA-256 identico e progetti senza file personali collegati nel catalogo.
+- Ricerca combinata per testo, sorgente e categoria, navigazione progressiva e apertura esplicita del dettaglio file o della scheda progetto.
+- Nessuna presunzione di proprietà o cancellazione basata sui duplicati; storici e audio esterni non modificati. Guida, test e PWA sincronizzati.
+
 ### v2.56 · 2026-11-03
 - Audio Finder: quando si seleziona una fonte, il dettaglio del gruppo mostra e rende collegabili solo i file di quella sorgente. «Tutte le sorgenti» mantiene il confronto tra archivi.
 - Il cambio fonte azzera selezioni e progetto di destinazione, prevenendo collegamenti di file non più visibili.

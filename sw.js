@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-56-source-scope-20261103';
+const CACHE_NAME = 'kyv-studio-v2-57-audio-audit-20261104';
 const APP_SHELL = [
     './',
     './index.html',
@@ -29,6 +29,7 @@ const APP_SHELL = [
     './kyv-audio-incremental-v252.js',
     './kyv-audio-batch-v253.js',
     './kyv-audio-review-batch-v254.js',
+    './kyv-audio-audit-v257.js',
     './kyv-audio-project.js',
     './kyv-audio-finder-ui-v245.js',
     './kyv-audio-finder-linked-v245.js',

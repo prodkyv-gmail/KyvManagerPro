@@ -1,3 +1,11 @@
+## v2.57 — Controllo operativo dell'archivio audio (4 novembre 2026)
+
+Nella pagina **Audio Finder** apri la sezione **Controllo archivio audio** (all'inizio della pagina). L'app legge i record che hai autorizzato e mostra quattro indicatori: da classificare nella scansione corrente, tuoi audio ancora senza progetto KYV collegato, possibili copie con veri hash SHA-256 identici e progetti senza audio personale collegato **in KYV**. Quest'ultimo numero può comprendere anche progetti storici gestiti altrove: non indica necessariamente una mancanza.
+
+Usa **Cerca**, **Tipo verifica** e **Fonte** per restringere i risultati. Gli indicatori mostrano le quantità globali; il filtro fonte seleziona solo le verifiche audio della fonte e non attribuisce file a progetti mancanti. Premi **Dettaglio / collega manualmente** per aprire un audio personale, **Apri nella scansione corrente** per un audio non classificato o **Apri Scheda Progetto** per un progetto. Per vedere tutte le categorie, inclusi i progetti, scegli **Tutte le sorgenti**. La scansione deve essere aperta per poter classificare file non ancora confermati come tuoi.
+
+Il pannello è una diagnostica senza salvataggi: non considera tue reference o file di altri, non deduce un nuovo progetto da un nome e non elimina copie. Un hash identico verifica i byte, non un contratto o l'appartenenza musicale. Continua a collegare solo dopo una tua selezione e conferma negli strumenti esistenti.
+
 ## v2.56 — Filtrare davvero le versioni per archivio (3 novembre 2026)
 
 In **Audio Finder → Brani e versioni** apri il gruppo di un brano già approvato come **Mio**. Nel menu **Sorgente** scegli **Drive**, **Dropbox**, **Dispositivo locale** oppure **Tutte le sorgenti**. Se scegli ad esempio Drive, compariranno nella scheda soltanto file Drive e potrai spuntare e collegare soltanto quelli. Per vedere gli altri file della stessa canzone devi tornare a **Tutte le sorgenti**. Cambiare la sorgente cancella le spunte e il progetto selezionato (non cambia alcun dato salvato).
