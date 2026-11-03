@@ -302,6 +302,46 @@ async function dropbox(){
   catch{return null}}).filter(Boolean);
  previewScan(data,'La ricerca usa gli audio già registrati: non esplora l’intero Dropbox.');
 }
+function ensureChooser(){
+ if(window.Dropbox?.choose)return Promise.resolve(window.Dropbox);
+ if(chooserLoad)return chooserLoad;
+ const key=T(window.KYV_CONFIG?.DROPBOX_APP_KEY);
+ if(!key)throw Error('Dropbox Chooser non configurato. Usa l’archivio Dropbox esistente.');
+ chooserLoad=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');script.id='dropboxjs';
+  script.src='https://www.dropbox.com/static/api/2/dropins.js';
+  script.setAttribute('data-app-key',key);
+  const timer=setTimeout(()=>reject(Error('Dropbox non ha risposto: verifica rete e dominio autorizzato.')),12000);
+  script.onload=()=>{clearTimeout(timer);window.Dropbox?.choose?resolve(window.Dropbox):reject(Error('Dropbox Chooser non disponibile'));};
+  script.onerror=()=>{clearTimeout(timer);reject(Error('Impossibile caricare il selettore Dropbox'));};
+  document.head.appendChild(script);
+ }).catch(e=>{chooserLoad=null;document.getElementById('dropboxjs')?.remove();throw e;});
+ return chooserLoad;
+}
+async function chooseDropbox(){
+ const chooser=await ensureChooser();
+ chooser.choose({
+  success:files=>run(async()=>{
+   const chosen=(files||[]).map(W.chooserItem).filter(Boolean);
+   if(!chosen.length)throw Error('Nessun audio Dropbox valido selezionato');
+   const rows=[];
+   for(const file of chosen){
+    const old=catalogue.find(x=>x.provider==='dropbox'&&x.link_file===file.link);
+    let identity=file.id;
+    if(!identity){
+     if(!crypto?.subtle)throw Error('Connessione HTTPS richiesta per identificare il link Dropbox');
+     const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(file.link));
+     identity='chooser:'+Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    rows.push(F.record({provider:'dropbox',account:old?.account_label||'Dropbox Chooser',
+     externalKey:old?.external_key||identity,name:file.name,size:file.size,url:file.link,origin:'selezione-chooser'}));
+   }
+   previewScan(rows,'File selezionati nel Chooser ufficiale. Non è una ricerca dell’intero account e non crea progetti.');
+  }),
+  cancel(){info('Selezione Dropbox annullata. Nessun dato salvato.');},
+  linkType:'preview',multiselect:true,extensions:['audio']
+ });
+}
 async function local(files){
  if(!files.length)throw Error('Seleziona cartella o file');
  if(files.length>MAX)throw Error('Seleziona meno di '+MAX+' file');
