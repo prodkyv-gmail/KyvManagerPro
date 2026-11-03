@@ -1,5 +1,13 @@
 # Changelog
 
+### v2.54 · 2026-11-03
+- Revisione guidata: gruppi temporanei per titolo e artista dichiarati, separazione brani omonimi e artisti non specificati, filtri e navigazione progressiva.
+- Caselle esplicite per selezione multipla fino a 100 file della vista corrente; le classificazioni massive richiedono conferma e salvataggio separato.
+- Reference già escluse, file personali già confermati, revisioni metadati e scelte manuali non vengono sovrascritti da azioni massive.
+- Cambiare filtri/gruppi azzera le caselle per evitare operazioni invisibili. Audio e progetti non modificati dalla ricerca.
+- Test v2.54, manuale, guida, versione e cache PWA aggiornati; nessuna migrazione database.
+
+
 ### v2.53 · 2026-11-03
 - Nuovo pulsante manuale **Analizza sorgenti cloud insieme** per Drive configurati e archivio Dropbox registrato, con rapporto distinto per fonte.
 - Errori e scansioni parziali non nascondono i risultati delle altre sorgenti; nessuna cancellazione di file non trovati.
