@@ -13,7 +13,7 @@ const isPaid=v=>window.KYV?.isPaid?window.KYV.isPaid(v):/^(si|sì|yes|true|1|pag
 const cents=v=>Math.round((Number(v)||0)*100);
 const dateOK=v=>/^\d{4}-\d{2}-\d{2}$/.test(t(v))&&!Number.isNaN(new Date(t(v)+'T12:00:00Z').getTime());
 const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'});
-const invoiceAmount=inv=>window.KYV_INVOICE_LINE?.cents(inv)??Math.max(0,cents(money(inv?.XML_SHA256?inv?.PrezzoTotale:inv?.PrezzoUnitario)));
+const invoiceAmount=inv=>window.KYV_INVOICE_LINE?.cents(inv)??Math.max(0,cents(money(inv?.PrezzoUnitario)));
 function summarize(invoice,payments,reversals=[]){
   const total=invoiceAmount(invoice),movements=(payments||[]).filter(x=>t(x.ID_FT)===t(invoice.ID_FT));
   const reversed=new Set((reversals||[]).map(x=>t(x.ID_INCASSO)));
