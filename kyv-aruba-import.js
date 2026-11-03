@@ -168,7 +168,7 @@ function explainInsertError(error){
   const cause=(raw+' '+details+' '+text(error?.hint));
   // PostgreSQL 23505 riguarda qualsiasi vincolo UNIQUE, non soltanto l'hash XML.
   if(code==='23505'||/duplicate key|unique constraint/i.test(raw)){
-    if(/FATTURE1_pkey|FATTURE_pkey|\\bID_FT\\b/i.test(cause)){
+    if(/FATTURE1_pkey|FATTURE_pkey|\bID_FT\b/i.test(cause)){
       return 'Conflitto con ID interno fattura (ID_FT): il contatore automatico del database potrebbe non essere sincronizzato con i dati storici. Il file XML non è stato importato. Serve riallineare la sequenza; non creare o cancellare fatture per aggirare l’errore.';
     }
     if(/fatture_owner_xml_sha256_unique|XML_SHA256/i.test(cause)){
