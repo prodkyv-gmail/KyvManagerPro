@@ -29,6 +29,9 @@
     <script src="kyv-core.js"></script>
     <script src="kyv-toast.js"></script>
     <script src="kyv-helpers.js"></script>
+    <script src="kyv-invoice-line-amount.js"></script>
+    <script src="kyv-home-charts-v250.js"></script>
+    <script src="kyv-home-charts-ui-v250.js"></script>
     <script src="kyv-data-guard.js"></script>
     <script src="kyv-priority.js"></script>
     <script src="kyv-help.js"></script>
@@ -105,11 +108,11 @@
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(180,122,255,.16)">
                     <div class="flex items-center"><i data-lucide="receipt" class="w-4 h-4 text-purple-300 mr-2"></i><p class="kyv-metric-label">Fatturato</p></div>
-                    <div><h3 class="kyv-metric-value text-purple-100" id="val-fatturato">€ 0,00</h3><p class="text-[10px] text-amber-300/80 font-medium mt-2" id="val-da-incassare">Da incassare: € 0,00</p></div>
+                    <div><h3 class="kyv-metric-value text-purple-100" id="val-fatturato">€ 0,00</h3><p class="text-[10px] text-amber-300/80 font-medium mt-2" id="val-da-incassare">Da incassare (flag): € 0,00</p></div>
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(68,215,182,.16)">
-                    <div class="flex items-center"><i data-lucide="banknote" class="w-4 h-4 text-emerald-300 mr-2"></i><p class="kyv-metric-label">Incassato</p></div>
-                    <h3 class="kyv-metric-value text-emerald-300" id="val-incassato">€ 0,00</h3>
+                    <div class="flex items-center"><i data-lucide="banknote" class="w-4 h-4 text-emerald-300 mr-2"></i><p class="kyv-metric-label">Incassato (flag)</p></div>
+                    <h3 class="kyv-metric-value text-emerald-300" id="val-incassato">€ 0,00</h3><p class="text-[10px] text-kyv-text mt-2">Stima dal flag PAGATA. Incassi bancari verificati in Fatture.</p>
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(255,114,133,.15)">
                     <div class="flex items-center"><i data-lucide="trending-down" class="w-4 h-4 text-rose-300 mr-2"></i><p class="kyv-metric-label">Uscite</p></div>
@@ -121,7 +124,7 @@
             <div class="mb-6">
                 <div class="flex items-center mb-3">
                     <i data-lucide="wallet" class="w-5 h-5 text-emerald-400 mr-2"></i>
-                    <h3 class="kyv-section-title text-white">Entrate incassate per tipologia</h3>
+                    <h3 class="kyv-section-title text-white">Fatture segnate incassate per tipologia (PAGATA)</h3>
                 </div>
                 <div class="flex space-x-3 overflow-x-auto custom-scrollbar pb-2" id="tipo-ft-cards">
                     <div class="text-kyv-text text-xs italic">Calcolo in corso...</div>
@@ -166,7 +169,7 @@
                 <div class="lg:col-span-2 bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[400px]">
                     <div class="flex items-center mb-4">
                         <i data-lucide="bar-chart-big" class="w-5 h-5 text-sky-400 mr-2"></i>
-                        <h3 class="font-semibold text-white text-sm">Andamento Entrate (Tipo FT / Anno)</h3>
+                        <h3 class="font-semibold text-white text-sm">Fatturato emesso per anno · PrezzoUnitario</h3>
                     </div>
                     <div class="flex-1 relative w-full">
                         <canvas id="chartAndamento"></canvas>
@@ -177,7 +180,7 @@
                 <div class="bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[400px]">
                     <div class="flex items-center mb-4">
                         <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-400 mr-2"></i>
-                        <h3 class="font-semibold text-white text-sm">Ripartizione Stati</h3>
+                        <h3 class="font-semibold text-white text-sm">Progetti per stato o fase</h3>
                     </div>
                     <div class="flex-1 relative w-full flex justify-center">
                         <canvas id="chartStati"></canvas>
@@ -189,7 +192,7 @@
                 <div class="bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[350px]">
                     <div class="flex items-center mb-4">
                         <i data-lucide="bar-chart-3" class="w-5 h-5 text-purple-400 mr-2"></i>
-                        <h3 class="font-semibold text-white text-sm">Top Artisti (Fatturato Totale)</h3>
+                        <h3 class="font-semibold text-white text-sm">Artisti · numero di progetti</h3>
                     </div>
                     <div class="flex-1 relative w-full">
                         <canvas id="chartTopArtisti"></canvas>
@@ -264,7 +267,7 @@
                 document.getElementById('val-fee').innerText = fmtEuro.format(totFee); 
                 document.getElementById('val-fatturato').innerText = fmtEuro.format(totFatturato);
                 document.getElementById('val-incassato').innerText = fmtEuro.format(totIncassato); 
-                document.getElementById('val-da-incassare').innerText = `Da incassare: ${fmtEuro.format(totFatturato - totIncassato)}`;
+                document.getElementById('val-da-incassare').innerText = `Da incassare (flag): ${fmtEuro.format(totFatturato - totIncassato)}`;
                 document.getElementById('val-uscite').innerText = fmtEuro.format(totUscite); 
                 
                 // RENDER CARDS TIPO FT
@@ -485,6 +488,7 @@
         }
 
         function updateDashboardCharts(progettiData, fattureData, tipoFtPerAnno, tipiUnici) {
+            if(window.KYV_HOME_CHARTS_UI_V250){window.KYV_HOME_CHARTS_UI_V250.update(progettiData,fattureData);return;}
             if (progettiData && chartStatiInstance) {
                 const statiCount = {}; progettiData.forEach(p => { const stato = p.STATO ? p.STATO.trim().toUpperCase() : 'NON DEFINITO'; statiCount[stato] = (statiCount[stato] || 0) + 1; });
                 chartStatiInstance.data.labels = Object.keys(statiCount); chartStatiInstance.data.datasets[0].data = Object.values(statiCount);
@@ -553,8 +557,7 @@
                 data: { 
                     labels: [], 
                     datasets: [
-                        { label: 'Incassato', data: [], backgroundColor: '#00E676', borderRadius: 4 }, 
-                        { label: 'Da incassare', data: [], backgroundColor: '#FF1744', borderRadius: 4 }
+                        { label: 'Numero progetti', data: [], backgroundColor: '#818cf8', borderRadius: 4 }
                     ] 
                 }, 
                 options: { 
