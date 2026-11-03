@@ -286,7 +286,7 @@
                 if (searchTxt && !combinedStr.includes(searchTxt)) return;
                 const stat = window.KYV_COLLECTIONS_V236?.paymentState(f);
                 let isPagata = stat ? stat.kind === 'paid' : KYV.isPaid(f.PAGATA);
-                let numVal = stat ? stat.total : (window.KYV_INVOICE_LINE?.amount(f) ?? Math.max(0,parseKyvNumber(f.XML_SHA256 ? f.PrezzoTotale : f.PrezzoUnitario)));
+                let numVal = stat ? stat.total : (window.KYV_INVOICE_LINE?.amount(f) ?? Math.max(0,parseKyvNumber(f.PrezzoUnitario)));
                 let received = stat ? stat.received : (isPagata ? numVal : 0);
                 let outstanding = stat ? stat.remaining : (isPagata ? 0 : numVal);
                 let imp = fmtEuro.format(numVal); let d = f.Data ? new Date(f.Data).toLocaleDateString('it-IT') : '-';
