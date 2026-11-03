@@ -31,7 +31,24 @@ async function fetchInvoices(pid){
   try{
     const direct=await client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(200);
     if(direct.error)throw direct.error;
-    if((direct.data||[]).length)return unique(direct.data);
+    // v2.47: explicit allocation rows take precedence over the historical single ID_PROGETTO.
+    const shares=await client().from('FATTURE_RIPARTIZIONI').select('id_ft,prezzo_unitario')
+      .eq('id_progetto',pid).limit(1000);
+    if(shares.error)throw shares.error;
+    const shareById=new Map();
+    for(const r of shares.data||[])shareById.set(text(r.id_ft),(shareById.get(text(r.id_ft))||0)+Number(r.prezzo_unitario));
+    const ids=[...shareById.keys()];
+    const shared=ids.length?await client().from('FATTURE').select(fields).in('ID_FT',ids).limit(1000):{data:[],error:null};
+    if(shared.error)throw shared.error;
+    if((shared.data||[]).length!==ids.length)throw Error('Fatture ripartite non leggibili interamente');
+    const relevantDirect=direct.data||[];
+    const directIds=relevantDirect.map(r=>r.ID_FT);
+    const allShare=directIds.length?await client().from('FATTURE_RIPARTIZIONI').select('id_ft').in('id_ft',directIds).limit(1000):{data:[],error:null};
+    if(allShare.error)throw allShare.error;
+    const splitIds=new Set((allShare.data||[]).map(a=>text(a.id_ft)));
+    const explicit=(shared.data||[]).map(f=>({...f,PrezzoUnitario:String(shareById.get(text(f.ID_FT))),PrezzoTotale:String(shareById.get(text(f.ID_FT))),XML_SHA256:null,_v247_shared:true}));
+    const legacyDirect=relevantDirect.filter(f=>!splitIds.has(text(f.ID_FT)));
+    if(explicit.length||legacyDirect.length)return unique([...explicit,...legacyDirect]);
     const project=await client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle();
     if(project.error)throw project.error;
     if(!project.data||!text(project.data.IDFT))return [];
@@ -68,7 +85,7 @@ function mount(rows,pid){
     const data=stateFor(rows),pending=awaitingInvoice(currentProject(pid),rows);const paymentMeta=data.kind==='none'?'Quando la emetti, registrala direttamente da qui.':data.kind==='paid'?`Incassato ${euro(data.paidTotal)}`:`Residuo da incassare ${euro(data.openTotal)}`;
     const reminder=pending?`<div class="kyv-finance-reminder" role="status"><div><span class="kyv-finance-reminder-label">Da fatturare</span><strong>Progetto completato · Fattura da emettere</strong><p>Nessuna fattura collegata. Puoi registrarla con il progetto già selezionato, oppure collegare manualmente una fattura esistente. Nessun invio allo SdI viene eseguito da questa schermata.</p></div><button type="button" class="kyv-finance-btn" data-kyv-finance-new>Crea fattura collegata</button></div>`:'';
     const register=pending?'':'<button type="button" class="kyv-finance-btn secondary" data-kyv-finance-new>＋ Registra fattura</button>';
-    panel.innerHTML=`${reminder}<div class="kyv-finance-block"><span class="kyv-finance-label">Fattura</span><strong class="kyv-finance-value">${H(data.invoice)}</strong><span class="kyv-finance-meta">${H(data.invoiceMeta)}</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-${data.kind}">${data.kind==='paid'?'✓':data.kind==='open'?'●':'○'} ${H(data.payment)}</span><span class="kyv-finance-meta">${H(paymentMeta)}</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Apri amministrazione</button>${register}<a class="kyv-finance-manual" data-kyv-finance-manual href="fatture.html?collegaProgetto=${encodeURIComponent(pid)}">Collega fattura esistente (manuale)</a></div>`;
+    panel.innerHTML=`${reminder}<div class="kyv-finance-block"><span class="kyv-finance-label">Fattura</span><strong class="kyv-finance-value">${H(data.invoice)}</strong><span class="kyv-finance-meta">${H(data.invoiceMeta)}</span></div><div class="kyv-finance-block"><span class="kyv-finance-label">Pagamento</span><span class="kyv-finance-state kyv-finance-${data.kind}">${data.kind==='paid'?'✓':data.kind==='open'?'●':'○'} ${H(data.payment)}</span><span class="kyv-finance-meta">${H(paymentMeta)}</span></div><div class="kyv-finance-actions"><button type="button" class="kyv-finance-btn" data-kyv-finance-admin>Apri amministrazione</button>${register}<a class="kyv-finance-manual" data-kyv-finance-manual href="fatture.html?ripartizione_progetto=${encodeURIComponent(pid)}">Aggiungi quota a fattura esistente / Duplica riga</a></div>`;
   }
   panel.querySelector('[data-kyv-finance-admin]')?.addEventListener('click',()=>{if(typeof window.setTab==='function')window.setTab('amministrazione');setTimeout(()=>document.getElementById('tab-admin')?.scrollIntoView({behavior:'smooth',block:'start'}),60);});
   panel.querySelector('[data-kyv-finance-new]')?.addEventListener('click',()=>{const meta=projectMeta();if(window.KYV_PROJECT_INVOICES?.openNew)KYV_PROJECT_INVOICES.openNew(pid,meta.title,meta.artist);else location.href=`scheda_progetto.html?id=${encodeURIComponent(pid)}&tab=amministrazione&newInvoice=1`;});
