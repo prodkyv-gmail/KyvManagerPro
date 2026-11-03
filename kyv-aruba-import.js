@@ -161,6 +161,29 @@ async function loadFiles(fileList){
   }catch(error){state.items=[];show(error.message,'error');}
   finally{state.busy=false;render();}
 }
+function explainInsertError(error){
+  const code=text(error?.code);
+  const raw=text(error?.message);
+  const details=text(error?.details);
+  const cause=(raw+' '+details+' '+text(error?.hint));
+  // PostgreSQL 23505 riguarda qualsiasi vincolo UNIQUE, non soltanto l'hash XML.
+  if(code==='23505'||/duplicate key|unique constraint/i.test(raw)){
+    if(/FATTURE1_pkey|FATTURE_pkey|\\bID_FT\\b/i.test(cause)){
+      return 'Conflitto con ID interno fattura (ID_FT): il contatore automatico del database potrebbe non essere sincronizzato con i dati storici. Il file XML non è stato importato. Serve riallineare la sequenza; non creare o cancellare fatture per aggirare l’errore.';
+    }
+    if(/fatture_owner_xml_sha256_unique|XML_SHA256/i.test(cause)){
+      return 'Impronta XML già presente nel database: rileggi il registro e controlla la fattura prima di tentare nuovamente.';
+    }
+    return 'Vincolo di unicità del database (23505), non necessariamente XML duplicato: '+(raw||'verifica i vincoli della tabella FATTURE')+'.';
+  }
+  if(code==='23502'&&/ID_FT/i.test(cause)){
+    return 'Identificativo interno ID_FT non assegnato dal database: verifica la sequenza delle fatture. Nessun XML importato.';
+  }
+  if(code==='42501'||/row-level security|permission denied/i.test(cause)){
+    return 'Autorizzazione insufficiente per inserire in FATTURE: verifica la sessione e le policy di accesso. '+(raw?'Dettaglio: '+raw:'');
+  }
+  return 'Salvataggio fallito'+(code?' (codice '+code+')':'')+': '+(raw||'errore non specificato');
+}
 function payload(row,projectId){
   const fields=['Numero_Originale','XML_SHA256','Numero','Data','TipoDocumento','Denominazione','IdCodice5','CodiceFiscale6','CodiceDestinatario','ProgressivoInvio','Descrizione','ImportoTotaleDocumento','PrezzoUnitario','PrezzoTotale','ImportoPagamento','PAGATA'];
   const data={};fields.forEach(key=>{if(row[key]!==undefined&&row[key]!==null&&row[key]!=='')data[key]=row[key];});
@@ -183,14 +206,14 @@ async function importSelected(){
       if(item.projectId&&!state.projects.some(p=>text(p.ID)===text(item.projectId))){item.kind='review';item.reason='Progetto selezionato non valido; modifica manualmente.';item.selected=false;continue;}
       const res=await state.client.from('FATTURE').insert([payload(item.row,item.projectId)]).select('ID_FT').single();
       if(res.error){
-        item.kind='review';item.reason=/duplicate|unique|23505/i.test(res.error.message)?'Duplicato intercettato dal database.':'Salvataggio fallito: '+res.error.message;item.selected=false;
+        item.kind='review';item.reason=explainInsertError(res.error);item.selected=false;
         stopped=true;break;
       }
       item.kind='imported';item.reason='Importata con ID '+res.data.ID_FT;item.selected=false;saved++;
       state.existing.push({...item.row,ID_FT:res.data.ID_FT});
     }
     if(!stopped)reassess();
-    show(saved+' fattur'+(saved===1?'a importata':'e importate')+'. '+(stopped?'Salvataggio interrotto al primo errore; verifica i record prima di riprovare.':'Duplicati e casi dubbi esclusi.'),stopped?'error':'success');
+    show(saved+' fattur'+(saved===1?'a importata':'e importate')+'. '+(stopped?'Salvataggio interrotto al primo errore. Leggi il motivo esatto nella colonna Controllo e verifica prima di ritentare.':'Duplicati e casi dubbi esclusi.'),stopped?'error':'success');
     if(saved&&state.onImported)await state.onImported();
   }catch(error){show('Importazione interrotta: '+error.message,'error');}
   finally{state.busy=false;render();}
@@ -242,5 +265,5 @@ function boot(opts){
   });
   render();
 }
-window.KYV_ARUBA_IMPORT=Object.freeze({boot,parseInvoiceDocument,classify,normalizedNumber,payload});
+window.KYV_ARUBA_IMPORT=Object.freeze({boot,parseInvoiceDocument,classify,normalizedNumber,payload,explainInsertError});
 })();
