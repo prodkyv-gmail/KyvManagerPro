@@ -309,7 +309,7 @@ async function local(files){
  if(label.length<2||label.length>180)throw Error('Indica un nome per il tuo archivio locale');
  if(!crypto?.subtle)throw Error('L’identità locale richiede HTTPS');
  info('Lettura dei soli metadati selezionati…');
- const data=[];
+ const data=[],localRefs=new Map();
  for(const f of files){
   if(!F.isAudio(f.name,f.type))continue;
   const relative=T(f.webkitRelativePath||f.name).replaceAll('\\','/');
@@ -318,10 +318,11 @@ async function local(files){
   const input=new TextEncoder().encode(relative+'|'+f.size+'|'+f.lastModified);
   const digest=await crypto.subtle.digest('SHA-256',input);
   const key=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
-  data.push(F.record({provider:'local',account:label,externalKey:key,name:f.name,path,mime:f.type,
-   size:f.size,modified:new Date(f.lastModified).toISOString(),origin:'selezione'}));
+  const record=F.record({provider:'local',account:label,externalKey:key,name:f.name,path,mime:f.type,
+   size:f.size,modified:new Date(f.lastModified).toISOString(),origin:'selezione'});
+  data.push(record);localRefs.set(W.KEY(record),f);
  }
- previewScan(data,'Le cartelle locali, anche OneDrive sincronizzate, devono essere selezionate da te. Non salviamo percorsi assoluti.');
+ previewScan(data,'Le cartelle locali, anche OneDrive sincronizzate, devono essere selezionate da te. Non salviamo percorsi assoluti.',localRefs);
 }
 async function savePreview(){
  const plan=C.plan(preview,owner);
