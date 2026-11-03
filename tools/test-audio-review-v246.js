@@ -38,7 +38,7 @@ assert.throws(()=>R.planLinks(Array(26).fill({audioId:'b',projectId:'2'}),files,
 const html=read('kyv_audio_finder.html'),ui=read('kyv-audio-finder-ui-v245.js');
 for(const x of ['review-generate','review-panel','review-save','finder-link-status','review-list'])assert.ok(html.includes('id="'+x+'"'));
 assert.ok(html.includes('kyv-audio-review-v246.js'));
-assert.ok(ui.includes("R.planLinks(selections,catalogue,projects,links,owner)"));
+assert.ok(ui.includes("R.planLinks(selections,personalCatalogue(),projects,links,owner)"),"Review can only link approved personal audio");
 assert.ok(ui.includes("await fetchAll();\n const payload=R.planLinks"),'Revalidate links before insertion');
 assert.ok(ui.includes("db.from('KYV_AUDIO_ASSOCIAZIONI').insert(payload)"),'Single batch insert');
 assert.ok(ui.includes("confirm('Confermi '"),'Human consent mandatory');
