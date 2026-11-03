@@ -1,8 +1,11 @@
-const CACHE_NAME = 'kyv-studio-v2-49-version-groups-20261103';
+const CACHE_NAME = 'kyv-studio-v2-50-views-charts-20261103';
 const APP_SHELL = [
     './',
     './index.html',
     './progetti.html',
+    './kyv-project-list-v250.js',
+    './kyv-home-charts-v250.js',
+    './kyv-home-charts-ui-v250.js',
     './scheda_progetto.html',
     './data_quality.html',
     './ascolto.html',
