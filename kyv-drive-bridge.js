@@ -250,7 +250,7 @@
   async function listFiles({ accountId='all', action='getDriveFiles', pages=10, audioOnly=false, onPage=null } = {}){
     const accounts = activeAccounts(accountId);
     if(!accounts.length){ const miss = missingAccounts(); throw new Error(miss.length ? `Nessun URL Apps Script configurato per ${miss.map(a=>a.email||a.label).join(', ')}.` : 'Nessun Drive configurato.'); }
-    const files = []; const errors = [];
+    const files = []; const errors = []; const limitedAccounts = [];
     for(const account of accounts){
       let pageToken = ''; let page = 0;
       try {
@@ -260,10 +260,11 @@
           files.push(...batch); if(typeof onPage === 'function') onPage({account, page, files:batch, total:files.length, data});
           pageToken = data.nextPageToken || data.next || ''; page++;
         } while(pageToken && page < pages);
+        if(pageToken)limitedAccounts.push(account.label||account.email||account.id);
       } catch(err){ errors.push(err.message || String(err)); }
     }
     files.sort((a,b)=>`${a.name || ''}`.toLowerCase().localeCompare(`${b.name || ''}`.toLowerCase(), 'it', {numeric:true, sensitivity:'base'}));
-    return { files, errors, accounts };
+    return { files, errors, accounts, truncated:limitedAccounts.length>0, limitedAccounts };
   }
 
   async function ping(accountId='all'){

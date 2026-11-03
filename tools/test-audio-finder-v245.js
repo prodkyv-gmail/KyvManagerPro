@@ -47,7 +47,7 @@ assert.ok(ui.includes("window.KYV_DRIVE.listFiles")===false||ui.includes('KYV_DR
 assert.ok(ui.includes("all('DROPBOX_AUDIO_FILES'"),'Use preexisting authorized Dropbox archive');
 assert.ok(ui.includes('webkitRelativePath'),'Browser folder scanning is explicit');
 assert.ok(ui.includes('crypto.subtle.digest'),'Local identity hash has no absolute path');
-assert.ok(ui.includes('content_hash:x.content_hash||old?.content_hash'),'Reindex must preserve verified hash');
+assert.ok(ui.includes('I.preserveRecord(x,indexByKey.get(C.key(x)))'),'Reindex must preserve verified hash');
 assert.ok(ui.includes("db.from('KYV_AUDIO_INDICE').upsert"),'Metadata saved on explicit action');
 assert.ok(ui.includes("db.from('KYV_AUDIO_ASSOCIAZIONI').insert"),'Links saved separately with confirmation');
 assert.ok(ui.includes("confirm('Confermi il collegamento"),'Never link inferred project without confirmation');
@@ -63,12 +63,12 @@ assert.ok(read('kyv-creative-desk-ui-v244.js').includes('kyv_audio_finder.html?s
 assert.ok(read('integrazioni.html').includes('href="kyv_audio_finder.html"'));
 assert.ok(read('kyv-producer-mode.js').includes("'kyv_audio_finder.html','Audio Finder'"));
 assert.ok(read('menu.js').includes("navItem('audiofinder'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-51-audio-workspace-20261103'));
+assert.ok(read('sw.js').includes('kyv-studio-v2-52-incremental-audio-20261103'));
 for(const x of ['kyv_audio_finder.html','kyv-audio-finder-v245.js','kyv-audio-finder-ui-v245.js','kyv-audio-finder-linked-v245.js'])
  assert.ok(read('sw.js').includes("'./"+x+"'"));
 const pkg=JSON.parse(read('package.json'));
-assert.equal(pkg.version,'2.51.0');
-assert.equal(read('VERSION').trim(),'2.51');
+assert.equal(pkg.version,'2.52.0');
+assert.equal(read('VERSION').trim(),'2.52');
 assert.equal(pkg.scripts['check:audio-finder-v245'],'node tools/test-audio-finder-v245.js');
 assert.ok(pkg.scripts.check.includes('check:audio-finder-v245'));
 console.log('OK: Audio Finder v2.45 metadata indexing, duplicate signals, consent, RLS, project/session links and PWA');

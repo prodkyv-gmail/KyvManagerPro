@@ -1,3 +1,6 @@
+### v2.52 — Confronto incrementale e no-op sicuro
+Identifica un file per provider, account ed external_key; non dedurre duplicati da nomi uguali. Scansioni senza decisioni/aggiornamenti espliciti non devono scrivere. La classificazione `mio` già concessa non autorizza ad aggiornare metadati cambiati senza una seconda approvazione. Escludi reference; i suggerimenti di versione non sono associazioni. Rileggi le revisioni prima dell'upsert. Mantieni metadati validi se il provider omette campi. Evidenzia paginazione Drive incompleta senza mai cancellare assenti o affermare che l'intero cloud è stato esaminato.
+
 ### v2.51 — Esploratore cloud e locale con separazione degli stati
 Mostrare nell'esploratore unificato **solo** file approvati `mio`; mantenere la scoperta da Drive/Dropbox/locale nella coda non approvata. Dropbox Chooser è solo un selettore di file, non crawling dell'intero account. Riproduzione locale solo per file scelti dall'utente e con URL temporanei revocati. Non archiviare Blob, non creare progetti per scansione o anteprima. Ricerca/approvazione massiva solo nella selezione visibile filtrata. Confermare accesso cloud, possibile dipendenza da popup/CORS e limiti. Aggiornare simultaneamente guida, test, cache e versioni.
 

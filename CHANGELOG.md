@@ -1,5 +1,14 @@
 # Changelog
 
+### v2.52 · 2026-11-03
+- Audio Finder: confronto incrementale per identità sorgente, vista «Nuovi / modificati / invariati / reference / da verificare».
+- Gli aggiornamenti di metadati di un proprio brano richiedono conferma esplicita; scansioni senza modifiche non scrivono sul database.
+- Rilettura finale contro modifiche concorrenti; conservazione di hash e metadati validi quando una sorgente li omette.
+- Proposte di versioni per titolo/artista, nessuna fusione o creazione automatica di progetti.
+- Google Drive segnala scansione limitata dal numero di pagine, senza trattare file assenti come eliminati.
+- Guida e suite di test aggiornate; nessuna migrazione del database.
+
+
 ### v2.51 · 2026-11-03
 - Esploratore unificato dei soli audio personali approvati con filtri incrociati per sorgente, archivio e stato dei collegamenti.
 - Dropbox Chooser ufficiale integrato in Audio Finder: selezione file, coda di classificazione e nessuna creazione automatica.
