@@ -64,7 +64,9 @@ function groups(files=[],links=[]){
  for(const [title,entries] of byTitle){
   const artists=new Map();
   for(const e of entries)if(e.meta.normalizedArtist&&!artists.has(e.meta.normalizedArtist))artists.set(e.meta.normalizedArtist,e.meta.artist);
-  const splitByArtist=artists.size>1;
+  // Even a single named artist must never absorb files with no declared artist.
+  const hasUnknownArtist=entries.some(e=>!e.meta.normalizedArtist);
+  const splitByArtist=artists.size>1||(artists.size>0&&hasUnknownArtist);
   const buckets=new Map();
   for(const e of entries){
    const artistKey=splitByArtist?e.meta.normalizedArtist||'__unknown__':'*';
@@ -81,7 +83,7 @@ function groups(files=[],links=[]){
    out.push({
     key:title+'::'+(splitByArtist?artistKey:'*'),title:representative?.title||title,
     artist:splitByArtist?(artists.get(artistKey)||'Artista da identificare'):(artists.values().next().value||''),
-    ambiguousArtist:splitByArtist&&artistKey==='__unknown__',
+    ambiguousArtist:!representative?.normalizedArtist,
     files:unique,versionKinds:names,providers,linkedProjectIds:targetIds,unlinkedCount:unique.filter(x=>active(x.file.id).length===0).length,
     exactHashDuplicates:verifiedTwins(unique.map(e=>e.file)),
     needsReview:true
@@ -107,6 +109,7 @@ function planVersionLinks({group,selectedIds=[],projectId,files=[],projects=[],l
  if(!review?.planLinks)throw Error('Validazione collegamenti non disponibile');
  const authorized=new Set(allowedForLink(group,links).map(f=>txt(f.id)));
  if(selectedIds.length>25||selectedIds.length===0)throw Error('Seleziona da 1 a 25 versioni');
+ if(new Set(selectedIds.map(txt)).size!==selectedIds.length)throw Error('Seleziona versioni diverse, senza duplicati');
  if(selectedIds.some(id=>!authorized.has(txt(id))))throw Error('Sono presenti versioni non autorizzate o già collegate');
  const payload=review.planLinks(selectedIds.map(audioId=>({audioId,projectId})),files,projects,links,owner);
  // The caller still needs an explicit UI confirmation before making its one DB write.
