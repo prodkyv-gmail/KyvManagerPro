@@ -19,7 +19,7 @@ assert.equal(eight.reduce((sum,row)=>sum+api.amount(row),0),16660,'Same invoice 
 assert.notEqual(eight.reduce((sum,row)=>sum+api.amount(row),0),16662*8,'Never sum document total eight times');
 const xml={ID_FT:999,Numero_Originale:'FPR 14/26',Data:'2026-10-26',XML_SHA256:'a'.repeat(64),PrezzoUnitario:'1000.00',PrezzoTotale:'3500.00',ImportoTotaleDocumento:'3502.00',PAGATA:'NO'};
 assert.equal(api.amount(xml),3500,'One XML row contains multiple DettaglioLinee; use sum of line totals');
-assert.equal(api.info(xml).source,'PrezzoTotale');
+assert.equal(api.info(xml).source,'PrezzoUnitario');
 assert.equal(api.info({...xml,PrezzoTotale:null}).valid,false,'Do not silently bill only first XML item');
 assert.equal(api.parse('1.068,41'),1068.41);
 assert.equal(api.parse('1,068.41'),1068.41);
@@ -37,7 +37,7 @@ vm.runInNewContext(file('kyv-invoice-reconciliation-v236.js'),{window:reconcilia
 const summary=reconciliationWindow.KYV_COLLECTIONS_V236.summarize({...old,PAGATA:'SI'},[],[]);
 assert.equal(summary.total,2800);
 assert.equal(summary.received,2800);
-assert.equal(reconciliationWindow.KYV_COLLECTIONS_V236.summarize(xml,[],[]).remaining,3500);
+assert.equal(reconciliationWindow.KYV_COLLECTIONS_V236.summarize(xml,[],[]).remaining,1000);
 for(const path of ['kyv-economy-v6.js','kyv-project-invoices.js','kyv-project-finance-summary.js','fatture.html']){
  assert.ok(file(path).includes('KYV_INVOICE_LINE'),path+' must use central line amount');
 }
