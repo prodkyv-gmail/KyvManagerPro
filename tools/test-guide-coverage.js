@@ -46,5 +46,5 @@ assert.ok(pkg.scripts.check.includes('check:guide-coverage'),'Guide verification
 assert.equal(pkg.scripts['check:guide-coverage'],'node tools/test-guide-coverage.js');
 const policy=read('docs/GUIDE_SYNC_POLICY.md');
 assert.ok(policy.includes('nella stessa PR')&&policy.includes('test-guide-coverage.js'));
-assert.equal(version,'2.53','Guide must match current functional release');
+assert.equal(version,'2.54','Guide must match current functional release');
 console.log('OK: current manual, nine contextual page guides, navigation, in-app entry points and offline/PWA help are synchronized');
