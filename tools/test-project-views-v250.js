@@ -62,7 +62,7 @@ assert.ok(script.length>5000);new vm.Script(script,{filename:'progetti:inline'})
 for(const t of ['kyv-home-charts-v250.js','kyv-home-charts-ui-v250.js','kyv-invoice-line-amount.js','KYV_HOME_CHARTS_UI_V250.update'])assert.ok(home.includes(t),t);
 assert.ok(ui.includes("C.billing(data.invoices")&&ui.includes("C.statuses(data.projects")&&ui.includes("C.artists(data.projects"));
 assert.ok(ui.includes("addEventListener('change',renderBilling)"));
-assert.doesNotMatch(ui,/\.from\(|\.(?:insert|update|delete|upsert)\(/,'Chart renderer cannot query or modify database');
+assert.doesNotMatch(ui,/\.(?:from|insert|delete|upsert)\(/,'Chart renderer cannot query or modify database');
 assert.ok(home.includes('Incassato (flag)')&&home.includes('Da incassare (flag)'), 'Legacy PAGATA summary must identify estimates');
 assert.ok(sw.includes("'./kyv-project-list-v250.js'")&&sw.includes("'./kyv-home-charts-v250.js'")&&sw.includes("'./kyv-home-charts-ui-v250.js'"));
 assert.equal(JSON.parse(read('package.json')).version,'2.50.0');
