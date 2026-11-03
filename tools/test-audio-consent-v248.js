@@ -38,7 +38,7 @@ assert.throws(()=>C.mark(rows,100,'mio'),/non disponibile/);
 assert.throws(()=>C.markMany(rows,Array.from({length:201},(_,i)=>i),'mio'),/troppo ampia/);
 assert.equal(C.markMany(scan,[1,2],'mio').filter(x=>x._explicit).length,2);
 const ui=read('kyv-audio-finder-ui-v245.js'),page=read('kyv_audio_finder.html'),sql=read('docs/v248-audio-decisions.sql');
-assert.ok(ui.includes('C.preview(rows,decisions)'));
+assert.ok(ui.includes('C.preview(compared,decisions)'),'Scans must compare source identity before review');
 assert.ok(ui.includes('C.plan(I.safeRows(preview),owner)'));
 assert.ok(ui.includes("db.from('KYV_AUDIO_DECISIONI').upsert("));
 assert.ok(ui.includes("db.from('KYV_AUDIO_INDICE').upsert("));
