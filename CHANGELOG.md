@@ -1,5 +1,13 @@
 # Changelog
 
+### v2.51 · 2026-11-03
+- Esploratore unificato dei soli audio personali approvati con filtri incrociati per sorgente, archivio e stato dei collegamenti.
+- Dropbox Chooser ufficiale integrato in Audio Finder: selezione file, coda di classificazione e nessuna creazione automatica.
+- Player locale temporaneo per file esplicitamente selezionati; nessun upload o accesso permanente ai file.
+- Ricerca e filtro nella coda di acquisizione; selezione massiva limitata ai file visibili.
+- Catalogo tecnico spostato nei dettagli espandibili, guida e PWA aggiornate.
+
+
 ### v2.50 · 2026-11-03
 - Progetti: popup rapido in sola lettura, ricerca completa con paginazione, filtri combinabili e ordinamenti, vista compatta.
 - Panoramica grafica del database PROGETTI con conteggi verificabili per stato/fase e dati non indicati.
