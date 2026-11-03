@@ -105,7 +105,7 @@ function renderGroupDetail(all=groupList()){
   (g.ambiguousArtist?' Il nome dell’artista non è sufficiente per attribuirle.':'')+
   (g.exactHashDuplicates?' · '+g.exactHashDuplicates+' hash identici verificati fra le versioni.':'')+'</p>'+
   '<div class="finder-group-approve"><button type="button" data-group-action="select">Seleziona fino a 25 versioni non collegate</button>'+
-  '<button type="button" data-group-action="clear">Deseleziona</button><span class="finder-note">'+groupSelected.size+' selezionate</span></div>'+
+  '<button type="button" data-group-action="clear">Deseleziona</button><span class="finder-note" id="finder-group-selected-count">'+groupSelected.size+' selezionate</span></div>'+
   rows.map(({file,version})=>{
    const eligible=available.has(String(file.id)),checked=groupSelected.has(String(file.id));
    return '<div class="finder-group-file"><input type="checkbox" data-group-file="'+H(file.id)+'"'+
@@ -123,14 +123,14 @@ function renderGroupDetail(all=groupList()){
 function showGroup(key){
  const match=groupList().find(g=>g.key===key);if(!match)return;
  groupKey=key;groupShown=Math.max(24,groupShown);groupFileShown=35;groupSelected.clear();
- groupProject=match.linkedProjectIds.length===1?match.linkedProjectIds[0]:'';
+ groupProject=''; // Never preselect a destination from filename matching or past group links.
  renderGroups();
 }
 function groupSelection(action){
  const g=groupList().find(x=>x.key===groupKey);if(!g)return;
  if(action==='clear'){groupSelected.clear();renderGroupDetail();return}
  if(action==='select'){
-  const candidates=G.allowedForLink(g,links).slice(0,Math.min(25,groupFileShown));
+  const candidates=G.allowedForLink(g,links).sort((a,b)=>G.versionOf(a).kind.localeCompare(G.versionOf(b).kind,'it')||a.nome_file.localeCompare(b.nome_file,'it')).slice(0,Math.min(25,groupFileShown));
   groupSelected=new Set(candidates.map(f=>String(f.id)));renderGroupDetail();
  }
  if(action==='more'){groupFileShown+=35;renderGroupDetail();}
@@ -359,6 +359,7 @@ function boot(){
   const x=e.target.closest('[data-group-file]');if(!x)return;
   if(x.checked){if(groupSelected.size>=25){x.checked=false;info('Massimo 25 versioni per conferma, poi ripeti con le successive.',true);return;}groupSelected.add(x.dataset.groupFile);}
   else groupSelected.delete(x.dataset.groupFile);
+  const count=$('finder-group-selected-count');if(count)count.textContent=groupSelected.size+' selezionate';
  });
  $('finder-group-detail').addEventListener('click',e=>{
   const b=e.target.closest('[data-group-action],[data-group-open-file]');if(!b)return;
