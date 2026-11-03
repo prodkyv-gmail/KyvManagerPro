@@ -47,7 +47,7 @@ assert.equal(multiple.stats.ambiguousInvoiceLines,1);
 assert.equal(multiple.stats.unallocatedInvoiceLines,1);
 assert.equal(multiple.projects.find(y=>y.ID===2).billed,0,'Ambiguous legacy link must not double count');
 const xml=api.analyze({projects:p,invoices:[{ID_FT:20,ID_PROGETTO:3,XML_SHA256:'a'.repeat(64),PrezzoUnitario:'100',PrezzoTotale:'800',ImportoTotaleDocumento:'900',Data:'2026-05-01'}]});
-assert.equal(xml.stats.invoiceTotal,800,'Single-row XML counts aggregate item total only');
+assert.equal(xml.stats.invoiceTotal,100,'XML managerial revenue must use PrezzoUnitario only');
 const sql=read('docs/v240-rights-project-allocations.sql');
 for(const snippet of ['ENABLE ROW LEVEL SECURITY','FOR UPDATE','kyv_guard_rights_allocation','owner_id=(select auth.uid())','ID_ATTRIBUZIONE" bigint NOT NULL UNIQUE','ON DELETE RESTRICT'])
  assert.ok(sql.includes(snippet),'SQL missing '+snippet);
