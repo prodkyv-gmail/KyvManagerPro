@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-03 — v2.47 Ripartizione fatture multi-progetto
+
+- Nuova fattura multi-progetto e comando **Ripartisci / Duplica riga** sulle fatture esistenti, con importo unitario per progetto e fee riportabile manualmente.
+- Un solo documento fiscale e fino a 100 righe; protezione anti duplicati e transazione atomica, con tabella additiva e RLS.
+- Scheda Progetto, Progetti, KYV Analyst, Intelligence, Economia e Ritorno dei progetti riconoscono le quote esplicite; nessuna attribuzione automatica degli incassi condivisi.
+- Regola finanziaria: **PrezzoUnitario**, non ImportoTotaleDocumento, nei conteggi gestionali (anche XML). Documentazione e PWA aggiornate.
+
+
 ## 2026-11-03 — hotfix Aruba XML e sequenza ID_FT
 
 - Riallineata la sequenza interna dell'ID fatture (5→107 rispetto al massimo ID esistente), senza modificare le 107 fatture storiche e senza importare automaticamente alcun documento XML.
