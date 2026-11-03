@@ -129,25 +129,30 @@ function renderDetail(){
 function groupList(){
  return G.groups(personalCatalogue(),links);
 }
+function selectedGroupView(){
+ return G.scopedToProvider(groupList().find(g=>g.key===groupKey),$('finder-group-source').value,links);
+}
 function renderGroups(){
  const all=groupList();
  const filtered=G.filter(all,{query:$('finder-group-query').value,source:$('finder-group-source').value,mode:$('finder-group-mode').value});
  const multi=all.filter(x=>x.files.length>1).length;
+ const source=$('finder-group-source').value;
  $('finder-group-count').textContent=all.length+' possibili brani · '+multi+' con più versioni · '+
   filtered.length+' gruppi nella vista. Raggruppamenti da verificare, nessuna associazione automatica.';
- $('finder-group-list').innerHTML=filtered.slice(0,groupShown).map((g,i)=>
-  '<button type="button" class="finder-group-tile'+(groupKey===g.key?' active':'')+'" data-group-index="'+i+'">'+
+ $('finder-group-list').innerHTML=filtered.slice(0,groupShown).map((g,i)=>{
+  const scoped=G.scopedToProvider(g,source,links);
+  return '<button type="button" class="finder-group-tile'+(groupKey===g.key?' active':'')+'" data-group-index="'+i+'">'+
   '<strong>'+H(g.artist?g.artist+' · '+g.title:g.title)+'</strong>'+
-  '<small>'+g.files.length+' file · '+H(g.versionKinds.join(', '))+'</small>'+
+  '<small>'+scoped.files.length+(source?' file della sorgente · ':' file · ')+H(scoped.versionKinds.join(', '))+'</small>'+
   '<small>'+H(g.providers.join(' + '))+(g.ambiguousArtist?' · artista ambiguo':'')+'</small>'+
-  '</button>').join('')||'<p class="finder-note">Nessun gruppo in questa ricerca. Prova «Tutti i brani» oppure indica un altro termine.</p>';
+  '</button>';}).join('')||'<p class="finder-note">Nessun gruppo in questa ricerca. Prova «Tutti i brani» oppure indica un altro termine.</p>';
  $('finder-group-more').hidden=filtered.length<=groupShown;
  // A filter change must not leave a hidden group or destination actionable.
  if(groupKey&&!filtered.some(g=>g.key===groupKey)){groupKey='';groupSelected.clear();groupProject='';}
  renderGroupDetail(all);
 }
 function renderGroupDetail(all=groupList()){
- const el=$('finder-group-detail'),g=all.find(x=>x.key===groupKey);
+ const el=$('finder-group-detail'),g=G.scopedToProvider(all.find(x=>x.key===groupKey),$('finder-group-source').value,links);
  if(!g){el.hidden=true;el.innerHTML='';return;}
  el.hidden=false;
  const available=new Set(G.allowedForLink(g,links).map(f=>String(f.id)));
@@ -160,7 +165,7 @@ function renderGroupDetail(all=groupList()){
   [...projects].sort((a,b)=>pn(a).localeCompare(pn(b),'it')).map(p=>
    '<option value="'+H(p.ID)+'"'+(String(p.ID)===groupProject?' selected':'')+'>'+H(pn(p))+'</option>').join('');
  el.innerHTML='<h3>'+H(g.artist?g.artist+' · '+g.title:g.title)+'</h3>'+
-  '<p class="finder-note">Queste versioni sono accostate solo per somiglianza del nome: verifica che siano davvero dello stesso lavoro prima di associarle.'+
+  '<p class="finder-note">'+($('finder-group-source').value?'Sono mostrate e selezionabili solo le versioni della sorgente scelta. Per collegare versioni di tutti gli archivi scegli «Tutte le sorgenti». ':'')+'Queste versioni sono accostate solo per somiglianza del nome: verifica che siano davvero dello stesso lavoro prima di associarle.'+
   (g.ambiguousArtist?' Artista non dichiarato: verifica ogni file e la destinazione prima di collegare.':'')+
   (g.exactHashDuplicates?' · '+g.exactHashDuplicates+' hash identici verificati fra le versioni.':'')+'</p>'+
   '<div class="finder-group-approve"><button type="button" data-group-action="select">Seleziona fino a 25 versioni non collegate</button>'+
@@ -186,7 +191,7 @@ function showGroup(key){
  renderGroups();
 }
 function groupSelection(action){
- const g=groupList().find(x=>x.key===groupKey);if(!g)return;
+ const g=selectedGroupView();if(!g)return;
  if(action==='clear'){groupSelected.clear();renderGroupDetail();return}
  if(action==='select'){
   const candidates=G.allowedForLink(g,links).sort((a,b)=>G.versionOf(a).kind.localeCompare(G.versionOf(b).kind,'it')||a.nome_file.localeCompare(b.nome_file,'it')).slice(0,Math.min(25,groupFileShown));
@@ -195,14 +200,23 @@ function groupSelection(action){
  if(action==='more'){groupFileShown+=35;renderGroupDetail();}
 }
 async function saveGroup(){
- const g=groupList().find(x=>x.key===groupKey);if(!g)throw Error('Scegli un gruppo');
+ const source=$('finder-group-source').value;
+ const g=selectedGroupView();if(!g)throw Error('Scegli un gruppo visibile');
  const chosen=[...groupSelected],projectId=groupProject;
+ const destination=projects.find(p=>String(p.ID)===String(projectId));
  const plan=G.planVersionLinks({group:g,selectedIds:chosen,projectId,files:personalCatalogue(),projects,links,owner,review:R});
- if(!confirm('Confermi '+plan.length+' versioni selezionate per il progetto #'+projectId+
-  '? Hai verificato che appartengano al tuo brano? Nessun nuovo progetto sarà creato.'))return;
+ const selectedNames=g.files.filter(e=>chosen.includes(String(e.file.id))).map(e=>e.file.nome_file);
+ const previewNames=selectedNames.slice(0,6).map(x=>'• '+x).join('\n');
+ const destinationName=destination?pn(destination):'Progetto #'+projectId;
+ if(!confirm('Confermi '+plan.length+' versioni del gruppo «'+g.title+'» nella sorgente «'+(source||'Tutte')+'»\n'+
+  'Progetto scelto: '+destinationName+'\n\n'+previewNames+(selectedNames.length>6?'\n… e altre '+(selectedNames.length-6):'')+
+  '\n\nHai verificato che questi file appartengano proprio al progetto? Non viene creato alcun progetto.'))return;
  info('Controllo dell’indice e dei collegamenti prima del salvataggio…');
  await fetchAll();
- const refreshed=groupList().find(x=>x.key===g.key);
+ if($('finder-group-source').value!==source||groupKey!==g.key)
+  throw Error('Sorgente o gruppo cambiati durante il controllo: riseleziona file e progetto.');
+ const refreshed=G.scopedToProvider(groupList().find(x=>x.key===g.key),source,links);
+ if(!refreshed)throw Error('Gruppo o sorgente non più disponibili');
  const verified=G.planVersionLinks({group:refreshed,selectedIds:chosen,projectId,files:personalCatalogue(),projects,links,owner,review:R});
  const result=await db.from('KYV_AUDIO_ASSOCIAZIONI').insert(verified).select('id');
  if(result.error||result.data?.length!==verified.length)
@@ -625,7 +639,7 @@ function boot(){
  window.addEventListener('pagehide',()=>{closeExplorerPlayer();transientFiles.clear()});
 
  $('finder-group-query').addEventListener('input',()=>{groupShown=24;renderGroups()});
- $('finder-group-source').addEventListener('change',()=>{groupShown=24;renderGroups()});
+ $('finder-group-source').addEventListener('change',()=>{groupShown=24;groupSelected.clear();groupProject='';renderGroups()});
  $('finder-group-mode').addEventListener('change',()=>{groupShown=24;renderGroups()});
  $('finder-group-more').addEventListener('click',()=>{groupShown+=24;renderGroups()});
  $('finder-group-list').addEventListener('click',e=>{

@@ -1,5 +1,12 @@
 # Changelog
 
+### v2.56 · 2026-11-03
+- Audio Finder: quando si seleziona una fonte, il dettaglio del gruppo mostra e rende collegabili solo i file di quella sorgente. «Tutte le sorgenti» mantiene il confronto tra archivi.
+- Il cambio fonte azzera selezioni e progetto di destinazione, prevenendo collegamenti di file non più visibili.
+- La conferma manuale espone nome progetto e file selezionati; dopo la rilettura del database si verifica di nuovo fonte e gruppo.
+- Suite dedicata v2.56, guida contestuale/manuale e cache PWA aggiornate. Nessuna migrazione DB, nessuna scansione continua, nessun accesso Vercel.
+
+
 ### v2.55 · 2026-11-03
 - Audio Finder: i file senza artista dichiarato non vengono più raggruppati sotto un artista noto, neppure se il titolo coincide.
 - Se un filtro nasconde il gruppo di versioni aperto, la scheda e le selezioni di file e progetto vengono azzerate.
