@@ -42,7 +42,7 @@ assert.ok(ui.includes('C.preview(rows,decisions)'));
 assert.ok(ui.includes('C.plan(preview,owner)'));
 assert.ok(ui.includes("db.from('KYV_AUDIO_DECISIONI').upsert("));
 assert.ok(ui.includes("db.from('KYV_AUDIO_INDICE').upsert("));
-assert.ok(ui.includes('const personalCatalogue=()=>catalogue.filter(f=>C.isAllowed(f,decisions))'));
+assert.ok(ui.includes('const personalCatalogue=()=>catalogue.filter(f=>approvedKeys.has(C.key(f)))'));
 assert.ok(ui.includes('personalCatalogue().find(x=>x.id===selected)'));
 assert.ok(ui.includes('KYV_AUDIO_PROJECT.createFromItem('));
 assert.ok(!ui.includes("KYV_AUDIO_PROJECT.createFromItem({\n    fileName:f.nome_file")||ui.includes('if(b.dataset.newProject)run('));
