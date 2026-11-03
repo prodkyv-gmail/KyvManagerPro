@@ -1,7 +1,7 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252,B=window.KYV_AUDIO_BATCH_V253;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
 let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null;
@@ -256,13 +256,13 @@ function renderPreview(){
  $('finder-preview-list').innerHTML=visible.map(i=>{
   const f=preview[i],listen=f.provider==='local'&&transientFiles.has(W.KEY(f)),
    state=f._sync?.state||'new',changes=f._sync?.changedFields||[];
-  const hints=['new','changed'].includes(state)?I.versionSuggestions(f,knownPersonal,2):[];
+  const hints=['new','changed'].includes(state)?B.propose(f,knownPersonal,2):[];
   const update=state==='changed'&&f.decision==='mio'&&!f._explicit;
   return '<div class="finder-intake-row"><div><strong>'+H(f.nome_file)+'</strong><small>'+
    H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'File selezionato'))+'</small>'+
    '<em>'+H(syncLabels[state]||'Da esaminare')+'</em>'+
    (changes.length?'<span class="finder-sync-meta">Differenze: '+H(changes.join(', '))+'</span>':'')+
-   (hints.length?'<span class="finder-sync-meta">Possibili versioni: '+H(hints.map(x=>x.name+' ('+x.reason+')').join(' · '))+' — verifica tu, nessun collegamento creato</span>':'')+
+   (hints.length?'<span class="finder-sync-meta">Possibili versioni: '+H(hints.map(x=>x.name+' ('+x.relationship+')').join(' · '))+' — verifica tu, nessun collegamento creato</span>':'')+
    (listen?'<button type="button" class="explorer-small-btn" data-preview-play="'+i+'">Ascolta file locale</button>':'')+
    (update?'<button type="button" class="finder-action-update" data-confirm-update="'+i+'">Confermo aggiornamento metadati del mio file</button>':'')+
    '</div><label>È una mia produzione?<select data-preview-choice="'+i+'">'+
@@ -273,10 +273,10 @@ function renderPreview(){
  }).join('')||'<p class="explorer-desc">Nessun file corrisponde a questo filtro. I risultati già approvati restano nel catalogo: scegli “Tutti i risultati” per visualizzarli.</p>';
  $('finder-preview-more').hidden=visible.length>=indices.length;
 }
-function previewScan(rows,note,localRefs=null){
+function previewScan(rows,note,localRefs=null,checkedUnsaved=false){
  if(!rows.length)throw Error('Nessun file audio nella selezione');
  if(rows.length>MAX)throw Error('Oltre '+MAX+' file: restringi la selezione');
- if(preview.some(x=>x._explicit)&&!confirm('Ci sono classificazioni non ancora salvate. Vuoi scartarle e iniziare una nuova scansione?'))return;
+ if(!checkedUnsaved&&preview.some(x=>x._explicit)&&!confirm('Ci sono classificazioni non ancora salvate. Vuoi scartarle e iniziare una nuova scansione?'))return;
  closeExplorerPlayer();transientFiles.clear();
  if(localRefs)for(const [key,file] of localRefs)transientFiles.set(key,file);
  const compared=I.compare(rows,catalogue,decisions);
@@ -311,26 +311,68 @@ function listenPreview(index){
  $('explorer-player-wrap').hidden=false;
  $('explorer-player-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
-async function drive(){
+async function readDriveRecords(){
  if(!window.KYV_DRIVE?.listFiles)throw Error('Connettore Google Drive non disponibile');
- info('Lettura Google Drive in corso…');
  const r=await KYV_DRIVE.listFiles({accountId:$('drive-account').value||'all',pages:12,audioOnly:true});
- if(r.errors?.length)throw Error('Drive non letto completamente: '+r.errors.join('; '));
+ let invalid=0;
  const rows=(r.files||[]).map(f=>{
   const id=T(f.id),account=T(f.driveEmail||f.driveAccount||f.driveLabel);
-  if(!id||!account||!F.isAudio(f.name,f.mimeType))return null;
+  if(!id||!account||!F.isAudio(f.name,f.mimeType)){invalid++;return null;}
   try{return F.record({provider:'drive',account,externalKey:id,name:f.name,path:f.folder||'',mime:f.mimeType,
-    size:f.size,modified:f.updated,url:f.webViewLink||f.url||null});}catch{return null}
+    size:f.size,modified:f.updated,url:f.webViewLink||f.url||null});}catch{invalid++;return null}
  }).filter(Boolean);
- previewScan(rows,r.truncated?'Scansione Drive PARZIALE: è stato raggiunto il limite di 12 pagine. I file non trovati non vengono eliminati.':'Google Drive: nessun file esistente viene eliminato in base alla scansione.');
+ const errors=[...(r.errors||[])];
+ if(invalid)errors.push(invalid+' file Drive con metadati non validi esclusi');
+ return {rows,errors,truncated:Boolean(r.truncated)};
+}
+async function drive(){
+ info('Lettura Google Drive in corso…');
+ const r=await readDriveRecords();
+ if(r.errors.length)throw Error('Drive non letto completamente: '+r.errors.join('; '));
+ previewScan(r.rows,r.truncated?'Scansione Drive PARZIALE: limite di 12 pagine raggiunto; file non trovati non eliminati.':
+  'Google Drive: i file assenti dalla scansione non vengono eliminati.');
+}
+async function readDropboxRecords(){
+ const rows=await all('DROPBOX_AUDIO_FILES','ID_FILE,Nome_File,Link_Dropbox,Hash_SHA256,created_at','ID_FILE');
+ let invalid=0;
+ const data=rows.map(f=>{
+  try{return F.record({provider:'dropbox',account:'Archivio Dropbox KYV',
+   externalKey:'id:'+f.ID_FILE,name:f.Nome_File||'',hash:f.Hash_SHA256,url:f.Link_Dropbox,
+   modified:f.created_at,origin:'archivio'});}
+  catch{invalid++;return null}
+ }).filter(Boolean);
+ return {rows:data,errors:invalid?[invalid+' righe Dropbox senza audio/identità validi escluse']:[],truncated:false};
 }
 async function dropbox(){
  info('Lettura archivio Dropbox…');
- const rows=await all('DROPBOX_AUDIO_FILES','ID_FILE,Nome_File,Link_Dropbox,Hash_SHA256,created_at','ID_FILE');
- const data=rows.map(f=>{try{return F.record({provider:'dropbox',account:'Archivio Dropbox KYV',
-  externalKey:'id:'+f.ID_FILE,name:f.Nome_File||'',hash:f.Hash_SHA256,url:f.Link_Dropbox,modified:f.created_at,origin:'archivio'})}
-  catch{return null}}).filter(Boolean);
- previewScan(data,'La ricerca usa gli audio già registrati: non esplora l’intero Dropbox.');
+ const result=await readDropboxRecords();
+ previewScan(result.rows,result.errors.length?
+  'Archivio Dropbox con risultati esclusi: '+result.errors.join('; ')+'. Non è una scansione di tutto l’account.':
+  'La ricerca usa solo gli audio già registrati: non esplora l’intero Dropbox.');
+}
+async function batchCloud(){
+ const driveSelected=$('batch-drive').checked,dropboxSelected=$('batch-dropbox').checked;
+ if(!driveSelected&&!dropboxSelected)throw Error('Seleziona almeno una sorgente cloud');
+ if(preview.some(f=>f._explicit)&&
+   !confirm('Hai classificazioni non salvate. Vuoi scartarle e avviare una nuova ricerca sulle sorgenti selezionate?'))return;
+ $('batch-status').textContent='Lettura delle sorgenti selezionate in corso…';
+ $('batch-warnings').textContent='';
+ info('Scansione cloud guidata in corso…');
+ await fetchAll();
+ const result=await B.scan({drive:driveSelected,dropbox:dropboxSelected,
+  driveReader:readDriveRecords,dropboxReader:readDropboxRecords,limit:MAX});
+ $('batch-status').textContent='Ricerca completata: '+result.total+' file distinti per identità sorgente.\n'+
+  result.reports.map(x=>x.label+': '+x.unique+' file unici · '+x.redundant+
+   ' ripetizioni stessa identità · '+(x.status==='complete'?'letti senza errori':x.status==='error'?'lettura non riuscita':'lettura parziale')).join('\n');
+ $('batch-warnings').textContent=result.warnings.join('\n')||
+  'Nessuna anomalia segnalata dalle sorgenti selezionate.';
+ if(!result.rows.length){
+  info('Nessun file audio utilizzabile dalle sorgenti selezionate. Nessun dato modificato.',true);return;
+ }
+ const warnings=result.partial?'ATTENZIONE: alcune fonti sono parziali o non disponibili. La coda mostra soltanto i file effettivamente trovati. ':'';
+ previewScan(result.rows,warnings+
+  'Risultati unificati per identità sorgente (non per titolo). Conferma solo i tuoi lavori; nessuna creazione o aggiornamento automatici.',null,true);
+ $('finder-preview').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function ensureChooser(){
  if(window.Dropbox?.choose)return Promise.resolve(window.Dropbox);
@@ -562,6 +604,7 @@ function boot(){
  $('review-list').addEventListener('change',rememberReview);
  $('finder-more').addEventListener('click',()=>{shown+=120;render()});
  $('finder-drive').addEventListener('click',()=>run(drive));
+ $('batch-scan').addEventListener('click',()=>run(batchCloud));
  $('finder-dropbox').addEventListener('click',()=>run(dropbox));
  $('finder-dropbox-choose').addEventListener('click',()=>run(chooseDropbox));
  $('finder-folder').addEventListener('change',e=>run(()=>local(Array.from(e.target.files||[]))));

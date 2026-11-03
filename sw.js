@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-52-incremental-audio-20261103';
+const CACHE_NAME = 'kyv-studio-v2-53-cloud-batch-20261103';
 const APP_SHELL = [
     './',
     './index.html',
@@ -27,6 +27,7 @@ const APP_SHELL = [
     './kyv-audio-groups-v249.js',
     './kyv-audio-workspace-v251.js',
     './kyv-audio-incremental-v252.js',
+    './kyv-audio-batch-v253.js',
     './kyv-audio-project.js',
     './kyv-audio-finder-ui-v245.js',
     './kyv-audio-finder-linked-v245.js',
