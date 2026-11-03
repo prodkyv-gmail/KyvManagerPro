@@ -58,14 +58,14 @@ assert.ok(ui.includes('Dropbox Chooser')&&ui.includes('chooser.choose('));
 assert.ok(ui.includes("previewScan(rows,'File selezionati nel Chooser ufficiale"),'Chooser cannot index directly');
 assert.ok(ui.includes('URL.createObjectURL(file)')&&ui.includes('URL.revokeObjectURL(playerObjectUrl)'));
 assert.ok(ui.includes("window.addEventListener('pagehide'"),'Stop playback and release memory on exit');
-assert.ok(ui.includes("const indices=previewIndices().slice(0,Math.min(100,previewShown))"),
+assert.ok(ui.includes("J.selectionPlan(preview,[...scanChecked],previewIndices().slice(0,previewShown))"),
  'Mass approval must only cover currently shown and filtered files');
 assert.ok(ui.includes('C.plan(I.safeRows(preview),owner)')&&ui.includes('KYV_AUDIO_PROJECT.createFromItem'),
  'Keep independent explicit ownership and manual project confirmation');
 assert.ok(!ui.includes('createProjectFromScan'), 'Discovery must never create a project');
 assert.ok(sw.includes("'./kyv-audio-workspace-v251.js'"));
-assert.equal(JSON.parse(read('package.json')).version,'2.53.0');
-assert.equal(read('VERSION').trim(),'2.53');
+assert.equal(JSON.parse(read('package.json')).version,'2.54.0');
+assert.equal(read('VERSION').trim(),'2.54');
 assert.ok(read('guida.html').includes('v2.51'));
 assert.ok(read('kyv-help.js').includes('v2.51'));
 console.log('OK: v2.51 approved-only explorer, safe Dropbox Chooser, filtered review and temporary audio playback');
