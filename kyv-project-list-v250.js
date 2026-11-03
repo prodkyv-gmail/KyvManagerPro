@@ -32,8 +32,8 @@ function filterRows(rows=[],opts={}){
   if(mode==='ATTESA'&&(!waiting(p)||done(p)))return false;
   if(mode==='USCITI'&&!done(p))return false;
   if(ra&&fold(p.ARTISTA)!==ra)return false;
-  if(rs&&fold(p.STATO)!==rs)return false;
-  if(rp&&fold(p.SVILUPPO)!==rp)return false;
+  if(rs&&(rs==='__missing__'?!!t(p.STATO):fold(p.STATO)!==rs))return false;
+  if(rp&&(rp==='__missing__'?!!t(p.SVILUPPO):fold(p.SVILUPPO)!==rp))return false;
   return words.every(w=>fold([p.TITOLO,p.ARTISTA,p.STATO,p.SVILUPPO,p.NOTE,p.Prossimo_Followup].join(' ')).includes(w));
  }).sort((a,b)=>compare(a,b,sort));
  if(mode==='RECENTI'&&!q&&!ra&&!rs&&!rp)list=list.slice(0,40);
