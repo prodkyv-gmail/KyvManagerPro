@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-54-guided-review-20261103';
+const CACHE_NAME = 'kyv-studio-v2-55-safe-groups-20261103';
 const APP_SHELL = [
     './',
     './index.html',
