@@ -4,7 +4,7 @@
 const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
-let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='';
+let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='';
 const info=(v,error=false)=>{const el=$('finder-status');el.textContent=v;el.className='finder-status'+(error?' error':'')};
 const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v)};
 async function all(table,fields,sort){
@@ -27,11 +27,12 @@ async function fetchAll(){
   all('KYV_SESSIONI','id,titolo,data_sessione,archiviata','data_sessione'),
   all('KYV_AUDIO_DECISIONI','provider,account_label,external_key,decision','updated_at')
  ]);
+ approvedKeys=new Set(decisions.filter(d=>d.decision==='mio').map(C.key));
 }
 const pn=p=>(p.ARTISTA?p.ARTISTA+' · ':'')+(p.TITOLO||'Senza titolo')+' #'+p.ID;
 const sn=p=>(p.titolo||'Sessione')+' · '+(p.data_sessione||'');
 const active=id=>links.filter(l=>l.id_audio===id&&!l.annullata);
-const personalCatalogue=()=>catalogue.filter(f=>C.isAllowed(f,decisions));
+const personalCatalogue=()=>catalogue.filter(f=>approvedKeys.has(C.key(f)));
 function fillSelects(){
  const make=(arr,id,name)=>'<option value="">Seleziona</option>'+arr.map(p=>'<option value="'+H(id(p))+'">'+H(name(p))+'</option>').join('');
  $('link-project').innerHTML=make(projects,p=>p.ID,pn);
