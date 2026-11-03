@@ -1,3 +1,6 @@
+### v2.56 — Filtri fonte coerenti con i file collegabili
+Nella sezione Brani e versioni, il filtro fonte deve valere simultaneamente per le tessere, il dettaglio, le checkbox, la selezione multipla e **entrambe** le verifiche del collegamento prima dell'insert. Se la sorgente cambia, cancellare selezioni/progetto ed impedire salvataggi con filtri mutati durante un'attesa. Con "Tutte le sorgenti" mantenere il collegamento multi-provider esplicito. Mostrare nel popup di conferma il progetto realmente scelto e un riepilogo di file selezionati; non dedurre l'appartenenza dal nome. Aggiornare guida e regressioni nello stesso rilascio.
+
 ### v2.55 — Gruppi personali e filtro non visibile
 Per file già approvati come propri, non attribuire mai un audio privo di artista dichiarato all'unico artista noto con lo stesso titolo. I gruppi sono proposte da nome e devono evidenziare l'ambiguità. Se la ricerca o un filtro nasconde il gruppo selezionato, chiudere dettagli e azzerare file/progetto selezionati prima di consentire un inserimento. Il filtro sorgente è a livello di gruppo e può includere file di altre sorgenti: chiarirlo nella guida e nella pagina. Rifiutare file duplicati nella stessa operazione di collegamento; nessuna creazione automatica. Aggiornare test, guida contestuale, manuale, PWA e versione senza migrazione DB.
 
