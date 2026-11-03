@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-48-personal-audio-20261103';
+const CACHE_NAME = 'kyv-studio-v2-49-version-groups-20261103';
 const APP_SHELL = [
     './',
     './index.html',
@@ -21,6 +21,7 @@ const APP_SHELL = [
     './kyv-audio-finder-v245.js',
     './kyv-audio-review-v246.js',
     './kyv-audio-consent-v248.js',
+    './kyv-audio-groups-v249.js',
     './kyv-audio-project.js',
     './kyv-audio-finder-ui-v245.js',
     './kyv-audio-finder-linked-v245.js',
