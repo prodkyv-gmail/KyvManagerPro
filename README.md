@@ -1,3 +1,11 @@
+## v2.55 — Raggruppamento sicuro degli audio personali (3 novembre 2026)
+
+In **Audio Finder → Brani e versioni** il raggruppamento degli audio già classificati `mio` isola i file **senza artista dichiarato** anche quando nell'archivio esiste **un solo artista con lo stesso titolo**. Prima venivano separati soltanto se erano presenti due artisti dichiarati diversi, quindi una versione non attribuita poteva apparire sotto il nome del solo artista noto. Rimangono suggerimenti basati sui nomi; nessuna identità musicale viene dedotta dal titolo.
+
+Cambiare i filtri di ricerca, sorgente o modalità e rendere non visibile il gruppo aperto azzera il dettaglio, i file spuntati e il progetto di destinazione. Il filtro sorgente seleziona i gruppi che **contengono** una fonte, non restringe i file al suo interno: verificare tutte le versioni prima di premere Collega. Il motore rifiuta inoltre selezioni contenenti due volte lo stesso ID file. Restano la verifica prima/dopo rilettura del database e la conferma manuale; nessun progetto viene creato o collegato per ricerca, nessuna migrazione SQL, nessun upload audio.
+
+**Test e release:** `npm run check:audio-link-safety-v255` più suite preesistenti; versione `2.55`, cache PWA ruotata. Guide `guida.html`, `kyv-help.js` e manuale sincronizzate. Collaudo PWA autenticata e connettori cloud da verificare separatamente; Vercel non aperto.
+
 ## v2.54 — Revisione guidata di file audio e versioni (3 novembre 2026)
 
 **Audio Finder → Verifica unificata e incrementale** ora propone gruppi di file con titolo e artista compatibili per agevolare la revisione di centinaia di demo, mix, master e altre versioni. I gruppi riguardano **solo i file emersi nella scansione avviata manualmente**, prima della classificazione, e sono costruiti da nomi/metadati: non è riconoscimento acustico, non provano che il file sia tuo, non collegano progetti. I brani omonimi con artisti dichiarati diversi vengono mantenuti separati; i file con artista non dichiarato restano in un gruppo distinto. I titoli generici o non riconoscibili rimangono elementi individuali da esaminare.
