@@ -37,7 +37,7 @@ begin
  return t::numeric;
 exception when invalid_text_representation or numeric_value_out_of_range then return null;
 end $$;
-revoke all on function public.kyv_v247_number(text) from public;
+revoke all on function public.kyv_v247_number(text) from public, anon;
 grant execute on function public.kyv_v247_number(text) to authenticated;
 
 -- One database transaction for initial manual invoice + allocations, or for
@@ -111,7 +111,7 @@ begin
  end loop;
  return inv_id;
 end $$;
-revoke all on function public.kyv_v247_save_invoice(bigint,jsonb,jsonb) from public;
+revoke all on function public.kyv_v247_save_invoice(bigint,jsonb,jsonb) from public, anon;
 grant execute on function public.kyv_v247_save_invoice(bigint,jsonb,jsonb) to authenticated;
 
 comment on table public."FATTURE_RIPARTIZIONI" is
