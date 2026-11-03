@@ -86,7 +86,7 @@ assert.equal(el('tot-acconti-aperti').innerText,'EUR 50.00');
 assert.equal(el('tot-da-pagare').innerText,'EUR 200.00');
 assert.equal(pkg.version,'2.54.0');
 assert.equal(read('VERSION').trim(),'2.54');
-assert.match(read('config.js'),/APP_VERSION: '2\.53'/);
+assert.match(read('config.js'),/APP_VERSION: '2\.54'/);
 assert.ok(sw.includes('kyv-studio-v2-54-guided-review-20261103'));
 assert.ok(pkg.scripts.check.includes('check:cash-navigation-v243'));
 assert.equal(pkg.scripts['check:cash-navigation-v243'],'node tools/test-cash-navigation-v243.js');
