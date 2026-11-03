@@ -34,15 +34,15 @@ async function tests(){
  assert.throws(()=>B.combine([{provider:'onedrive',rows:[]}]),/non autorizzata/);
  assert.throws(()=>B.combine([{provider:'drive',rows:source1}],2),/Oltre 2 file/);
  const conflicting=B.combine([{provider:'drive',rows:[
-  make('abc','Brano demo.wav'),make('abc','Brano master.wav',{size_bytes:4321})
+  make('abc','Brano demo.wav'),make('abc','Brano master.wav','drive','KYV',{size_bytes:4321})
  ]}]);
  assert.equal(conflicting.total,1);
  assert.equal(conflicting.reports[0].conflicts,1,'Same identity changed metadata requires manual review');
  assert.equal(conflicting.rows[0].nome_file,'Brano demo.wav','No speculative metadata replacement');
  assert.ok(conflicting.warnings.some(x=>x.includes('discordanti')));
  const withoutRevisions=B.combine([{provider:'drive',rows:[
-  make('abc','Brano demo.wav',{content_hash:'a'.repeat(64)}),
-  make('abc','Brano demo.wav',{content_hash:null})
+  make('abc','Brano demo.wav','drive','KYV',{content_hash:'a'.repeat(64)}),
+  make('abc','Brano demo.wav','drive','KYV',{content_hash:null})
  ]}]);
  assert.equal(withoutRevisions.rows[0].content_hash,'a'.repeat(64));
  const asyncResults=await B.scan({drive:true,dropbox:true,
