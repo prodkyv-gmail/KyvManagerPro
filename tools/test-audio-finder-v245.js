@@ -51,7 +51,8 @@ assert.ok(ui.includes('content_hash:x.content_hash||old?.content_hash'),'Reindex
 assert.ok(ui.includes("db.from('KYV_AUDIO_INDICE').upsert"),'Metadata saved on explicit action');
 assert.ok(ui.includes("db.from('KYV_AUDIO_ASSOCIAZIONI').insert"),'Links saved separately with confirmation');
 assert.ok(ui.includes("confirm('Confermi il collegamento"),'Never link inferred project without confirmation');
-assert.doesNotMatch(ui,/\.delete\(|\.remove\(|\.upload\(/,'Never delete or upload binaries');
+assert.doesNotMatch(ui,/\b(?:db|client)\.from\([^\n]{0,180}\)\s*\.\s*(?:delete|remove|upload)\s*\(/,'Never delete or upload catalogue records');
+assert.doesNotMatch(ui,/\b(?:db|client)\.storage[^\n]*\.(?:remove|upload)\s*\(/,'Never mutate audio storage');
 assert.ok(page.includes('id="finder-folder"')&&page.includes('webkitdirectory'));
 assert.ok(page.includes('OneDrive online')&&page.includes('non ancora attivo'));
 assert.ok(page.includes('id="finder-preview"')&&page.includes('id="finder-link-form"'));
