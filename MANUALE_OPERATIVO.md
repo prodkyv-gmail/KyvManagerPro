@@ -1,3 +1,7 @@
+## Nota operativa 3 novembre 2026 — Importazione XML Aruba
+
+Se l'app mostra “Duplicato intercettato dal database” pur riportando “0 duplicati” nella lettura dei file, controllare prima il vincolo che ha fallito. Un errore su `FATTURE1_pkey` / `ID_FT` indica che il contatore automatico potrebbe essere rimasto indietro rispetto alle fatture storiche: **non prova** che il file XML sia già presente. È stato verificato e corretto un caso con massimo ID 107 e sequenza a 5, ora riallineata a 107 senza modifiche ai record. L'importatore hotfix distingue da qui in avanti errore ID interno e duplicato SHA-256 effettivo. Dopo il riallineamento, riaprire il pannello, riselezionare il file, verificare progetto opzionale e importare; controllare che la fattura compaia nel registro (inizialmente non incassata). Non creare duplicati manuali, né cambiare gli ID esistenti.
+
 # KyvManagerPro — Manuale Operativo Super Esteso v2.24
 
 Questo manuale descrive KyvManagerPro come **assistente operativo per KYV / Vincenzo Centrella**, produttore musicale che deve seguire molti brani, artisti, manager, label, autori, sessioni, file audio, contratti, quote, diritti, fatture, incassi e spese.
