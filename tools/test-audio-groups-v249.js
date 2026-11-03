@@ -70,7 +70,7 @@ assert.ok(project.includes('select.value===\'__new__\''),'Explicit new project c
 assert.ok(project.includes("if(!select.value)return"), 'No submission without choosing a destination');
 assert.ok(sw.includes("'./kyv-audio-groups-v249.js'"));
 assert.equal(JSON.parse(read('package.json')).version,'2.49.0');
-assert.equal(read('VERSION').trim(),'2.49');
+assert.equal(read('VERSION').trim(),'2.50');
 assert.ok(read('kyv-help.js').includes('v2.49'));
 assert.ok(read('guida.html').includes('v2.49'));
 console.log('OK: v2.49 advisory cross-source version grouping, artist ambiguity, no auto-project, manual checked links');
