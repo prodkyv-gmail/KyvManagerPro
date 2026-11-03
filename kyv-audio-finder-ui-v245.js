@@ -142,7 +142,8 @@ function renderGroups(){
   '<small>'+H(g.providers.join(' + '))+(g.ambiguousArtist?' · artista ambiguo':'')+'</small>'+
   '</button>').join('')||'<p class="finder-note">Nessun gruppo in questa ricerca. Prova «Tutti i brani» oppure indica un altro termine.</p>';
  $('finder-group-more').hidden=filtered.length<=groupShown;
- if(groupKey&&!all.some(g=>g.key===groupKey)){groupKey='';groupSelected.clear();groupProject='';}
+ // A filter change must not leave a hidden group or destination actionable.
+ if(groupKey&&!filtered.some(g=>g.key===groupKey)){groupKey='';groupSelected.clear();groupProject='';}
  renderGroupDetail(all);
 }
 function renderGroupDetail(all=groupList()){
@@ -160,7 +161,7 @@ function renderGroupDetail(all=groupList()){
    '<option value="'+H(p.ID)+'"'+(String(p.ID)===groupProject?' selected':'')+'>'+H(pn(p))+'</option>').join('');
  el.innerHTML='<h3>'+H(g.artist?g.artist+' · '+g.title:g.title)+'</h3>'+
   '<p class="finder-note">Queste versioni sono accostate solo per somiglianza del nome: verifica che siano davvero dello stesso lavoro prima di associarle.'+
-  (g.ambiguousArtist?' Il nome dell’artista non è sufficiente per attribuirle.':'')+
+  (g.ambiguousArtist?' Artista non dichiarato: verifica ogni file e la destinazione prima di collegare.':'')+
   (g.exactHashDuplicates?' · '+g.exactHashDuplicates+' hash identici verificati fra le versioni.':'')+'</p>'+
   '<div class="finder-group-approve"><button type="button" data-group-action="select">Seleziona fino a 25 versioni non collegate</button>'+
   '<button type="button" data-group-action="clear">Deseleziona</button><span class="finder-note" id="finder-group-selected-count">'+groupSelected.size+' selezionate</span></div>'+

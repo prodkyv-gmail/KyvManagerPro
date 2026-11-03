@@ -1,3 +1,6 @@
+### v2.55 — Gruppi personali e filtro non visibile
+Per file già approvati come propri, non attribuire mai un audio privo di artista dichiarato all'unico artista noto con lo stesso titolo. I gruppi sono proposte da nome e devono evidenziare l'ambiguità. Se la ricerca o un filtro nasconde il gruppo selezionato, chiudere dettagli e azzerare file/progetto selezionati prima di consentire un inserimento. Il filtro sorgente è a livello di gruppo e può includere file di altre sorgenti: chiarirlo nella guida e nella pagina. Rifiutare file duplicati nella stessa operazione di collegamento; nessuna creazione automatica. Aggiornare test, guida contestuale, manuale, PWA e versione senza migrazione DB.
+
 ### v2.54 — Revisione a gruppi senza approvazione implicita
 Raggruppamenti da nomi di file solo informativi: non equivalgono a identità acustica, proprietà del brano o associazione di progetto. Separare esplicitamente artisti diversi e quelli non dichiarati. Un bulk può toccare fino a 100 **caselle spuntate e visibili**, e non deve alterare reference già escluse, lavori approvati, aggiornamenti metadati da riconfermare o decisioni individuali già prese. Cambio filtro/gruppo azzera la selezione, ma mantiene decisioni manuali non salvate fino a scarto volontario. La classificazione è sempre seguita da conferma separata di persistenza, senza creare progetti.
 

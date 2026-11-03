@@ -1,3 +1,9 @@
+## v2.55 — Separazione prudente dei brani omonimi (3 novembre 2026)
+
+Apri **Audio Finder → Brani e versioni** dopo aver confermato i file come **Mio**. Se due file riportano lo stesso titolo ma solo uno specifica l'artista, appaiono in gruppi **separati**: non attribuire il file senza artista a un progetto soltanto perché il titolo coincide. I gruppi senza artista riportano un avviso; sono ipotesi da controllare ascoltando o verificando i nomi, non prove di proprietà.
+
+Usa ricerca, sorgente e filtro **Più versioni/Tutti/Da collegare**. Se la modifica nasconde il gruppo aperto, le spunte precedenti e il progetto scelto sono annullati. Il filtro sorgente seleziona i gruppi che contengono quella sorgente, mentre il dettaglio può mostrare file di più archivi. Apri il gruppo, scegli versioni **distinte**, scegli tu il progetto e conferma nel popup. Per creare un progetto nuovo, resta necessario aprire il singolo file e confermare la proposta separata. Nessun dato storico cambia automaticamente.
+
 ## v2.54 — Revisione guidata di file audio e versioni (3 novembre 2026)
 
 **Audio Finder → Verifica unificata e incrementale** ora propone gruppi di file con titolo e artista compatibili per agevolare la revisione di centinaia di demo, mix, master e altre versioni. I gruppi riguardano **solo i file emersi nella scansione avviata manualmente**, prima della classificazione, e sono costruiti da nomi/metadati: non è riconoscimento acustico, non provano che il file sia tuo, non collegano progetti. I brani omonimi con artisti dichiarati diversi vengono mantenuti separati; i file con artista non dichiarato restano in un gruppo distinto. I titoli generici o non riconoscibili rimangono elementi individuali da esaminare.
