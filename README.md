@@ -1,3 +1,13 @@
+## KYVManagerPro v2.47 — Fatturazione multi-progetto (3/11/2026)
+
+**Una fattura fiscale, più righe gestionali.** Nuova tabella owner-scoped `FATTURE_RIPARTIZIONI` e funzione transazionale `kyv_v247_save_invoice`, documentate in `docs/v247-fatture-ripartizioni.sql`. Non riscrive fatture/progetti/incassi storici. Ogni riga contiene `id_ft`, progetto, `prezzo_unitario` attribuito, descrizione e riferimento facoltativo alla fee. La stessa fattura può avere più righe e più progetti, e lo stesso progetto più fatture o fee. La funzione crea un documento e le sue righe nella stessa transazione oppure sostituisce atomicamente le sole righe di un documento esistente; rifiuta quote che superano il suo `PrezzoUnitario` e impedisce di creare una nuova fattura con lo stesso numero originale nello stesso anno.
+
+**UI:** `fatture.html` → **Nuova multi-progetto** / su fattura esistente **Ripartisci / Duplica riga**; `kyv-invoice-split-v247.js`. Duplica riga copia soltanto la descrizione, non copia progetto o importo. **Riporta fee** propone `PROGETTI.FEE` ma l'importo rimane modificabile prima del salvataggio. Dalla Scheda Progetto: **Aggiungi quota a fattura esistente / Duplica riga**, con progetto preselezionato. Le righe di ripartizione prevalgono sul vecchio `ID_PROGETTO` senza modificare quel campo: niente doppia contabilizzazione del documento.
+
+**Contabilità:** per il fatturato gestionale si usa sempre `PrezzoUnitario`, anche per XML. `ImportoTotaleDocumento` è solo il totale fiscale di controllo; i file XML multi-riga già importati richiedono una verifica dell'imponibile gestionale/unitario. Le quote fatturate per progetto non equivalgono a incassi attribuiti: i bonifici di fatture condivise restano **da ripartire**, non vengono suddivisi automaticamente. Le viste Economia, Intelligence, Analyst, Ritorno, Scheda e Progetti distinguono quote esplicite, dati storici e mancata attribuzione.
+
+**Prima del rilascio:** applicare lo schema SQL in modo additivo su Supabase e verificare RLS; CI `npm run check` + `tools/test-invoice-split-v247.js`. Non eseguire nessuna duplicazione di righe in `FATTURE` per simulare più progetti.
+
 ## 2026-11-03 — Hotfix import XML Aruba (base v2.46)
 
 **Diagnosi verificata sul database KYV:** 107 righe FATTURE, massimo `ID_FT=107`, ma la sequence identity `FATTURE_ID_FT_seq` era a 5. Gli inserimenti XML fallivano con conflitto sulla primary key `FATTURE1_pkey`, erroneamente etichettato «Duplicato XML». La sequenza è stata riallineata a 107 senza cancellare o modificare fatture; la fattura del caso non era stata importata e richiede un nuovo tentativo con il file XML originale.
