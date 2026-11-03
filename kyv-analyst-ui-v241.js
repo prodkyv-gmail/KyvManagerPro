@@ -91,7 +91,7 @@ async function refresh(){
  try{
   const c=window.KYV?.createSupabaseClient?.();
   if(!c)throw Error('Client autenticato non disponibile');
-  const [projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals,sessions,sessionLinks,pitches]=await Promise.all([
+  const [projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals,sessions,sessionLinks,pitches,invoiceSplits]=await Promise.all([
    allRows(c,'PROGETTI','ID,TITOLO,ARTISTA,STATO,SVILUPPO,FEE,Data_Sessione,Data_Pubblicazione,IDFT,Prossimo_Followup,Ultimo_Sollecito,Priorita_Followup','ID'),
    allRows(c,'FATTURE','ID_FT,ID_PROGETTO,XML_SHA256,PrezzoUnitario,PrezzoTotale,Data,PAGATA','ID_FT'),
    allRows(c,'FATTURE_INCASSI','ID_INCASSO,ID_FT,Data,Importo','ID_INCASSO'),
@@ -101,9 +101,10 @@ async function refresh(){
    allRows(c,'KYV_ATTRIBUZIONI_DIRITTI_STORNI','ID_STORNO,ID_ATTRIBUZIONE','ID_STORNO'),
    allRows(c,'KYV_SESSIONI','id,data_sessione,durata_minuti,esito,archiviata','data_sessione'),
    allRows(c,'KYV_SESSIONI_PROGETTI','id,id_sessione,id_progetto,annullato','created_at'),
-   allRows(c,'KYV_PIAZZAMENTI','id,id_progetto,destinatario,stato,prossimo_followup,archiviata','created_at')
+   allRows(c,'KYV_PIAZZAMENTI','id,id_progetto,destinatario,stato,prossimo_followup,archiviata','created_at'),
+   allRows(c,'FATTURE_RIPARTIZIONI','id,id_ft,id_progetto,prezzo_unitario','id')
   ]);
-  const payload={projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals};
+  const payload={projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals,invoiceSplits};
   report=E.build(payload,now());
   creativeReport=window.KYV_CREATIVE_DESK_V244.analyze({sessions,links:sessionLinks,pitches,projects},now());
   renderSuggestions();
