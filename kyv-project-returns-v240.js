@@ -14,7 +14,7 @@ const money=v=>{
  const n=Number(s);return Number.isFinite(n)?n:0;
 };
 const cents=v=>Math.round(money(v)*100);
-const amount=f=>root.KYV_INVOICE_LINE?.cents(f)??Math.max(0,cents(f.XML_SHA256?f.PrezzoTotale:f.PrezzoUnitario));
+const amount=f=>root.KYV_INVOICE_LINE?.cents(f)??Math.max(0,cents(f.PrezzoUnitario));
 const paid=x=>/^(si|sì|yes|true|1|pagat|incassat)/i.test(text(x));
 const difference=(start,end)=>Math.round((Date.parse(end+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/86400000);
 function analyze({projects=[],invoices=[],payments=[],paymentReversals=[],rights=[],allocations=[],allocationReversals=[],invoiceSplits=[]}={}){
