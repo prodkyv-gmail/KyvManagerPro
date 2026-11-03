@@ -395,24 +395,43 @@ async function local(files){
  previewScan(data,'Le cartelle locali, anche OneDrive sincronizzate, devono essere selezionate da te. Non salviamo percorsi assoluti.',localRefs);
 }
 async function savePreview(){
- const plan=C.plan(preview,owner);
- if(!confirm('Confermi '+plan.approved.length+' tuoi file audio da indicizzare, '+plan.excluded+' reference escluse e '+plan.pending+' da verificare? Non verranno creati progetti o caricati audio.'))return;
- // Decisions are persisted first so exclusions survive new scans; upserts are idempotent.
+ const approvedSelections=preview.filter(f=>f._explicit);
+ if(!approvedSelections.length){
+  info('Nessuna classificazione o modifica selezionata: i file già noti sono rimasti invariati. Nessun dato salvato.');return;
+ }
+ const plan=C.plan(I.safeRows(preview),owner);
+ if(!confirm('Confermi '+plan.approved.length+' tuoi file da indicizzare o aggiornare, '+plan.excluded+
+  ' reference escluse e '+plan.pending+' da verificare? Il programma non crea progetti, non cancella file e non carica audio.'))return;
+ info('Verifica dell’indice aggiornato prima del salvataggio…');
+ // Re-read to avoid overwriting decisions/revisions changed by another session.
+ await fetchAll();
+ const indexByKey=new Map(catalogue.map(f=>[C.key(f),f]));
+ const decisionByKey=new Map(decisions.map(f=>[C.key(f),f.decision]));
+ for(const f of approvedSelections){
+  const key=C.key(f),previous=f._previous||null,latest=indexByKey.get(key)||null;
+  const before=f._sync?.previousDecision||'da_verificare',now=decisionByKey.get(key)||'da_verificare';
+  if(before!==now)throw Error('La classificazione è cambiata da un altro accesso. Rileggi la sorgente prima di aggiornare.');
+  if(Boolean(previous)!==Boolean(latest)||
+   (previous&&latest&&(I.differs(previous,latest).length||I.differs(latest,previous).length)))
+   throw Error('I metadati sono stati modificati da un altro accesso. Rileggi la sorgente prima di salvare.');
+ }
+ // Decisions first; an interrupted second step never creates projects or binary uploads.
  for(let i=0;i<plan.changes.length;i+=100){
-  const r=await db.from('KYV_AUDIO_DECISIONI').upsert(plan.changes.slice(i,i+100),{onConflict:'owner_id,provider,account_label,external_key'});
-  if(r.error)throw Error('Classificazioni non completamente salvate: '+r.error.message+'. Ripeti la scansione se necessario.');
+  const r=await db.from('KYV_AUDIO_DECISIONI').upsert(plan.changes.slice(i,i+100),
+   {onConflict:'owner_id,provider,account_label,external_key'});
+  if(r.error)throw Error('Classificazioni non completamente salvate: '+r.error.message+'. Rileggi e verifica prima di ripetere.');
  }
  for(let i=0;i<plan.approved.length;i+=100){
-  const rows=plan.approved.slice(i,i+100).map(x=>{
-   const old=catalogue.find(p=>C.key(p)===C.key(x));
-   return {...x,content_hash:x.content_hash||old?.content_hash||null,link_file:x.link_file||old?.link_file||null};
-  });
-  const r=await db.from('KYV_AUDIO_INDICE').upsert(rows,{onConflict:'owner_id,provider,account_label,external_key'}).select('id');
-  if(r.error)throw Error('Indicizzazione parziale: '+r.error.message+'. Nessun progetto creato; puoi ripetere la scansione.');
+  const rows=plan.approved.slice(i,i+100).map(x=>I.preserveRecord(x,indexByKey.get(C.key(x))));
+  const r=await db.from('KYV_AUDIO_INDICE').upsert(rows,
+   {onConflict:'owner_id,provider,account_label,external_key'}).select('id');
+  if(r.error||r.data?.length!==rows.length)
+   throw Error('Indicizzazione non completamente confermata: '+(r.error?.message||'risultato non verificato')+'. Rileggi prima di ripetere.');
  }
  preview=[];$('finder-preview').hidden=true;
  await fetchAll();fillSelects();invalidateReview();render();
- info(plan.approved.length+' tuoi brani indicizzati; '+plan.excluded+' reference escluse. Per creare un progetto seleziona manualmente un file nel catalogo.');
+ info(plan.approved.length+' file personali confermati/aggiornati; '+plan.excluded+
+  ' reference escluse. Nessun progetto creato o collegamento modificato.');
 }
 async function associate(){
  const f=personalCatalogue().find(x=>x.id===selected);if(!f)throw Error('Seleziona un audio personale approvato');
@@ -556,7 +575,10 @@ function boot(){
  $('finder-preview-more').addEventListener('click',()=>{previewShown+=60;renderPreview()});
  $('finder-preview-query').addEventListener('input',()=>{previewShown=60;renderPreview()});
  $('finder-preview-state').addEventListener('change',()=>{previewShown=60;renderPreview()});
+ $('finder-sync-state').addEventListener('change',()=>{previewShown=60;renderPreview()});
  $('finder-preview-list').addEventListener('click',e=>{
+  const update=e.target.closest('[data-confirm-update]');
+  if(update){confirmMetadataUpdate(Number(update.dataset.confirmUpdate));return;}
   const b=e.target.closest('[data-preview-play]');if(b)run(()=>listenPreview(Number(b.dataset.previewPlay)));
  });
  $('preview-mark-mine').addEventListener('click',()=>bulkPreview('mio'));
