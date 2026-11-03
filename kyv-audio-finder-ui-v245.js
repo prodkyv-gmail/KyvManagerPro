@@ -1,10 +1,10 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
-let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='';
+let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null;
 const info=(v,error=false)=>{const el=$('finder-status');el.textContent=v;el.className='finder-status'+(error?' error':'')};
 const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v)};
 async function all(table,fields,sort){
@@ -38,6 +38,62 @@ function fillSelects(){
  $('link-project').innerHTML=make(projects,p=>p.ID,pn);
  $('link-session').innerHTML=make(sessions.filter(s=>!s.archiviata),p=>p.id,sn);
 }
+
+function explorerApproved(){return W.approved(catalogue,decisions,links);}
+function explorerRows(){return W.query(explorerApproved(),{text:$('explorer-query').value,provider:$('explorer-source').value,
+ account:$('explorer-account').value,status:$('explorer-linked').value,sort:$('explorer-sort').value});}
+function syncExplorerAccounts(){
+ const sel=$('explorer-account'),previous=sel.value,accounts=W.accounts(explorerApproved(),$('explorer-source').value);
+ sel.innerHTML='<option value="">Tutti gli archivi</option>'+accounts.map(a=>'<option value="'+H(a)+'">'+H(a)+'</option>').join('');
+ sel.value=accounts.includes(previous)?previous:'';
+}
+function closeExplorerPlayer(){
+ const audio=$('explorer-player');audio.pause();audio.removeAttribute('src');audio.load();
+ if(playerObjectUrl){URL.revokeObjectURL(playerObjectUrl);playerObjectUrl=null;}
+ $('explorer-player-wrap').hidden=true;
+}
+function openLocalAudio(fileId){
+ const record=explorerApproved().find(x=>String(x.id)===String(fileId));
+ if(!record||record.provider!=='local')throw Error('Solo i file locali già approvati possono essere ascoltati qui');
+ const file=transientFiles.get(W.KEY(record));
+ if(!file)throw Error('Riseleziona il file dal dispositivo per ascoltarlo. Il browser non conserva accessi permanenti.');
+ closeExplorerPlayer();
+ playerObjectUrl=URL.createObjectURL(file);
+ $('explorer-player').src=playerObjectUrl;
+ $('explorer-player-title').textContent='Ascolto locale · '+file.name;
+ $('explorer-player-wrap').hidden=false;$('explorer-player-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function safeCloudLink(f){
+ if(f.provider==='local'||!f.link_file)return null;
+ const link=F.safeUrl(f.link_file);if(!link)return null;
+ try{const host=new URL(link).hostname;
+   if(f.provider==='drive'&&/(^|\.)drive\.google\.com$/i.test(host))return link;
+   if(f.provider==='dropbox'&&/(^|\.)dropbox\.com$/i.test(host))return link;
+ }catch{}return null;
+}
+function renderExplorer(){
+ const approved=explorerApproved(),stats=W.stats(approved),items=explorerRows();
+ $('explorer-status').textContent=stats.total+' miei audio approvati · '+stats.linked+' collegati · '+stats.unlinked+
+  ' da collegare · '+stats.bySource.local+' locali · '+stats.bySource.drive+' Drive · '+stats.bySource.dropbox+
+  ' Dropbox · '+items.length+' risultati';
+ $('explorer-items').innerHTML=items.slice(0,explorerShown).map(f=>{
+  const link=safeCloudLink(f),listen=f.provider==='local'&&transientFiles.has(W.KEY(f));
+  return '<div class="explorer-item"><div><strong>'+H(f.nome_file)+'</strong><small>'+
+   H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'Cartella non indicata'))+'</small>'+
+   '<small>'+f.linkCount+' collegamenti · '+(f.size_bytes!=null?Number(f.size_bytes).toLocaleString('it-IT')+' byte':'Dimensione ignota')+
+   '</small></div><div class="explorer-item-actions">'+
+   (listen?'<button type="button" data-explorer-play="'+H(f.id)+'">Ascolta</button>':'')+
+   (link?'<a href="'+H(link)+'" target="_blank" rel="noopener noreferrer">Apri in '+H(f.provider==='drive'?'Drive':'Dropbox')+'</a>':'')+
+   '<button type="button" data-explorer-detail="'+H(f.id)+'">Dettaglio / collega</button></div></div>';
+ }).join('')||'<p class="explorer-desc">Nessun tuo audio nella ricerca. Seleziona i file da una sorgente, quindi classifica soltanto i tuoi lavori.</p>';
+ $('explorer-more').hidden=items.length<=explorerShown;
+ $('explorer-more').textContent='Mostra altri '+Math.min(60,items.length-explorerShown);
+}
+function explorerDetail(id){
+ const file=explorerApproved().find(f=>String(f.id)===String(id));if(!file)throw Error('Audio non approvato');
+ selected=file.id;const advanced=$('finder-advanced');if(advanced)advanced.open=true;
+ render();$('finder-detail').scrollIntoView({behavior:'smooth',block:'start'});
+}
 function render(){
  const personal=personalCatalogue();
  const rows=R.filterCatalogue(personal,links,{query:$('finder-query').value,source:$('finder-source').value,status:$('finder-link-status').value});
@@ -49,6 +105,7 @@ function render(){
  $('finder-more').hidden=rows.length<=shown;
  renderDetail();
  renderGroups();
+ renderExplorer();
 }
 function renderDetail(){
  const f=personalCatalogue().find(x=>x.id===selected);$('link-panel').hidden=!f;
