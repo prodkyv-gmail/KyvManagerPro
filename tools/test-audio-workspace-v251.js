@@ -64,8 +64,8 @@ assert.ok(ui.includes('C.plan(preview,owner)')&&ui.includes('KYV_AUDIO_PROJECT.c
  'Keep independent explicit ownership and manual project confirmation');
 assert.ok(!ui.includes('createProjectFromScan'), 'Discovery must never create a project');
 assert.ok(sw.includes("'./kyv-audio-workspace-v251.js'"));
-assert.equal(JSON.parse(read('package.json')).version,'2.51.0');
-assert.equal(read('VERSION').trim(),'2.51');
+assert.equal(JSON.parse(read('package.json')).version,'2.52.0');
+assert.equal(read('VERSION').trim(),'2.52');
 assert.ok(read('guida.html').includes('v2.51'));
 assert.ok(read('kyv-help.js').includes('v2.51'));
 console.log('OK: v2.51 approved-only explorer, safe Dropbox Chooser, filtered review and temporary audio playback');
