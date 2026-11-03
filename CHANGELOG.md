@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-03 — hotfix Aruba XML e sequenza ID_FT
+
+- Riallineata la sequenza interna dell'ID fatture (5→107 rispetto al massimo ID esistente), senza modificare le 107 fatture storiche e senza importare automaticamente alcun documento XML.
+- Importatore: errore chiave primaria ora distinto da duplicato SHA-256 e problemi di autorizzazione, con indicazioni di recupero e nuovi test.
+- Aggiornati guida in Fatture, manuale, documentazione e cache PWA. Versione funzionale invariata v2.46.
+
+
 ## 2026-10-31 — v2.46 Audio Finder
 
 - Coda abbinamenti: suggerimenti titolo/artista spiegabili, conflitti ambigui senza selezione predefinita, selezione e conferma multipla (massimo 25) con un unico salvataggio dopo rilettura.
