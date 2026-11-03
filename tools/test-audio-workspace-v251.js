@@ -60,7 +60,7 @@ assert.ok(ui.includes('URL.createObjectURL(file)')&&ui.includes('URL.revokeObjec
 assert.ok(ui.includes("window.addEventListener('pagehide'"),'Stop playback and release memory on exit');
 assert.ok(ui.includes("const indices=previewIndices().slice(0,Math.min(100,previewShown))"),
  'Mass approval must only cover currently shown and filtered files');
-assert.ok(ui.includes('C.plan(preview,owner)')&&ui.includes('KYV_AUDIO_PROJECT.createFromItem'),
+assert.ok(ui.includes('C.plan(I.safeRows(preview),owner)')&&ui.includes('KYV_AUDIO_PROJECT.createFromItem'),
  'Keep independent explicit ownership and manual project confirmation');
 assert.ok(!ui.includes('createProjectFromScan'), 'Discovery must never create a project');
 assert.ok(sw.includes("'./kyv-audio-workspace-v251.js'"));
