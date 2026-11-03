@@ -6,8 +6,6 @@
 - Ricerca combinata per testo, sorgente e categoria, navigazione progressiva e apertura esplicita del dettaglio file o della scheda progetto.
 - Nessuna presunzione di proprietà o cancellazione basata sui duplicati; storici e audio esterni non modificati. Guida, test e PWA sincronizzati.
 
-# Changelog
-
 ### v2.56 · 2026-11-03
 - Audio Finder: quando si seleziona una fonte, il dettaglio del gruppo mostra e rende collegabili solo i file di quella sorgente. «Tutte le sorgenti» mantiene il confronto tra archivi.
 - Il cambio fonte azzera selezioni e progetto di destinazione, prevenendo collegamenti di file non più visibili.
