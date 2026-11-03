@@ -6,7 +6,7 @@ const C=root.KYV_AUDIO_CONSENT_V248,G=root.KYV_AUDIO_GROUPS_V249;
 if(!C||!G)throw Error('Audio ownership and version helpers required');
 const T=v=>String(v??'').trim();
 const KEY=C.key;
-const fields=Object.freeze(['nome_file','percorso_relativo','size_bytes','modificato_il','mime_type','link_file']);
+const fields=Object.freeze(['nome_file','percorso_relativo','size_bytes','modificato_il','mime_type','link_file','content_hash']);
 function differs(a,b){
  if(!a||!b)return[];
  return fields.filter(k=>{
@@ -21,7 +21,7 @@ function differs(a,b){
   return T(next)!==T(old);
  });
 }
-function hasRevisionInfo(f){return f?.size_bytes!=null||!!T(f?.modificato_il);}
+function hasRevisionInfo(f){return f?.size_bytes!=null||!!T(f?.modificato_il)||/^[a-f0-9]{64}$/i.test(T(f?.content_hash));}
 function classify(record,old,decision){
  const state=decision==='reference'?'excluded':decision==='da_verificare'?'pending':
   !old?'new':differs(old,record).length?'changed':
