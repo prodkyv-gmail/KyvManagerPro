@@ -1,7 +1,7 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
 let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null;
@@ -229,49 +229,78 @@ async function refresh(){
  });
 }
 function previewIndices(){
- const q=F.norm($('finder-preview-query').value),status=$('finder-preview-state').value;
- return preview.map((file,index)=>({file,index})).filter(x=>
-  (status==='all'||x.file.decision===status)&&
-  (!q||F.norm([x.file.nome_file,x.file.percorso_relativo,x.file.provider,x.file.account_label].join(' ')).includes(q)))
- .map(x=>x.index);
+ return I.filter(preview,{
+  query:$('finder-preview-query').value,
+  status:$('finder-sync-state').value,
+  decision:$('finder-preview-state').value
+ });
 }
+const syncLabels={
+ new:'Nuovo · classificazione richiesta',
+ changed:'Metadati diversi · approvazione aggiornamento richiesta',
+ unchanged:'Già indicizzato · metadati confrontabili invariati',
+ unverified:'Già noto · revisione non verificabile dai dati disponibili',
+ excluded:'Reference esclusa · nessun inserimento',
+ pending:'Classificazione sospesa · nessun inserimento'
+};
 function renderPreview(){
  const indices=previewIndices(),visible=indices.slice(0,previewShown);
- const classified=preview.filter(x=>x._explicit);
- $('finder-preview-count').textContent=preview.length+' file · '+indices.length+' nella ricerca · '+
- classified.filter(x=>x.decision==='mio').length+' miei · '+
- classified.filter(x=>x.decision==='reference').length+' reference · '+classified.length+' decisioni';
+ const sum=I.summary(preview),selected=preview.filter(x=>x._explicit);
+ $('finder-sync-summary').textContent=sum.new+' nuovi · '+sum.changed+' con metadati cambiati · '+
+  sum.unchanged+' già indicizzati senza variazioni rilevate · '+sum.unverified+' senza dati di revisione · '+
+  sum.excluded+' reference escluse · '+sum.pending+' in attesa di classificazione. Non vengono rimossi file mancanti.';
+ $('finder-preview-count').textContent=preview.length+' file rilevati · '+indices.length+' nel filtro · '+
+  selected.filter(x=>x.decision==='mio').length+' approvati ora · '+
+  selected.filter(x=>x.decision==='reference').length+' reference escluse ora · '+selected.length+' decisioni esplicite';
+ const knownPersonal=personalCatalogue();
  $('finder-preview-list').innerHTML=visible.map(i=>{
-  const f=preview[i],listen=f.provider==='local'&&transientFiles.has(W.KEY(f));
+  const f=preview[i],listen=f.provider==='local'&&transientFiles.has(W.KEY(f)),
+   state=f._sync?.state||'new',changes=f._sync?.changedFields||[];
+  const hints=['new','changed'].includes(state)?I.versionSuggestions(f,knownPersonal,2):[];
+  const update=state==='changed'&&f.decision==='mio'&&!f._explicit;
   return '<div class="finder-intake-row"><div><strong>'+H(f.nome_file)+'</strong><small>'+
    H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'File selezionato'))+'</small>'+
+   '<em>'+H(syncLabels[state]||'Da esaminare')+'</em>'+
+   (changes.length?'<span class="finder-sync-meta">Differenze: '+H(changes.join(', '))+'</span>':'')+
+   (hints.length?'<span class="finder-sync-meta">Possibili versioni: '+H(hints.map(x=>x.name+' ('+x.reason+')').join(' · '))+' — verifica tu, nessun collegamento creato</span>':'')+
    (listen?'<button type="button" class="explorer-small-btn" data-preview-play="'+i+'">Ascolta file locale</button>':'')+
+   (update?'<button type="button" class="finder-action-update" data-confirm-update="'+i+'">Confermo aggiornamento metadati del mio file</button>':'')+
    '</div><label>È una mia produzione?<select data-preview-choice="'+i+'">'+
    '<option value="da_verificare"'+(f.decision==='da_verificare'?' selected':'')+'>Da verificare</option>'+
    '<option value="mio"'+(f.decision==='mio'?' selected':'')+'>Sì, mio brano o collaborazione</option>'+
    '<option value="reference"'+(f.decision==='reference'?' selected':'')+'>No, reference o brano di altri</option>'+
    '</select></label></div>';
- }).join('')||'<p class="explorer-desc">Nessun file corrisponde al filtro. Le scelte precedenti restano memorizzate.</p>';
+ }).join('')||'<p class="explorer-desc">Nessun file corrisponde a questo filtro. I risultati già approvati restano nel catalogo: scegli “Tutti i risultati” per visualizzarli.</p>';
  $('finder-preview-more').hidden=visible.length>=indices.length;
 }
 function previewScan(rows,note,localRefs=null){
  if(!rows.length)throw Error('Nessun file audio nella selezione');
  if(rows.length>MAX)throw Error('Oltre '+MAX+' file: restringi la selezione');
+ if(preview.some(x=>x._explicit)&&!confirm('Ci sono classificazioni non ancora salvate. Vuoi scartarle e iniziare una nuova scansione?'))return;
  closeExplorerPlayer();transientFiles.clear();
  if(localRefs)for(const [key,file] of localRefs)transientFiles.set(key,file);
- preview=C.preview(rows,decisions);previewShown=60;
- $('finder-preview-query').value='';$('finder-preview-state').value='all';
+ const compared=I.compare(rows,catalogue,decisions);
+ preview=C.preview(compared,decisions);previewShown=60;
+ $('finder-preview-query').value='';$('finder-preview-state').value='all';$('finder-sync-state').value='attention';
  $('finder-preview').hidden=false;
  $('finder-preview-note').textContent=preview.length+' audio rilevati. '+note+
-  ' Sono soltanto candidati: nessun progetto o collegamento viene creato.';
- renderPreview();info('Scansione completata. Classifica soltanto le tue produzioni.');
+  ' Confronto effettuato sui metadati/ID della sorgente, non sul contenuto audio. Nessun progetto o collegamento viene creato.';
+ renderPreview();
+ const sum=I.summary(preview);
+ info('Confronto terminato: '+sum.new+' nuovi, '+sum.changed+' con metadati cambiati, '+sum.unchanged+' già noti. Nessuna modifica automatica.');
 }
 function bulkPreview(decision){
  const indices=previewIndices().slice(0,Math.min(100,previewShown));
  if(!indices.length)return;
- if(!confirm('Confermi la classificazione di '+indices.length+' file VISIBILI come '+
- (decision==='mio'?'tuoi lavori':'reference da escludere')+'?'))return;
+ if(!confirm('Confermi la classificazione di '+indices.length+' file visibili come '+
+ (decision==='mio'?'tuoi lavori':'reference da escludere')+'? Le possibili versioni non sono collegamenti automatici.'))return;
  preview=C.markMany(preview,indices,decision);renderPreview();
+}
+function confirmMetadataUpdate(index){
+ const file=preview[index];
+ if(!file||file._sync?.state!=='changed'||file.decision!=='mio')throw Error('Aggiornamento non disponibile');
+ if(!confirm('Confermi che i metadati aggiornati si riferiscono ancora al tuo stesso file? Nessuna versione o progetto sarà creato automaticamente.'))return;
+ preview=C.mark(preview,index,'mio');renderPreview();
 }
 function listenPreview(index){
  const f=preview[index];if(!f||f.provider!=='local')throw Error('Anteprima disponibile solo per audio selezionato localmente');
@@ -293,7 +322,7 @@ async function drive(){
   try{return F.record({provider:'drive',account,externalKey:id,name:f.name,path:f.folder||'',mime:f.mimeType,
     size:f.size,modified:f.updated,url:f.webViewLink||f.url||null});}catch{return null}
  }).filter(Boolean);
- previewScan(rows,'Massimo 12 pagine per Drive: archivi molto grandi possono richiedere più scansioni.');
+ previewScan(rows,r.truncated?'Scansione Drive PARZIALE: è stato raggiunto il limite di 12 pagine. I file non trovati non vengono eliminati.':'Google Drive: nessun file esistente viene eliminato in base alla scansione.');
 }
 async function dropbox(){
  info('Lettura archivio Dropbox…');
