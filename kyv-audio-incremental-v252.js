@@ -89,5 +89,8 @@ function versionSuggestions(record,oldApproved=[],max=4){
  return options.sort((a,b)=>Number(b.identicalHash)-Number(a.identicalHash)||
   a.name.localeCompare(b.name,'it')).slice(0,Math.max(0,Math.min(10,max)));
 }
-root.KYV_AUDIO_INCREMENTAL_V252=Object.freeze({KEY,differs,classify,compare,summary,filter,preserveRecord,versionSuggestions});
+function safeRows(items=[]){
+ return items.map(({_sync,_previous,_suggestions,...record})=>record);
+}
+root.KYV_AUDIO_INCREMENTAL_V252=Object.freeze({KEY,differs,classify,compare,summary,filter,preserveRecord,versionSuggestions,safeRows});
 })(typeof window!=='undefined'?window:globalThis);
