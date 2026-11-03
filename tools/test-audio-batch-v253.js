@@ -12,7 +12,7 @@ const make=(id,name,provider='drive',account='KYV',extra={})=>({
 async function tests(){
  const source1=[
   make('d1','Emma - Mia Luce demo.wav'),
-  make('d1','Emma - Mia Luce demo.wav',{ /* ignored per duplicate identity */}),
+  make('d1','Emma - Mia Luce demo.wav'),
   make('d2','Emma - Mia Luce mix.wav'),
   make('bad','notaudio.txt','drive','KYV',{mime_type:'text/plain'})
  ];
