@@ -9,6 +9,7 @@ if(!supported.has(page))return;
 let db=null;
 let editor=null;
 let listInvoices=[];
+let listAllocations=[];
 let legacyProjects=[];
 let contextInvoices=[];
 let contextProjectId='';
@@ -32,7 +33,7 @@ function paid(row){
 }
 function amount(row){
   if(window.KYV_INVOICE_LINE?.amount)return window.KYV_INVOICE_LINE.amount(row);
-  const raw=row?.XML_SHA256?row?.PrezzoTotale:row?.PrezzoUnitario;
+  const raw=row?.PrezzoUnitario;
   if(window.KYV&&typeof KYV.parseNumber==='function')return Math.max(0,KYV.parseNumber(raw)||0);
   if(typeof raw==='number')return Number.isFinite(raw)?Math.max(0,raw):0;
   const n=Number(String(raw||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,''));
@@ -104,7 +105,32 @@ async function fetchLegacyInvoices(projectId){
   const client=await ensureDb();const {data:project,error}=await client.from('PROGETTI').select('ID,IDFT').eq('ID',projectId).maybeSingle();if(error)throw error;if(!project||!text(project.IDFT))return[];
   const {data,error:invoiceError}=await client.from('FATTURE').select(invoiceFields).eq('ID_FT',project.IDFT).limit(5);if(invoiceError)throw invoiceError;return uniqueInvoices(data||[]);
 }
-async function loadProjectInvoices(projectId){projectId=text(projectId);if(!projectId)return[];try{const direct=await fetchDirectInvoices(projectId);if(direct.length)return uniqueInvoices(direct);const legacy=await fetchLegacyInvoices(projectId);return uniqueInvoices(legacy.filter(row=>!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===projectId));}catch(error){console.warn('[KYV Invoices] Lettura fatture progetto non riuscita',error);return null;}}
+async function loadProjectInvoices(projectId){
+ projectId=text(projectId);if(!projectId)return[];
+ try{
+  const client=await ensureDb();
+  const [direct,shareRes]=await Promise.all([fetchDirectInvoices(projectId),
+    client.from('FATTURE_RIPARTIZIONI').select('id_ft,prezzo_unitario').eq('id_progetto',projectId).limit(1000)]);
+  if(shareRes.error)throw shareRes.error;
+  const shareById=new Map();
+  for(const x of shareRes.data||[])shareById.set(text(x.id_ft),(shareById.get(text(x.id_ft))||0)+Number(x.prezzo_unitario));
+  const directIds=direct.map(x=>x.ID_FT);
+  const allocated=directIds.length?await client.from('FATTURE_RIPARTIZIONI').select('id_ft').in('id_ft',directIds).limit(1000):{data:[],error:null};
+  if(allocated.error)throw allocated.error;
+  const allocatedIds=new Set((allocated.data||[]).map(x=>text(x.id_ft)));
+  const invoiceIds=[...shareById.keys()];
+  const shared=invoiceIds.length?await client.from('FATTURE').select(invoiceFields).in('ID_FT',invoiceIds).limit(1000):{data:[],error:null};
+  if(shared.error||((shared.data||[]).length!==invoiceIds.length))throw Error('Lettura fatture multi-progetto incompleta');
+  const mapped=(shared.data||[]).map(x=>projectShare(x,shareById.get(text(x.ID_FT))));
+  const legacyDirect=direct.filter(x=>!allocatedIds.has(text(x.ID_FT)));
+  if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect]);
+  const legacy=await fetchLegacyInvoices(projectId);
+  return uniqueInvoices(legacy.filter(row=>!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===projectId));
+ }catch(error){console.warn('[KYV Invoices] Lettura fatture progetto non riuscita',error);return null;}
+}
+function projectShare(invoice,amount){
+ return {...invoice,PrezzoUnitario:String(amount),PrezzoTotale:String(amount),XML_SHA256:null,_v247Share:true};
+}
 
 function contextHref(projectId,create=false){const base=`scheda_progetto.html?id=${encodeURIComponent(projectId)}&tab=amministrazione`;return create?`${base}&newInvoice=1`:base;}
 function mountContextChip(projectId,rows){
@@ -117,16 +143,20 @@ function scheduleContextMount(projectId,attempt=0){clearTimeout(mountTimer);moun
 
 async function loadListData(){
   const client=await ensureDb();const invoiceLimit=1500,projectLimit=600;
-  const [invoiceRes,projectRes]=await Promise.all([client.from('FATTURE').select(invoiceFields).order('Data',{ascending:false}).limit(invoiceLimit),client.from('PROGETTI').select('ID,IDFT').order('ID',{ascending:false}).limit(projectLimit)]);
-  listInvoiceReadFailed=Boolean(invoiceRes.error||projectRes.error);listCoverageLimited=!listInvoiceReadFailed&&((invoiceRes.data||[]).length>=invoiceLimit||(projectRes.data||[]).length>=projectLimit);
+  const [invoiceRes,projectRes,allocationRes]=await Promise.all([client.from('FATTURE').select(invoiceFields).order('Data',{ascending:false}).limit(invoiceLimit),client.from('PROGETTI').select('ID,IDFT').order('ID',{ascending:false}).limit(projectLimit),client.from('FATTURE_RIPARTIZIONI').select('id_ft,id_progetto,prezzo_unitario').order('id',{ascending:false}).limit(5000)]);
+  listInvoiceReadFailed=Boolean(invoiceRes.error||projectRes.error||allocationRes.error);listCoverageLimited=!listInvoiceReadFailed&&((invoiceRes.data||[]).length>=invoiceLimit||(projectRes.data||[]).length>=projectLimit);
   if(invoiceRes.error)console.warn('[KYV Invoices] Lettura lista fatture non riuscita',invoiceRes.error);if(projectRes.error)console.warn('[KYV Invoices] Lettura riferimenti legacy non riuscita',projectRes.error);
-  listInvoices=invoiceRes.error?[]:(invoiceRes.data||[]);legacyProjects=projectRes.error?[]:(projectRes.data||[]);enhanceProjectList();
+  listInvoices=invoiceRes.error?[]:(invoiceRes.data||[]);legacyProjects=projectRes.error?[]:(projectRes.data||[]);listAllocations=allocationRes.error?[]:(allocationRes.data||[]);enhanceProjectList();
 }
 function listInvoicesForProject(projectId){
-  const direct=listInvoices.filter(row=>text(row.ID_PROGETTO)===text(projectId));
+  const shareById=new Map();for(const r of listAllocations.filter(r=>text(r.id_progetto)===text(projectId)))shareById.set(text(r.id_ft),(shareById.get(text(r.id_ft))||0)+Number(r.prezzo_unitario));
+  const allocatedIds=new Set(listAllocations.map(r=>text(r.id_ft)));
+  const mapped=listInvoices.filter(f=>shareById.has(text(f.ID_FT))).map(f=>projectShare(f,shareById.get(text(f.ID_FT))));
+  const direct=listInvoices.filter(row=>text(row.ID_PROGETTO)===text(projectId)&&!allocatedIds.has(text(row.ID_FT)));
+  if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct]);
   const legacy=legacyProjects.find(row=>text(row.ID)===text(projectId));
   const byInvoiceId=legacy&&text(legacy.IDFT)?listInvoices.filter(row=>text(row.ID_FT)===text(legacy.IDFT)):[];
-  return uniqueInvoices(direct.length?direct:byInvoiceId.filter(row=>!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===text(projectId)));
+  return uniqueInvoices(byInvoiceId.filter(row=>!allocatedIds.has(text(row.ID_FT))&&(!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===text(projectId))));
 }
 function renderListCell(projectId){
   if(listInvoiceReadFailed)return '<span class="kyv-invoice-main kyv-invoice-error" title="Lettura fatture non riuscita">⚠ Stato non disponibile</span>';
