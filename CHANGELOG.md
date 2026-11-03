@@ -1,5 +1,11 @@
 # Changelog
 
+### v2.55 · 2026-11-03
+- Audio Finder: i file senza artista dichiarato non vengono più raggruppati sotto un artista noto, neppure se il titolo coincide.
+- Se un filtro nasconde il gruppo di versioni aperto, la scheda e le selezioni di file e progetto vengono azzerate.
+- Bloccata la ripetizione dello stesso file in una selezione manuale da collegare; dettagli e guida esplicitano i limiti dei filtri sorgente.
+- Regressioni automatizzate v2.55, manuale e guida contestuale sincronizzati; PWA cache ruotata. Nessuna migrazione DB, nessun audio caricato, nessun accesso Vercel.
+
 ### v2.54 · 2026-11-03
 - Revisione guidata: gruppi temporanei per titolo e artista dichiarati, separazione brani omonimi e artisti non specificati, filtri e navigazione progressiva.
 - Caselle esplicite per selezione multipla fino a 100 file della vista corrente; le classificazioni massive richiedono conferma e salvataggio separato.
