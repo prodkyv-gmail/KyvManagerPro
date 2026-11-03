@@ -1,10 +1,10 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
-let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='';
+let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null;
 const info=(v,error=false)=>{const el=$('finder-status');el.textContent=v;el.className='finder-status'+(error?' error':'')};
 const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v)};
 async function all(table,fields,sort){
@@ -28,6 +28,7 @@ async function fetchAll(){
   all('KYV_AUDIO_DECISIONI','provider,account_label,external_key,decision','updated_at')
  ]);
  approvedKeys=new Set(decisions.filter(d=>d.decision==='mio').map(C.key));
+ if($('explorer-account'))syncExplorerAccounts();
 }
 const pn=p=>(p.ARTISTA?p.ARTISTA+' · ':'')+(p.TITOLO||'Senza titolo')+' #'+p.ID;
 const sn=p=>(p.titolo||'Sessione')+' · '+(p.data_sessione||'');
@@ -37,6 +38,62 @@ function fillSelects(){
  const make=(arr,id,name)=>'<option value="">Seleziona</option>'+arr.map(p=>'<option value="'+H(id(p))+'">'+H(name(p))+'</option>').join('');
  $('link-project').innerHTML=make(projects,p=>p.ID,pn);
  $('link-session').innerHTML=make(sessions.filter(s=>!s.archiviata),p=>p.id,sn);
+}
+
+function explorerApproved(){return W.approved(catalogue,decisions,links);}
+function explorerRows(){return W.query(explorerApproved(),{text:$('explorer-query').value,provider:$('explorer-source').value,
+ account:$('explorer-account').value,status:$('explorer-linked').value,sort:$('explorer-sort').value});}
+function syncExplorerAccounts(){
+ const sel=$('explorer-account'),previous=sel.value,accounts=W.accounts(explorerApproved(),$('explorer-source').value);
+ sel.innerHTML='<option value="">Tutti gli archivi</option>'+accounts.map(a=>'<option value="'+H(a)+'">'+H(a)+'</option>').join('');
+ sel.value=accounts.includes(previous)?previous:'';
+}
+function closeExplorerPlayer(){
+ const audio=$('explorer-player');audio.pause();audio.removeAttribute('src');audio.load();
+ if(playerObjectUrl){URL.revokeObjectURL(playerObjectUrl);playerObjectUrl=null;}
+ $('explorer-player-wrap').hidden=true;
+}
+function openLocalAudio(fileId){
+ const record=explorerApproved().find(x=>String(x.id)===String(fileId));
+ if(!record||record.provider!=='local')throw Error('Solo i file locali già approvati possono essere ascoltati qui');
+ const file=transientFiles.get(W.KEY(record));
+ if(!file)throw Error('Riseleziona il file dal dispositivo per ascoltarlo. Il browser non conserva accessi permanenti.');
+ closeExplorerPlayer();
+ playerObjectUrl=URL.createObjectURL(file);
+ $('explorer-player').src=playerObjectUrl;
+ $('explorer-player-title').textContent='Ascolto locale · '+file.name;
+ $('explorer-player-wrap').hidden=false;$('explorer-player-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function safeCloudLink(f){
+ if(f.provider==='local'||!f.link_file)return null;
+ const link=F.safeUrl(f.link_file);if(!link)return null;
+ try{const host=new URL(link).hostname;
+   if(f.provider==='drive'&&/(^|\.)drive\.google\.com$/i.test(host))return link;
+   if(f.provider==='dropbox'&&/(^|\.)dropbox\.com$/i.test(host))return link;
+ }catch{}return null;
+}
+function renderExplorer(){
+ const approved=explorerApproved(),stats=W.stats(approved),items=explorerRows();
+ $('explorer-status').textContent=stats.total+' miei audio approvati · '+stats.linked+' collegati · '+stats.unlinked+
+  ' da collegare · '+stats.bySource.local+' locali · '+stats.bySource.drive+' Drive · '+stats.bySource.dropbox+
+  ' Dropbox · '+items.length+' risultati';
+ $('explorer-items').innerHTML=items.slice(0,explorerShown).map(f=>{
+  const link=safeCloudLink(f),listen=f.provider==='local'&&transientFiles.has(W.KEY(f));
+  return '<div class="explorer-item"><div><strong>'+H(f.nome_file)+'</strong><small>'+
+   H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'Cartella non indicata'))+'</small>'+
+   '<small>'+f.linkCount+' collegamenti · '+(f.size_bytes!=null?Number(f.size_bytes).toLocaleString('it-IT')+' byte':'Dimensione ignota')+
+   '</small></div><div class="explorer-item-actions">'+
+   (listen?'<button type="button" data-explorer-play="'+H(f.id)+'">Ascolta</button>':'')+
+   (link?'<a href="'+H(link)+'" target="_blank" rel="noopener noreferrer">Apri in '+H(f.provider==='drive'?'Drive':'Dropbox')+'</a>':'')+
+   '<button type="button" data-explorer-detail="'+H(f.id)+'">Dettaglio / collega</button></div></div>';
+ }).join('')||'<p class="explorer-desc">Nessun tuo audio nella ricerca. Seleziona i file da una sorgente, quindi classifica soltanto i tuoi lavori.</p>';
+ $('explorer-more').hidden=items.length<=explorerShown;
+ $('explorer-more').textContent='Mostra altri '+Math.min(60,items.length-explorerShown);
+}
+function explorerDetail(id){
+ const file=explorerApproved().find(f=>String(f.id)===String(id));if(!file)throw Error('Audio non approvato');
+ selected=file.id;const advanced=$('finder-advanced');if(advanced)advanced.open=true;
+ render();$('finder-detail').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function render(){
  const personal=personalCatalogue();
@@ -49,6 +106,7 @@ function render(){
  $('finder-more').hidden=rows.length<=shown;
  renderDetail();
  renderGroups();
+ renderExplorer();
 }
 function renderDetail(){
  const f=personalCatalogue().find(x=>x.id===selected);$('link-panel').hidden=!f;
@@ -170,34 +228,59 @@ async function refresh(){
   render();info(personalCatalogue().length+' audio personali confermati. Nessuna scansione automatica attiva.');
  });
 }
-function renderPreview(){
- const visible=preview.slice(0,previewShown);
- const changed=preview.filter(x=>x._explicit);
- const mine=changed.filter(x=>x.decision==='mio').length;
- const references=changed.filter(x=>x.decision==='reference').length;
- $('finder-preview-count').textContent=preview.length+' audio trovati · '+mine+' tuoi selezionati · '+references+' reference escluse · '+changed.length+' decisioni esplicite';
- $('finder-preview-list').innerHTML=visible.map((f,i)=>
- '<div class="finder-intake-row"><div><strong>'+H(f.nome_file)+'</strong><small>'+H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'File selezionato'))+'</small></div>'+
- '<label>È una mia produzione?<select data-preview-choice="'+i+'">'+
- '<option value="da_verificare"'+(f.decision==='da_verificare'?' selected':'')+'>Da verificare</option>'+
- '<option value="mio"'+(f.decision==='mio'?' selected':'')+'>Sì, è un mio brano / collaborazione</option>'+
- '<option value="reference"'+(f.decision==='reference'?' selected':'')+'>No, reference o brano di altri</option>'+
- '</select></label></div>').join('');
- $('finder-preview-more').hidden=previewShown>=preview.length;
+function previewIndices(){
+ const q=F.norm($('finder-preview-query').value),status=$('finder-preview-state').value;
+ return preview.map((file,index)=>({file,index})).filter(x=>
+  (status==='all'||x.file.decision===status)&&
+  (!q||F.norm([x.file.nome_file,x.file.percorso_relativo,x.file.provider,x.file.account_label].join(' ')).includes(q)))
+ .map(x=>x.index);
 }
-function previewScan(rows,note){
+function renderPreview(){
+ const indices=previewIndices(),visible=indices.slice(0,previewShown);
+ const classified=preview.filter(x=>x._explicit);
+ $('finder-preview-count').textContent=preview.length+' file · '+indices.length+' nella ricerca · '+
+ classified.filter(x=>x.decision==='mio').length+' miei · '+
+ classified.filter(x=>x.decision==='reference').length+' reference · '+classified.length+' decisioni';
+ $('finder-preview-list').innerHTML=visible.map(i=>{
+  const f=preview[i],listen=f.provider==='local'&&transientFiles.has(W.KEY(f));
+  return '<div class="finder-intake-row"><div><strong>'+H(f.nome_file)+'</strong><small>'+
+   H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'File selezionato'))+'</small>'+
+   (listen?'<button type="button" class="explorer-small-btn" data-preview-play="'+i+'">Ascolta file locale</button>':'')+
+   '</div><label>È una mia produzione?<select data-preview-choice="'+i+'">'+
+   '<option value="da_verificare"'+(f.decision==='da_verificare'?' selected':'')+'>Da verificare</option>'+
+   '<option value="mio"'+(f.decision==='mio'?' selected':'')+'>Sì, mio brano o collaborazione</option>'+
+   '<option value="reference"'+(f.decision==='reference'?' selected':'')+'>No, reference o brano di altri</option>'+
+   '</select></label></div>';
+ }).join('')||'<p class="explorer-desc">Nessun file corrisponde al filtro. Le scelte precedenti restano memorizzate.</p>';
+ $('finder-preview-more').hidden=visible.length>=indices.length;
+}
+function previewScan(rows,note,localRefs=null){
  if(!rows.length)throw Error('Nessun file audio nella selezione');
  if(rows.length>MAX)throw Error('Oltre '+MAX+' file: restringi la selezione');
+ closeExplorerPlayer();transientFiles.clear();
+ if(localRefs)for(const [key,file] of localRefs)transientFiles.set(key,file);
  preview=C.preview(rows,decisions);previewShown=60;
+ $('finder-preview-query').value='';$('finder-preview-state').value='all';
  $('finder-preview').hidden=false;
- $('finder-preview-note').textContent=preview.length+' file audio rilevati. '+note+' Nessun file o progetto viene creato prima della tua scelta.';
- renderPreview();info('Ricerca completata. Classifica solo le tue produzioni prima di salvare.');
+ $('finder-preview-note').textContent=preview.length+' audio rilevati. '+note+
+  ' Sono soltanto candidati: nessun progetto o collegamento viene creato.';
+ renderPreview();info('Scansione completata. Classifica soltanto le tue produzioni.');
 }
 function bulkPreview(decision){
- const indices=preview.slice(0,Math.min(100,previewShown)).map((_,i)=>i);
+ const indices=previewIndices().slice(0,Math.min(100,previewShown));
  if(!indices.length)return;
- if(!confirm('Confermi la classificazione di '+indices.length+' file come '+(decision==='mio'?'tuoi lavori':'reference da escludere')+'?'))return;
+ if(!confirm('Confermi la classificazione di '+indices.length+' file VISIBILI come '+
+ (decision==='mio'?'tuoi lavori':'reference da escludere')+'?'))return;
  preview=C.markMany(preview,indices,decision);renderPreview();
+}
+function listenPreview(index){
+ const f=preview[index];if(!f||f.provider!=='local')throw Error('Anteprima disponibile solo per audio selezionato localmente');
+ const file=transientFiles.get(W.KEY(f));if(!file)throw Error('Riseleziona il file per ascoltarlo');
+ closeExplorerPlayer();playerObjectUrl=URL.createObjectURL(file);
+ $('explorer-player').src=playerObjectUrl;
+ $('explorer-player-title').textContent='Ascolto temporaneo · '+f.nome_file;
+ $('explorer-player-wrap').hidden=false;
+ $('explorer-player-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function drive(){
  if(!window.KYV_DRIVE?.listFiles)throw Error('Connettore Google Drive non disponibile');
@@ -220,6 +303,46 @@ async function dropbox(){
   catch{return null}}).filter(Boolean);
  previewScan(data,'La ricerca usa gli audio già registrati: non esplora l’intero Dropbox.');
 }
+function ensureChooser(){
+ if(window.Dropbox?.choose)return Promise.resolve(window.Dropbox);
+ if(chooserLoad)return chooserLoad;
+ const key=T(window.KYV_CONFIG?.DROPBOX_APP_KEY);
+ if(!key)throw Error('Dropbox Chooser non configurato. Usa l’archivio Dropbox esistente.');
+ chooserLoad=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');script.id='dropboxjs';
+  script.src='https://www.dropbox.com/static/api/2/dropins.js';
+  script.setAttribute('data-app-key',key);
+  const timer=setTimeout(()=>reject(Error('Dropbox non ha risposto: verifica rete e dominio autorizzato.')),12000);
+  script.onload=()=>{clearTimeout(timer);window.Dropbox?.choose?resolve(window.Dropbox):reject(Error('Dropbox Chooser non disponibile'));};
+  script.onerror=()=>{clearTimeout(timer);reject(Error('Impossibile caricare il selettore Dropbox'));};
+  document.head.appendChild(script);
+ }).catch(e=>{chooserLoad=null;document.getElementById('dropboxjs')?.remove();throw e;});
+ return chooserLoad;
+}
+async function chooseDropbox(){
+ const chooser=await ensureChooser();
+ chooser.choose({
+  success:files=>run(async()=>{
+   const chosen=(files||[]).map(W.chooserItem).filter(Boolean);
+   if(!chosen.length)throw Error('Nessun audio Dropbox valido selezionato');
+   const rows=[];
+   for(const file of chosen){
+    const old=catalogue.find(x=>x.provider==='dropbox'&&x.link_file===file.link);
+    let identity=file.id;
+    if(!identity){
+     if(!crypto?.subtle)throw Error('Connessione HTTPS richiesta per identificare il link Dropbox');
+     const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(file.link));
+     identity='chooser:'+Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    rows.push(F.record({provider:'dropbox',account:old?.account_label||'Dropbox Chooser',
+     externalKey:old?.external_key||identity,name:file.name,size:file.size,url:file.link,origin:'selezione-chooser'}));
+   }
+   previewScan(rows,'File selezionati nel Chooser ufficiale. Non è una ricerca dell’intero account e non crea progetti.');
+  }),
+  cancel(){info('Selezione Dropbox annullata. Nessun dato salvato.');},
+  linkType:'preview',multiselect:true,extensions:['audio']
+ });
+}
 async function local(files){
  if(!files.length)throw Error('Seleziona cartella o file');
  if(files.length>MAX)throw Error('Seleziona meno di '+MAX+' file');
@@ -227,7 +350,7 @@ async function local(files){
  if(label.length<2||label.length>180)throw Error('Indica un nome per il tuo archivio locale');
  if(!crypto?.subtle)throw Error('L’identità locale richiede HTTPS');
  info('Lettura dei soli metadati selezionati…');
- const data=[];
+ const data=[],localRefs=new Map();
  for(const f of files){
   if(!F.isAudio(f.name,f.type))continue;
   const relative=T(f.webkitRelativePath||f.name).replaceAll('\\','/');
@@ -236,10 +359,11 @@ async function local(files){
   const input=new TextEncoder().encode(relative+'|'+f.size+'|'+f.lastModified);
   const digest=await crypto.subtle.digest('SHA-256',input);
   const key=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
-  data.push(F.record({provider:'local',account:label,externalKey:key,name:f.name,path,mime:f.type,
-   size:f.size,modified:new Date(f.lastModified).toISOString(),origin:'selezione'}));
+  const record=F.record({provider:'local',account:label,externalKey:key,name:f.name,path,mime:f.type,
+   size:f.size,modified:new Date(f.lastModified).toISOString(),origin:'selezione'});
+  data.push(record);localRefs.set(W.KEY(record),f);
  }
- previewScan(data,'Le cartelle locali, anche OneDrive sincronizzate, devono essere selezionate da te. Non salviamo percorsi assoluti.');
+ previewScan(data,'Le cartelle locali, anche OneDrive sincronizzate, devono essere selezionate da te. Non salviamo percorsi assoluti.',localRefs);
 }
 async function savePreview(){
  const plan=C.plan(preview,owner);
@@ -345,6 +469,20 @@ function kindChanged(){
 }
 function boot(){
  $('finder-reload').addEventListener('click',refresh);
+ $('explorer-query').addEventListener('input',()=>{explorerShown=60;renderExplorer()});
+ $('explorer-source').addEventListener('change',()=>{explorerShown=60;syncExplorerAccounts();renderExplorer()});
+ $('explorer-account').addEventListener('change',()=>{explorerShown=60;renderExplorer()});
+ $('explorer-linked').addEventListener('change',()=>{explorerShown=60;renderExplorer()});
+ $('explorer-sort').addEventListener('change',()=>{explorerShown=60;renderExplorer()});
+ $('explorer-more').addEventListener('click',()=>{explorerShown+=60;renderExplorer()});
+ $('explorer-stop').addEventListener('click',closeExplorerPlayer);
+ $('explorer-items').addEventListener('click',e=>{
+  const detail=e.target.closest('[data-explorer-detail]'),listen=e.target.closest('[data-explorer-play]');
+  if(detail)return explorerDetail(detail.dataset.explorerDetail);
+  if(listen)run(()=>openLocalAudio(listen.dataset.explorerPlay));
+ });
+ window.addEventListener('pagehide',()=>{closeExplorerPlayer();transientFiles.clear()});
+
  $('finder-group-query').addEventListener('input',()=>{groupShown=24;renderGroups()});
  $('finder-group-source').addEventListener('change',()=>{groupShown=24;renderGroups()});
  $('finder-group-mode').addEventListener('change',()=>{groupShown=24;renderGroups()});
@@ -377,6 +515,7 @@ function boot(){
  $('finder-more').addEventListener('click',()=>{shown+=120;render()});
  $('finder-drive').addEventListener('click',()=>run(drive));
  $('finder-dropbox').addEventListener('click',()=>run(dropbox));
+ $('finder-dropbox-choose').addEventListener('click',()=>run(chooseDropbox));
  $('finder-folder').addEventListener('change',e=>run(()=>local(Array.from(e.target.files||[]))));
  $('finder-files').addEventListener('change',e=>run(()=>local(Array.from(e.target.files||[]))));
  $('finder-save').addEventListener('click',()=>run(savePreview));
@@ -386,9 +525,14 @@ function boot(){
   renderPreview();
  });
  $('finder-preview-more').addEventListener('click',()=>{previewShown+=60;renderPreview()});
+ $('finder-preview-query').addEventListener('input',()=>{previewShown=60;renderPreview()});
+ $('finder-preview-state').addEventListener('change',()=>{previewShown=60;renderPreview()});
+ $('finder-preview-list').addEventListener('click',e=>{
+  const b=e.target.closest('[data-preview-play]');if(b)run(()=>listenPreview(Number(b.dataset.previewPlay)));
+ });
  $('preview-mark-mine').addEventListener('click',()=>bulkPreview('mio'));
  $('preview-mark-reference').addEventListener('click',()=>bulkPreview('reference'));
- $('finder-cancel').addEventListener('click',()=>{preview=[];$('finder-preview').hidden=true;info('Anteprima scartata, nulla salvato.')});
+ $('finder-cancel').addEventListener('click',()=>{preview=[];$('finder-preview').hidden=true;closeExplorerPlayer();transientFiles.clear();renderExplorer();info('Anteprima scartata, nulla salvato.')});
  $('finder-list').addEventListener('click',e=>{const b=e.target.closest('[data-audio]');if(b){selected=b.dataset.audio;render()}});
  $('finder-detail').addEventListener('click',e=>{
   const b=e.target.closest('[data-suggest],[data-unlink],[data-new-project]');if(!b)return;
