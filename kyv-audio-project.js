@@ -49,6 +49,8 @@
   function fileNameFromItem(item){ return String(item?.fileName || item?.Nome_File || item?.name || item?.filename || rawNameFromItem(item) || '').trim(); }
   function sourceFromItem(item){ return String(item?.source || item?.driveLabel || item?.driveEmail || item?.Tipo_File || item?.type || '').trim(); }
   function sourceKind(item){
+    const verified=String(item?.provider||'').toLowerCase();
+    if(['local','drive','dropbox'].includes(verified)) return verified;
     const blob = `${sourceFromItem(item)} ${linkFromItem(item)} ${item?.webViewLink || ''} ${item?.webContentLink || ''}`.toLowerCase();
     if(blob.includes('dropbox')) return 'dropbox';
     if(blob.includes('drive.google') || blob.includes('google') || /\bdrive\b/.test(blob) || item?.driveEmail || item?.driveLabel || item?.webViewLink || item?.webContentLink) return 'drive';
@@ -88,8 +90,11 @@
     return 'Versione audio';
   }
   function isAudioItem(item){
-    const blob = [rawNameFromItem(item), fileNameFromItem(item), item?.type, item?.Tipo_File, item?.mimeType, linkFromItem(item)].join(' ');
-    return AUDIO_EXT_RE.test(blob) || /audio/i.test(blob) || /demo ascolto|master|mix|provino|topline/i.test(blob);
+    const pieces=[rawNameFromItem(item),fileNameFromItem(item),item?.type,item?.Tipo_File,item?.mimeType,linkFromItem(item)];
+    const blob=pieces.join(' ');
+    return pieces.some(v=>AUDIO_EXT_RE.test(String(v||'').trim()))||
+      /(?:^|\s)audio(?:\/(?:mpeg|wav|x-wav|flac|mp4|aiff?|ogg|aac|unknown))?/i.test(blob)||
+      /demo ascolto|master|mix|provino|topline/i.test(blob);
   }
 
   function projectLabel(p){
@@ -199,12 +204,12 @@
       const wrap=document.createElement('div');
       wrap.id='kyv-audio-project-modal';
       wrap.className='fixed inset-0 z-[9998] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4';
-      const options=(projects||[]).slice().sort((a,b)=>projectLabel(a).localeCompare(projectLabel(b),'it')).map(p=>`<option value="${esc(p.ID)}" ${suggestedProject&&String(suggestedProject.ID)===String(p.ID)?'selected':''}>${esc(projectLabel(p))} · #${esc(p.ID)}</option>`).join('');
+      const options=(projects||[]).slice().sort((a,b)=>projectLabel(a).localeCompare(projectLabel(b),'it')).map(p=>`<option value="${esc(p.ID)}">${esc(projectLabel(p))} · #${esc(p.ID)}</option>`).join('');
       const typeOptions=['Demo','Produzione','Voce','Mix','Master','Stems','Versione audio'].map(v=>`<option ${v===defaults.fileType?'selected':''}>${v}</option>`).join('');
       wrap.innerHTML=`<div class="w-full max-w-3xl max-h-[94vh] rounded-3xl border border-violet-500/25 bg-[#151923] shadow-2xl overflow-hidden flex flex-col">
         <div class="p-5 border-b border-[#232838] bg-violet-600/10 flex items-start justify-between gap-3"><div><p class="text-[10px] uppercase tracking-[0.18em] text-violet-200 font-black">File → progetto → amministrazione</p><h3 class="text-xl font-black text-white mt-1">Avvia o collega questo brano</h3><p class="text-xs text-slate-400 mt-1">Registra questa versione nel progetto giusto. La data sessione resta vuota finché non la confermi.</p></div><button type="button" data-close class="w-10 h-10 rounded-xl border border-[#232838] text-slate-300 hover:text-white">×</button></div>
         <form class="p-5 space-y-4 overflow-y-auto custom-scrollbar">
-          <div class="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4"><label class="block text-[10px] uppercase tracking-widest text-violet-200 font-black mb-1">Dove collegare il file</label><select name="projectId" class="w-full bg-[#0f111a] border border-[#343a4c] text-white px-4 py-3 rounded-xl outline-none focus:border-violet-400"><option value="">Crea un nuovo progetto</option>${options}</select><p class="text-[11px] text-slate-400 mt-2">Se il brano esiste già, selezionalo: verrà aggiunta una versione, non un duplicato.</p></div>
+          <div class="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4"><label class="block text-[10px] uppercase tracking-widest text-violet-200 font-black mb-1">Dove collegare il file</label><select name="projectId" class="w-full bg-[#0f111a] border border-[#343a4c] text-white px-4 py-3 rounded-xl outline-none focus:border-violet-400"><option value="" selected>Seleziona tu la destinazione…</option><option value="__new__">Crea un nuovo progetto (solo su tua conferma)</option>${options}</select><p class="text-[11px] text-slate-400 mt-2">Se il brano esiste già, selezionalo: verrà aggiunta una versione, non un duplicato.</p></div>
           <div data-new-fields class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-black mb-1">Titolo progetto</span><input name="title" required class="w-full bg-[#0f111a] border border-[#232838] text-white px-4 py-3 rounded-xl outline-none focus:border-violet-400" value="${esc(defaults.title)}"></label>
             <label><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-black mb-1">Artista</span><input name="artist" class="w-full bg-[#0f111a] border border-[#232838] text-white px-4 py-3 rounded-xl outline-none focus:border-violet-400" value="${esc(defaults.artist)}" placeholder="Artista, se noto"></label>
@@ -219,11 +224,17 @@
         </form></div>`;
       document.body.appendChild(wrap);
       const form=wrap.querySelector('form'); const select=form.elements.projectId;
-      const sync=()=>{const linking=!!select.value; wrap.querySelector('[data-new-fields]').classList.toggle('opacity-50',linking); form.elements.title.required=!linking; wrap.querySelector('[data-submit]').textContent=linking?'Collega versione':'Crea progetto e collega';};
+      const sync=()=>{
+         const linking=!!select.value&&select.value!=='__new__',creating=select.value==='__new__';
+         wrap.querySelector('[data-new-fields]').classList.toggle('opacity-50',!creating);
+         form.elements.title.required=creating;
+         wrap.querySelector('[data-submit]').disabled=!select.value;
+         wrap.querySelector('[data-submit]').textContent=linking?'Collega versione':creating?'Crea progetto e collega':'Scegli prima la destinazione';
+       };
       select.addEventListener('change',sync); sync();
       const done=value=>{wrap.remove();resolve(value)};
       wrap.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>done(null))); wrap.addEventListener('click',e=>{if(e.target===wrap)done(null)});
-      form.addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(form);done({projectId:String(fd.get('projectId')||'').trim(),title:String(fd.get('title')||'').trim(),artist:String(fd.get('artist')||'').trim(),management:String(fd.get('management')||'').trim(),label:String(fd.get('label')||'').trim(),sessionDate:String(fd.get('sessionDate')||'').trim(),fileType:String(fd.get('fileType')||'').trim(),version:String(fd.get('version')||'').trim(),link:String(fd.get('link')||'').trim(),note:String(fd.get('note')||'').trim()})});
+      form.addEventListener('submit',e=>{e.preventDefault();if(!select.value)return;const fd=new FormData(form);done({projectId:select.value==='__new__'?'':String(fd.get('projectId')||'').trim(),title:String(fd.get('title')||'').trim(),artist:String(fd.get('artist')||'').trim(),management:String(fd.get('management')||'').trim(),label:String(fd.get('label')||'').trim(),sessionDate:String(fd.get('sessionDate')||'').trim(),fileType:String(fd.get('fileType')||'').trim(),version:String(fd.get('version')||'').trim(),link:String(fd.get('link')||'').trim(),note:String(fd.get('note')||'').trim()})});
       setTimeout(()=> (suggestedProject?select:form.elements.title)?.focus(),30);
     });
   }
@@ -403,7 +414,9 @@
   }
 
   async function archiveVersion(db,item,project,values){
-    return sourceKind(item)==='dropbox' ? archiveDropbox(db,item,project,values) : archiveDrive(db,item,project,values);
+    const kind=sourceKind(item);
+    if(kind==='local')throw new Error('L’archiviazione locale richiede il salvataggio atomico v2.23; non viene creato un falso link Drive.');
+    return kind==='dropbox' ? archiveDropbox(db,item,project,values) : archiveDrive(db,item,project,values);
   }
 
   function isMissingV23Rpc(err){
@@ -561,6 +574,9 @@
       if(similar&&!confirm(`Il titolo sembra già presente in: ${projectLabel(similar)}. Vuoi creare comunque un nuovo progetto?`))project=similar;
     }
 
+    const actionLabel=project?'collegare questa versione al progetto #'+project.ID:
+      'creare un nuovo progetto per «'+values.title+'» e collegare questa versione';
+    if(!confirm('Confermi di voler '+actionLabel+'? Hai verificato che il file sia una tua produzione.'))return null;
     const saved=await saveTransactional(db,item,values,project?.ID||null);
     if(saved){
       const linked=attachImport(saved.project,saved,sourceKind(item),'atomic-v2.23');
