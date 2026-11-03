@@ -101,6 +101,8 @@ async function open(id=null,project=''){
   const old=invoice?splits(invoice.ID_FT):[];
   rows=old.length?old.map(a=>({projectId:t(a.id_progetto),amount:t(a.prezzo_unitario),fee:t(a.fee_riferimento),description:t(a.descrizione)})):
    [{...row(),projectId:invoice?t(invoice.ID_PROGETTO):prefill,amount:invoice&&invoice.ID_PROGETTO?t(amount(invoice)):''}];
+  // When opened from a project and linked to an existing invoice, add its own empty fee line.
+  if(invoice&&prefill&&!rows.some(r=>t(r.projectId)===prefill))rows.push({...row(),projectId:prefill});
   render();
  }catch(e){error(e.message);}
 }
