@@ -1,5 +1,5 @@
 // Regression: historical invoice line items are distinct project fees,
-// NOT repeated document totals. XML Aruba currently imports one aggregate row.
+// NOT repeated document totals. XML Aruba retains total fiscal and multi-line details separately from the unitary value.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const window={};
 const file=name=>fs.readFileSync(name,'utf8');
@@ -18,9 +18,9 @@ const eight=[2800,1600,1200,2500,960,3000,3000,1600].map((n,i)=>({...old,ID_FT:8
 assert.equal(eight.reduce((sum,row)=>sum+api.amount(row),0),16660,'Same invoice eight lines, sum item compensation');
 assert.notEqual(eight.reduce((sum,row)=>sum+api.amount(row),0),16662*8,'Never sum document total eight times');
 const xml={ID_FT:999,Numero_Originale:'FPR 14/26',Data:'2026-10-26',XML_SHA256:'a'.repeat(64),PrezzoUnitario:'1000.00',PrezzoTotale:'3500.00',ImportoTotaleDocumento:'3502.00',PAGATA:'NO'};
-assert.equal(api.amount(xml),3500,'One XML row contains multiple DettaglioLinee; use sum of line totals');
+assert.equal(api.amount(xml),1000,'XML must also use PrezzoUnitario, never PrezzoTotale or fiscal total');
 assert.equal(api.info(xml).source,'PrezzoUnitario');
-assert.equal(api.info({...xml,PrezzoTotale:null}).valid,false,'Do not silently bill only first XML item');
+assert.equal(api.info({...xml,PrezzoTotale:null}).valid,true,'PrezzoTotale does not govern managerial revenue');
 assert.equal(api.parse('1.068,41'),1068.41);
 assert.equal(api.parse('1,068.41'),1068.41);
 // verify the arithmetic engine and reversal ledger agree with canonical row amounts
@@ -30,7 +30,7 @@ let calc=eng.compute({invoices:eight,projects:[],payments:[],reversals:[],siaes:
 assert.equal(calc.totals.billed,16660);
 assert.equal(calc.rows.find(x=>x.period==='2025').billed,1666000);
 calc=eng.compute({invoices:[xml],projects:[],payments:[],reversals:[],siaes:[]},'annual');
-assert.equal(calc.totals.billed,3500);
+assert.equal(calc.totals.billed,1000);
 // Payment state per line: no duplicated document cash total.
 const reconciliationWindow={KYV_INVOICE_LINE:api,KYV:{parseNumber:api.parse,isPaid:v=>/^si$/i.test(v),formatEuro:v=>String(v)}};
 vm.runInNewContext(file('kyv-invoice-reconciliation-v236.js'),{window:reconciliationWindow,Date,Intl,Number,Math,Set,Map});
@@ -47,4 +47,4 @@ assert.ok(intelligent.includes('ID_PROGETTO,XML_SHA256'));
 assert.ok(intelligent.includes('voci fattura'));
 assert.ok(file('config.js').includes("invoiceLines.src='kyv-invoice-line-amount.js'"));
 assert.ok(file('sw.js').includes("'./kyv-invoice-line-amount.js'"));
-console.log('OK: project/line revenue, XML aggregate, historical no-duplication and payment safety');
+console.log('OK: project/line revenue, XML unitary amounts, historical no-duplication and payment safety');
