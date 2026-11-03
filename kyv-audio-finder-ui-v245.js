@@ -28,6 +28,7 @@ async function fetchAll(){
   all('KYV_AUDIO_DECISIONI','provider,account_label,external_key,decision','updated_at')
  ]);
  approvedKeys=new Set(decisions.filter(d=>d.decision==='mio').map(C.key));
+ if($('explorer-account'))syncExplorerAccounts();
 }
 const pn=p=>(p.ARTISTA?p.ARTISTA+' · ':'')+(p.TITOLO||'Senza titolo')+' #'+p.ID;
 const sn=p=>(p.titolo||'Sessione')+' · '+(p.data_sessione||'');
@@ -468,6 +469,20 @@ function kindChanged(){
 }
 function boot(){
  $('finder-reload').addEventListener('click',refresh);
+ $('explorer-query').addEventListener('input',()=>{explorerShown=60;renderExplorer()});
+ $('explorer-source').addEventListener('change',()=>{explorerShown=60;syncExplorerAccounts();renderExplorer()});
+ $('explorer-account').addEventListener('change',()=>{explorerShown=60;renderExplorer()});
+ $('explorer-linked').addEventListener('change',()=>{explorerShown=60;renderExplorer()});
+ $('explorer-sort').addEventListener('change',()=>{explorerShown=60;renderExplorer()});
+ $('explorer-more').addEventListener('click',()=>{explorerShown+=60;renderExplorer()});
+ $('explorer-stop').addEventListener('click',closeExplorerPlayer);
+ $('explorer-items').addEventListener('click',e=>{
+  const detail=e.target.closest('[data-explorer-detail]'),listen=e.target.closest('[data-explorer-play]');
+  if(detail)return explorerDetail(detail.dataset.explorerDetail);
+  if(listen)run(()=>openLocalAudio(listen.dataset.explorerPlay));
+ });
+ window.addEventListener('pagehide',()=>{closeExplorerPlayer();transientFiles.clear()});
+
  $('finder-group-query').addEventListener('input',()=>{groupShown=24;renderGroups()});
  $('finder-group-source').addEventListener('change',()=>{groupShown=24;renderGroups()});
  $('finder-group-mode').addEventListener('change',()=>{groupShown=24;renderGroups()});
@@ -500,6 +515,7 @@ function boot(){
  $('finder-more').addEventListener('click',()=>{shown+=120;render()});
  $('finder-drive').addEventListener('click',()=>run(drive));
  $('finder-dropbox').addEventListener('click',()=>run(dropbox));
+ $('finder-dropbox-choose').addEventListener('click',()=>run(chooseDropbox));
  $('finder-folder').addEventListener('change',e=>run(()=>local(Array.from(e.target.files||[]))));
  $('finder-files').addEventListener('change',e=>run(()=>local(Array.from(e.target.files||[]))));
  $('finder-save').addEventListener('click',()=>run(savePreview));
@@ -509,9 +525,14 @@ function boot(){
   renderPreview();
  });
  $('finder-preview-more').addEventListener('click',()=>{previewShown+=60;renderPreview()});
+ $('finder-preview-query').addEventListener('input',()=>{previewShown=60;renderPreview()});
+ $('finder-preview-state').addEventListener('change',()=>{previewShown=60;renderPreview()});
+ $('finder-preview-list').addEventListener('click',e=>{
+  const b=e.target.closest('[data-preview-play]');if(b)run(()=>listenPreview(Number(b.dataset.previewPlay)));
+ });
  $('preview-mark-mine').addEventListener('click',()=>bulkPreview('mio'));
  $('preview-mark-reference').addEventListener('click',()=>bulkPreview('reference'));
- $('finder-cancel').addEventListener('click',()=>{preview=[];$('finder-preview').hidden=true;info('Anteprima scartata, nulla salvato.')});
+ $('finder-cancel').addEventListener('click',()=>{preview=[];$('finder-preview').hidden=true;closeExplorerPlayer();transientFiles.clear();renderExplorer();info('Anteprima scartata, nulla salvato.')});
  $('finder-list').addEventListener('click',e=>{const b=e.target.closest('[data-audio]');if(b){selected=b.dataset.audio;render()}});
  $('finder-detail').addEventListener('click',e=>{
   const b=e.target.closest('[data-suggest],[data-unlink],[data-new-project]');if(!b)return;
