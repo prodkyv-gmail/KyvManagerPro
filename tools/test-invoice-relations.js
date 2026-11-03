@@ -15,8 +15,8 @@ assert.doesNotMatch(sheet,/fattureByNumero/,'Scheda must not load invoices by nu
 assert.ok(sheet.includes('data-invoice-id="${H(f.ID_FT)}"'),'Invoice rows must expose stable ID_FT');
 
 assert.ok(invoices.includes("select('ID,IDFT')"),'Producer invoice module must read IDFT only as legacy ID relation');
-assert.ok(invoices.includes('if(direct.length)return uniqueInvoices(direct);'),'Producer context must prefer direct invoices');
-assert.ok(invoices.includes('direct.length?direct:byInvoiceId.filter'),'Producer list must prefer direct invoices');
+assert.ok(invoices.includes('if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect]);'),'Producer context must prefer explicit allocations and valid legacy direct invoices');
+assert.ok(invoices.includes('if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct]);'),'Producer list must prefer explicit allocations and non-overridden direct relations');
 assert.ok(invoices.includes('legacy.filter(row=>!text(row.ID_PROGETTO)'),'Producer legacy cannot override another project ID');
 assert.ok(invoices.includes("text(row.ID_FT)===text(legacy.IDFT)"),'Project lists must use IDFT → ID_FT');
 assert.ok(invoices.includes("row.dataset.invoiceId"),'Invoice row opening must use ID_FT');
@@ -25,7 +25,7 @@ assert.doesNotMatch(invoices,/legacy\.FT/,'Project lists must not match legacy F
 
 assert.ok(finance.includes(".eq('ID_PROGETTO',pid)"),'Finance summary must use project ID relation');
 assert.ok(finance.includes(".eq('ID_FT',project.data.IDFT)"),'Finance summary must use legacy invoice ID relation');
-assert.ok(finance.includes('if((direct.data||[]).length)return unique(direct.data);'),'Finance summary must prefer direct invoices');
+assert.ok(finance.includes('if(explicit.length||legacyDirect.length)return unique([...explicit,...legacyDirect]);'),'Finance summary must prefer explicit allocations then valid direct invoices');
 assert.ok(finance.includes('legacy.data||[]).filter(row=>!text(row.ID_PROGETTO)'),'Finance fallback must reject cross-project links');
 assert.doesNotMatch(finance,/eq\('Numero',project\.data\.FT\)/,'Finance summary must not query invoice number');
 
@@ -52,10 +52,10 @@ const editor=fs.readFileSync('kyv-record-editor.js','utf8');
 assert.match(finance,/function currentProject\(pid\)/,'The completion prompt must refer to the currently selected project');
 assert.match(finance,/data-kyv-finance-new>Crea fattura collegata/,'Completed projects should offer a contextual invoice action');
 assert.match(finance,/const register=pending\?'':'/,'The reminder must not duplicate the create action');
-assert.match(finance,/Collega fattura esistente \(manuale\)/,'Manual invoice linking must remain available');
-assert.match(finance,/fatture\.html\?collegaProgetto=/,'Manual linking must preserve the project context');
+assert.match(finance,/Aggiungi quota a fattura esistente \/ Duplica riga/,'Invoice allocations must be accessible from project finance summary');
+assert.match(finance,/fatture\.html\?ripartizione_progetto=/,'Invoice split editor must preserve project context');
 assert.match(manualPage,/function renderManualInvoiceHelp/,'Invoice register must guide manual assignment');
-assert.match(manualPage,/campo <strong>ID_PROGETTO<\/strong>/,'Manual flow must identify the stable ID field');
+assert.match(manualPage,/Ripartisci \/ Duplica riga/,'Invoice register must offer multi-project split entry');
 assert.match(manualPage,/data-kyv-new-table="FATTURE"/,'The manual creation button must be retained');
 assert.match(editor,/fieldsRoot\.querySelectorAll\('\.dyn-record-input'\)/,'The saved invoice must include the contextually preselected relation');
 assert.match(invoices,/if\(!setField\('ID_PROGETTO',projectId\)\)throw/,'Contextual creation must fail closed when ID cannot be set');
@@ -74,4 +74,6 @@ assert.equal(awaitingInvoice(null,[]),false,'Unloaded project cannot trigger a r
 assert.doesNotMatch(finance,/\.from\(['"](?:FATTURE|PROGETTI)['"]\)\s*\.(?:insert|update|upsert|delete)\(/,'Completion prompts must remain read-only');
 assert.equal((finance.match(/new MutationObserver/g)||[]).length,1,'Do not add another MutationObserver');
 
-console.log('OK: invoice/project relations use stable IDs only; Numero is display-only.');
+assert.ok(invoices.includes(".from('FATTURE_RIPARTIZIONI')"),'Project invoice links read explicit allocations');
+assert.ok(finance.includes(".from('FATTURE_RIPARTIZIONI')"),'Finance summary reads explicit allocations');
+console.log('OK: project invoice relations use explicit allocations and stable IDs only; Numero is display-only.');
