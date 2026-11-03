@@ -1,3 +1,6 @@
+### v2.51 — Esploratore cloud e locale con separazione degli stati
+Mostrare nell'esploratore unificato **solo** file approvati `mio`; mantenere la scoperta da Drive/Dropbox/locale nella coda non approvata. Dropbox Chooser è solo un selettore di file, non crawling dell'intero account. Riproduzione locale solo per file scelti dall'utente e con URL temporanei revocati. Non archiviare Blob, non creare progetti per scansione o anteprima. Ricerca/approvazione massiva solo nella selezione visibile filtrata. Confermare accesso cloud, possibile dipendenza da popup/CORS e limiti. Aggiornare simultaneamente guida, test, cache e versioni.
+
 ### v2.50 — Viste rapide e grafici autonomi
 Progetti non deve duplicare la Scheda Progetto: popup in sola lettura, senza query secondarie o scritture. La ricerca deve coprire tutte le schede e fallire esplicitamente in caso di recupero incompleto. I grafici devono usare dati attestati, mostrare i valori mancanti e conservare filtri autonomi. Fatturato dalla Home sempre su PrezzoUnitario; non usare `PAGATA` per presentare incassi bancari verificati o attribuire fee agli artisti.
 
