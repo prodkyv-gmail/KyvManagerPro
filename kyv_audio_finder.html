@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
@@ -48,6 +48,28 @@
 .finder-intake-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:10px 0}
 .finder-intake-actions button{font-size:12px}
 @media(max-width:650px){.finder-intake-row{grid-template-columns:1fr}}
+.explorer{border:1px solid #475569;border-radius:16px;background:linear-gradient(135deg,#192238,#101725);padding:18px;margin:18px 0}
+.explorer h2{font-weight:900;font-size:20px;color:white;margin:0 0 5px}
+.explorer-desc{font-size:12px;color:#cbd5e1;line-height:1.65}
+.explorer-filters{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.explorer-filters input,.explorer-filters select{background:#0c1422;border:1px solid #64748b;color:#f8fafc;border-radius:9px;padding:10px;max-width:100%;min-height:42px}
+.explorer-filters input{flex:2 1 240px}.explorer-filters select{flex:1 1 140px}
+.explorer-items{display:grid;gap:8px;margin:14px 0}
+.explorer-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid #354058;border-radius:10px;padding:12px;background:rgba(8,15,29,.56)}
+.explorer-item strong{display:block;color:#f8fafc;overflow-wrap:anywhere;font-size:13px}
+.explorer-item small{display:block;margin-top:5px;font-size:11px;color:#cbd5e1;overflow-wrap:anywhere}
+.explorer-item-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.explorer-item-actions button,.explorer-item-actions a,.explorer-small-btn{border:1px solid #66778f;border-radius:9px;padding:8px 10px;color:#e0e7ff;background:#1e293b;font-weight:800;font-size:12px}
+.explorer-status{font-size:12px;color:#a5b4fc;margin:9px 0}
+.explorer-player{border:1px solid #4f6180;border-radius:12px;padding:12px;background:#111827;margin:12px 0}
+.explorer-player[hidden]{display:none!important}.explorer-player audio{width:100%;margin-top:7px}
+.explorer-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.explorer-tools a{color:#bae6fd;text-decoration:underline}
+.finder-secondary-details{border:1px solid #38455f;border-radius:14px;padding:12px;margin:14px 0}
+.finder-secondary-details>summary{font-size:15px;font-weight:850;cursor:pointer;min-height:30px}
+.finder-secondary-details[open]>summary{margin-bottom:12px}
+@media(max-width:650px){.explorer-item{grid-template-columns:1fr}.explorer-item-actions{justify-content:flex-start}}
+
 .finder-group-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:12px 0}
 .finder-group-tile{display:block;text-align:left;min-width:0;width:100%;background:#1e293b!important}
 .finder-group-tile strong,.finder-group-tile small{display:block}.finder-group-tile small{color:#cbd5e1;margin-top:5px}
@@ -73,9 +95,28 @@
 <div class="overflow-y-auto flex-1">
 <div class="finder-main">
 <p>Scansiona solo quando vuoi i file audio nelle sorgenti autorizzate, poi salva i metadati nel catalogo. <strong>Non vengono caricati gli audio su Supabase</strong> e nessun progetto viene collegato automaticamente per somiglianza del nome.</p>
+<section class="explorer" aria-label="Esploratore unico dei miei brani" id="finder-explorer">
+<div class="explorer-tools"><div><h2>Esplora i miei brani · v2.51</h2><p class="explorer-desc">Cerca insieme i soli file già approvati come tuoi tra Mac, PC, smartphone, Drive e archivio Dropbox.</p></div><a href="#finder-sources">Aggiungi da una sorgente</a></div>
+<div class="explorer-filters">
+<input id="explorer-query" type="search" aria-label="Cerca su tutte le sorgenti" placeholder="Titolo, nome file, cartella, account…">
+<select id="explorer-source" aria-label="Fonte"><option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+<select id="explorer-account" aria-label="Archivio/account"><option value="">Tutti gli archivi</option></select>
+<select id="explorer-linked" aria-label="Collegamenti"><option value="all">Tutti i miei file</option><option value="linked">Collegati</option><option value="unlinked">Da collegare</option></select>
+<select id="explorer-sort" aria-label="Ordina"><option value="name">Nome A–Z</option><option value="recent">Modifica recente</option><option value="size">Dimensione</option></select>
+</div>
+<p class="explorer-status" role="status" id="explorer-status">Lettura del catalogo personale…</p>
+<div class="explorer-player" id="explorer-player-wrap" hidden>
+<div class="explorer-tools"><strong id="explorer-player-title">Anteprima audio locale</strong><button type="button" class="explorer-small-btn" id="explorer-stop">Chiudi anteprima</button></div>
+<audio id="explorer-player" controls preload="none"></audio>
+<p class="explorer-desc">Riproduzione temporanea dal file scelto su questo dispositivo, senza caricamento sul server. La pagina può perdere accesso quando viene chiusa.</p>
+</div>
+<div class="explorer-items" id="explorer-items"></div>
+<button id="explorer-more" type="button" class="explorer-small-btn" hidden>Mostra altri file</button>
+<p class="explorer-desc">Le reference e i file «da verificare» non appaiono qui. Per ascoltare un audio locale, selezionalo nuovamente dalle sorgenti: la pagina non può aprire autonomamente i file del tuo disco. I link cloud possono richiedere accesso al provider.</p>
+</section>
 <button data-finder-action id="finder-reload" type="button">Rileggi indice</button>
 <div id="finder-status" class="finder-status" role="status">Preparazione…</div>
-<section class="finder-sources" aria-label="Sorgenti">
+<section class="finder-sources" id="finder-sources" aria-label="Sorgenti">
 <div class="finder-card"><h2>Google Drive</h2>
 <label for="drive-account">Account</label><select id="drive-account"><option value="all">Tutti i Drive</option></select>
 <button type="button" data-finder-action id="finder-drive" style="margin-top:10px">Cerca audio su Drive</button>
@@ -83,7 +124,8 @@
 </div>
 <div class="finder-card"><h2>Dropbox</h2>
 <button type="button" data-finder-action id="finder-dropbox">Leggi archivio audio Dropbox</button>
-<small>Indicizza i file già registrati in KYV. L'esplorazione diretta di tutto il Dropbox richiede un connettore aggiuntivo.</small>
+<button type="button" id="finder-dropbox-choose" data-finder-action style="margin-top:8px">Scegli audio direttamente da Dropbox</button>
+<small>Indicizza i file già registrati in KYV. Il pulsante Scegli usa il Dropbox Chooser ufficiale: apre una finestra di scelta di file, non un crawler di tutto l'account.</small>
 <a href="kyv_dropbox.html">Apri Archivio Dropbox</a>
 </div>
 <div class="finder-card"><h2>Cartella Mac / PC</h2>
@@ -100,7 +142,9 @@
 </div>
 </section>
 <section id="finder-preview" class="finder-preview" hidden>
-<h2>Seleziona solo i tuoi brani — nessun progetto automatico</h2><p id="finder-preview-note"></p>
+<h2>Verifica i file trovati — nessun progetto automatico</h2><p id="finder-preview-note"></p>
+<div class="explorer-filters"><input id="finder-preview-query" type="search" placeholder="Filtra i risultati prima di classificare" aria-label="Cerca nella selezione temporanea">
+<select id="finder-preview-state" aria-label="Filtra classificazione"><option value="all">Tutte le classificazioni</option><option value="mio">Miei selezionati</option><option value="reference">Reference</option><option value="da_verificare">Da verificare</option></select></div>
 <p class="finder-note">Per ciascun file scegli se è un tuo lavoro, una reference/brano di altri oppure da verificare. Solo gli audio marcati esplicitamente come tuoi entreranno nel catalogo. Non presumo che un file sia tuo dal nome o dalla cartella.</p>
 <div class="finder-intake-actions"><button type="button" id="preview-mark-mine" data-finder-action>Segna come miei i primi 100 visibili</button><button type="button" id="preview-mark-reference" data-finder-action>Escludi i primi 100 visibili</button></div>
 <p id="finder-preview-count" class="finder-note" role="status"></p>
