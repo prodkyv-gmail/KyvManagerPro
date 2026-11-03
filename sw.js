@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-47-invoice-split-20261103';
+const CACHE_NAME = 'kyv-studio-v2-48-personal-audio-20261103';
 const APP_SHELL = [
     './',
     './index.html',
@@ -20,6 +20,8 @@ const APP_SHELL = [
     './kyv_audio_finder.html',
     './kyv-audio-finder-v245.js',
     './kyv-audio-review-v246.js',
+    './kyv-audio-consent-v248.js',
+    './kyv-audio-project.js',
     './kyv-audio-finder-ui-v245.js',
     './kyv-audio-finder-linked-v245.js',
     './kyv-drive-bridge.js',

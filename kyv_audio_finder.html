@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
@@ -42,6 +42,12 @@
 .review-row small{grid-column:1/-1;color:#cbd5e1}.review-row select{background:#0f172a;color:#f8fafc;border:1px solid #64748b;border-radius:8px;padding:10px;min-width:0;width:100%}
 .review-row label{display:flex;align-items:center;gap:8px}.review-row input{width:19px;height:19px;flex:none}
 @media(max-width:800px){.review-row{grid-template-columns:1fr}}
+.finder-intake-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,220px);align-items:center;gap:10px;padding:10px;margin:6px 0;background:#151923;border:1px solid #475569;border-radius:9px}
+.finder-intake-row strong{display:block;overflow-wrap:anywhere}.finder-intake-row small{color:#cbd5e1}
+.finder-intake-row select{width:100%;background:#0f172a;border:1px solid #64748b;padding:9px;color:#fff;border-radius:8px}
+.finder-intake-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.finder-intake-actions button{font-size:12px}
+@media(max-width:650px){.finder-intake-row{grid-template-columns:1fr}}
 </style></head>
 <body class="flex h-screen overflow-hidden">
 <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
@@ -67,12 +73,12 @@
 <a href="kyv_dropbox.html">Apri Archivio Dropbox</a>
 </div>
 <div class="finder-card"><h2>Cartella Mac / PC</h2>
-<label for="local-label">Nome identificativo dell'archivio</label><input id="local-label" maxlength="180" value="Mac personale">
+<label for="local-label">Nome identificativo dell'archivio</label><input id="local-label" maxlength="180" value="Dispositivo personale">
 <label for="finder-folder" style="display:block;margin-top:10px">Seleziona una cartella (browser compatibile)</label>
 <input id="finder-folder" class="finder-input-file" type="file" accept=".wav,.mp3,.aiff,.aif,.flac,.m4a,.aac,.ogg,.opus" webkitdirectory multiple>
-<label for="finder-files" style="display:block;margin-top:10px">Oppure seleziona file audio singoli</label>
-<input id="finder-files" class="finder-input-file" type="file" accept="audio/*,.wav,.aiff,.aif,.flac" multiple>
-<small>Funziona anche per una cartella OneDrive sincronizzata sul Mac. Il browser non accede al resto del disco.</small>
+<label for="finder-files" style="display:block;margin-top:10px">Oppure scegli audio su PC, Android o tramite File su iPhone</label>
+<input id="finder-files" class="finder-input-file" type="file" accept="audio/*,.wav,.mp3,.m4a,.aiff,.aif,.flac,.aac,.ogg,.opus" multiple>
+<small>L’app legge solo cartelle o file che selezioni. Su iPhone usa il selettore File: non è un crawler permanente. Funziona anche su cartelle OneDrive sincronizzate.</small>
 </div>
 <div class="finder-card"><h2>OneDrive online</h2>
 <p>Collegamento diretto Microsoft non ancora attivo. Puoi già indicizzare file dalla cartella OneDrive sincronizzata e autorizzata sul computer.</p>
@@ -80,9 +86,12 @@
 </div>
 </section>
 <section id="finder-preview" class="finder-preview" hidden>
-<h2>Anteprima scansione — solo metadati</h2><p id="finder-preview-note"></p>
-<p class="finder-note" id="finder-preview-list"></p>
-<button id="finder-save" data-finder-action type="button">Salva metadati nell'indice</button>
+<h2>Seleziona solo i tuoi brani — nessun progetto automatico</h2><p id="finder-preview-note"></p>
+<p class="finder-note">Per ciascun file scegli se è un tuo lavoro, una reference/brano di altri oppure da verificare. Solo gli audio marcati esplicitamente come tuoi entreranno nel catalogo. Non presumo che un file sia tuo dal nome o dalla cartella.</p>
+<div class="finder-intake-actions"><button type="button" id="preview-mark-mine" data-finder-action>Segna come miei i primi 100 visibili</button><button type="button" id="preview-mark-reference" data-finder-action>Escludi i primi 100 visibili</button></div>
+<p id="finder-preview-count" class="finder-note" role="status"></p>
+<div id="finder-preview-list"></div><button id="finder-preview-more" type="button" hidden>Mostra altri</button>
+<div class="finder-intake-actions"><button id="finder-save" data-finder-action type="button">Salva soltanto le scelte confermate</button></div>
 <button id="finder-cancel" type="button">Scarta anteprima</button>
 </section>
 <section class="finder-card" style="margin:18px 0" aria-label="Coda di revisione audio">
@@ -112,7 +121,7 @@
 <button type="submit" data-finder-action>Conferma collegamento</button></form>
 <p class="finder-note">Il collegamento è reversibile: «Scollega» conserva il file nell'indice.</p>
 </section></section></div>
-<p class="finder-note">I file locali rimangono sul dispositivo. Non è un crawler invisibile: per aggiornare il catalogo dovrai avviare un'altra scansione. I suggerimenti di progetto non modificano i dati senza la tua conferma.</p>
+<p class="finder-note">La scansione è avviata solo da te e usa solo file e cartelle autorizzati. Le reference non diventano progetti. Puoi creare un progetto soltanto dopo aver selezionato un file personale e confermato la scelta.</p>
 </div></div></main>
 <script>loadKyvSidebar('audiofinder');document.getElementById('finder-version').textContent='v'+(window.KYV_CONFIG?.APP_VERSION||'');if(window.lucide)lucide.createIcons();</script>
 </body></html>

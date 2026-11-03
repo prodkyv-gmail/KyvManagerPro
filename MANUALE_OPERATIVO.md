@@ -1,3 +1,15 @@
+## v2.48 — Audio personali, PC/Mac e smartphone (3 novembre 2026)
+
+KYV Audio Finder non presume più che qualsiasi audio letto da una cartella autorizzata sia un tuo brano. Dopo aver scelto una cartella su PC/Mac o file da PC, Android o dall'app File su iPhone, compare la coda **Mio / Reference / Da verificare**. Ogni file è inizialmente da verificare; soltanto i file marcati **esplicitamente** "È un mio lavoro" vengono indicizzati e potranno essere collegati a progetti. Le reference vengono ricordate soltanto per identità sorgente (non sono archiviate le loro tracce audio, nomi, URL o percorsi), così la scansione successiva le riconosce come escluse. I file in attesa non entrano nel catalogo.
+
+La classificazione può avvenire file per file o per i primi 100 file visibili, previa conferma. Premendo **Salva soltanto le scelte confermate** si registrano le decisioni e si indicizzano soltanto i file approvati, senza trasferire audio binari né creare progetti. Il comando **Apri proposta progetto / versione** compare soltanto dopo che un file personale è stato approvato e selezionato nel catalogo: apre un ulteriore popup per scegliere progetto esistente o crearne uno nuovo. Nessun progetto si crea dalla scansione, dal nome o automaticamente.
+
+Le cartelle di smartphone non vengono scandite in background: iOS utilizza il file picker, Android supporta la scelta esplicita di file e in alcuni browser di cartelle; il browser non accede a cartelle non selezionate. La connessione OneDrive online, lo scanner persistente e un vero browser Dropbox/Drive cloud sono ancora **future fasi**, non sono dichiarati attivi.
+
+In **Progetti**, la ricerca ora opera sull'intero archivio caricato anche con la scheda Recenti: il limite delle 40 righe si applica soltanto quando non si sta cercando.
+
+Il database additivo `KYV_AUDIO_DECISIONI` conserva owner, provider, account_label, external_key e decisione, protetto da RLS. Non modifica le 175 schede, le fatture, i progetti storici o le cartelle dei dispositivi.
+
 ## v2.47 — Duplica riga, più progetti su una fattura (3 novembre 2026)
 
 Apri **Fatture emesse**. Per creare una nuova fattura che comprende più brani usa **Nuova multi-progetto**: compila numero originale, data, cliente, PrezzoUnitario gestionale e, se necessario, totale fiscale separato. Nella prima riga scegli progetto e quota unitario; premi **Duplica riga** per creare una seconda quota: descrizione copiata, progetto e importo lasciati vuoti per evitare doppio conteggio. **Riporta fee** legge la FEE del progetto come proposta modificabile. Puoi aggiungere più righe allo stesso progetto per fee/tranche differenti.

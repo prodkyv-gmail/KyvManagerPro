@@ -1,0 +1,62 @@
+// v2.48: audio on every device is NOT assumed to be the user's creative work.
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const read=p=>fs.readFileSync(p,'utf8');
+const root={},ctx={window:root,Date,Number,Object,Error,Set,Map};
+vm.runInNewContext(read('kyv-audio-consent-v248.js'),ctx);
+const C=root.KYV_AUDIO_CONSENT_V248;
+const audio=[
+ {provider:'local',account_label:'Dispositivo personale',external_key:'file-1',nome_file:'Musica commerciale.mp3'},
+ {provider:'local',account_label:'Dispositivo personale',external_key:'file-2',nome_file:'MIO_BRANO_DEMO_v2.wav'},
+ {provider:'drive',account_label:'A',external_key:'file-3',nome_file:'reference.ogg'}
+];
+let rows=C.preview(audio,[]);
+assert.equal(rows.length,3);
+assert.equal(rows.every(x=>x.decision==='da_verificare'&&!x._explicit),true);
+assert.throws(()=>C.plan(rows,'owner'),/Classifica/,'Never index merely because a scan ran');
+rows=C.mark(rows,0,'reference');
+rows=C.mark(rows,1,'mio');
+let plan=C.plan(rows,'owner');
+assert.equal(plan.approved.length,1,'Only explicitly approved personal audio is indexed');
+assert.equal(plan.approved[0].nome_file,'MIO_BRANO_DEMO_v2.wav');
+assert.equal(plan.excluded,1);
+assert.equal(plan.pending,0);
+assert.equal(plan.changes.length,2);
+assert.equal(plan.changes.some(x=>x.nome_file),false,'Reference decisions must not retain file names');
+assert.equal(plan.changes.some(x=>x.percorso_relativo),false,'Exclusions must not retain relative or absolute paths');
+assert.equal(plan.changes.every(x=>x.owner_id==='owner'),true);
+assert.throws(()=>C.plan(rows,''),/autenticata/);
+const known=[{provider:'local',account_label:'Dispositivo personale',external_key:'file-1',decision:'reference'}];
+const scan=C.preview(audio,known);
+assert.equal(scan[0].decision,'reference','Remember a past exclusion');
+assert.equal(scan[0]._explicit,false,'Past decisions must not imply fresh authorization to index files');
+assert.equal(C.isAllowed(audio[0],known),false);
+assert.equal(C.isAllowed(audio[1],known),false);
+assert.equal(C.isAllowed(audio[0],[{...known[0],decision:'mio'}]),true);
+assert.equal(C.preview([...audio,audio[0]],known).length,3,'Source identity dedup');
+assert.throws(()=>C.mark(rows,0,'indovinato'),/non valida/);
+assert.throws(()=>C.mark(rows,100,'mio'),/non disponibile/);
+assert.throws(()=>C.markMany(rows,Array.from({length:201},(_,i)=>i),'mio'),/troppo ampia/);
+assert.equal(C.markMany(scan,[1,2],'mio').filter(x=>x._explicit).length,2);
+const ui=read('kyv-audio-finder-ui-v245.js'),page=read('kyv_audio_finder.html'),sql=read('docs/v248-audio-decisions.sql');
+assert.ok(ui.includes('C.preview(rows,decisions)'));
+assert.ok(ui.includes('C.plan(preview,owner)'));
+assert.ok(ui.includes("db.from('KYV_AUDIO_DECISIONI').upsert("));
+assert.ok(ui.includes("db.from('KYV_AUDIO_INDICE').upsert("));
+assert.ok(ui.includes('const personalCatalogue=()=>catalogue.filter(f=>C.isAllowed(f,decisions))'));
+assert.ok(ui.includes('personalCatalogue().find(x=>x.id===selected)'));
+assert.ok(ui.includes('KYV_AUDIO_PROJECT.createFromItem('));
+assert.ok(!ui.includes("KYV_AUDIO_PROJECT.createFromItem({\n    fileName:f.nome_file")||ui.includes('if(b.dataset.newProject)run('));
+assert.ok(!ui.includes('createProjectFromScan'),'Scan must not create projects');
+assert.ok(page.includes('id="finder-files"')&&page.includes('id="finder-folder"'));
+assert.ok(page.includes('id="finder-preview-list"')&&page.includes('id="preview-mark-reference"'));
+assert.ok(page.includes('src="kyv-audio-consent-v248.js"'));
+assert.ok(sql.includes('enable row level security')&&sql.includes('auth.uid()'));
+assert.ok(sql.includes('decision in (\'mio\',\'reference\',\'da_verificare\')'));
+assert.ok(!sql.includes('alter table public."PROGETTI"')&&!sql.includes('drop table'));
+assert.ok(read('progetti.html').includes("state.filter==='RECENTI'&&!text(search.value)"));
+assert.ok(read('sw.js').includes("'./kyv-audio-consent-v248.js'"));
+assert.equal(JSON.parse(read('package.json')).version,'2.48.0');
+assert.equal(read('VERSION').trim(),'2.48');
+assert.ok(read('kyv-help.js').includes('v2.48'));
+assert.ok(read('guida.html').includes('v2.48'));
+console.log('OK: approved-only personal audio, persistent reference exclusions, explicit project creation and mobile picker');
