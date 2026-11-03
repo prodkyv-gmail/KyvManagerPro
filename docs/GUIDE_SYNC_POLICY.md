@@ -1,3 +1,6 @@
+### v2.50 — Viste rapide e grafici autonomi
+Progetti non deve duplicare la Scheda Progetto: popup in sola lettura, senza query secondarie o scritture. La ricerca deve coprire tutte le schede e fallire esplicitamente in caso di recupero incompleto. I grafici devono usare dati attestati, mostrare i valori mancanti e conservare filtri autonomi. Fatturato dalla Home sempre su PrezzoUnitario; non usare `PAGATA` per presentare incassi bancari verificati o attribuire fee agli artisti.
+
 ### v2.49 — Gruppi di versioni non confermati
 Per ogni raggruppamento esporre chiaramente che l'accostamento avviene da nomi dei file e non dal contenuto audio. Non preimpostare destinazioni di progetto, non creare progetti e non scrivere associazioni senza scelta e conferma esplicite. Gli hash reali possono segnalare duplicati, ma non sostituiscono verifica del brano. Aggiornare insieme Audio Finder, PWA, guide e test.
 
