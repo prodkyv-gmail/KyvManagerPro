@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-incremental-v252.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
@@ -44,6 +44,10 @@
 @media(max-width:800px){.review-row{grid-template-columns:1fr}}
 .finder-intake-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,220px);align-items:center;gap:10px;padding:10px;margin:6px 0;background:#151923;border:1px solid #475569;border-radius:9px}
 .finder-intake-row strong{display:block;overflow-wrap:anywhere}.finder-intake-row small{color:#cbd5e1}
+.finder-intake-row em{display:inline-block;font-size:11px;font-weight:700;font-style:normal;border:1px solid #64748b;border-radius:20px;padding:3px 9px;margin-top:5px;color:#cbd5e1}
+.finder-sync-meta{display:block;font-size:11px;color:#93c5fd;margin-top:4px}
+.finder-sync-note{padding:12px;border:1px solid #475569;border-radius:10px;margin:10px 0;font-size:12px;color:#cbd5e1;background:#0b1222}
+.finder-action-update{margin-top:7px;border:1px solid #818cf8;border-radius:8px;padding:7px 10px;background:#263050;color:#e0e7ff;font-size:12px;font-weight:800}
 .finder-intake-row select{width:100%;background:#0f172a;border:1px solid #64748b;padding:9px;color:#fff;border-radius:8px}
 .finder-intake-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:10px 0}
 .finder-intake-actions button{font-size:12px}
@@ -142,14 +146,17 @@
 </div>
 </section>
 <section id="finder-preview" class="finder-preview" hidden>
-<h2>Verifica i file trovati — nessun progetto automatico</h2><p id="finder-preview-note"></p>
+<h2>Sincronizzazione incrementale · v2.52</h2><p id="finder-preview-note"></p>
+<p id="finder-sync-summary" class="finder-sync-note" role="status"></p>
+<p class="finder-note">I file già esaminati vengono riconosciuti tramite identità sorgente. I metadati diversi sono proposti per aggiornamento; quelli senza informazioni sufficienti restano «revisione non verificabile». Nessun aggiornamento, eliminazione o collegamento è automatico.</p>
 <div class="explorer-filters"><input id="finder-preview-query" type="search" placeholder="Filtra i risultati prima di classificare" aria-label="Cerca nella selezione temporanea">
-<select id="finder-preview-state" aria-label="Filtra classificazione"><option value="all">Tutte le classificazioni</option><option value="mio">Miei selezionati</option><option value="reference">Reference</option><option value="da_verificare">Da verificare</option></select></div>
+<select id="finder-preview-state" aria-label="Filtra classificazione"><option value="all">Tutte le classificazioni</option><option value="mio">Miei selezionati</option><option value="reference">Reference</option><option value="da_verificare">Da verificare</option></select>
+<select id="finder-sync-state" aria-label="Stato scansione incrementale"><option value="attention">Nuovi e da verificare</option><option value="new">Nuovi</option><option value="changed">Metadati modificati</option><option value="unverified">Revisione non verificabile</option><option value="pending">Classificazione sospesa</option><option value="unchanged">Già indicizzati, invariati nei metadati</option><option value="excluded">Reference già escluse</option><option value="all">Tutti i risultati</option></select></div>
 <p class="finder-note">Per ciascun file scegli se è un tuo lavoro, una reference/brano di altri oppure da verificare. Solo gli audio marcati esplicitamente come tuoi entreranno nel catalogo. Non presumo che un file sia tuo dal nome o dalla cartella.</p>
 <div class="finder-intake-actions"><button type="button" id="preview-mark-mine" data-finder-action>Segna come miei i primi 100 visibili</button><button type="button" id="preview-mark-reference" data-finder-action>Escludi i primi 100 visibili</button></div>
 <p id="finder-preview-count" class="finder-note" role="status"></p>
 <div id="finder-preview-list"></div><button id="finder-preview-more" type="button" hidden>Mostra altri</button>
-<div class="finder-intake-actions"><button id="finder-save" data-finder-action type="button">Salva soltanto le scelte confermate</button></div>
+<div class="finder-intake-actions"><button id="finder-save" data-finder-action type="button">Salva le classificazioni e gli aggiornamenti confermati</button></div>
 <button id="finder-cancel" type="button">Scarta anteprima</button>
 </section>
 <section class="finder-card" style="margin:18px 0" aria-label="Coda di revisione audio">
