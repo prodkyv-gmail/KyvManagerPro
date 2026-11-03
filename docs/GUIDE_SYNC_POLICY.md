@@ -1,3 +1,6 @@
+### Regola v2.48 — audio non necessariamente dell'utente
+Ogni nuovo file da PC/smartphone/Drive/Dropbox entra nel catalogo KYV soltanto dopo approvazione esplicita come lavoro proprio. Le reference restano escluse, senza dati personali o audio copiati. La creazione del progetto richiede un secondo clic e il popup di conferma; mai auto-creare dalla scansione. Preservare la scelta nei test, nella guida contestuale e nel manuale. La scansione mobile è solo su file/cartelle selezionate e non è persistente.
+
 # KYVManagerPro — Regola di aggiornamento della guida
 
 ## Regola operativa permanente
