@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id),t=v=>String(v??'').trim();
 const H=v=>t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const parse=v=>root.KYV_INVOICE_LINE?.parse(v)??(Number(t(v).replace(',','.'))||null);
 const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n||0);
-let client=null,onSaved=null,projects=[],invoices=[],allocations=[],invoice=null,rows=[],prefill='',busy=false,token=0;
+let client=null,onSaved=null,projects=[],invoices=[],allocations=[],invoice=null,rows=[],prefill='',draft={},busy=false,token=0;
 const row=()=>({projectId:'',amount:'',fee:'',description:''});
 const money=v=>Math.round((parse(v)||0)*100)/100;
 const amount=f=>money(f?.PrezzoUnitario);
@@ -42,10 +42,10 @@ function panel(){
   if(act==='fee'){const p=projects.find(x=>t(x.ID)===t(rows[i]?.projectId));const fee=parse(p?.FEE);if(fee===null||fee<0)return error('Fee del progetto non disponibile');rows[i].fee=String(fee);rows[i].amount=String(fee);render();}
   if(act==='save')save();
  });
- el.addEventListener('input',ev=>{const key=ev.target.dataset.field,i=Number(ev.target.dataset.i);if(key&&rows[i])rows[i][key]=ev.target.value;totals();});
+ el.addEventListener('input',ev=>{const key=ev.target.dataset.field,i=Number(ev.target.dataset.i);if(key&&rows[i])rows[i][key]=ev.target.value;if(ev.target.id?.startsWith('split-')&&ev.target.tagName==='INPUT')draft[ev.target.id.slice(6)]=ev.target.value;totals();});
  el.addEventListener('change',ev=>{
   if(ev.target.id==='split-existing'){open(ev.target.value||null,prefill);return;}
-  const key=ev.target.dataset.field,i=Number(ev.target.dataset.i);if(key&&rows[i])rows[i][key]=ev.target.value;totals();
+  const key=ev.target.dataset.field,i=Number(ev.target.dataset.i);if(key&&rows[i])rows[i][key]=ev.target.value;if(ev.target.id?.startsWith('split-')&&ev.target.tagName==='INPUT')draft[ev.target.id.slice(6)]=ev.target.value;totals();
  });
  return el;
 }
@@ -56,7 +56,7 @@ function field(key,label,value='',type='text'){
 }
 function doc(){
  if(invoice)return {numero:t(invoice.Numero_Originale||invoice.Numero),data:invoice.Data,cliente:invoice.Denominazione,prezzo_unitario:amount(invoice),descrizione:t(invoice.Descrizione),totale_fiscale:t(invoice.ImportoTotaleDocumento)};
- return {numero:t($('split-numero')?.value),data:t($('split-data')?.value),cliente:t($('split-cliente')?.value),prezzo_unitario:parse($('split-unitario')?.value),descrizione:t($('split-descrizione')?.value),totale_fiscale:t($('split-fiscale')?.value)};
+ return {numero:t(draft.numero),data:t(draft.data),cliente:t(draft.cliente),prezzo_unitario:parse(draft.unitario),descrizione:t(draft.descrizione),totale_fiscale:t(draft.fiscale)};
 }
 function projectOptions(selected){
  return '<option value="">Seleziona progetto</option>'+projects.map(p=>'<option value="'+H(p.ID)+'"'+(t(p.ID)===t(selected)?' selected':'')+'>'+H(label(p.ID)+' (#'+p.ID+')')+'</option>').join('');
@@ -65,7 +65,7 @@ function render(){
  const d=doc(),existing=!!invoice;
  const options=!existing&&prefill?'<label>Oppure scegli fattura già registrata<select id="split-existing"><option value="">Crea nuova fattura</option>'+invoices.map(f=>'<option value="'+H(f.ID_FT)+'">'+H((f.Numero_Originale||f.Numero||f.ID_FT)+' · '+f.Denominazione)+'</option>').join('')+'</select></label>':'';
  const details=existing?'<div class="split-doc"><div><b>Fattura</b><p>'+H(d.numero)+' · '+H(d.data)+'</p></div><div><b>Cliente</b><p>'+H(d.cliente)+'</p></div><div><b>PrezzoUnitario gestionale</b><p>'+H(euro(d.prezzo_unitario))+'</p><small>Totale fiscale: '+H(d.totale_fiscale||'—')+'</small></div></div>':
- '<div class="split-doc">'+options+field('numero','Numero fattura')+field('data','Data fattura','', 'date')+field('cliente','Cliente')+field('unitario','PrezzoUnitario (€), base gestionale')+field('fiscale','Totale fiscale (opzionale)')+field('descrizione','Descrizione')+'</div>';
+ '<div class="split-doc">'+options+field('numero','Numero fattura',draft.numero)+field('data','Data fattura',draft.data, 'date')+field('cliente','Cliente',draft.cliente)+field('unitario','PrezzoUnitario (€), base gestionale',draft.unitario)+field('fiscale','Totale fiscale (opzionale)',draft.fiscale)+field('descrizione','Descrizione',draft.descrizione)+'</div>';
  $('split-body').innerHTML=details+'<p>Il tasto <b>Duplica riga</b> copia la descrizione ma lascia vuoti progetto e PrezzoUnitario. Non genera nuove fatture fiscali.</p><div id="split-lines">'+
  rows.map((r,i)=>'<div class="split-row">'+
  '<label>Progetto<select data-i="'+i+'" data-field="projectId">'+projectOptions(r.projectId)+'</select></label>'+
@@ -93,7 +93,7 @@ async function refresh(){
 }
 function labelLocal(p){return (p.ARTISTA||'')+' '+(p.TITOLO||'');}
 async function open(id=null,project=''){
- panel();const stamp=++token;prefill=t(project);$('kyv-split-modal').hidden=false;$('split-error').textContent='';$('split-body').textContent='Caricamento fatture…';
+ panel();const stamp=++token;prefill=t(project);draft={};$('kyv-split-modal').hidden=false;$('split-error').textContent='';$('split-body').textContent='Caricamento fatture…';
  try{
   await refresh();if(stamp!==token)return;
   invoice=id?invoices.find(f=>t(f.ID_FT)===t(id)):null;
