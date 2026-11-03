@@ -35,7 +35,7 @@ assert.ok(read('sw.js').includes("'./kyv-invoice-split-v247.js'"));
 assert.ok(read('guida.html').includes('v2.47 — Inserire più progetti'));
 assert.ok(read('kyv-help.js').includes('Duplica riga'));
 assert.equal(JSON.parse(read('package.json')).version,'2.47.0');
-assert.equal(read('VERSION').trim(),'2.47');
+assert.equal(read('VERSION').trim(),'2.48');
 assert.ok(JSON.parse(read('package.json')).scripts.check.includes('check:invoice-split-v247'));
 // One invoice is counted once globally, yet billed shares go to each project.
 const inv={ID_FT:100,ID_PROGETTO:1,PrezzoUnitario:'3500',Data:'2026-10-10',PAGATA:'NO'};
