@@ -1,3 +1,6 @@
+### v2.53 — Scansioni cloud selezionate e indipendenti
+Il comando batch parte solo su clic ed enumera soltanto Drive già configurati e/o il Dropbox registrato nel database. Non equivale a crawler dell'intero account, e non include dispositivi locali senza file picker. Se una fonte è incompleta o fallisce, segnalare la copertura della fonte e mantenere i risultati disponibili senza inferire cancellazioni. Non unire titoli omonimi: deduplicare solo provider+account+external_key. Suggerimenti di SHA-256 identico e titoli compatibili restano separati dalle decisioni manuali di proprietà e dai collegamenti ai progetti.
+
 ### v2.52 — Confronto incrementale e no-op sicuro
 Identifica un file per provider, account ed external_key; non dedurre duplicati da nomi uguali. Scansioni senza decisioni/aggiornamenti espliciti non devono scrivere. La classificazione `mio` già concessa non autorizza ad aggiornare metadati cambiati senza una seconda approvazione. Escludi reference; i suggerimenti di versione non sono associazioni. Rileggi le revisioni prima dell'upsert. Mantieni metadati validi se il provider omette campi. Evidenzia paginazione Drive incompleta senza mai cancellare assenti o affermare che l'intero cloud è stato esaminato.
 
