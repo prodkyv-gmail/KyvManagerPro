@@ -21,7 +21,7 @@ create policy rip_own_insert on public."FATTURE_RIPARTIZIONI" for insert to auth
   exists(select 1 from public."PROGETTI" p where p."ID"=id_progetto and p.owner_id=owner_id));
 create policy rip_own_delete on public."FATTURE_RIPARTIZIONI" for delete to authenticated
  using(owner_id=(select auth.uid()));
-revoke all on public."FATTURE_RIPARTIZIONI" from anon;
+revoke all on public."FATTURE_RIPARTIZIONI" from public, anon, authenticated;
 grant select,insert,delete on public."FATTURE_RIPARTIZIONI" to authenticated;
 
 -- Only values from PrezzoUnitario fund managerial allocations; never ImportoTotaleDocumento.
