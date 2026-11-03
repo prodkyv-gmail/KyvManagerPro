@@ -1,10 +1,10 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252,B=window.KYV_AUDIO_BATCH_V253,J=window.KYV_AUDIO_REVIEW_BATCH_V254;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252,B=window.KYV_AUDIO_BATCH_V253,J=window.KYV_AUDIO_REVIEW_BATCH_V254,A=window.KYV_AUDIO_AUDIT_V257;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
-let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null,scanReviewGroup='',scanReviewGroupShown=24,scanChecked=new Set();
+let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null,scanReviewGroup='',scanReviewGroupShown=24,scanChecked=new Set(),auditShown=40;
 const info=(v,error=false)=>{const el=$('finder-status');el.textContent=v;el.className='finder-status'+(error?' error':'')};
 const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v)};
 async function all(table,fields,sort){
@@ -72,6 +72,56 @@ function safeCloudLink(f){
    if(f.provider==='dropbox'&&/(^|\.)dropbox\.com$/i.test(host))return link;
  }catch{}return null;
 }
+
+function renderAudit(){
+ // Works exclusively with data already loaded for the authenticated user.
+ const data=A.report({catalogue,decisions,links,projects,preview}),stats=data.summary;
+ const rows=A.filterFindings(data,{type:$('audit-type').value,source:$('audit-source').value,
+   query:$('audit-query').value});
+ $('audit-coverage').textContent=stats.approved+' audio personali nel catalogo · '+stats.projectsChecked+
+  ' progetti letti. Scansione attuale: '+preview.length+' file; '+stats.savedPending+
+  ' decisioni “da verificare” registrate (senza nomi consultabili se non indicizzati).';
+ const cards=[
+  [stats.pendingScan,'Audio da classificare nella scansione attuale'],
+  [stats.unlinked,'Audio personali senza progetto collegato'],
+  [stats.duplicateGroups,'Gruppi con SHA-256 identico ('+stats.duplicateFiles+' file)'],
+  [stats.projectsWithoutApprovedAudio,'Progetti senza audio personale collegato nel catalogo']
+ ];
+ $('audit-kpis').innerHTML=cards.map(([count,name])=>'<div class="audit-kpi"><strong>'+
+  Number(count).toLocaleString('it-IT')+'</strong><span>'+H(name)+'</span></div>').join('');
+ $('audit-status').textContent=rows.length+' verifiche in elenco · '+Math.min(rows.length,auditShown)+
+  ' visualizzate. Solo suggerimenti: non sono state create associazioni.';
+ $('audit-items').innerHTML=rows.slice(0,auditShown).map(item=>{
+  let action='';
+  if(item.type==='pending')
+   action='<button type="button" data-audit-pending="'+H(item.title)+'">Apri nella scansione corrente</button>';
+  if(item.type==='unlinked')
+   action='<button type="button" data-audit-file="'+H(item.file.id)+'">Dettaglio / collega manualmente</button>';
+  if(item.type==='projects')
+   action='<a href="scheda_progetto.html?id='+H(encodeURIComponent(item.project.ID))+
+    '">Apri Scheda Progetto</a>';
+  const copies=item.type==='duplicates'?'<div class="audit-entry-copies">'+
+   item.files.slice(0,8).map(f=>'<div class="audit-entry-copy"><small>'+
+   H(f.nome_file+' · '+f.provider+' · '+f.account_label)+'</small>'+
+   '<div class="audit-entry-actions"><button type="button" data-audit-file="'+H(f.id)+
+   '">Dettaglio audio</button></div></div>').join('')+
+   (item.files.length>8?'<small>Altre '+(item.files.length-8)+
+   ' copie: cercale in «Esplora i miei brani».</small>':'')+'</div>':'';
+  return '<article class="audit-entry"><strong>'+H(item.title)+'</strong><small>'+
+   H(item.detail)+(item.source?' · '+H(item.source):'')+
+   '</small>'+copies+(action?'<div class="audit-entry-actions">'+action+'</div>':'')+'</article>';
+ }).join('')||'<p class="explorer-desc">Nessun risultato per i filtri scelti. Questo non prova che tutti i cloud o dispositivi siano stati scanditi.</p>';
+ $('audit-more').hidden=rows.length<=auditShown;
+ $('audit-more').textContent='Mostra altre '+Math.min(40,rows.length-auditShown)+' verifiche';
+}
+function focusAuditPending(name){
+ if($('finder-preview').hidden)throw Error('Questa scansione è stata chiusa. Avvia una nuova selezione per rivedere il file.');
+ scanReviewGroup='';resetScanSelection();
+ $('finder-preview-query').value=name;
+ $('finder-preview-state').value='da_verificare';$('finder-sync-state').value='all';
+ previewShown=60;renderPreview();
+ $('finder-preview').scrollIntoView({behavior:'smooth',block:'start'});
+}
 function renderExplorer(){
  const approved=explorerApproved(),stats=W.stats(approved),items=explorerRows();
  $('explorer-status').textContent=stats.total+' miei audio approvati · '+stats.linked+' collegati · '+stats.unlinked+
@@ -107,6 +157,7 @@ function render(){
  renderDetail();
  renderGroups();
  renderExplorer();
+ renderAudit();
 }
 function renderDetail(){
  const f=personalCatalogue().find(x=>x.id===selected);$('link-panel').hidden=!f;
@@ -331,6 +382,7 @@ function renderPreview(){
  }).join('')||'<p class="explorer-desc">Nessun file corrisponde a questo filtro. I risultati già approvati restano nel catalogo: scegli “Tutti i risultati” per visualizzarli.</p>';
  $('finder-preview-more').hidden=visible.length>=indices.length;
  updateScanSelected();
+ renderAudit();
 }
 function previewScan(rows,note,localRefs=null,checkedUnsaved=false){
  if(!rows.length)throw Error('Nessun file audio nella selezione');
@@ -624,6 +676,16 @@ function kindChanged(){
 }
 function boot(){
  $('finder-reload').addEventListener('click',refresh);
+ $('audit-query').addEventListener('input',()=>{auditShown=40;renderAudit()});
+ $('audit-type').addEventListener('change',()=>{auditShown=40;renderAudit()});
+ $('audit-source').addEventListener('change',()=>{auditShown=40;renderAudit()});
+ $('audit-more').addEventListener('click',()=>{auditShown+=40;renderAudit()});
+ $('audit-items').addEventListener('click',e=>{
+  const file=e.target.closest('[data-audit-file]');
+  const pending=e.target.closest('[data-audit-pending]');
+  if(file)return explorerDetail(file.dataset.auditFile);
+  if(pending)return run(()=>focusAuditPending(pending.dataset.auditPending));
+ });
  $('explorer-query').addEventListener('input',()=>{explorerShown=60;renderExplorer()});
  $('explorer-source').addEventListener('change',()=>{explorerShown=60;syncExplorerAccounts();renderExplorer()});
  $('explorer-account').addEventListener('change',()=>{explorerShown=60;renderExplorer()});
@@ -713,7 +775,7 @@ function boot(){
  $('scan-clear-selected').addEventListener('click',()=>{resetScanSelection();renderPreview()});
  $('preview-mark-mine').addEventListener('click',()=>run(()=>bulkPreview('mio')));
  $('preview-mark-reference').addEventListener('click',()=>run(()=>bulkPreview('reference')));
- $('finder-cancel').addEventListener('click',()=>{preview=[];scanReviewGroup='';resetScanSelection();$('finder-preview').hidden=true;closeExplorerPlayer();transientFiles.clear();renderExplorer();info('Anteprima scartata, nulla salvato.')});
+ $('finder-cancel').addEventListener('click',()=>{preview=[];scanReviewGroup='';resetScanSelection();$('finder-preview').hidden=true;closeExplorerPlayer();transientFiles.clear();renderExplorer();renderAudit();info('Anteprima scartata, nulla salvato.')});
  $('finder-list').addEventListener('click',e=>{const b=e.target.closest('[data-audio]');if(b){selected=b.dataset.audio;render()}});
  $('finder-detail').addEventListener('click',e=>{
   const b=e.target.closest('[data-suggest],[data-unlink],[data-new-project]');if(!b)return;
