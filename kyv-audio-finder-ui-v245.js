@@ -1,10 +1,10 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252,B=window.KYV_AUDIO_BATCH_V253;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252,B=window.KYV_AUDIO_BATCH_V253,J=window.KYV_AUDIO_REVIEW_BATCH_V254;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
-let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null;
+let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null,scanReviewGroup='',scanReviewGroupShown=24,scanChecked=new Set();
 const info=(v,error=false)=>{const el=$('finder-status');el.textContent=v;el.className='finder-status'+(error?' error':'')};
 const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v)};
 async function all(table,fields,sort){
@@ -228,12 +228,50 @@ async function refresh(){
   render();info(personalCatalogue().length+' audio personali confermati. Nessuna scansione automatica attiva.');
  });
 }
+// v2.54: group suggestions are transient and never write or assign ownership.
+function scanGroups(){return J.classifyGroups(preview);}
+function filteredScanGroups(){return J.filteredGroups(scanGroups(),{
+ query:$('scan-group-query').value,source:$('scan-group-source').value,mode:$('scan-group-mode').value
+});}
+function renderScanGroups(){
+ const all=scanGroups(),shownGroups=filteredScanGroups();
+ $('scan-group-summary').textContent=all.length+' possibili brani, '+
+  all.filter(g=>g.count>1).length+' con più versioni; '+shownGroups.length+' nella vista'+
+  (scanReviewGroup?' · un gruppo aperto':'')+'. Nessun raggruppamento equivale a un progetto.';
+ $('scan-group-list').innerHTML=shownGroups.slice(0,scanReviewGroupShown).map((g,i)=>
+  '<button type="button" data-scan-group="'+i+'" aria-pressed="'+String(g.id===scanReviewGroup)+'">'+
+  '<strong>'+H(g.artist+' · '+g.title)+'</strong>'+
+  '<small>'+g.count+' file · '+H(g.versions.join(', '))+'</small>'+
+  '<small>'+H(g.sources.join(' + '))+(g.artistUnknown?' · artista non dichiarato':'')+'</small>'+
+  '</button>').join('')||'<p class="finder-note">Nessun gruppo in questa ricerca. Puoi cercare per file nella coda sotto.</p>';
+ $('scan-group-more').hidden=shownGroups.length<=scanReviewGroupShown;
+ $('scan-group-clear').hidden=!scanReviewGroup;
+}
+function updateScanSelected(){
+ $('scan-selected-count').textContent=scanChecked.size+' file spuntati (massimo 100)';
+}
+function resetScanSelection(){
+ scanChecked.clear();updateScanSelected();
+}
+function activateScanGroup(id){
+ if(!scanGroups().some(g=>g.id===id))throw Error('Gruppo non più disponibile');
+ scanReviewGroup=id;resetScanSelection();
+ $('finder-preview-state').value='all';$('finder-sync-state').value='all';
+ previewShown=60;renderPreview();
+}
+function batchSelectVisible(){
+ const visible=previewIndices().slice(0,previewShown);
+ const indices=J.candidates(preview,visible).slice(0,100);
+ scanChecked=new Set(indices);renderPreview();
+ info(indices.length+' file della vista selezionati per revisione. Nessuna classificazione eseguita.');
+}
 function previewIndices(){
- return I.filter(preview,{
+ const initial=I.filter(preview,{
   query:$('finder-preview-query').value,
   status:$('finder-sync-state').value,
   decision:$('finder-preview-state').value
  });
+ return J.narrowIndices(initial,scanGroups(),scanReviewGroup);
 }
 const syncLabels={
  new:'Nuovo · classificazione richiesta',
@@ -244,6 +282,7 @@ const syncLabels={
  pending:'Classificazione sospesa · nessun inserimento'
 };
 function renderPreview(){
+ renderScanGroups();
  const indices=previewIndices(),visible=indices.slice(0,previewShown);
  const sum=I.summary(preview),selected=preview.filter(x=>x._explicit);
  $('finder-sync-summary').textContent=sum.new+' nuovi · '+sum.changed+' con metadati cambiati · '+
@@ -257,8 +296,12 @@ function renderPreview(){
   const f=preview[i],listen=f.provider==='local'&&transientFiles.has(W.KEY(f)),
    state=f._sync?.state||'new',changes=f._sync?.changedFields||[];
   const hints=['new','changed'].includes(state)?B.propose(f,knownPersonal,2):[];
-  const update=state==='changed'&&f.decision==='mio'&&!f._explicit;
-  return '<div class="finder-intake-row"><div><strong>'+H(f.nome_file)+'</strong><small>'+
+  const update=state==='changed'&&f.decision==='mio'&&!f._explicit,
+   selectable=J.bulkEligible(f),checked=scanChecked.has(i);
+  return '<div class="finder-intake-row"><div><label class="scan-selection-label">'+
+   '<input type="checkbox" data-preview-select="'+i+'" '+(selectable?'':'disabled ')+
+   (checked?'checked ':'')+'aria-label="Spunta '+H(f.nome_file)+' per classificazione multipla">'+
+   '<strong>'+H(f.nome_file)+'</strong></label><small>'+
    H(f.provider+' · '+f.account_label+' · '+(f.percorso_relativo||'File selezionato'))+'</small>'+
    '<em>'+H(syncLabels[state]||'Da esaminare')+'</em>'+
    (changes.length?'<span class="finder-sync-meta">Differenze: '+H(changes.join(', '))+'</span>':'')+
@@ -272,12 +315,14 @@ function renderPreview(){
    '</select></label></div>';
  }).join('')||'<p class="explorer-desc">Nessun file corrisponde a questo filtro. I risultati già approvati restano nel catalogo: scegli “Tutti i risultati” per visualizzarli.</p>';
  $('finder-preview-more').hidden=visible.length>=indices.length;
+ updateScanSelected();
 }
 function previewScan(rows,note,localRefs=null,checkedUnsaved=false){
  if(!rows.length)throw Error('Nessun file audio nella selezione');
  if(rows.length>MAX)throw Error('Oltre '+MAX+' file: restringi la selezione');
  if(!checkedUnsaved&&preview.some(x=>x._explicit)&&!confirm('Ci sono classificazioni non ancora salvate. Vuoi scartarle e iniziare una nuova scansione?'))return;
  closeExplorerPlayer();transientFiles.clear();
+ scanReviewGroup='';scanReviewGroupShown=24;resetScanSelection();
  if(localRefs)for(const [key,file] of localRefs)transientFiles.set(key,file);
  const compared=I.compare(rows,catalogue,decisions);
  preview=C.preview(compared,decisions);previewShown=60;
@@ -290,11 +335,15 @@ function previewScan(rows,note,localRefs=null,checkedUnsaved=false){
  info('Confronto terminato: '+sum.new+' nuovi, '+sum.changed+' con metadati cambiati, '+sum.unchanged+' già noti. Nessuna modifica automatica.');
 }
 function bulkPreview(decision){
- const indices=previewIndices().slice(0,Math.min(100,previewShown));
- if(!indices.length)return;
- if(!confirm('Confermi la classificazione di '+indices.length+' file visibili come '+
- (decision==='mio'?'tuoi lavori':'reference da escludere')+'? Le possibili versioni non sono collegamenti automatici.'))return;
- preview=C.markMany(preview,indices,decision);renderPreview();
+ // The review applies to explicitly checked, currently rendered files, not every search result.
+ const selected=J.selectionPlan(preview,[...scanChecked],previewIndices().slice(0,previewShown));
+ if(!selected.length)throw Error('Spunta prima i file che hai verificato nella vista');
+ if(!confirm('Confermi di classificare ESATTAMENTE i '+selected.length+' file SPUNTATI come '+
+  (decision==='mio'?'tuoi lavori personali':'reference non tue')+
+  '? Non verrà creato, collegato o eliminato nessun progetto.'))return;
+ preview=C.markMany(preview,selected,decision);
+ resetScanSelection();renderPreview();
+ info(selected.length+' classificazioni impostate ma NON salvate. Premi Salva dopo aver verificato le scelte.');
 }
 function confirmMetadataUpdate(index){
  const file=preview[index];
@@ -470,7 +519,7 @@ async function savePreview(){
   if(r.error||r.data?.length!==rows.length)
    throw Error('Indicizzazione non completamente confermata: '+(r.error?.message||'risultato non verificato')+'. Rileggi prima di ripetere.');
  }
- preview=[];$('finder-preview').hidden=true;
+ preview=[];scanReviewGroup='';resetScanSelection();$('finder-preview').hidden=true;
  await fetchAll();fillSelects();invalidateReview();render();
  info(plan.approved.length+' file personali confermati/aggiornati; '+plan.excluded+
   ' reference escluse. Nessun progetto creato o collegamento modificato.');
