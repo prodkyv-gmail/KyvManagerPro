@@ -99,6 +99,21 @@ function filter(groupsList=[],{query='',source='',mode='all'}={}){
   (!source||g.providers.includes(source))&&
   terms.every(term=>normalize([g.title,g.artist,...g.files.map(e=>e.file.nome_file)].join(' ')).includes(term)));
 }
+// The source selector applies to the FILES within a group, not only to its tile.
+ // Return a new read-only view; never mutate the cross-provider group or stored links.
+function scopedToProvider(group,provider='',links=[]){
+ if(!group)return null;
+ const chosen=txt(provider);
+ if(!chosen)return group;
+ const entries=group.files.filter(e=>txt(e?.file?.provider)===chosen);
+ if(!entries.length)return null;
+ const active=id=>links.some(l=>txt(l.id_audio)===txt(id)&&!l.annullata&&l.confermata!==false&&l.id_progetto!=null);
+ return {...group,files:entries,providers:[chosen],
+   versionKinds:[...new Set(entries.map(e=>e.version.kind))].sort((a,b)=>a.localeCompare(b,'it')),
+   unlinkedCount:entries.filter(e=>!active(e.file.id)).length,
+   linkedProjectIds:[...new Set(links.filter(l=>!l.annullata&&l.confermata!==false&&l.id_progetto!=null&&entries.some(e=>txt(e.file.id)===txt(l.id_audio))).map(l=>txt(l.id_progetto)))],
+   exactHashDuplicates:verifiedTwins(entries.map(e=>e.file))};
+}
 function allowedForLink(group,links=[]){
  if(!group)return[];
  return group.files.filter(({file})=>!links.some(l=>txt(l.id_audio)===txt(file.id)&&!l.annullata&&l.confermata!==false&&l.id_progetto!=null)).map(x=>x.file);
@@ -115,5 +130,5 @@ function planVersionLinks({group,selectedIds=[],projectId,files=[],projects=[],l
  // The caller still needs an explicit UI confirmation before making its one DB write.
  return payload;
 }
-root.KYV_AUDIO_GROUPS_V249=Object.freeze({stem,versionOf,groups,filter,allowedForLink,planVersionLinks});
+root.KYV_AUDIO_GROUPS_V249=Object.freeze({stem,versionOf,groups,filter,scopedToProvider,allowedForLink,planVersionLinks});
 })(typeof window!=='undefined'?window:globalThis);
