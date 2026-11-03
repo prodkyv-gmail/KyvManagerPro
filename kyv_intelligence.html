@@ -66,14 +66,15 @@ async function load(){
  $('message').className='msg';$('message').textContent='Caricamento e verifica degli archivi…';$('content').hidden=true;
  try{
  const c=window.KYV?.createSupabaseClient?.();if(!c)throw Error('Client autenticato non disponibile.');
- const [invoices,projects,payments,reversals,siaes,rightsLiquidations]=await Promise.all([
+ const [invoices,projects,payments,reversals,siaes,rightsLiquidations,invoiceSplits]=await Promise.all([
  allRows(c,'FATTURE','ID_FT,Data,ImportoTotaleDocumento,PrezzoTotale,PrezzoUnitario,ImportoPagamento,PAGATA,ID_PROGETTO,XML_SHA256','ID_FT'),
  allRows(c,'PROGETTI','ID,STATO,SVILUPPO,FEE,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione','ID'),
  allRows(c,'FATTURE_INCASSI','ID_INCASSO,ID_FT,Importo,Data','ID_INCASSO'),
  allRows(c,'FATTURE_INCASSI_STORNI','ID_STORNO,ID_INCASSO,Data','ID_STORNO'),
  allRows(c,'ESTRATTO SIAE','ID_ECSIAE,DATA,OPERAZIONE,IMPORTO','ID_ECSIAE'),
-  allRows(c,'KYV_LIQUIDAZIONI_DIRITTI','ID_LIQUIDAZIONE,Ente,DataAccredito,ImportoNetto','ID_LIQUIDAZIONE')]);
- source={invoices,projects,payments,reversals,siaes,rightsLiquidations};
+  allRows(c,'KYV_LIQUIDAZIONI_DIRITTI','ID_LIQUIDAZIONE,Ente,DataAccredito,ImportoNetto','ID_LIQUIDAZIONE'),
+ allRows(c,'FATTURE_RIPARTIZIONI','id,id_ft,id_progetto,prezzo_unitario','id')]);
+ source={invoices,projects,payments,reversals,siaes,rightsLiquidations,invoiceSplits};
  const years=[...new Set([...invoices.map(i=>i.Data?.slice(0,4)),...siaes.map(s=>s.DATA?.slice(0,4)),...rightsLiquidations.map(x=>x.DataAccredito?.slice(0,4))].filter(Boolean))].sort().reverse();
  $('year').innerHTML='<option value="all">Tutti gli anni</option>'+years.map(y=>'<option value="'+H(y)+'">'+H(y)+'</option>').join('');
  $('message').textContent='Dati caricati. Le attribuzioni non verificate restano segnalate separatamente.';$('content').hidden=false;render();
