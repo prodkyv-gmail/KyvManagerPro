@@ -34,7 +34,7 @@ assert.ok(sql.includes('from public."PROGETTI" p where p."ID"=pid and p.owner_id
 assert.ok(read('sw.js').includes("'./kyv-invoice-split-v247.js'"));
 assert.ok(read('guida.html').includes('v2.47 — Inserire più progetti'));
 assert.ok(read('kyv-help.js').includes('Duplica riga'));
-assert.equal(JSON.parse(read('package.json')).version,'2.49.0');
+assert.equal(JSON.parse(read('package.json')).version,'2.50.0');
 assert.equal(read('VERSION').trim(),'2.50');
 assert.ok(JSON.parse(read('package.json')).scripts.check.includes('check:invoice-split-v247'));
 // One invoice is counted once globally, yet billed shares go to each project.
