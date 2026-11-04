@@ -121,7 +121,7 @@ assert.ok(audio.includes("G.planVersionLinks("),'Group links remain guarded');
 assert.ok(audio.includes('groupProject=\'\'; // Never preselect a destination'));
 assert.ok(!audio.includes("db.from('PROGETTI').insert"),'No automatic projects');
 for(const token of [
- 'body.kyv-v260 .desk-disclosure','body.kyv-v260 .hub-query-bar',
+ 'body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details)','body.kyv-v260 .hub-query-bar',
  'body.kyv-v260 .desk-form-extras-grid','body.kyv-v260 .finder-journey',
  'body.kyv-v260 .finder-workflow-details','body.kyv-v260 #finder-explorer'
 ])assert.ok(theme.includes(token),'Shared CSS missing '+token);
