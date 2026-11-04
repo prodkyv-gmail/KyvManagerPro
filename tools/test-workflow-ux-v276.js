@@ -27,7 +27,7 @@ assert.ok(editor.includes('aria-label="Apri menu"'));
 for(const label of ['Esporta CSV della tabella corrente','Aggiungi un record nella tabella corrente','Alterna vista compatta e larga'])assert.ok(editor.includes('aria-label="'+label+'"'),label);
 assert.ok(editor.includes("btn.setAttribute('aria-pressed',String(compact))"),'Density toggle state must remain accessible');
 assert.ok(editor.includes('id="editor-view-status"'),'Editor preserves existing record counts');
-assert.ok(guide.includes('id="v276-workflow"')&&guide.includes('Manuale corrente · v2.76'));
+assert.ok(guide.includes('id="v276-workflow"')&&guide.includes('Manuale corrente · v'+read('VERSION').trim()));
 const root={};vm.runInNewContext(help,{window:root});
 for(const key of ['progetti','sessioni','fatture','editor'])assert.ok(root.KYV_HELP.getContent(key).content.includes('v2.76 · Comandi coerenti'),key+' contextual help');
 assert.ok(read('MANUALE_OPERATIVO.md').includes('v2.76 — Coerenza operativa'));
