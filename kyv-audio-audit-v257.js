@@ -7,7 +7,7 @@ if(!W||!C)throw Error('Audio workspace and consent required');
 const T=v=>String(v??'').trim();
 const fold=v=>T(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('it-IT').replace(/\s+/g,' ');
 const SHA=/^[a-f0-9]{64}$/i;
-const SOURCES=Object.freeze(['local','drive','dropbox']);
+const SOURCES=Object.freeze(['local','drive','dropbox','onedrive']);
 const MODES=Object.freeze(['all','pending','unlinked','duplicates','projects']);
 const priority={pending:0,unlinked:1,duplicates:2,projects:3};
 function report({catalogue=[],decisions=[],links=[],projects=[],preview=[]}={}){
