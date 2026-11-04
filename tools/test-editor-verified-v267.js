@@ -57,11 +57,11 @@ function fakeDB({records=data,total=records.length,missingCount=false,limitAt=In
  assert.ok(html.includes("Colonne nascoste solo nella griglia"),'Column visibility remains independent of data reads');
  assert.ok(html.includes('if (action === \'export-csv\')'),'Existing full data CSV stays available');
  assert.ok(html.includes("const readOnlyTables = new Set(['AUDIO_VERSIONI'])"));
- assert.ok(config.includes("APP_VERSION: '2.71'"));
+ assert.ok(config.includes("APP_VERSION: '2.72'"));
  assert.ok(sw.includes("'./kyv-editor-read-v267.js'"));
- assert.ok(sw.includes('kyv-studio-v2-71-mobile-disclosures-20261104'));
- assert.ok(fs.readFileSync('VERSION','utf8').trim()==='2.71');
- assert.equal(require('../package.json').version,'2.71.0');
+ assert.ok(sw.includes('kyv-studio-v2-72-project-disclosure-20261104'));
+ assert.ok(fs.readFileSync('VERSION','utf8').trim()==='2.72');
+ assert.equal(require('../package.json').version,'2.72.0');
  assert.ok(require('../package.json').scripts.check.includes('check:editor-verified-v267'));
  assert.ok(fs.readFileSync('guida.html','utf8').includes('v2.67'));
  assert.ok(fs.readFileSync('kyv-help.js','utf8').includes('v2.67'));
