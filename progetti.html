@@ -155,7 +155,7 @@
                 <div class="actions"><div class="search"><input id="uscite-search" type="search" autocomplete="off" placeholder="Titolo, artista, note o #ID…" aria-label="Cerca progetti nell'intero archivio" aria-describedby="project-filter-note"></div><button class="btn primary" type="button" onclick="openNewProjectChoices()">+ Nuovo</button><button class="btn icon" id="reload" type="button" title="Ricarica" aria-label="Ricarica">↻</button></div>
             </div>
             <div class="filters" id="filters" role="group" aria-label="Viste principali dei progetti"><button class="filter active" data-filter="RECENTI" type="button" aria-pressed="true">Recenti</button><button class="filter" data-filter="DA_FARE" type="button" aria-pressed="false">Da fare</button><button class="filter" data-filter="ATTESA" type="button" aria-pressed="false">In attesa</button><button class="filter" data-filter="USCITI" type="button" aria-pressed="false">Usciti</button><button class="filter" data-filter="TUTTI" type="button" aria-pressed="false">Tutti</button><span class="count" id="project-count">0 progetti</span></div>
-            <div class="project-filter-status"><p id="project-filter-note" class="filter-note" role="status" aria-live="polite">Recenti mostra fino a 40 progetti. Seleziona Tutti per consultare l'intero archivio.</p><button class="btn" id="project-clear-filters" type="button" hidden aria-label="Azzera ricerca, filtri e ordinamento">Azzera filtri</button></div>
+            <div class="project-filter-status"><p id="project-filter-note" class="filter-note" role="status" aria-live="polite">Recenti mostra i 40 progetti più recenti; l'ordinamento scelto cambia solo il loro ordine. Seleziona Tutti per l'intero archivio.</p><button class="btn" id="project-clear-filters" type="button" hidden aria-label="Azzera ricerca, filtri e ordinamento">Azzera filtri</button></div>
             <details id="project-advanced-details" class="proj-disclosure"><summary><span>Filtri e ordinamento</span><small id="project-advanced-count" aria-live="polite">Nessun filtro avanzato</small></summary>
             <div class="advanced-filters" role="group" aria-label="Filtri combinabili progetti">
                 <label>Artista<select id="project-artist-filter"><option value="">Tutti gli artisti</option></select></label>
@@ -268,7 +268,7 @@
             const rows=visibleRows();
             count.textContent=rows.length+' '+(rows.length===1?'progetto':'progetti')+' nella vista · '+state.rows.length+' totali';
             // One always-visible summary and one reset control, even when advanced filters stay folded.
-            const viewLabels={RECENTI:'Recenti (fino a 40)',DA_FARE:'Da fare',ATTESA:'In attesa',USCITI:'Usciti',TUTTI:'Tutti'};
+            const viewLabels={RECENTI:'Recenti (40 per attività)',DA_FARE:'Da fare',ATTESA:'In attesa',USCITI:'Usciti',TUTTI:'Tutti'};
             const hasFilters=Boolean(search.value.trim()||state.artist||state.status||state.phase||state.sort!=='activity'||state.filter!=='RECENTI');
             const filterSummary=[];
             if(state.filter!=='RECENTI')filterSummary.push('Vista: '+(viewLabels[state.filter]||state.filter));
@@ -279,7 +279,7 @@
             if(state.sort!=='activity')filterSummary.push('Ordine: '+(el('project-sort').selectedOptions?.[0]?.textContent||state.sort));
             el('project-filter-note').textContent=hasFilters
                 ? filterSummary.join(' · ')+' · '+rows.length+' '+(rows.length===1?'risultato':'risultati')+' nell’archivio caricato.'
-                : 'Recenti mostra fino a 40 progetti. Usa Tutti per vedere l’archivio completo; cerca anche per #ID.';
+                : 'Recenti mostra i 40 progetti più recenti; cambia l’ordine senza cambiarne i membri. Usa Tutti per l’archivio completo o cerca per #ID.';
             el('project-clear-filters').hidden=!hasFilters;
             filters.forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.filter===state.filter)));
             const activeAdvanced=[state.artist,state.status,state.phase].filter(Boolean).length+(state.sort!=='activity'?1:0);

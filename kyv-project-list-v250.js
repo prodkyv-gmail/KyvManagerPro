@@ -38,9 +38,11 @@ function filterRows(rows=[],opts={}){
   // #41 or id:41 is an exact project lookup, not a fuzzy match against notes.
   if(requestedId)return t(p.ID)===String(Number(requestedId[1]));
   return words.every(w=>fold([p.ID,p.TITOLO,p.ARTISTA,p.STATO,p.SVILUPPO,p.NOTE,p.Prossimo_Followup].join(' ')).includes(w));
- }).sort((a,b)=>compare(a,b,sort));
- if(mode==='RECENTI'&&!q&&!requestedId&&!ra&&!rs&&!rp)list=list.slice(0,40);
- return list;
+ });
+ // v2.74: Recenti means the 40 most recently active projects, regardless of chosen display order.
+ // Pick membership by activity first, then apply the user's preferred sort within that group.
+ if(mode==='RECENTI'&&!q&&!requestedId&&!ra&&!rs&&!rp)list=list.sort((a,b)=>compare(a,b,'activity')).slice(0,40);
+ return list.sort((a,b)=>compare(a,b,sort));
 }
 function distinct(rows,field){
  const values=new Map();

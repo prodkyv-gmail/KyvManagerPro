@@ -1,3 +1,11 @@
+## v2.74 — Ordinamento stabile dei 40 progetti Recenti (4 novembre 2026)
+
+**Correzione:** la vista **Recenti** individua sempre prima i 40 progetti con l'attività più recente, indipendentemente dall'ordinamento selezionato. **Titolo A–Z**, **Artista A–Z**, **Follow-up imminente** e **Attività meno recente** cambiano soltanto l'ordine di questi 40 progetti, senza sostituirli con altri dell'archivio. Il criterio di attività usa le date effettivamente registrate; non inventa date mancanti.
+
+**Per consultare tutti i progetti**, selezionare **Tutti** e poi il criterio di ordinamento desiderato. Una ricerca per nome, artista, note, **#ID** o filtri avanzati continua a lavorare sull'intero archivio caricato e verificato, anche se è selezionata la vista Recenti. Per cancellare tutti i criteri, utilizzare il singolo pulsante **Azzera filtri**.
+
+La pagina Progetti, la Guida completa e la guida contestuale **?** riportano questa distinzione. Aggiunto collaudo automatico v2.74 su appartenenza ai 40 Recenti, ordinamento e ricerca sull'archivio. Nessuna modifica a database, permessi, file audio, fatture, progetti o deployment Vercel.
+
 ## v2.73 — Ricerca, filtri e guida pratica dettagliata (4 novembre 2026)
 
 In **Progetti**, il riepilogo dei filtri è ora visibile anche senza aprire il pannello avanzato, con un unico **Azzera filtri** disponibile quando esistono criteri attivi. Ricerca esatta per **#ID / id:ID**, vista Recenti esplicitamente limitata a 40 risultati quando non sono impostati filtri, tasti di scelta con stato accessibile e ricerca sull'intero archivio caricato. Le operazioni restano di sola lettura.
