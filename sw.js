@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-79-integrated-modal-ux-20261104';
+const CACHE_NAME = 'kyv-studio-v2-80-guided-audio-scan-20261104';
 const APP_SHELL = [
     './',
     './index.html',

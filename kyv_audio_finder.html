@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-incremental-v252.js"></script><script src="kyv-audio-batch-v253.js"></script><script src="kyv-audio-review-batch-v254.js"></script><script src="kyv-audio-audit-v257.js"></script><script src="kyv-cloud-browser-v258.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-incremental-v252.js"></script><script src="kyv-audio-batch-v253.js"></script><script src="kyv-audio-review-batch-v254.js"></script><script src="kyv-audio-audit-v257.js"></script><script src="kyv-cloud-browser-v258.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-scan-v280.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
@@ -16,6 +16,15 @@
 .finder-main p{line-height:1.6;color:#cbd5e1}.finder-main a{color:#c7d2fe}
 .finder-status{padding:12px;background:#1e293b;border:1px solid #334155;border-radius:10px;margin:14px 0;color:#cbd5e1}
 .finder-status.error{background:#7f1d1d;border-color:#f87171;color:#fee2e2}
+.finder-v280-readiness{background:#121b2b;border:1px solid #45516c;border-radius:12px;padding:14px;margin:16px 0}
+.finder-v280-readiness h2{font-weight:800;font-size:15px;color:#f1f5ff;margin:0 0 7px}
+.finder-v280-readiness ul{margin:7px 0 0 19px;padding:0;display:grid;gap:6px;color:#d5deed;font-size:12px;line-height:1.45}
+.finder-v280-readiness p{font-size:12px;margin:7px 0 0}
+.finder-v280-coverage{border:1px solid #4c5870;border-radius:10px;background:#192437;padding:12px;margin:10px 0;color:#dde7f5;font-size:12px;line-height:1.6}
+.finder-v280-coverage[hidden]{display:none!important}
+.finder-v280-progress{display:block;color:#c7d2fe;font-size:12px;line-height:1.5;margin-top:7px}
+@media(max-width:650px){.finder-v280-readiness{padding:12px}.finder-v280-coverage{padding:10px}}
+
 .finder-sources{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
 .finder-card{min-width:0;background:#151923;border:1px solid #334155;border-radius:14px;padding:16px}
 .finder-card h2{font-size:17px;font-weight:800;margin:0 0 12px}
@@ -217,6 +226,11 @@
 <div id="finder-status" class="finder-status" role="status">Preparazione…</div>
 <details id="finder-sources-details" class="kyv-v260-disclosure finder-workflow-details">
 <summary>Aggiungi audio da PC, smartphone o cloud <small>Solo dopo la tua scelta · nessuna scansione nascosta</small></summary>
+<div class="finder-v280-readiness" aria-label="Disponibilità sorgenti rilevata nel dispositivo">
+<h2>Sorgenti disponibili su questo dispositivo · v2.80</h2>
+<p>Stato indicativo delle funzioni configurate, non un controllo di accesso ai tuoi cloud. Nessuna ricerca parte automaticamente.</p>
+<ul id="finder-source-readiness" role="status" aria-live="polite"><li>Controllo dei selettori locali e delle configurazioni…</li></ul>
+</div>
 <section class="finder-sources" id="finder-sources" aria-label="Sorgenti">
 <div class="finder-card"><h2>Google Drive</h2>
 <label for="drive-account">Account</label><select id="drive-account"><option value="all">Tutti i Drive</option></select>
@@ -244,10 +258,11 @@
 <div class="finder-card"><h2>Cartella Mac / PC</h2>
 <label for="local-label">Nome identificativo dell'archivio</label><input id="local-label" maxlength="180" value="Dispositivo personale">
 <label for="finder-folder" style="display:block;margin-top:10px">Seleziona una cartella (browser compatibile)</label>
-<input id="finder-folder" class="finder-input-file" type="file" accept=".wav,.mp3,.aiff,.aif,.flac,.m4a,.aac,.ogg,.opus" webkitdirectory multiple>
+<input id="finder-folder" data-finder-action class="finder-input-file" type="file" accept=".wav,.mp3,.aiff,.aif,.flac,.m4a,.aac,.ogg,.opus" webkitdirectory multiple>
 <label for="finder-files" style="display:block;margin-top:10px">Oppure scegli audio su PC, Android o tramite File su iPhone</label>
-<input id="finder-files" class="finder-input-file" type="file" accept="audio/*,.wav,.mp3,.m4a,.aiff,.aif,.flac,.aac,.ogg,.opus" multiple>
+<input id="finder-files" data-finder-action class="finder-input-file" type="file" accept="audio/*,.wav,.mp3,.m4a,.aiff,.aif,.flac,.aac,.ogg,.opus" multiple>
 <small>L’app legge solo cartelle o file che selezioni. Su iPhone usa il selettore File: non è un crawler permanente. Funziona anche su cartelle OneDrive sincronizzate.</small>
+<p id="finder-local-progress" class="finder-v280-progress" role="status" aria-live="polite">Nessuna selezione locale in corso.</p>
 </div>
 <div class="finder-card"><h2>OneDrive online · v2.58</h2>
 <p>Ricerca manuale Microsoft Graph con autorizzazione OAuth PKCE e permesso minimo <code>Files.Read</code>, <strong>disponibile dopo la configurazione</strong> di Microsoft Entra e del database. Nessun audio viene scaricato o caricato nel catalogo automaticamente.</p>
@@ -262,6 +277,7 @@
 </section>
 </details>
 <section id="finder-preview" class="finder-preview" hidden>
+<div id="finder-scan-coverage" class="finder-v280-coverage" role="status" aria-live="polite" hidden></div>
 <h2>Revisione guidata dei brani · v2.54</h2><p id="finder-preview-note"></p>
 <p id="finder-sync-summary" class="finder-sync-note" role="status"></p>
 <p class="finder-note">I file già esaminati vengono riconosciuti tramite identità sorgente. I metadati diversi sono proposti per aggiornamento; quelli senza informazioni sufficienti restano «revisione non verificabile». Nessun aggiornamento, eliminazione o collegamento è automatico.</p>
