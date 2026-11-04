@@ -1,5 +1,11 @@
 # Changelog
 
+### v2.59 · 2026-11-04
+- Nuova vista predefinita «Scrivania musicale» nella Scrivania creativa, senza duplicazione di archivi: unione in sola lettura per progetto delle sessioni documentate, piazzamenti attivi, audio personali confermati, fee e fatture esplicitamente attribuite.
+- Filtri autonomi, ricerca tra artisti/titoli/sessioni/destinatari, grafico stato piazzamenti, caricamento progressivo e popup di dettaglio con navigazione alle sezioni originali.
+- Economia: quote basate su PrezzoUnitario/ripartizioni, incassi solo da movimenti non stornati su fatture a progetto diretto, nessuna ripartizione presunta degli incassi multi-progetto; flag PAGATA legacy segnalato separatamente.
+- Se una fonte economica non è disponibile, sospende le metriche economiche senza bloccare le viste creative. Versione, guida e suite regressioni aggiornate; nessuna migrazione dati e nessun accesso Vercel.
+
 ### v2.58 · 2026-11-04
 - Dropbox: nuovo percorso OAuth PKCE temporaneo e ricerca ricorsiva di sola lettura avviata manualmente su cartelle autorizzate, con paginazione limitata e avvisi per scansioni parziali. Restano archivio e Chooser precedenti.
 - OneDrive: predisposti OAuth Microsoft e ricerca per testo con Graph Files.Read; non operativi senza configurazione client ID/SPA. Salvataggio disabilitato finché non viene applicata e verificata la migrazione SQL dei provider e attivato il flag.

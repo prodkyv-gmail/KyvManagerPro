@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-58-consented-cloud-20261104';
+const CACHE_NAME = 'kyv-studio-v2-59-unified-music-20261104';
 const APP_SHELL = [
     './',
     './index.html',
@@ -36,6 +36,7 @@ const APP_SHELL = [
     './kyv-audio-finder-linked-v245.js',
     './kyv-drive-bridge.js',
     './kyv-creative-desk-v244.js',
+    './kyv-music-hub-v259.js',
     './kyv-creative-desk-ui-v244.js',
     './kyv-analyst-engine-v241.js',
     './kyv-creative-funnel-v242.js',
