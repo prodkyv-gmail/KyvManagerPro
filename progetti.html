@@ -35,7 +35,12 @@
         .content{flex:1;overflow:auto;padding:24px 32px}.notice{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px;padding:10px 13px;border:1px solid rgba(167,243,208,.15);background:rgba(16,185,129,.045);border-radius:12px;color:#a7f3d0;font-size:11px}.notice span:last-child{color:#7d889d}
         .table-wrap{border:1px solid var(--border);background:var(--card);border-radius:14px;overflow:hidden}.table-scroll{overflow:auto;max-height:calc(100vh - 245px)}table{width:100%;border-collapse:collapse;min-width:760px}thead{position:sticky;top:0;z-index:2;background:var(--card2);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.09em}th{padding:13px 16px;text-align:left}th:last-child{text-align:right}td{padding:14px 16px;border-top:1px solid rgba(35,40,56,.7);vertical-align:top}.row{cursor:pointer;transition:background .12s}.row:hover{background:rgba(99,102,241,.065)}.project-title{display:block;font-size:14px;font-weight:900;color:white}.artist{display:block;margin-top:4px;color:var(--cyan);font-size:12px;font-weight:750}.status{display:inline-flex;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);border-radius:999px;padding:5px 8px;font-size:11px;font-weight:850;color:#dbeafe}.next{font-size:12px;font-weight:750;color:#f1f5f9;line-height:1.4}.muted{font-size:11px;color:var(--muted)}.open{display:inline-flex;background:rgba(99,102,241,.13);border:1px solid rgba(129,140,248,.28);color:#e0e7ff;border-radius:9px;padding:7px 10px;font-size:11px;font-weight:900}.empty{text-align:center;padding:48px 16px!important;color:var(--muted)}
         .mobile-open{display:none;position:fixed;left:12px;top:12px;z-index:60;width:42px;height:42px;border:1px solid var(--border);background:#171b26;color:white;border-radius:12px}.backdrop{display:none}.modal{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.74);display:none;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}.modal-card{width:min(720px,100%);background:#151923;border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.45)}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}.modal-head h2{margin:0;font-size:18px}.close{border:0;background:transparent;color:var(--muted);font-size:24px;cursor:pointer}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:18px}.choice{display:block;border:1px solid var(--border);border-radius:14px;padding:16px;background:#11151f}.choice:hover{border-color:#6366f1;background:#171b29}.choice strong{display:block;color:white}.choice span{display:block;color:var(--muted);font-size:11px;line-height:1.45;margin-top:6px}
-        .advanced-filters{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;margin-top:12px}.advanced-filters label{display:grid;gap:4px;color:var(--muted);font-size:11px;font-weight:800}.advanced-filters select{background:#111723;color:#e2e8f0;border:1px solid #414a61;border-radius:10px;padding:9px 11px;min-width:140px;max-width:min(235px,82vw)}.filter-note{font-size:11px;color:#c4b5fd;min-height:14px}
+        .advanced-filters{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;margin-top:12px}.advanced-filters label{display:grid;gap:4px;color:var(--muted);font-size:11px;font-weight:800}.advanced-filters select{background:#111723;color:#e2e8f0;border:1px solid #414a61;border-radius:10px;padding:9px 11px;min-width:140px;max-width:min(235px,82vw)}.filter-note{font-size:12px;color:#cbd5e1;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+        .project-filter-status{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin:8px 0 12px}
+        .project-filter-status .btn{flex:0 0 auto;min-height:38px;padding:7px 12px;font-size:12px}
+        .project-filter-status .btn[hidden]{display:none!important}
+        #filters .filter[aria-pressed="true"]{outline:1px solid rgba(179,170,255,.56);outline-offset:1px}
+        @media(max-width:600px){.project-filter-status{align-items:flex-start}.project-filter-status .btn{width:auto}}
         .overview{border:1px solid rgba(129,140,248,.18);background:rgba(99,102,241,.035);padding:14px;border-radius:14px;margin-bottom:16px}.overview-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}.overview-head h2{font-size:15px;margin:0}.overview-head select{background:#111723;color:#f8fafc;border:1px solid #475569;padding:7px 10px;border-radius:9px}.overview-bars{display:grid;gap:8px;margin-top:12px}.overview-bar{display:grid;grid-template-columns:minmax(110px,210px) 1fr 42px;align-items:center;text-align:left;gap:12px;background:transparent;border:0;color:#e2e8f0;cursor:pointer;padding:4px 0;font-size:12px;font-weight:700}.overview-bar:hover span:first-child{text-decoration:underline}.overview-track{height:9px;border-radius:999px;background:#273449;overflow:hidden}.overview-fill{display:block;background:#818cf8;border-radius:999px;height:100%;min-width:3px}.overview-legend{font-size:11px;color:#94a3b8;margin:8px 0 0}.overview-more{margin-top:8px;font-size:11px;border:1px solid #475569;border-radius:8px;color:#dbeafe;background:#1d2536;padding:7px 10px}
         .compact-mode td{padding-top:10px;padding-bottom:10px}.compact-mode .cell-secondary{display:none}.project-row-actions{display:flex;justify-content:flex-end;gap:5px;flex-wrap:wrap}.quick-body{padding:19px 20px;max-height:75vh;overflow:auto}.quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.quick-item{border:1px solid #354058;border-radius:10px;padding:12px;min-width:0}.quick-item small{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.quick-item strong{display:block;font-size:13px;line-height:1.5;overflow-wrap:anywhere}.quick-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.quick-actions a{border:1px solid #525b73;border-radius:10px;padding:9px 12px;color:#e0e7ff;font-weight:800;font-size:12px}.quick-note{margin-top:12px;color:#cbd5e1;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
         /* v2.72: one primary action and native disclosures for secondary data/destinations. */
@@ -147,19 +152,18 @@
         <header class="header">
             <div class="header-top">
                 <div><div class="eyebrow">Lavoro creativo</div><h1 class="title">Progetti</h1><p class="subtitle">Trova il brano e apri la sua scheda. Nessun caricamento secondario rallenta questa vista.</p></div>
-                <div class="actions"><div class="search"><input id="uscite-search" type="search" autocomplete="off" placeholder="Titolo, artista, prossima azione…" aria-label="Cerca progetti"></div><button class="btn primary" type="button" onclick="openNewProjectChoices()">+ Nuovo</button><button class="btn icon" id="reload" type="button" title="Ricarica" aria-label="Ricarica">↻</button></div>
+                <div class="actions"><div class="search"><input id="uscite-search" type="search" autocomplete="off" placeholder="Titolo, artista, note o #ID…" aria-label="Cerca progetti nell'intero archivio" aria-describedby="project-filter-note"></div><button class="btn primary" type="button" onclick="openNewProjectChoices()">+ Nuovo</button><button class="btn icon" id="reload" type="button" title="Ricarica" aria-label="Ricarica">↻</button></div>
             </div>
-            <div class="filters" id="filters"><button class="filter active" data-filter="RECENTI" type="button">Recenti</button><button class="filter" data-filter="DA_FARE" type="button">Da fare</button><button class="filter" data-filter="ATTESA" type="button">In attesa</button><button class="filter" data-filter="USCITI" type="button">Usciti</button><button class="filter" data-filter="TUTTI" type="button">Tutti</button><span class="count" id="project-count">0 progetti</span></div>
+            <div class="filters" id="filters" role="group" aria-label="Viste principali dei progetti"><button class="filter active" data-filter="RECENTI" type="button" aria-pressed="true">Recenti</button><button class="filter" data-filter="DA_FARE" type="button" aria-pressed="false">Da fare</button><button class="filter" data-filter="ATTESA" type="button" aria-pressed="false">In attesa</button><button class="filter" data-filter="USCITI" type="button" aria-pressed="false">Usciti</button><button class="filter" data-filter="TUTTI" type="button" aria-pressed="false">Tutti</button><span class="count" id="project-count">0 progetti</span></div>
+            <div class="project-filter-status"><p id="project-filter-note" class="filter-note" role="status" aria-live="polite">Recenti mostra fino a 40 progetti. Seleziona Tutti per consultare l'intero archivio.</p><button class="btn" id="project-clear-filters" type="button" hidden aria-label="Azzera ricerca, filtri e ordinamento">Azzera filtri</button></div>
             <details id="project-advanced-details" class="proj-disclosure"><summary><span>Filtri e ordinamento</span><small id="project-advanced-count" aria-live="polite">Nessun filtro avanzato</small></summary>
             <div class="advanced-filters" role="group" aria-label="Filtri combinabili progetti">
                 <label>Artista<select id="project-artist-filter"><option value="">Tutti gli artisti</option></select></label>
                 <label>Stato<select id="project-status-filter"><option value="">Tutti gli stati</option></select></label>
                 <label>Fase<select id="project-phase-filter"><option value="">Tutte le fasi</option></select></label>
                 <label>Ordina per<select id="project-sort"><option value="activity">Ultima attività</option><option value="title">Titolo A–Z</option><option value="artist">Artista A–Z</option><option value="followup">Follow-up imminente</option><option value="oldest">Attività meno recente</option></select></label>
-                <button class="btn" id="project-clear-filters" type="button">Azzera filtri</button>
                 <button class="btn" id="project-view-toggle" type="button" aria-pressed="true">Vista compatta</button>
             </div>
-            <p id="project-filter-note" class="filter-note" role="status"></p>
             </details>
         </header>
 
@@ -263,15 +267,29 @@
         function render(){
             const rows=visibleRows();
             count.textContent=rows.length+' '+(rows.length===1?'progetto':'progetti')+' nella vista · '+state.rows.length+' totali';
-            el('project-filter-note').textContent=(state.phase?'Filtro fase: '+(state.phase==='__missing__'?'Non indicata':state.phase)+' · ':'')+
-              (search.value?'Ricerca nell’intero archivio · ':'')+'Le modifiche si effettuano nella Scheda progetto.';
+            // One always-visible summary and one reset control, even when advanced filters stay folded.
+            const viewLabels={RECENTI:'Recenti (fino a 40)',DA_FARE:'Da fare',ATTESA:'In attesa',USCITI:'Usciti',TUTTI:'Tutti'};
+            const hasFilters=Boolean(search.value.trim()||state.artist||state.status||state.phase||state.sort!=='activity'||state.filter!=='RECENTI');
+            const filterSummary=[];
+            if(state.filter!=='RECENTI')filterSummary.push('Vista: '+(viewLabels[state.filter]||state.filter));
+            if(search.value.trim())filterSummary.push('Ricerca: '+search.value.trim());
+            if(state.artist)filterSummary.push('Artista: '+state.artist);
+            if(state.status)filterSummary.push('Stato: '+(state.status==='__missing__'?'Non indicato':state.status));
+            if(state.phase)filterSummary.push('Fase: '+(state.phase==='__missing__'?'Non indicata':state.phase));
+            if(state.sort!=='activity')filterSummary.push('Ordine: '+(el('project-sort').selectedOptions?.[0]?.textContent||state.sort));
+            el('project-filter-note').textContent=hasFilters
+                ? filterSummary.join(' · ')+' · '+rows.length+' '+(rows.length===1?'risultato':'risultati')+' nell’archivio caricato.'
+                : 'Recenti mostra fino a 40 progetti. Usa Tutti per vedere l’archivio completo; cerca anche per #ID.';
+            el('project-clear-filters').hidden=!hasFilters;
+            filters.forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.filter===state.filter)));
             const activeAdvanced=[state.artist,state.status,state.phase].filter(Boolean).length+(state.sort!=='activity'?1:0);
             el('project-advanced-count').textContent=activeAdvanced?
                 activeAdvanced+' '+(activeAdvanced===1?'filtro attivo':'filtri attivi'):'Nessun filtro avanzato';
             const table=el('projects-table');table.classList.toggle('compact-mode',state.compact);
             const toggle=el('project-view-toggle');toggle.textContent=state.compact?'Vista compatta':'Vista dettagliata';
             toggle.setAttribute('aria-pressed',String(state.compact));
-            if(!rows.length)body.innerHTML='<tr><td colspan="5" class="empty">Nessun progetto corrispondente ai filtri. Usa «Azzera filtri».</td></tr>';
+            if(!rows.length)body.innerHTML='<tr><td colspan="5" class="empty">'+
+                (state.rows.length?'Nessun progetto corrispondente ai criteri. Cambia ricerca o usa «Azzera filtri».':'Nessun progetto presente nell’archivio.')+'</td></tr>';
             else body.innerHTML=rows.slice(0,state.shown).map(p=>{
                 const status=text(p.STATO)||(!M.done(p)&&M.nextAction(p)?'In lavorazione':'Stato non indicato');
                 const action=M.nextAction(p)||(M.done(p)?'Progetto chiuso':'Da decidere');
