@@ -1,5 +1,11 @@
 # Changelog
 
+### v2.63 · 2026-11-04
+- Home: priorità operative subito visibili; fatture per tipologia PAGATA e grafici dettagliati in pannelli richiudibili, Chart.js ridimensionato all'apertura senza nuove letture. Collegamento Sessioni alla Scrivania creativa attuale. Gli errori mostrano dati non disponibili, non falsi zeri.
+- Economia: funzioni operative mantenute; link amministrativi raccolti in Analisi e strumenti; registro suddiviso in Fatture da incassare aperte e Fatture incassate richiudibili, con totali ancora visibili e nessuna modifica a incassi/acconti/ripartizioni.
+- Analyst: nuova graduatoria del fatturato esplicitamente attribuito agli artisti con selettore indipendente Top 5/10/20 dal report già calcolato; indicatori creativi secondari richiudibili, verifiche e domande in primo piano.
+- Stili comuni, nuova suite regressione UI, guida contestuale e manuale sincronizzati, cache PWA v2.63; nessun database o Vercel modificato.
+
 ### v2.62 · 2026-11-04
 - Scrivania musicale: pannelli richiudibili per filtri avanzati e grafico globale, azzeramento mirato e riduzione dei KPI duplicati nelle testate delle tre schede.
 - Sessioni e Piazzamenti: ricerche indipendenti tra tab, navigazione tastiera, moduli essenziali con campi avanzati facoltativi riaperti alla modifica; invariati validazioni e salvataggi.
