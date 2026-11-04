@@ -23,6 +23,7 @@ const APP_SHELL = [
     './kyv_scrivania_creativa.html',
     './kyv_audio_finder.html',
     './kyv-audio-finder-v245.js',
+    './kyv-audio-scan-v280.js',
     './kyv-audio-review-v246.js',
     './kyv-audio-consent-v248.js',
     './kyv-audio-groups-v249.js',
