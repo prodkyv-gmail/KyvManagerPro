@@ -193,7 +193,7 @@
             <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto min-w-0">
                 <div class="relative flex-1 sm:w-64">
                     <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-kyv-text"></i>
-                    <input type="text" id="editor-search" placeholder="Ricerca in tabella..." class="w-full bg-kyv-card border border-kyv-border rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors shadow-sm" oninput="debounceFilterEditorTable()">
+                    <input type="text" id="editor-search" aria-label="Filtra i record della tabella corrente" title="Filtra i dati caricati della tabella corrente. Per cercare tra tutti gli archivi usa il comando Cerca nel menu." placeholder="Filtra tabella corrente..." class="w-full bg-kyv-card border border-kyv-border rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors shadow-sm" oninput="debounceFilterEditorTable()">
                 </div>
                 <button data-action="clear-search" class="px-3 py-2 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-kyv-text hover:text-white rounded-lg transition-colors flex items-center text-sm shadow-sm" aria-label="Cancella filtro" title="Cancella filtro">
                     <i data-lucide="search-x" class="w-4 h-4"></i>
