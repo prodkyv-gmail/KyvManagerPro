@@ -1,0 +1,7 @@
+/* v2.76 — Shared style for existing operational controls; no duplicate bars. */
+.kyv-v276-toolbar{min-width:0}
+.kyv-v276-toolbar :is(button,select,input){min-height:44px}
+.kyv-v276-toolbar :is(button,a,select,input):focus-visible{outline:3px solid #b8b1ff;outline-offset:2px}
+.kyv-v276-toolbar :is(input,select){color:#f8fafc}
+.kyv-v276-feedback{display:block;margin:.15rem 0 .75rem;padding:.55rem .8rem;border-radius:.75rem;border:1px solid rgba(148,163,184,.19);background:rgba(148,163,184,.055);color:#cbd5e1;font-size:12px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:767px){.kyv-v276-toolbar :is(input,select){font-size:16px}.kyv-v276-toolbar :is(button,a,select,input){touch-action:manipulation}.kyv-v276-feedback{font-size:12px;margin:.45rem 0 .8rem}#editor-tabs{scrollbar-width:thin}#editor-view-status{line-height:1.55;overflow-wrap:anywhere}}

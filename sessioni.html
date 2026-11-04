@@ -53,6 +53,7 @@
         @media (max-width: 767px) { .session-card:hover { transform:none; } .timeline-line::before { display:none; } }
     </style>
     <link rel="stylesheet" href="kyv-theme.css">
+    <link rel="stylesheet" href="kyv-operational-ui-v276.css">
 </head>
 <body class="flex h-screen overflow-hidden antialiased text-sm">
     <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
@@ -72,12 +73,12 @@
                         <p class="text-kyv-text mt-1 text-xs sm:text-sm kyv-page-subtitle">Agenda operativa per sessioni, follow-up, consegne master e uscite. Usa i dati già presenti nella tabella PROGETTI.</p>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 w-full xl:w-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 w-full xl:w-auto kyv-v276-toolbar" role="group" aria-label="Ricerca e comandi Sessioni">
                     <div class="relative min-w-0 sm:w-80">
                         <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-kyv-text"></i>
-                        <input id="session-search" class="kyv-input pl-9" type="search" placeholder="Cerca artista, titolo, autori, label..." oninput="renderSessioni()">
+                        <input id="session-search" class="kyv-input pl-9" type="search" aria-label="Cerca progetti in Sessioni Studio" aria-describedby="session-results-status" placeholder="Cerca artista, titolo, autori, label..." oninput="renderSessioni()">
                     </div>
-                    <select id="session-filter" class="kyv-input sm:w-52" onchange="renderSessioni()">
+                    <select id="session-filter" class="kyv-input sm:w-52" aria-label="Filtra sessioni e consegne" onchange="renderSessioni()">
                         <option value="tutto">Tutto</option>
                         <option value="oggi">Oggi</option>
                         <option value="prossime">Prossime sessioni</option>
@@ -85,7 +86,7 @@
                         <option value="master">Master da consegnare</option>
                         <option value="uscite">Uscite future</option>
                     </select>
-                    <button onclick="fetchSessioni()" class="px-5 py-2.5 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg transition-colors flex items-center justify-center font-bold shadow-sm">
+                    <button type="button" onclick="fetchSessioni()" class="px-5 py-2.5 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg transition-colors flex items-center justify-center font-bold shadow-sm">
                         <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 text-kyv-text"></i> Ricarica
                     </button>
                     <button onclick="openNewProjectPopup()" class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors flex items-center justify-center font-black shadow-lg shadow-cyan-500/15">
@@ -94,6 +95,7 @@
                 </div>
             </header>
 
+            <p id="session-results-status" class="kyv-v276-feedback" role="status" aria-live="polite">Caricamento archivio Sessioni…</p>
             <div id="session-project-context" class="hidden mb-6 rounded-xl border border-cyan-400/25 bg-cyan-400/5 p-4 flex flex-wrap items-center justify-between gap-3" role="status" aria-live="polite">
                 <div class="min-w-0"><span class="text-[10px] uppercase tracking-wider text-cyan-300 font-black">Sessioni del progetto selezionato</span><p id="session-project-context-label" class="text-sm font-bold text-white break-words mt-1"></p></div>
                 <a href="sessioni.html" class="px-3 py-2 rounded-lg border border-cyan-400/30 text-cyan-200 hover:text-white text-xs font-bold">Vedi tutte le sessioni</a>
@@ -465,10 +467,11 @@
             KYV.setText('metric-master', masterCount);
             KYV.setText('metric-uscite', releaseCount);
 
-            const timelineItems = rows.flatMap(row => classifyTimeline(row).map(meta => ({ row, meta })))
-                .sort((a, b) => (a.meta.delta ?? 9999) - (b.meta.delta ?? 9999))
-                .slice(0, 24);
-            KYV.setText('timeline-count', `${timelineItems.length} elementi`);
+            const timelineAll = rows.flatMap(row => classifyTimeline(row).map(meta => ({ row, meta })))
+                .sort((a, b) => (a.meta.delta ?? 9999) - (b.meta.delta ?? 9999));
+            const timelineItems = timelineAll.slice(0, 24);
+            KYV.setText('timeline-count', `${timelineItems.length} di ${timelineAll.length} elementi`);
+            KYV.setText('session-results-status', `${rows.length} progetti corrispondenti su ${progetti.length} caricati · Timeline: ${timelineItems.length} di ${timelineAll.length} eventi mostrati · Le metriche Oggi/Prossime/Master/Uscite si riferiscono all’intero archivio caricato.`);
             document.getElementById('timeline-list').innerHTML = timelineItems.length
                 ? timelineItems.map(({ row, meta }) => projectCard(row, meta)).join('')
                 : emptyState('Nessuna scadenza in timeline', 'Aggiungi Data_Sessione, Data_Consegna_Master o Data_Pubblicazione nei progetti.', 'calendar-x');
@@ -491,6 +494,7 @@
         }
         async function fetchSessioni() {
             try {
+                KYV.setText('session-results-status','Caricamento archivio Sessioni… Ricerca e filtro correnti saranno mantenuti.');
                 document.getElementById('timeline-list').innerHTML = emptyState('Caricamento sessioni...', 'Sto leggendo i progetti da Supabase.', 'loader-2');
                 if (window.lucide) lucide.createIcons();
                 // Lettura verificata, non limitata silenziosamente al primo blocco Supabase.
@@ -501,7 +505,11 @@
                 console.error(err);
                 progetti = [];
                 renderSessionProjectContext();
-                document.getElementById('timeline-list').innerHTML = emptyState('Errore caricamento', err.message || 'Impossibile leggere i progetti.', 'triangle-alert');
+                KYV.setText('session-results-status','Archivio Sessioni non disponibile · Ricarica per riprovare senza perdere ricerca e filtro.');
+                ['metric-oggi','metric-prossime','metric-master','metric-uscite','timeline-count'].forEach(key=>KYV.setText(key,'—'));
+                document.getElementById('timeline-list').innerHTML = emptyState('Errore caricamento', err.message || 'Impossibile leggere i progetti. Usa Ricarica.', 'triangle-alert');
+                document.getElementById('followup-list').innerHTML = emptyState('Dati non disponibili', 'Ricarica per leggere nuovamente i follow-up.', 'triangle-alert');
+                document.getElementById('release-list').innerHTML = emptyState('Dati non disponibili', 'Ricarica per leggere nuovamente le uscite.', 'triangle-alert');
                 KYV.showToast('Errore caricamento sessioni.', 'error');
                 if (window.lucide) lucide.createIcons();
             }

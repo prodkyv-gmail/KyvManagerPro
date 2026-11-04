@@ -1,3 +1,15 @@
+## v2.76 — Coerenza operativa Progetti / Sessioni / Fatture / Studio Editor (4 novembre 2026)
+
+**Progetti mobile:** corretta la regola grafica tardiva di `kyv-layout-polish.js` che sovrascriveva la testata compatta introdotta nella v2.75. Rimangono un solo menu, una sola ricerca e le stesse card.
+
+**Sessioni Studio:** intestazione comandi accessibile; riepilogo di `progetti corrispondenti / progetti caricati` e `eventi timeline visibili / totali`, distinguendo il limite di 24 elementi da un numero assoluto. Le metriche Oggi, Prossime, Master e Uscite continuano a riferirsi all'intero archivio caricato. Se una lettura fallisce, metriche, timeline e box laterali non mostrano risultati precedenti come attendibili; il pulsante Ricarica conserva ricerca e filtro.
+
+**Fatture / Economia:** la ricerca per numero, cliente e progetto non viene più cancellata dal caricamento, da Ricarica o da un salvataggio. Un indicatore precisa quante fatture vengono visualizzate e quante sono state ricevute e che i totali sono calcolati sulle righe filtrate (oppure tutte quelle caricate quando non c'è ricerca). In caso di errore il registro è indicato come non disponibile e le somme rimangono non attendibili fino alla lettura successiva.
+
+**Studio Editor:** migliorati i nomi accessibili del menu e dei comandi Esporta, Aggiungi, Compatta/Larga. Il pulsante densità aggiorna lo stato accessibile. La barra operativa condivisa ha controlli da almeno 44 px e focus visibile sulle pagine Sessioni, Economia ed Editor.
+
+**Verifica:** test v2.76 dedicato alle barre, ai contatori, alla semantica delle ricerche e alla guida. Nessuna modifica a database, autorizzazioni, dati storici, associazioni, flussi automatici o Vercel; il collaudo visuale autenticato resta separato dalla CI.
+
 ## v2.75 — Progetti mobile più leggibili e aggiornamento della lista (4 novembre 2026)
 
 La pagina **Progetti** su smartphone usa un'intestazione più compatta, mantiene la ricerca a portata di mano, lascia scorrere orizzontalmente le cinque viste principali e mostra il conteggio **risultati · visualizzati · archivio** fuori dalla barra di navigazione. Le schede hanno una gerarchia visiva più chiara: titolo e artista subito sopra stato e prossima azione, con **Riepilogo** per la lettura rapida e **Scheda** per il dettaglio. Non sono stati creati pulsanti o popup duplicati.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-75-mobile-projects-20261104';
+const CACHE_NAME = 'kyv-studio-v2-76-operational-ux-20261104';
 const APP_SHELL = [
     './',
     './index.html',
@@ -57,6 +57,7 @@ const APP_SHELL = [
     './manifest.json',
     './kyv-theme.css',
     './kyv-responsive.css',
+    './kyv-operational-ui-v276.css',
     './config.js',
     './kyv-core.js',
     './kyv-auth.js',

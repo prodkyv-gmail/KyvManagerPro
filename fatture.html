@@ -161,6 +161,7 @@
         }
     </script>
     <link rel="stylesheet" href="kyv-theme.css">
+    <link rel="stylesheet" href="kyv-operational-ui-v276.css">
 </head>
 <body class="kyv-v260 flex h-screen overflow-hidden antialiased text-sm">
     <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
@@ -177,10 +178,10 @@
                             <p class="text-kyv-text mt-2 text-xs md:text-sm">Controlla fatturato, incassi e fee; sotto trovi il registro completo delle fatture.</p>
                         </div>
                     </div>
-                    <div class="kyv-economy-toolbar" role="group" aria-label="Comandi Economia">
+                    <div class="kyv-economy-toolbar kyv-v276-toolbar" role="group" aria-label="Comandi Economia">
                         <div class="kyv-economy-search">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-kyv-text"></i>
-                            <input type="search" id="correlazione-search" placeholder="Numero, cliente, progetto…" class="w-full bg-kyv-bg border border-kyv-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:border-indigo-500 outline-none transition-colors" oninput="applyCorrelazioneFilters()">
+                            <input type="search" id="correlazione-search" aria-label="Cerca fatture per numero, cliente o progetto" aria-describedby="kyv-invoice-filter-status" placeholder="Numero, cliente, progetto…" class="w-full bg-kyv-bg border border-kyv-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:border-indigo-500 outline-none transition-colors" oninput="applyCorrelazioneFilters()">
                         </div>
                         <details class="kyv-economy-extras" id="kyv-economy-extras">
                             <summary>Analisi e strumenti <span aria-hidden="true">+</span></summary>
@@ -194,7 +195,7 @@
                         <button type="button" id="kyv-aruba-open" class="kyv-primary-action whitespace-nowrap" title="Importa fatture elettroniche XML Aruba"><i data-lucide="file-up" class="w-4 h-4 mr-2"></i>Importa XML Aruba</button>
                         <button type="button" id="kyv-split-new" class="kyv-primary-action whitespace-nowrap" title="Una fattura con più progetti"><i data-lucide="copy-plus" class="w-4 h-4 mr-2"></i>Nuova multi-progetto</button>
                         <button type="button" data-kyv-new-table="FATTURE" class="kyv-primary-action whitespace-nowrap"><i data-lucide="plus" class="w-4 h-4 mr-2"></i>Nuova</button>
-                        <button onclick="fetchFattureCorrelate()" class="kyv-icon-action shrink-0" aria-label="Ricarica fatture" title="Ricarica"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="fetchFattureCorrelate()" class="kyv-icon-action shrink-0" aria-label="Ricarica fatture" title="Ricarica"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             </header>
@@ -209,6 +210,7 @@
                     </div>
                 </div>
                 <div id="kyv-invoice-load-error" class="hidden rounded-xl border border-red-400/50 bg-red-950/40 p-4 text-red-100 text-sm" role="alert"></div>
+                <p id="kyv-invoice-filter-status" class="kyv-v276-feedback" role="status" aria-live="polite">Caricamento registro fatture…</p>
                 <section id="kyv-invoice-cash-summary" class="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-label="Riepilogo incassi delle fatture emesse">
                     <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4">
                         <span class="block text-xs text-emerald-200">Incassato complessivo (anche acconti)</span>
@@ -258,6 +260,7 @@
         }
 
         async function fetchFattureCorrelate() {
+            KYV.setText('kyv-invoice-filter-status','Caricamento fatture in corso… La ricerca selezionata sarà mantenuta.');
             document.getElementById('tbody-ft-nopag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; if(window.lucide) lucide.createIcons();
             const errorNode = document.getElementById('kyv-invoice-load-error');
             errorNode?.classList.add('hidden');
@@ -265,10 +268,11 @@
                 const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO, DataScadenzaPagamento, XML_SHA256').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
                 if(fatRes.error || projRes.error) throw (fatRes.error || projRes.error);
                 correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
-                correlazioneFattureGlobal = fatRes.data || []; await window.KYV_INVOICE_SPLIT_V247?.refresh?.(); document.getElementById('correlazione-search').value = ''; window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
+                correlazioneFattureGlobal = fatRes.data || []; await window.KYV_INVOICE_SPLIT_V247?.refresh?.(); window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
             } catch(e) {
                 correlazioneFattureGlobal = [];
                 correlazioneProjMapGlobal = {};
+                KYV.setText('kyv-invoice-filter-status','Registro fatture non disponibile · Ricarica per riprovare. Ricerca mantenuta; non interpretare i totali come zero.');
                 console.error('[KYV Fatture] Caricamento non riuscito', e);
                 if(errorNode){
                     errorNode.textContent='Impossibile leggere tutte le fatture o i progetti. Verifica la connessione e usa Ricarica: i totali non sono attendibili fino al completamento della lettura.';
@@ -314,6 +318,9 @@
                 sumAccontiAperti += isPagata ? 0 : received;
                 sumDaIncassare += outstanding;
             });
+            const shown=hNopag.length+hPag.length;
+            const total=correlazioneFattureGlobal.length;
+            KYV.setText('kyv-invoice-filter-status',`${shown} fatture visualizzate su ${total} ricevute · I totali di incassi e residui si riferiscono ${searchTxt?'alle fatture filtrate dalla ricerca':'alle fatture caricate'}.`);
             document.getElementById('tot-da-pagare').innerText = fmtEuro.format(sumDaIncassare);
             document.getElementById('tot-pagate').innerText = fmtEuro.format(sumPagate);
             document.getElementById('tot-incassato-complessivo').innerText = fmtEuro.format(sumIncassatoTutti);
