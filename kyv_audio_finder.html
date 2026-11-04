@@ -140,7 +140,7 @@
 <main class="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
 <header class="finder-head">
 <div class="flex items-center gap-3"><button class="md:hidden" type="button" onclick="toggleMobileMenu()" aria-label="Apri menu">☰</button><div><small>Studio & Career · <span id="finder-version"></span></small><h1>KYV Audio Finder</h1></div></div>
-<nav class="finder-links" aria-label="Navigazione"><a href="index.html">Home</a><a href="kyv_scrivania_creativa.html">Sessioni</a><a href="progetti.html">Progetti</a><a href="integrazioni.html">Tutte le app</a><a href="guida.html#guida-audiofinder" aria-label="Guida Audio Finder">Guida ?</a></nav>
+<nav class="finder-links" aria-label="Azioni contestuali"><a href="kyv_scrivania_creativa.html">Scrivania musicale</a><a href="guida.html#guida-audiofinder" aria-label="Guida Audio Finder">Guida ?</a></nav>
 </header>
 <div class="overflow-y-auto flex-1">
 <div class="finder-main">
@@ -189,6 +189,8 @@
 <button id="explorer-more" type="button" class="explorer-small-btn" hidden>Mostra altri file</button>
 <p class="explorer-desc">Le reference e i file «da verificare» non appaiono qui. Per ascoltare un audio locale, selezionalo nuovamente dalle sorgenti: la pagina non può aprire autonomamente i file del tuo disco. I link cloud possono richiedere accesso al provider.</p>
 </section>
+<details class="kyv-v260-disclosure" id="finder-batch-details">
+<summary>Scansione combinata di Drive e Dropbox <small>Funzione avanzata · avvio solo manuale</small></summary>
 <section class="batch-scan" aria-label="Scansione guidata sorgenti collegate">
 <h2>Analizza sorgenti cloud insieme · v2.53</h2>
 <p class="explorer-desc">Con un solo comando esamina i Drive già configurati e l'archivio Dropbox KYV già registrato. Le due fonti sono indipendenti: se una non risponde, vedi un avviso e puoi revisionare i file trovati nell'altra. Non apre da solo il tuo telefono o il tuo computer.</p>
@@ -201,6 +203,7 @@
 <p id="batch-warnings" class="batch-warning" role="status"></p>
 <p class="explorer-desc">Dropbox Chooser permette di aggiungere altri file, ma non esplora tutto il tuo account. Scansioni parziali non implicano file cancellati. I risultati vengono inviati soltanto alla coda di verifica: nessun salvataggio o progetto automatico.</p>
 </section>
+</details>
 <button data-finder-action id="finder-reload" type="button">Rileggi indice</button>
 <div id="finder-status" class="finder-status" role="status">Preparazione…</div>
 <section class="finder-sources" id="finder-sources" aria-label="Sorgenti">
@@ -212,6 +215,7 @@
 <div class="finder-card"><h2>Dropbox</h2>
 <button type="button" data-finder-action id="finder-dropbox">Leggi archivio audio Dropbox</button>
 <button type="button" id="finder-dropbox-choose" data-finder-action style="margin-top:8px">Scegli audio direttamente da Dropbox</button>
+<details class="kyv-v260-disclosure" id="finder-dropbox-oauth"><summary>Dropbox online · autorizzazione OAuth <small>Opzionale · richiede permessi del provider</small></summary>
 <div class="finder-sync-note" style="margin-top:12px">
 <strong>Dropbox online · v2.58 (OAuth PKCE)</strong>
 <p class="finder-note">Collegamento temporaneo di sola lettura. La tua app Dropbox deve avere la redirect URI registrata e il permesso <code>files.metadata.read</code>. Se non configurati, continua a usare archivio e Chooser.</p>
@@ -223,6 +227,7 @@
 <button type="button" id="finder-dropbox-online" data-finder-action style="margin-top:8px">Cerca audio nella cartella Dropbox autorizzata</button>
 </div>
 <small>Indicizza i file già registrati in KYV. Il pulsante Scegli usa il Dropbox Chooser ufficiale: apre una finestra di scelta di file, non un crawler di tutto l'account.</small>
+</details>
 <a href="kyv_dropbox.html">Apri Archivio Dropbox</a>
 </div>
 <div class="finder-card"><h2>Cartella Mac / PC</h2>
