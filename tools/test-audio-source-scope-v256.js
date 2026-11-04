@@ -39,9 +39,9 @@ assert.ok(ui.includes("if($('finder-group-source').value!==source||groupKey!==g.
 assert.ok(ui.includes('Progetto scelto: '),'Confirmation must identify chosen project');
 assert.ok(ui.includes("selectedNames.slice(0,6)"),'Confirmation must show selected files');
 assert.ok(page.includes('v2.56'));
-assert.ok(sw.includes('kyv-studio-v2-71-mobile-disclosures-20261104'));
+assert.ok(sw.includes('kyv-studio-v2-72-project-disclosure-20261104'));
 assert.ok(read('guida.html').includes('v2.56'));
 assert.ok(read('kyv-help.js').includes('v2.56'));
-assert.equal(JSON.parse(read('package.json')).version,'2.71.0');
-assert.equal(read('VERSION').trim(),'2.71');
+assert.equal(JSON.parse(read('package.json')).version,'2.72.0');
+assert.equal(read('VERSION').trim(),'2.72');
 console.log('OK: v2.56 source-scoped group details, manual links, recheck and project preview');
