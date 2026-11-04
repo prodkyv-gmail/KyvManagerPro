@@ -53,6 +53,12 @@ assert.ok(html.includes('pendingEditorDelete = { table: currentEditorTable, id: 
 assert.ok(html.includes("new CustomEvent('kyv:record-saved'"),'Search index invalidation happens after saves');
 assert.ok(html.includes('readOnlyTables.has(editorModalTable)'),'Protected archives remain read-only in modal');
 assert.ok(html.includes("isTimestamp ? 'datetime-local'"),'Timestamp must render full date/time instead of truncating to date');
+for(const filename of ['kyv-editor-project-fields.js','kyv-editor-invoice-fields.js','kyv-editor-primary-fields.js']){
+ const source=fs.readFileSync(filename,'utf8');
+ assert.ok(source.includes('KYV_EDITOR_ACTIVE_MODAL_TABLE'),'Modal decorators must follow actual reference table: '+filename);
+}
+assert.ok(fs.readFileSync('kyv-editor-relations.js','utf8').includes('select.disabled=input.disabled'),'Read-only reference selectors remain disabled');
+assert.ok(html.includes('window.KYV_EDITOR_ACTIVE_MODAL_TABLE = null'),'Closing modal resets its target context');
 assert.ok(sw.includes("'./kyv-editor-changes-v268.js'"));
 assert.ok(sw.includes('kyv-studio-v2-68-safe-mutations-20261104'));
 assert.equal(fs.readFileSync('VERSION','utf8').trim(),'2.68');

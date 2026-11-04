@@ -133,11 +133,11 @@ function enhanceCombo(input,values){
 }
 
 async function enhanceInvoiceModal(){
-  if(state.currentTable!=='FATTURE')return;
+  if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='FATTURE')return;
   const root=document.getElementById('dynamic-form-fields');
   if(!root)return;
   const values=await loadValues();
-  if(state.currentTable!=='FATTURE'||!root.isConnected)return;
+  if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='FATTURE'||!root.isConnected)return;
   root.querySelectorAll('.dyn-input[data-key]').forEach(input=>{
     const key=input.dataset.key;
     const type=String(input.getAttribute('type')||'text').toLowerCase();
@@ -206,7 +206,7 @@ function wrapFunctions(){
   };
   window.openDynamicModal=function(){
     const result=originalModal.apply(this,arguments);
-    if(state.currentTable==='FATTURE')setTimeout(()=>enhanceInvoiceModal().catch(error=>console.warn('[KYV editor invoice fields] modal',error)),0);
+    if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE==='FATTURE')setTimeout(()=>enhanceInvoiceModal().catch(error=>console.warn('[KYV editor invoice fields] modal',error)),0);
     return result;
   };
   state.wrapped=true;

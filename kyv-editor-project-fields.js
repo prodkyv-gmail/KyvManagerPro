@@ -126,11 +126,11 @@ function enhanceCombo(input,values){
 }
 
 async function enhanceProjectModal(){
-  if(state.currentTable!=='PROGETTI')return;
+  if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='PROGETTI')return;
   const root=document.getElementById('dynamic-form-fields');
   if(!root)return;
   const values=await loadValues();
-  if(state.currentTable!=='PROGETTI'||!root.isConnected)return;
+  if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='PROGETTI'||!root.isConnected)return;
   root.querySelectorAll('.dyn-input[data-key]').forEach(input=>{
     const key=input.dataset.key;
     const type=String(input.getAttribute('type')||'text').toLowerCase();
@@ -193,7 +193,7 @@ function wrapFunctions(){
   };
   window.openDynamicModal=function(){
     const result=originalModal.apply(this,arguments);
-    if(state.currentTable==='PROGETTI')setTimeout(()=>enhanceProjectModal().catch(error=>console.warn('[KYV editor project fields] modal',error)),0);
+    if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE==='PROGETTI')setTimeout(()=>enhanceProjectModal().catch(error=>console.warn('[KYV editor project fields] modal',error)),0);
     return result;
   };
   state.wrapped=true;

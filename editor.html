@@ -629,6 +629,7 @@
             modal.classList.add('opacity-0');
             document.getElementById('modal-dynamic-content').classList.add('scale-95');
             editorModalOpen = false;
+            window.KYV_EDITOR_ACTIVE_MODAL_TABLE = null;
             editorModalTouched = new Set();
             setTimeout(() => { if (!editorModalOpen) modal.classList.add('hidden'); }, 300);
             return true;
