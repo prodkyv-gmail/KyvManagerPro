@@ -36,6 +36,13 @@ function fakeDB({records=data,total=records.length,missingCount=false,limitAt=In
  await assert.rejects(readComplete(fakeDB({missingCount:true}),'PROGETTI','ID'),/totale non verificabile/);
  await assert.rejects(readComplete(fakeDB({error:{message:'RLS negata'}}),'PROGETTI','ID'),/RLS negata/);
  assert.deepEqual(await readComplete(fakeDB({records:[],total:0}),'PROGETTI','ID'),[]);
+ // Qualified order preserves historical PostgREST column names with spaces and dots.
+ let seenOrder='';
+ const special={from(){return{select(_fields,opts){return{order(col){seenOrder=col;return this;},async range(){
+  return{data:[],count:opts?.count==='exact'?0:null,error:null};
+ }};}};}};
+ assert.deepEqual(await readComplete(special,'EXPORT SIAE','Cod. Opera'),[]);
+ assert.equal(seenOrder,'"Cod. Opera"');
  await assert.rejects(readComplete(fakeDB(),'PROGETTI','ID',{pageSize:1001}),/pagina non valida/);
  assert.ok(html.includes('src="kyv-editor-read-v267.js"'));
  assert.ok(html.includes('KYV_EDITOR_READ_V267.readComplete(supabaseClient,tableName,tablePKs[tableName]'));

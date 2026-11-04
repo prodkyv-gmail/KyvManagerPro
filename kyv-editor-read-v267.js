@@ -10,9 +10,12 @@
   if(!db||!table||!sortColumn)throw new Error('Lettura Editor: client o tabella non disponibili');
   if(!Number.isSafeInteger(pageSize)||pageSize<1||pageSize>1000)throw new Error('Dimensione pagina non valida');
   const rows=[];let expected=null;
+  // PostgREST richiede gli identificativi tra virgolette quando contengono spazi o punti
+  // (per esempio la chiave storica SIAE "Cod. Opera").
+  const orderKey=/^[A-Za-z_][A-Za-z0-9_]*$/.test(sortColumn)?sortColumn:'"'+String(sortColumn).replaceAll('"','""')+'"';
   for(let offset=0;offset<=maxRows;offset+=pageSize){
    const q=db.from(table).select('*',offset===0?{count:'exact'}:{})
-     .order(sortColumn,{ascending:true});
+     .order(orderKey,{ascending:true});
    const {data,count,error}=await q.range(offset,offset+pageSize-1);
    if(error)throw new Error(table+': '+(error.message||'errore di lettura'));
    if(!Array.isArray(data))throw new Error(table+': risposta non verificabile');
