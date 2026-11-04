@@ -184,6 +184,9 @@ function getKyvHelpContent(activePage) {
     // v2.70: actionable navigation stays unique; status is informational.
     const simplerJourney = '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.70 · Un solo comando per funzione</h5><p class="text-sm text-kyv-text mt-2">Nel Percorso del progetto <b>Fatture</b> include lo stato senza aggiungere un secondo pulsante. «Non disponibili» significa errore di lettura, non assenza di fatture. L’Hub operativo mantiene una sola <b>Prossima azione</b>; il pannello precedente resta di ripiego se l’Hub non si carica. Nessun file audio viene associato senza tua conferma.</p></div>';
     ['progetti','scheda','sessioni','audiofinder','fatture'].forEach(key => { if(guide[key]) guide[key].content += simplerJourney; });
+    // v2.71: mobile drawer focus and manually opened secondary disclosures.
+    const mobileDisclosureV271 = '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.71 · Mobile e vista Easy</h5><p class="text-sm text-kyv-text mt-2">In Progetti il menu mobile si chiude con Esc; la barra inferiore resta unica e indica la sezione attiva. In Pipeline, Fatture e Rendiconto, Easy e Completa cambiano i dettagli mostrati senza richiudere automaticamente il registro o lo storico già aperto.</p></div>';
+    ['progetti','pipeline','fatture','rendiconto'].forEach(key => { if(guide[key]) guide[key].content += mobileDisclosureV271; });
     const aliases = { spese: 'documenti' };
     activePage = aliases[activePage] || activePage;
     return guide[activePage] || guide.default;
