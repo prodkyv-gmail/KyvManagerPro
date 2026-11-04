@@ -74,7 +74,7 @@ function renderKyvMobileBottomNav(activePage = 'dashboard') {
         { page: 'calendar', href: 'kyv_calendar.html', label: 'Agenda', icon: 'calendar-days' },
         { page: 'nuovo', href: 'acquisisci_audio.html', label: 'Nuovo', icon: 'folder-plus' },
         { page: 'progetti', href: 'progetti.html', label: 'Progetti', icon: 'music' },
-        { page: 'clienti', href: 'clienti.html', label: 'Rubrica', icon: 'users' },
+        { page: 'ascolto', href: 'ascolto.html', label: 'Ascolto', icon: 'headphones' },
     ];
 
     const nav = document.createElement('nav');
@@ -202,7 +202,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
 
     const navItem = (page, href, icon, label, accent = '') => `
         <li>
-            <a href="${href}" class="flex items-center px-3 py-2.5 rounded-xl transition-all text-sm font-bold ${isActive(page)}">
+            <a href="${href}" ${((activeAliases[page] || [page]).includes(activePage)) ? 'aria-current="page"' : ''} class="flex items-center px-3 py-2.5 rounded-xl transition-all text-sm font-bold ${isActive(page)}">
                 <i data-lucide="${icon}" class="w-4 h-4 mr-3 ${accent}"></i>
                 <span>${label}</span>
             </a>
@@ -238,7 +238,6 @@ function loadKyvSidebar(activePage = 'dashboard') {
                         ${navItem('creative', 'kyv_scrivania_creativa.html', 'calendar-range', 'Scrivania creativa', 'text-cyan-300')}
                         ${navItem('audiofinder', 'kyv_audio_finder.html', 'search-check', 'Audio Finder', 'text-emerald-300')}
                         ${navItem('clienti', 'clienti.html', 'users', 'Contatti', 'text-sky-300')}
-                        ${navItem('fatture', 'fatture.html', 'receipt', 'Fatture', 'text-emerald-300')}
                         ${navItem('ascolto', 'ascolto.html', 'headphones', 'Ascolto', 'text-violet-300')}
                         ${navItem('integrazioni', 'integrazioni.html', 'grid-3x3', 'Tutte le app', 'text-emerald-300')}
                     </ul>
@@ -270,7 +269,6 @@ function loadKyvSidebar(activePage = 'dashboard') {
                         <i data-lucide="chevron-down" class="kyv-chevron w-4 h-4"></i>
                     </summary>
                     <ul class="space-y-1">
-                        ${navItem('integrazioni', 'integrazioni.html', 'grid-3x3', 'Tutte le app', 'text-emerald-300')}
                         ${navItem('editor', 'editor.html', 'database', 'Studio Editor')}
                         ${navItem('importexport', 'importexport.html', 'arrow-down-up', 'Import / Export', 'text-purple-300')}
                         ${navItem('diagnostica', 'diagnostica.html', 'activity', 'Diagnostica', 'text-cyan-300')}
