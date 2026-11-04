@@ -48,9 +48,84 @@ body{background:#0f111a;color:#f8fafc} html{scroll-behavior:smooth} .guide-secti
   <div class="flex items-start md:items-center gap-3 min-w-0"><button class="md:hidden text-kyv-text hover:text-white mt-1" onclick="toggleMobileMenu()" aria-label="Apri menu"><i data-lucide="menu" class="w-6 h-6"></i></button><div class="min-w-0"><div class="mini-label mb-2">Manuale operativo · versione corrente <span id="guide-app-version"></span></div><h1 class="text-2xl md:text-4xl font-black tracking-tight text-white leading-tight">KYV Studio Manager <span class="text-indigo-400">Guida completa</span></h1><p class="text-kyv-text mt-2 max-w-5xl">Manuale dettagliato su passaggi, moduli, sezioni, bottoni, dati coinvolti e obiettivi. Pensato per guidare KYV dal primo contatto alla sessione, dal demo al master, fino a SIAE, IMAIE, fattura, incasso e archivio.</p></div></div>
   <span class="hidden lg:inline-flex px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-black" id="guide-badge-version">Guida aggiornata</span>
  </div>
- <nav class="mt-6 flex gap-2 overflow-x-auto custom-scrollbar pb-2" aria-label="Indice manuale"><a class="toc-link" href="#novita-v245">Novità v2.54</a><a class="toc-link" href="#guida-creativa">Sessioni &amp; Piazzamenti</a><a class="toc-link" href="#guida-audiofinder">Audio Finder</a><a class="toc-link" href="#guida-analyst">KYV Analyst</a><a class="toc-link" href="#guida-economia">Fatture &amp; incassi</a><a class="toc-link" href="#percorso-v224">Storico v2.24</a><a class="toc-link" href="#archivio-v223">Archivio v2.23</a><a class="toc-link" href="#navigazione">Navigazione</a><a class="toc-link" href="#viaggio">Viaggio</a><a class="toc-link" href="#routine">Routine</a><a class="toc-link" href="#bottoni">Bottoni</a><a class="toc-link" href="#panoramica">Panoramica</a><a class="toc-link" href="#assistente">Assistente Produzione</a><a class="toc-link" href="#progetti">Progetti &amp; Uscite</a><a class="toc-link" href="#scheda">Scheda Progetto Unica</a><a class="toc-link" href="#sessioni">Sessioni Studio</a><a class="toc-link" href="#crm">Rubrica CRM</a><a class="toc-link" href="#dropbox">Audio Dropbox &amp; Invii</a><a class="toc-link" href="#documenti">Documenti, Spese &amp; Schede</a><a class="toc-link" href="#protezione">Protezione Brano</a><a class="toc-link" href="#fatture">Fatture</a><a class="toc-link" href="#fisco">Piano Fiscale</a><a class="toc-link" href="#diritti">Quote, Autori, Rendiconti SIAE/IMAIE</a><a class="toc-link" href="#importexport">Import</a><a class="toc-link" href="#editor">Studio Editor</a><a class="toc-link" href="#report">Report &amp; PDF</a><a class="toc-link" href="#integrazioni">Drive</a><a class="toc-link" href="#login">Login</a></nav>
+ <nav class="mt-6 flex gap-2 overflow-x-auto custom-scrollbar pb-2" aria-label="Indice manuale"><a class="toc-link" href="#guida-pratica-v273">Guida pratica v2.73</a><a class="toc-link" href="#novita-v245">Archivio storico</a><a class="toc-link" href="#guida-creativa">Sessioni &amp; Piazzamenti</a><a class="toc-link" href="#guida-audiofinder">Audio Finder</a><a class="toc-link" href="#guida-analyst">KYV Analyst</a><a class="toc-link" href="#guida-economia">Fatture &amp; incassi</a><a class="toc-link" href="#percorso-v224">Storico v2.24</a><a class="toc-link" href="#archivio-v223">Archivio v2.23</a><a class="toc-link" href="#navigazione">Navigazione</a><a class="toc-link" href="#viaggio">Viaggio</a><a class="toc-link" href="#routine">Routine</a><a class="toc-link" href="#bottoni">Bottoni</a><a class="toc-link" href="#panoramica">Panoramica</a><a class="toc-link" href="#assistente">Assistente Produzione</a><a class="toc-link" href="#progetti">Progetti &amp; Uscite</a><a class="toc-link" href="#scheda">Scheda Progetto Unica</a><a class="toc-link" href="#sessioni">Sessioni Studio</a><a class="toc-link" href="#crm">Rubrica CRM</a><a class="toc-link" href="#dropbox">Audio Dropbox &amp; Invii</a><a class="toc-link" href="#documenti">Documenti, Spese &amp; Schede</a><a class="toc-link" href="#protezione">Protezione Brano</a><a class="toc-link" href="#fatture">Fatture</a><a class="toc-link" href="#fisco">Piano Fiscale</a><a class="toc-link" href="#diritti">Quote, Autori, Rendiconti SIAE/IMAIE</a><a class="toc-link" href="#importexport">Import</a><a class="toc-link" href="#editor">Studio Editor</a><a class="toc-link" href="#report">Report &amp; PDF</a><a class="toc-link" href="#integrazioni">Drive</a><a class="toc-link" href="#login">Login</a></nav>
 </header>
 <div class="flex-1 overflow-auto custom-scrollbar p-4 md:p-8 pb-28 md:pb-8"><div class="max-w-7xl mx-auto space-y-8">
+
+
+<section id="guida-pratica-v273" class="guide-section manual-card p-5 md:p-8" aria-labelledby="v273-title">
+ <div class="mini-label mb-2">Manuale corrente · v2.73 · 4 novembre 2026</div>
+ <h2 id="v273-title" class="section-title">Guida pratica dettagliata · dalla ricerca all'incasso</h2>
+ <p class="text-kyv-text leading-relaxed mt-3">Questa sezione è il riferimento operativo aggiornato. Le sezioni più vecchie presenti più avanti sono conservate come storico delle versioni: in caso di differenze tra comandi, valgono queste istruzioni e la guida <b>?</b> della pagina. Non occorre registrare un progetto a ogni file trovato, né collegare automaticamente fatture o audio.</p>
+ <nav class="flex flex-wrap gap-2 mt-4" aria-label="Capitoli della guida pratica">
+  <a class="toc-link" href="#v273-search">Ricerca e filtri</a><a class="toc-link" href="#v273-scheda">Scheda progetto</a>
+  <a class="toc-link" href="#v273-sessioni">Sessioni e audio</a><a class="toc-link" href="#v273-contabilita">Fatture e diritti</a>
+  <a class="toc-link" href="#v273-editor">Editor e controlli</a><a class="toc-link" href="#v273-problemi">Problemi comuni</a>
+ </nav>
+ <div id="v273-search" class="manual-card-soft p-5 mt-6" tabindex="-1">
+  <h3 class="sub-title">1. Trovare un progetto: ricerca locale, filtri e ricerca globale</h3>
+  <ol class="list-decimal pl-5 space-y-2 mt-3 text-kyv-text leading-relaxed">
+   <li>Apri <a class="text-indigo-300 underline" href="progetti.html">Progetti</a>. Il pulsante <b>Recenti</b> mostra fino a 40 progetti quando non hai impostato altri criteri; <b>Tutti</b> consulta tutto l'archivio che la pagina ha caricato e verificato.</li>
+   <li>Scrivi nella casella <b>Cerca progetti</b> un titolo, artista, stato, prossima azione, nota o un numero ID. Per trovare un ID esatto digita, ad esempio, <b>#41</b> oppure <b>id:41</b>. Maiuscole e accenti non cambiano la ricerca.</li>
+   <li>Seleziona una vista: <b>Da fare</b> per progetti con azioni registrate, <b>In attesa</b> per quelli in attesa, <b>Usciti</b> per i conclusi. Queste viste applicano criteri sullo stato <i>registrato</i>, non ricostruiscono automaticamente l'avanzamento.</li>
+   <li>Apri <b>Filtri e ordinamento</b> per combinare artista, stato, fase e ordinamento per titolo, artista, ultima attività, follow-up o data meno recente. La ricerca viene effettuata sui progetti effettivamente caricati, non solo sulla pagina dei primi 50 risultati.</li>
+   <li>Sotto i filtri trovi il <b>riepilogo dei criteri attivi</b> e un unico pulsante <b>Azzera filtri</b>, visibile anche se i filtri avanzati sono chiusi. Quando lo premi la vista torna a Recenti, la ricerca si svuota e l'ordinamento torna all'ultima attività.</li>
+   <li>Per il grafico apri <b>Analisi archivio</b>. I numeri si riferiscono all'intero archivio caricato, indipendentemente dai filtri della lista; cliccando una barra applichi un filtro a Stato o Fase e passi alla vista Tutti.</li>
+  </ol>
+  <p class="text-kyv-text mt-3"><b>Esempio:</b> cerca “Emma ballad”, poi filtra per <b>In attesa</b> per vedere solo le schede che corrispondono a entrambe le condizioni. Se non trovi nulla, controlla il riepilogo sotto la barra e premi <b>Azzera filtri</b>. La voce <b>0 risultati</b> non cancella nessun progetto.</p>
+  <p class="text-kyv-text mt-2"><b>Ricerca globale:</b> usa <b>Ctrl+K</b> (Windows) o <b>Cmd+K</b> (Mac) per cercare da una pagina compatibile tra Progetti, Fatture, Invii, Documenti, Versioni audio, SIAE e IMAIE. Digita almeno due caratteri, usa le frecce per spostarti, Invio per aprire ed Esc per chiudere. I risultati non implicano modifiche ai dati.</p>
+ </div>
+ <div id="v273-scheda" class="manual-card-soft p-5 mt-4" tabindex="-1">
+  <h3 class="sub-title">2. Aprire, leggere e modificare una Scheda progetto</h3>
+  <ol class="list-decimal pl-5 space-y-2 mt-3 text-kyv-text leading-relaxed">
+   <li>Dall'elenco Progetti premi <b>Riepilogo</b> per consultare lo stato senza modifiche, oppure <b>Scheda</b> per aprire tutti i dettagli. Nel Riepilogo, <b>Scadenze e note</b> e <b>Sessioni, audio e fatture</b> sono sezioni espandibili: si aprono soltanto quando servono.</li>
+   <li>Nella Scheda usa <b>Easy</b> per il percorso essenziale e <b>Completa</b> per tutte le schede tecniche. <b>Continua progetto</b> ti indirizza al passaggio operativo più opportuno; non salva né crea automaticamente documenti.</li>
+   <li>Usa <b>Modifica dati</b> solo per modificare i campi. Controlla titolo, artista, stato, fase, crediti e date prima del salvataggio. Le voci <b>Copia recap</b>, <b>Copia mancanze</b>, <b>Apri Drive</b> e <b>Apri contratto</b> restano tra le altre azioni o nei relativi pannelli.</li>
+   <li>La barra <b>Percorso</b> collega Scheda, Sessioni, Audio e Fatture mantenendo l'ID progetto. Lo stato nella voce <b>Fatture</b> è informativo e non costituisce un ordine di emissione o un incasso verificato dalla banca.</li>
+  </ol>
+  <p class="text-kyv-text mt-3"><b>Importante:</b> per creare un progetto da un brano trovato con Audio Finder o da una ricerca su disco è sempre necessaria la tua scelta esplicita. Non dare per scontato che tutti i file siano progetti di tua produzione.</p>
+ </div>
+ <div id="v273-sessioni" class="manual-card-soft p-5 mt-4" tabindex="-1">
+  <h3 class="sub-title">3. Sessioni, Piazzamenti, Pipeline e Audio Finder</h3>
+  <ol class="list-decimal pl-5 space-y-2 mt-3 text-kyv-text leading-relaxed">
+   <li>In <b>Sessioni</b> registra o consulta le sessioni svolte e i collaboratori; usa il collegamento al progetto esistente quando disponibile. Una fee di valore zero non va interpretata come errore: può significare che la sessione non è ancora stata valorizzata o piazzata.</li>
+   <li>In <b>Piazzamenti/Pipeline</b> monitora invii, destinatari, follow-up e lo stato comunicato dal contatto. Filtra per artista o fase solo per organizzare il lavoro; la visualizzazione non invia automaticamente proposte.</li>
+   <li>In <b>Audio Finder</b> seleziona le sorgenti autorizzate (dispositivo locale o collegamenti a Drive, Dropbox, OneDrive, se configurati), controlla metadati, titolo, durata e versione. Non confondere il solo ritrovamento di un file con l'attribuzione a un tuo progetto.</li>
+   <li>Quando vuoi associare un file scegli il progetto corretto e usa il comando esplicito di <b>Conferma collegamento</b>. Se il brano non è tuo, puoi ignorarlo o lasciarlo non associato. L'app non deve creare progetti né associazioni sulla sola base di corrispondenze automatiche.</li>
+  </ol>
+  <p class="text-kyv-text mt-3"><b>Esempio:</b> trovi una demo sul PC. Ascolta, verifica autore e progetto, seleziona la scheda corretta e soltanto dopo autorizza il collegamento. Se non esiste una scheda, valuta se crearla manualmente.</p>
+ </div>
+ <div id="v273-contabilita" class="manual-card-soft p-5 mt-4" tabindex="-1">
+  <h3 class="sub-title">4. Fatture, incassi, SIAE, IMAIE e diritti</h3>
+  <ol class="list-decimal pl-5 space-y-2 mt-3 text-kyv-text leading-relaxed">
+   <li>Apri <a class="text-indigo-300 underline" href="fatture.html">Fatture</a> per distinguere fatture emesse, da incassare e incassate. Il campo di stato <b>incassato/PAGATA</b> rappresenta quanto registrato nel gestionale, non sostituisce la verifica dell'estratto conto.</li>
+   <li>Per collegare una fattura a un progetto usa il comando esplicito. Verifica numero, cliente, imponibile o importo unitario e collegamenti prima di confermare. L'apertura della voce Fatture nel Percorso non effettua alcuna ripartizione.</li>
+   <li>In <b>Rendiconto SIAE / IMAIE</b> distingui royalties, quote e proventi dai dati di fatturazione. Prima di confrontare valori importati controlla periodo, segno e regola dell'importazione: le convenzioni dell'estratto SIAE possono avere segni contabili non intuitivi.</li>
+   <li>Per le analisi usa gli indicatori di KYV Analyst e i report per controllare incassi, fee e attività; non confondere importi attesi, fatturati e effettivamente incassati.</li>
+  </ol>
+  <p class="text-kyv-text mt-3"><b>Se leggi “Fatture non disponibili”:</b> è un errore di lettura o copertura non verificata, non la prova che il progetto abbia zero fatture. Riprova quando l'accesso ai dati è disponibile.</p>
+ </div>
+ <div id="v273-editor" class="manual-card-soft p-5 mt-4" tabindex="-1">
+  <h3 class="sub-title">5. Studio Editor, aggiornamento dati e guida contestuale</h3>
+  <ol class="list-decimal pl-5 space-y-2 mt-3 text-kyv-text leading-relaxed">
+   <li>Apri <b>Studio Editor</b> quando devi lavorare su un archivio in forma tabellare. Seleziona prima la tabella e usa filtri o ricerca, poi apri la riga che vuoi modificare; evita di apportare modifiche a record simili senza verificare l'ID.</li>
+   <li>Controlla quali colonne sono visibili nella tabella e l'eventuale impostazione di personalizzazione disponibile; nascondere una colonna è una scelta di visualizzazione, non cancella il suo contenuto.</li>
+   <li>Prima di salvare modifiche numeriche verifica formato e segno, in particolare quando provengono da estratti o documenti importati. Per un dato che non deve cambiare, non forzare una riscrittura della riga.</li>
+   <li>Premi <b>?</b> sulla pagina per aprire la guida contestuale. Per procedure complete usa questo manuale, il cui indice collega le sezioni aggiornate e lo storico tecnico.</li>
+  </ol>
+ </div>
+ <div id="v273-problemi" class="manual-card-soft p-5 mt-4" tabindex="-1">
+  <h3 class="sub-title">6. Soluzioni rapide ai problemi più comuni</h3>
+  <div class="space-y-3 mt-3 text-kyv-text leading-relaxed">
+   <p><b>Il progetto esiste ma non compare.</b> Controlla se stai guardando Recenti (solo fino a 40 senza altri criteri), Da fare o In attesa; prova Tutti o cerca con #ID. Se la pagina segnala caricamento incompleto o limite di sicurezza, non interpretare l'elenco parziale come archivio vuoto.</p>
+   <p><b>La ricerca non trova un brano.</b> Verifica il nome e il progetto di provenienza. Per i file audio la ricerca in un servizio cloud dipende dalla connessione e dai permessi della sorgente, mentre la ricerca Progetti riguarda le schede già presenti nel database.</p>
+   <p><b>Il pulsante Azzera filtri non appare.</b> Significa che non ci sono criteri attivi oltre alla vista Recenti di default. È collocato accanto al riepilogo, sempre fuori dal pannello dei filtri avanzati.</p>
+   <p><b>Compare una versione precedente sul telefono.</b> Verifica la versione indicata in app, ricarica e aggiorna la PWA; una pubblicazione GitHub non conferma da sola la distribuzione Vercel né l'aggiornamento della cache locale.</p>
+   <p><b>Il dato non si carica o l'accesso è negato.</b> Controlla sessione, permessi e connessione. Non ripetere modifiche o importazioni senza capire se la prima operazione sia stata salvata; chiedi una verifica tecnica con il messaggio esatto dell'errore.</p>
+  </div>
+ </div>
+ <p class="text-kyv-text mt-4">Per la documentazione delle funzioni precedenti prosegui nell'<a class="text-indigo-300 underline" href="#novita-v245">archivio storico</a>. Per una spiegazione specifica della pagina usa sempre il pulsante <b>?</b> del gestionale.</p>
+</section>
 
 <section id="novita-v245" class="guide-section manual-card p-5 md:p-7">
   <div class="mini-label mb-2">Funzionalità correnti · v2.44–v2.45</div>

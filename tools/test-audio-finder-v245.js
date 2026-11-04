@@ -63,12 +63,12 @@ assert.ok(read('kyv-creative-desk-ui-v244.js').includes('kyv_audio_finder.html?s
 assert.ok(read('integrazioni.html').includes('href="kyv_audio_finder.html"'));
 assert.ok(read('kyv-producer-mode.js').includes("'kyv_audio_finder.html','Audio Finder'"));
 assert.ok(read('menu.js').includes("navItem('audiofinder'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-72-project-disclosure-20261104'));
+assert.ok(read('sw.js').includes('kyv-studio-v2-73-search-guide-20261104'));
 for(const x of ['kyv_audio_finder.html','kyv-audio-finder-v245.js','kyv-audio-finder-ui-v245.js','kyv-audio-finder-linked-v245.js'])
  assert.ok(read('sw.js').includes("'./"+x+"'"));
 const pkg=JSON.parse(read('package.json'));
-assert.equal(pkg.version,'2.72.0');
-assert.equal(read('VERSION').trim() ,'2.72');
+assert.equal(pkg.version,'2.73.0');
+assert.equal(read('VERSION').trim() ,'2.73');
 assert.equal(pkg.scripts['check:audio-finder-v245'],'node tools/test-audio-finder-v245.js');
 assert.ok(pkg.scripts.check.includes('check:audio-finder-v245'));
 console.log('OK: Audio Finder v2.45 metadata indexing, duplicate signals, consent, RLS, project/session links and PWA');

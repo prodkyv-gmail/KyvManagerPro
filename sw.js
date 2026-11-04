@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-72-project-disclosure-20261104';
+const CACHE_NAME = 'kyv-studio-v2-73-search-guide-20261104';
 const APP_SHELL = [
     './',
     './index.html',

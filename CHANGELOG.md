@@ -7,6 +7,14 @@
 
 # Changelog
 
+### v2.73 · 2026-11-04
+- Ricerca Progetti: supporto a ID esatto con #41 o id:41, più ID nelle ricerche generali; mantenuto il limite 40 soltanto per Recenti senza criteri.
+- Stato dei filtri leggibile fuori dal pannello avanzato; unico pulsante Azzera filtri visibile se ci sono criteri, anche con la disclosure chiusa. Viste principali con aria-pressed e conteggi chiari.
+- Guida completa riorganizzata con capitolo dettagliato v2.73 in testa all'indice (ricerca, Progetti, Scheda, Sessioni, Audio Finder, Pipeline, Fatture, Rendiconto, Studio Editor, esempi e troubleshooting). Storico versioni precedenti marcato come archivio.
+- Guida contestuale ampliata per i moduli principali e nuovo manuale pratico in docs/MANUALE_PRATICO_V273.md. Versione, PWA, test e policy sincronizzati.
+- Nessuna modifica a dati/schema Supabase, associazioni audio o deploy Vercel.
+
+
 ### v2.72 · 2026-11-04
 - Progetti: la Vista rapida diventa compatta e propone una sola azione principale, con sezioni native espandibili **Scadenze e note** e **Sessioni, audio e fatture**. Tutti i dati e i link già esistenti restano disponibili con l'ID progetto.
 - Scheda: unificato il controllo della densità di vista in Easy/Completa, rimuovendo il pulsante duplicato “Mostra dettagli”; aggiunti role=group e aria-pressed per accessibilità.

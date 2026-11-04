@@ -25,7 +25,8 @@ function compare(a,b,sort='activity'){
 }
 function filterRows(rows=[],opts={}){
  const {mode='RECENTI',query='',artist='',status='',phase='',sort='activity'}=opts;
- const q=fold(query),words=q.split(' ').filter(Boolean);
+ const requestedId=/^(?:#|id\s*:)\s*(\d+)$/i.exec(t(query));
+ const q=fold(requestedId?'':query),words=q.split(' ').filter(Boolean);
  const ra=fold(artist),rs=fold(status),rp=fold(phase);
  let list=(rows||[]).filter(p=>{
   if(mode==='DA_FARE'&&(!nextAction(p)||done(p)))return false;
@@ -34,9 +35,11 @@ function filterRows(rows=[],opts={}){
   if(ra&&fold(p.ARTISTA)!==ra)return false;
   if(rs&&(rs==='__missing__'?!!t(p.STATO):fold(p.STATO)!==rs))return false;
   if(rp&&(rp==='__missing__'?!!t(p.SVILUPPO):fold(p.SVILUPPO)!==rp))return false;
-  return words.every(w=>fold([p.TITOLO,p.ARTISTA,p.STATO,p.SVILUPPO,p.NOTE,p.Prossimo_Followup].join(' ')).includes(w));
+  // #41 or id:41 is an exact project lookup, not a fuzzy match against notes.
+  if(requestedId)return t(p.ID)===String(Number(requestedId[1]));
+  return words.every(w=>fold([p.ID,p.TITOLO,p.ARTISTA,p.STATO,p.SVILUPPO,p.NOTE,p.Prossimo_Followup].join(' ')).includes(w));
  }).sort((a,b)=>compare(a,b,sort));
- if(mode==='RECENTI'&&!q&&!ra&&!rs&&!rp)list=list.slice(0,40);
+ if(mode==='RECENTI'&&!q&&!requestedId&&!ra&&!rs&&!rp)list=list.slice(0,40);
  return list;
 }
 function distinct(rows,field){
