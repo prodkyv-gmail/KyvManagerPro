@@ -1,3 +1,11 @@
+## v2.67 — Studio Editor: archivio completo e griglia progressiva (4 novembre 2026)
+
+**Lettura verificata:** apri Studio Editor, scegli una tabella e attendi che il contatore riporti i record verificati. La lettura non è più limitata silenziosamente a 1.000 record: usa pagine da 500, conteggio esatto e ordinamento per chiave. Se il totale è sconosciuto, il permesso nega la lettura, una pagina manca o l'archivio supera 30.000 righe, non mostra un elenco parziale come completo e propone **Riprova**. Le risposte tardive di un tab precedente non sovrascrivono il tab corrente.
+
+**Griglia leggera:** mostra fino a 120 righe iniziali; **Mostra altre 120 righe** aggiunge visibilità senza altre query. Ricerca testuale e ordinamento agiscono su tutto l'insieme caricato e verificato, non solo sulle 120 righe visibili. Il contatore distingue *mostrate*, *corrispondenze* e *totale verificato*. Il CSV esporta l'intera tabella caricata, comprese le colonne nascoste. La selezione delle colonne non altera i record.
+
+**Garanzie:** nessun cambiamento al salvataggio delle celle, ai moduli dati, alla proprietà dei file, ai segni SIAE o alle regole fiscali. I test di caricamento sono simulati; è ancora necessario un collaudo con accesso autorizzato alla PWA, sia desktop sia mobile. Vercel e database non sono stati modificati.
+
 ## v2.66 — Collaudo dei flussi e ricerca senza risultati obsoleti (4 novembre 2026)
 
 **Ricerca globale:** il comando **Aggiorna** nel popup rilegge su richiesta le sette fonti disponibili, con conteggi verificati come in v2.65. Un salvataggio completato nell'Editor o gli eventi espliciti di aggiornamento di fatture/progetti invalidano l'indice senza polling. Una lettura vecchia terminata dopo l'aggiornamento non può sostituire risultati nuovi. Se digiti prima che la verifica sia completata non compare un falso “zero risultati”: attendi la verifica oppure usa **Riprova** in caso di errore. Il tasto Invio apre il risultato solo quando stai digitando nella casella: i pulsanti del popup conservano la propria funzione.
