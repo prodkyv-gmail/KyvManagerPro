@@ -1,5 +1,13 @@
 # Changelog
 
+### v2.62 · 2026-11-04
+- Scrivania musicale: pannelli richiudibili per filtri avanzati e grafico globale, azzeramento mirato e riduzione dei KPI duplicati nelle testate delle tre schede.
+- Sessioni e Piazzamenti: ricerche indipendenti tra tab, navigazione tastiera, moduli essenziali con campi avanzati facoltativi riaperti alla modifica; invariati validazioni e salvataggi.
+- Popup musicale → Piazzamenti: trasporto per ID progetto verificato e sola preselezione senza scrittura.
+- Audio Finder: esplorazione dei soli audio personali in primo piano, quattro passaggi con pannelli richiudibili per sorgenti, audit, proposte e versioni, salti ad ancora che aprono le sezioni richieste.
+- Catalogo audio: ricerca e filtri ridisegnano la sola lista anziché riconfigurare gruppi/esploratore/audit; apertura automatica del blocco avanzato quando si seleziona un file da un gruppo.
+- Suite regressione dedicata, guida contestuale/manuale, versione e cache PWA aggiornate; nessuna migrazione dati né accesso Vercel.
+
 ### v2.61 · 2026-11-04
 - Progetti safe: grafico globale e filtri avanzati in pannelli nativi richiudibili, conta filtri attivi, apertura automatica del pannello quando si sceglie un intervallo dal grafico; nessun nuovo renderer.
 - Layout mobile della lista in card senza scorrimento tabellare, con etichette e attività datate; popup Riepilogo accessibile da tastiera, con chiusura Esc e restituzione del focus.
