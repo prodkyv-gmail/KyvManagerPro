@@ -74,9 +74,9 @@ for(const id of ['finder-audit','audit-kpis','audit-coverage','audit-status',
  'audit-items','audit-more','audit-query','audit-type','audit-source'])assert.ok(html.includes('id="'+id+'"'),id);
 assert.ok(html.includes('kyv-audio-audit-v257.js'));
 assert.ok(sw.includes("'./kyv-audio-audit-v257.js'"));
-assert.ok(sw.includes('kyv-studio-v2-61-project-clarity-20261104'));
-assert.equal(JSON.parse(read('package.json')).version,'2.61.0');
-assert.equal(read('VERSION').trim(),'2.61');
+assert.ok(sw.includes('kyv-studio-v2-62-creative-audio-20261104'));
+assert.equal(JSON.parse(read('package.json')).version,'2.62.0');
+assert.equal(read('VERSION').trim(),'2.62');
 assert.ok(read('guida.html').includes('v2.57'));
 assert.ok(read('kyv-help.js').includes('v2.57'));
 console.log('OK: v2.57 approved-only audit, SHA copy proof, pending scan, projects and manual navigation');

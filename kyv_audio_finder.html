@@ -145,6 +145,14 @@
 <div class="overflow-y-auto flex-1">
 <div class="finder-main">
 <p>Scansiona solo quando vuoi i file audio nelle sorgenti autorizzate, poi salva i metadati nel catalogo. <strong>Non vengono caricati gli audio su Supabase</strong> e nessun progetto viene collegato automaticamente per somiglianza del nome.</p>
+<nav class="finder-journey" aria-label="Percorso Audio Finder">
+<a href="#finder-explorer">1 · I miei brani</a>
+<a href="#finder-sources-details" data-finder-jump="finder-sources-details">2 · Aggiungi audio</a>
+<a href="#finder-audit-details" data-finder-jump="finder-audit-details">3 · Controllo archivio</a>
+<a href="#finder-version-groups-details" data-finder-jump="finder-version-groups-details">4 · Versioni</a>
+</nav>
+<details id="finder-audit-details" class="kyv-v260-disclosure finder-workflow-details">
+<summary>Controllo dell'archivio audio <small>Completezza, file non collegati e duplicati · sola lettura</small></summary>
 <section id="finder-audit" class="audit-center" aria-label="Controllo archivio audio">
 <div class="explorer-tools">
  <div><h2>Controllo archivio audio · v2.57</h2>
@@ -170,8 +178,9 @@
 <div id="audit-items" class="audit-items"></div>
 <button type="button" id="audit-more" hidden>Mostra altre verifiche</button>
 </section>
+</details>
 <section class="explorer" aria-label="Esploratore unico dei miei brani" id="finder-explorer">
-<div class="explorer-tools"><div><h2>Esplora i miei brani · v2.51</h2><p class="explorer-desc">Cerca insieme i soli file già approvati come tuoi tra Mac, PC, smartphone, Drive e archivio Dropbox.</p></div><a href="#finder-sources">Aggiungi da una sorgente</a></div>
+<div class="explorer-tools"><div><h2>Esplora i miei brani · v2.51</h2><p class="explorer-desc">Cerca insieme i soli file già approvati come tuoi tra Mac, PC, smartphone, Drive e archivio Dropbox.</p></div><a href="#finder-sources-details" data-finder-jump="finder-sources-details">Aggiungi da una sorgente</a></div>
 <div class="explorer-filters">
 <input id="explorer-query" type="search" aria-label="Cerca su tutte le sorgenti" placeholder="Titolo, nome file, cartella, account…">
 <select id="explorer-source" aria-label="Fonte"><option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option><option value="onedrive">OneDrive</option></select>
@@ -206,6 +215,8 @@
 </details>
 <button data-finder-action id="finder-reload" type="button">Rileggi indice</button>
 <div id="finder-status" class="finder-status" role="status">Preparazione…</div>
+<details id="finder-sources-details" class="kyv-v260-disclosure finder-workflow-details">
+<summary>Aggiungi audio da PC, smartphone o cloud <small>Solo dopo la tua scelta · nessuna scansione nascosta</small></summary>
 <section class="finder-sources" id="finder-sources" aria-label="Sorgenti">
 <div class="finder-card"><h2>Google Drive</h2>
 <label for="drive-account">Account</label><select id="drive-account"><option value="all">Tutti i Drive</option></select>
@@ -249,6 +260,7 @@
 <small>Configurazione necessaria: client ID Microsoft, redirect URI SPA esatta, migrazione SQL per il provider. Fino alla sua attivazione usa la selezione dei file OneDrive sincronizzati sul dispositivo.</small>
 </div>
 </section>
+</details>
 <section id="finder-preview" class="finder-preview" hidden>
 <h2>Revisione guidata dei brani · v2.54</h2><p id="finder-preview-note"></p>
 <p id="finder-sync-summary" class="finder-sync-note" role="status"></p>
@@ -282,7 +294,9 @@
 <div class="finder-intake-actions"><button id="finder-save" data-finder-action type="button">Salva le classificazioni e gli aggiornamenti confermati</button></div>
 <button id="finder-cancel" type="button">Scarta anteprima</button>
 </section>
-<section class="finder-card" style="margin:18px 0" aria-label="Coda di revisione audio">
+<details id="finder-review-details" class="kyv-v260-disclosure finder-workflow-details">
+<summary>Proposte di collegamento da revisionare <small>Opzionale · richiede conferma manuale</small></summary>
+<section class="finder-card" style="margin:12px" aria-label="Coda di revisione audio">
 <h2>Coda proposte · v2.46</h2>
 <p>Trova i possibili brani nei file già indicizzati. <strong>Nessuna associazione viene creata automaticamente.</strong> I titoli ambigui richiedono una scelta esplicita.</p>
 <button id="review-generate" type="button" data-finder-action>Genera proposte da revisionare</button>
@@ -291,6 +305,9 @@
 <button id="review-save" type="button" data-finder-action>Conferma associazioni selezionate (max 25)</button>
 <p class="finder-note">Spunta solo i file verificati. Il salvataggio usa un unico inserimento per il gruppo; «Scollega» annulla poi i singoli legami.</p></section>
 </section>
+</details>
+<details id="finder-version-groups-details" class="kyv-v260-disclosure finder-workflow-details">
+<summary>Brani e versioni raggruppati <small>Demo, mix e master suggeriti per nome · nessun link automatico</small></summary>
 <section class="finder-card" id="finder-version-groups" aria-label="Gruppi di versioni proposte">
 <h2>Brani e versioni · v2.56</h2>
 <p>I file che hai approvato come tuoi vengono raggruppati per nomi simili, per vedere demo, mix, master e altre versioni insieme. <strong>È solo una proposta, non una conferma che appartengano allo stesso brano.</strong> I file senza artista dichiarato restano separati da quelli attribuiti a un artista; cambiare filtro nasconde e deseleziona il gruppo precedente. Se scegli una sorgente, il dettaglio mostra e permette di selezionare <strong>solo i file di quella sorgente</strong>; scegli «Tutte le sorgenti» per rivedere e collegare versioni di archivi diversi. Cambiando sorgente, le selezioni precedenti e il progetto scelto vengono azzerati. La conferma finale mostra il progetto e i nomi dei file. Non vengono creati nuovi progetti o collegamenti automaticamente.</p>
@@ -304,6 +321,7 @@
 <button id="finder-group-more" type="button" hidden>Mostra altri gruppi</button>
 <div id="finder-group-detail" class="finder-group-detail" hidden></div>
 </section>
+</details>
 <details id="finder-advanced" class="finder-secondary-details"><summary>Dettagli e collegamenti avanzati dei file approvati</summary>
 <div class="finder-controls">
 <input type="search" id="finder-query" aria-label="Cerca file nell'indice" placeholder="Cerca titolo, nome file, sorgente, cartella…">

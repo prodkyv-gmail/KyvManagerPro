@@ -1097,3 +1097,142 @@ body.kyv-v260 #kyv-easy-mode-switch button {
  body.kyv-v260 #quick-edit-modal {padding:10px;}
  body.kyv-v260 #quick-edit-modal [data-key] {font-size:16px;}
 }
+
+
+/* v2.62 · Creative and Audio Finder: progressive workflow without duplicate tools.
+   Pure CSS; only existing IDs and native disclosures are used. */
+body.kyv-v260 .desk-content {max-width:var(--kyv-ui-content-width);}
+body.kyv-v260 .desk-header h1 {font-size:clamp(22px,2.4vw,30px);}
+body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details) {
+ border:1px solid var(--kyv-ui-border);
+ border-radius:var(--kyv-ui-radius);
+ background:linear-gradient(145deg,#162031,#111926);
+ margin:12px 0;
+ min-width:0;
+}
+body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details) > summary {
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+ gap:8px;list-style:none;cursor:pointer;
+ min-height:50px;padding:13px 17px;
+ font-size:14px;font-weight:850;color:#f3f5ff;
+}
+body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details) > summary::-webkit-details-marker {display:none;}
+body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details) > summary::after {
+ content:'+';font-size:22px;line-height:1;color:#bcb8ff;margin-left:auto;
+}
+body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details)[open] > summary::after{content:'−';}
+body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details) > summary small {
+ color:#bfcbdf;font-size:12px;font-weight:550;line-height:1.35;
+}
+body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details)[open] > summary {
+ border-bottom:1px solid var(--kyv-ui-border);
+}
+body.kyv-v260 .desk-explainer > .desk-method {
+ padding:12px 17px 15px;margin:0;font-size:12px;color:#cbd5e1;
+}
+body.kyv-v260 #desk-legacy-tools[hidden] {display:none!important;}
+body.kyv-v260 #desk-creative-insights .desk-stats {padding:12px 14px 0;margin:0;}
+body.kyv-v260 #desk-creative-insights #desk-method{padding:8px 16px 16px;margin:0;font-size:12px;}
+body.kyv-v260 #desk-legacy-tools .desk-tools {
+ border:1px solid var(--kyv-ui-border);
+ background:#141d2b;border-radius:var(--kyv-ui-radius);
+ padding:10px 12px;margin:12px 0;
+}
+body.kyv-v260 #desk-legacy-tools .desk-tools > input[type=search] {min-height:44px;}
+body.kyv-v260 .desk-tabs {
+ gap:7px;margin:16px 0 12px;
+ border-bottom:1px solid var(--kyv-ui-border);
+ padding-bottom:12px;
+}
+body.kyv-v260 .desk-tabs button {flex:0 1 auto;min-width:112px;}
+body.kyv-v260 #desk-hub .hub-main {background:transparent;border-color:var(--kyv-ui-border);}
+body.kyv-v260 .hub-query-bar {display:flex;align-items:stretch;flex-wrap:wrap;gap:9px;margin:16px 0 6px;}
+body.kyv-v260 .hub-query-bar input {
+ flex:1 1 230px;min-width:0;min-height:44px;
+ padding:11px 13px;border-radius:var(--kyv-ui-radius-small);
+ background:#0d1727;border:1px solid #64738f;color:#fff;font-size:15px;
+}
+body.kyv-v260 .hub-query-bar button {
+ flex:0 0 auto;min-height:44px;white-space:nowrap;
+ background:#1a2637;border-color:#66768f;
+}
+body.kyv-v260 #hub-more-filters {margin:6px 0 13px;}
+body.kyv-v260 #hub-more-filters .hub-filters {
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+ padding:14px;margin:0;
+}
+body.kyv-v260 #hub-more-filters .hub-filters select {
+ min-height:44px;border-color:#65758c;background:#101a2a;font-size:14px;
+}
+body.kyv-v260 #hub-pitch-analysis {margin:10px 0 12px;}
+body.kyv-v260 #hub-pitch-analysis .hub-graph {margin:12px;border-radius:12px;}
+body.kyv-v260 .desk-form-extras {border-color:var(--kyv-ui-border);margin:4px 0 0;}
+body.kyv-v260 .desk-form-extras-grid {
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:12px;padding:14px;
+}
+body.kyv-v260 .desk-form-extras-grid .wide {grid-column:1/-1;}
+body.kyv-v260 .desk-form-extras-grid label {min-width:0;}
+body.kyv-v260 .desk-form-extras-grid :is(input,textarea,select) {
+ min-width:0;min-height:44px;width:100%;
+ border-radius:var(--kyv-ui-radius-small);
+ border:1px solid #65758c;background:#0e1828;color:#fff;
+ font-size:15px;
+}
+body.kyv-v260 .finder-journey {
+ display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;
+ margin:15px 0;
+}
+body.kyv-v260 .finder-journey a {
+ display:inline-flex;align-items:center;justify-content:center;
+ flex:1 1 150px;min-height:44px;
+ background:#182436;border:1px solid var(--kyv-ui-border);
+ border-radius:var(--kyv-ui-radius-small);
+ color:#dfe7ff;font-size:12px;font-weight:800;text-align:center;
+ padding:8px 10px;text-decoration:none;
+}
+body.kyv-v260 .finder-journey a:hover {
+ background:#263852;border-color:#8e91c9;color:#fff;
+}
+body.kyv-v260 .finder-workflow-details {margin:13px 0;overflow:clip;}
+body.kyv-v260 .finder-workflow-details > :not(summary) {margin:12px!important;}
+body.kyv-v260 #finder-audit-details #finder-audit {
+ background:transparent;border:none;box-shadow:none;padding:4px;
+}
+body.kyv-v260 #finder-sources-details #finder-sources {
+ margin:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+}
+body.kyv-v260 #finder-version-groups-details #finder-version-groups,
+body.kyv-v260 #finder-review-details > .finder-card {
+ margin:12px!important;background:#161f30;border-color:var(--kyv-ui-border);
+}
+body.kyv-v260 #finder-explorer {
+ background:linear-gradient(135deg,#1c2a42,#121b2d);
+ border:1px solid #65718b;
+ box-shadow:0 12px 32px rgba(0,0,0,.16);
+}
+body.kyv-v260 #finder-explorer .explorer-filters {
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:9px;
+}
+body.kyv-v260 #finder-explorer #explorer-query {grid-column:1/-1;min-width:0;width:100%;}
+body.kyv-v260 #finder-explorer .explorer-filters :is(input,select) {
+ width:100%;max-width:100%;min-width:0;min-height:44px;font-size:14px;
+}
+body.kyv-v260 #finder-explorer .explorer-item-actions button {
+ min-height:44px;
+}
+@media(max-width:950px){
+ body.kyv-v260 #finder-explorer .explorer-filters {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:767px){
+ body.kyv-v260 .desk-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
+ body.kyv-v260 .desk-tabs button{min-width:0;font-size:12px;padding:8px 4px;}
+ body.kyv-v260 #hub-more-filters .hub-filters {grid-template-columns:1fr;padding:12px;}
+ body.kyv-v260 .desk-form-extras-grid {grid-template-columns:1fr;padding:12px;}
+ body.kyv-v260 .desk-form-extras-grid .wide {grid-column:auto;}
+ body.kyv-v260 #finder-explorer .explorer-filters {grid-template-columns:1fr;}
+ body.kyv-v260 .finder-journey {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
+ body.kyv-v260 :is(.desk-disclosure,.finder-workflow-details) > summary {padding:13px;align-items:flex-start;}
+ body.kyv-v260 .hub-query-bar button {flex:1 1 120px;}
+}

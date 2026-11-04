@@ -144,9 +144,9 @@ function renderExplorer(){
 function explorerDetail(id){
  const file=explorerApproved().find(f=>String(f.id)===String(id));if(!file)throw Error('Audio non approvato');
  selected=file.id;const advanced=$('finder-advanced');if(advanced)advanced.open=true;
- render();$('finder-detail').scrollIntoView({behavior:'smooth',block:'start'});
+ renderCatalogue();$('finder-detail').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function render(){
+function renderCatalogue(){
  const personal=personalCatalogue();
  const rows=R.filterCatalogue(personal,links,{query:$('finder-query').value,source:$('finder-source').value,status:$('finder-link-status').value});
  $('finder-count').textContent=rows.length+' file trovati · '+personal.length+' tuoi brani approvati';
@@ -156,6 +156,9 @@ function render(){
   '<small>'+active(f.id).length+' collegamenti verificati</small></button>').join('')||'<p>Nessun file corrispondente.</p>';
  $('finder-more').hidden=rows.length<=shown;
  renderDetail();
+}
+function render(){
+ renderCatalogue();
  renderGroups();
  renderExplorer();
  renderAudit();
@@ -742,6 +745,24 @@ function kindChanged(){
  $('project-wrap').hidden=!isProject;$('session-wrap').hidden=isProject;
 }
 function boot(){
+ // The source sections are optional, but anchor navigation always reveals the requested section.
+ const jumpIds=['finder-sources-details','finder-audit-details','finder-review-details','finder-version-groups-details','finder-advanced'];
+ const revealJump=id=>{
+  if(!jumpIds.includes(id))return;
+  const node=$(id);
+  if(node?.tagName==='DETAILS')node.open=true;
+  for(let parent=node?.parentElement;parent;parent=parent.parentElement)
+   if(parent.tagName==='DETAILS')parent.open=true;
+ };
+ document.querySelectorAll('[data-finder-jump]').forEach(link=>
+  link.addEventListener('click',()=>revealJump(link.dataset.finderJump)));
+ const initialHash=decodeURIComponent(location.hash.slice(1));
+ if(initialHash==='finder-sources')revealJump('finder-sources-details');
+ else revealJump(initialHash);
+ window.addEventListener('hashchange',()=>{
+  const hash=decodeURIComponent(location.hash.slice(1));
+  revealJump(hash==='finder-sources'?'finder-sources-details':hash);
+ });
  $('finder-reload').addEventListener('click',refresh);
  for(const source of ['dropbox','onedrive']){
   $('finder-'+source+'-connect').addEventListener('click',()=>run(()=>beginCloud(source)));
@@ -795,18 +816,18 @@ function boot(){
  });
  $('finder-group-detail').addEventListener('click',e=>{
   const b=e.target.closest('[data-group-action],[data-group-open-file]');if(!b)return;
-  if(b.dataset.groupOpenFile){selected=b.dataset.groupOpenFile;renderDetail();$('finder-detail').scrollIntoView({behavior:'smooth',block:'nearest'});return;}
+  if(b.dataset.groupOpenFile){selected=b.dataset.groupOpenFile;$('finder-advanced').open=true;renderCatalogue();$('finder-detail').scrollIntoView({behavior:'smooth',block:'nearest'});return;}
   if(b.dataset.groupAction==='save')return run(saveGroup);
   groupSelection(b.dataset.groupAction);
  });
- $('finder-query').addEventListener('input',()=>{shown=120;render()});
- $('finder-source').addEventListener('change',()=>{shown=120;render()});
- $('finder-link-status').addEventListener('change',()=>{shown=120;render()});
+ $('finder-query').addEventListener('input',()=>{shown=120;renderCatalogue()});
+ $('finder-source').addEventListener('change',()=>{shown=120;renderCatalogue()});
+ $('finder-link-status').addEventListener('change',()=>{shown=120;renderCatalogue()});
  $('review-generate').addEventListener('click',()=>run(async()=>generateReview()));
  $('review-more').addEventListener('click',()=>{reviewShown+=80;renderReview()});
  $('review-save').addEventListener('click',()=>run(saveReviewed));
  $('review-list').addEventListener('change',rememberReview);
- $('finder-more').addEventListener('click',()=>{shown+=120;render()});
+ $('finder-more').addEventListener('click',()=>{shown+=120;renderCatalogue()});
  $('finder-drive').addEventListener('click',()=>run(drive));
  $('batch-scan').addEventListener('click',()=>run(batchCloud));
  $('finder-dropbox').addEventListener('click',()=>run(dropbox));
