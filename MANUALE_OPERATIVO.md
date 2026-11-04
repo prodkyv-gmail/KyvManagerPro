@@ -1,3 +1,13 @@
+## v2.60 — Navigazione semplificata e nuova base grafica (4 novembre 2026)
+
+**Dove andare.** Le voci principali del menu includono Oggi, Agenda, Nuovo, Progetti, Scrivania creativa, Ascolto, Audio Finder e Tutte le app. Fatture emesse si trova in Amministrazione; non compare una seconda volta in Ogni giorno. Il gruppo Strumenti contiene gli strumenti specializzati senza ripetere Tutte le app. Sul telefono la barra inferiore apre direttamente Ascolto e non sostituisce più Rubrica dopo il caricamento. Puoi raggiungere i contatti da Strumenti/Launcher o dalla schermata dedicata.
+
+**Scrivania musicale.** La barra contestuale in alto contiene soltanto Audio Finder e Guida, perché le navigazioni generiche sono già nel menu. Restano tutte le schede: Scrivania musicale, Sessioni, Piazzamenti, senza nuove copie delle funzioni.
+
+**Audio Finder.** Cerca normalmente i tuoi brani, conferma Mio/Reference/Da verificare e associa i progetti solo su scelta esplicita. La scansione congiunta Drive + Dropbox già configurati si apre da **Scansione combinata di Drive e Dropbox** (pannello avanzato). In Dropbox, per collegamenti online facoltativi, apri **Dropbox online · autorizzazione OAuth**. Il pulsante Chooser e il registro archivio rimangono sempre disponibili, non è richiesto aprire l'area OAuth per consultarli. I pannelli richiudibili non eliminano o disabilitano alcun controllo.
+
+**Aspetto.** Sono unificati spazi, bordi, card, contrasti, ingressi da tastiera, dimensioni touch e popup su 13 sezioni. Progetti safe è esclusa da questa fase per non compromettere il suo avvio isolato. La grafica delle viste storiche verrà consolidata nelle versioni successive senza alterarne dati e diritti.
+
 ## v2.59 — La nuova Scrivania musicale (4 novembre 2026)
 
 Apri **Scrivania creativa**: la scheda iniziale **Scrivania musicale** mostra la situazione dei progetti realmente presenti in KYV. Gli indicatori in alto distinguono progetti, sessioni registrate, collegamenti a soli audio approvati come tuoi, piazzamenti e follow-up scaduti. Il grafico mostra la distribuzione per stato delle proposte registrate, non una conversione effettiva dei brani. I filtri indipendenti ricercano per artista, titolo, destinatario, titolo della sessione, stato e tipo. Per vedere i dettagli di un progetto premi **Apri riepilogo** e consulta il popup con collegamenti diretti alla Scheda Progetto, Audio Finder, Piazzamenti e Fatture. Le schede **Sessioni** e **Piazzamenti** mantengono le funzioni di inserimento e modifica.

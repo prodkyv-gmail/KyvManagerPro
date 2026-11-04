@@ -1,5 +1,11 @@
 # Changelog
 
+### v2.60 · 2026-11-04
+- Sistema visivo condiviso v2.60 in kyv-theme.css, applicato alle schermate operative compatibili: card, spazio, leggibilità, pulsanti, moduli, focus e mobile; la pagina Progetti safe rimane isolata.
+- Navigazione senza ripetizioni: Tutte le app una sola volta, Fatture in Amministrazione, barra mobile con Ascolto diretto e aria-current stabile, senza riscrittura del collegamento Rubrica.
+- Scrivania creativa e Audio Finder: collegamenti in testata solo contestuali; scansione combinata e OAuth Dropbox facoltativo dentro pannelli details HTML, con controlli e identificativi originali invariati.
+- Aggiunta suite regressione v2.60, guida contestuale/manuale e rotazione cache PWA; nessuna modifica ai flussi database, permessi o calcoli.
+
 ### v2.59 · 2026-11-04
 - Nuova vista predefinita «Scrivania musicale» nella Scrivania creativa, senza duplicazione di archivi: unione in sola lettura per progetto delle sessioni documentate, piazzamenti attivi, audio personali confermati, fee e fatture esplicitamente attribuite.
 - Filtri autonomi, ricerca tra artisti/titoli/sessioni/destinatari, grafico stato piazzamenti, caricamento progressivo e popup di dettaglio con navigazione alle sezioni originali.
