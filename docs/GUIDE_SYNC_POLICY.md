@@ -1,3 +1,6 @@
+### v2.71 — Mobile e pannelli progressivi
+Per Progetti safe, riutilizzare la sua navigazione isolata senza introdurre observer globali: controllare focus, Esc/Tab, aria-expanded e la barra rapida quando il menu è aperto. Nel modulo Easy/Completa modificare details.open all'inizializzazione e al cambio di modalità, non durante ogni refresh: l'utente deve poter mantenere aperta una sezione. Nessuna modifica a Supabase o a permessi.
+
 ### v2.70 — Consolidamento senza azioni duplicate
 Prima di aggiungere nuove funzionalità alla scheda, riutilizzare un componente esistente per ogni azione. Il modulo `kyv-flow-routes-v269.js` deve essere realmente caricato prima di `kyv-workflow-nav.js`; il test deve verificare che entrambe le occorrenze esistano e siano nell'ordine corretto. La voce Fatture del Percorso è unica: gli stati (da incassare, incassate, non emesse, errore di lettura) sono informativi e non possono aprire automaticamente una modifica o inserimento. Se l'Hub v3 contiene già la “Prossima azione”, nascondere il banner identico del vecchio hero; preservarlo come fallback se l'Hub non è pronto. Modificare soltanto la presentazione, senza interferire con permessi, relazioni, contabilità, logiche di consenso audio o dati archiviati.
 

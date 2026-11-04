@@ -1,3 +1,11 @@
+## v2.71 — Progetti mobile e viste secondarie senza interruzioni (4 novembre 2026)
+
+La pagina **Progetti**, con vista indipendente, ha un menu mobile accessibile: il focus entra nel menu aperto, **Esc** lo chiude e ritorna al pulsante, **Tab** naviga all'interno e lo stato è indicato con aria-expanded. La barra inferiore indica la sezione corrente, è disabilitata mentre il menu è aperto e non viene duplicata se una barra condivisa esiste già.
+
+Nelle viste **Easy/Completa** di Pipeline, Fatture e Rendiconto, i pulsanti comunicano la selezione tramite aria-pressed. I pannelli secondari aperti manualmente non si richiudono al refresh, ma seguono i cambi espliciti di modalità.
+
+Il percorso dei dati, le fatture e i file audio sono invariati. Nessun intervento Vercel o database.
+
 ## v2.70 — Navigazione senza duplicati (4 novembre 2026)
 
 La barra **Percorso** della Scheda progetto carica ora il modulo di navigazione corretto e mantiene il progetto fra Scheda, Sessioni, Audio Finder e Fatture. È stata eliminata una duplicazione: lo stato della fattura (incassata, da incassare, non emessa o non disponibile) viene mostrato come **etichetta informativa nella voce Fatture**, non in un secondo collegamento. In caso di errore di lettura non viene dedotto che non esistano fatture; nessuna azione di modifica o ripartizione parte dalla navigazione.

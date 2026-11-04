@@ -67,6 +67,7 @@
         thead{background:#1b2534;color:#c5cddd}
         td{border-top-color:var(--safe-outline)}
         .row:hover{background:rgba(129,140,248,.09)}
+        @media(max-width:820px){body.menu-open{overflow:hidden}body.menu-open .kyv-safe-mobile-nav{visibility:hidden;pointer-events:none}}
         .open{min-height:40px;align-items:center;justify-content:center}
         .project-title{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
         .artist{color:#aee5fb}
@@ -111,8 +112,8 @@
     </style>
 </head>
 <body>
-    <button class="mobile-open" type="button" onclick="document.body.classList.add('menu-open')" aria-label="Apri menu">☰</button>
-    <div class="backdrop" onclick="document.body.classList.remove('menu-open')"></div>
+    <button class="mobile-open" type="button" onclick="setSafeProjectsMenu(true)" aria-label="Apri menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+    <div class="backdrop" onclick="setSafeProjectsMenu(false)" aria-hidden="true"></div>
 
     <aside class="sidebar" id="sidebar">
         <div class="brand"><strong>KYV Studio</strong><span>Manager Pro</span></div>
@@ -121,7 +122,7 @@
             <a href="index.html"><i class="dot"></i>Oggi</a>
             <a href="kyv_calendar.html"><i class="dot"></i>Agenda</a>
             <a href="acquisisci_audio.html"><i class="dot"></i>Nuovo</a>
-            <a href="progetti.html" class="active"><i class="dot"></i>Progetti</a>
+            <a href="progetti.html" class="active" aria-current="page"><i class="dot"></i>Progetti</a>
             <a href="ascolto.html"><i class="dot"></i>Ascolto</a>
         </nav>
         <details class="group"><summary><span>Controllo</span><span>⌄</span></summary><nav class="nav"><a href="fatture.html">Fatture e incassi</a><a href="documenti.html?tab=spese">Spese</a><a href="documenti.html">Documenti</a><a href="fisco.html">Piano fiscale</a><a href="quote.html">Quote / split</a><a href="rendiconto.html">Rendiconto SIAE</a></nav></details>
@@ -192,6 +193,23 @@
         const dateValue=v=>{const n=new Date(v||0).getTime();return Number.isFinite(n)?n:0;};
         const activity=p=>Math.max(dateValue(p.updated_at),dateValue(p.Data_Sessione),dateValue(p.Data_Pubblicazione),dateValue(p.created_at),Number(p.ID||0));
         const activityLabel=p=>{const t=Math.max(dateValue(p.updated_at),dateValue(p.Data_Sessione),dateValue(p.Data_Pubblicazione),dateValue(p.created_at));if(!t)return '—';const d=Math.max(0,Math.floor((Date.now()-t)/86400000));if(d===0)return'Oggi';if(d===1)return'Ieri';if(d<45)return`${d} gg fa`;return new Date(t).toLocaleDateString('it-IT');};
+
+        // v2.71 — Safe Projects has its own isolated sidebar, not the shared menu.js.
+        // Keep keyboard focus, drawer state and the bottom quick nav in sync.
+        window.setSafeProjectsMenu=function(open){
+            const sidebar=el('sidebar'),trigger=document.querySelector('.mobile-open');
+            const shouldOpen=Boolean(open)&&window.matchMedia('(max-width:820px)').matches;
+            document.body.classList.toggle('menu-open',shouldOpen);
+            trigger?.setAttribute('aria-expanded',String(shouldOpen));
+            trigger?.setAttribute('aria-label',shouldOpen?'Chiudi menu':'Apri menu');
+            const quickNav=document.querySelector('.kyv-safe-mobile-nav');
+            if(quickNav)quickNav.inert=shouldOpen;
+            if(shouldOpen)sidebar?.querySelector('nav a')?.focus({preventScroll:true});
+            else if(open===false&&document.activeElement!==trigger)trigger?.focus({preventScroll:true});
+        };
+        window.addEventListener('resize',()=>{
+            if(window.innerWidth>820&&document.body.classList.contains('menu-open'))setSafeProjectsMenu(false);
+        });
 
         window.openNewProjectChoices=function(){
             state.newProjectFocus=document.activeElement;
@@ -367,7 +385,22 @@
                 document.addEventListener('keydown',event=>{
                     const quick=el('project-quick-modal'),newModal=el('new-project-choice-modal');
                     const current=quick.classList.contains('open')?quick:newModal.classList.contains('open')?newModal:null;
-                    if(!current)return;
+                    if(!current){
+                        if(!document.body.classList.contains('menu-open'))return;
+                        if(event.key==='Escape'){event.preventDefault();setSafeProjectsMenu(false);return;}
+                        if(event.key!=='Tab')return;
+                        const sidebar=el('sidebar');
+                        const items=[...sidebar.querySelectorAll('a[href],button:not([disabled]),summary')]
+                            .filter(node=>node.getClientRects().length);
+                        if(!items.length)return;
+                        const first=items[0],last=items[items.length-1];
+                        if(event.shiftKey&&(document.activeElement===first||!sidebar.contains(document.activeElement))){
+                            event.preventDefault();last.focus();
+                        }else if(!event.shiftKey&&(document.activeElement===last||!sidebar.contains(document.activeElement))){
+                            event.preventDefault();first.focus();
+                        }
+                        return;
+                    }
                     if(event.key==='Escape'){
                         event.preventDefault();
                         if(current===quick)closeQuick();else closeNewProjectChoices();

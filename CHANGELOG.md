@@ -7,6 +7,13 @@
 
 # Changelog
 
+### v2.71 · 2026-11-04
+- Pagina Progetti: menu mobile con Esc, Tab, focus di ritorno, aria-expanded e blocco temporaneo della barra inferiore; pagina corrente semanticamente indicata.
+- Impedito il doppio montaggio di navigazioni mobili quando una barra comune esiste già; nessun nuovo observer.
+- Pipeline/Fatture/Rendiconto: gruppo Easy/Completa con aria-pressed e pannelli che rispettano l'apertura manuale durante i refresh.
+- Aggiornati guida, manuale, QA, test e cache PWA. Nessuna modifica ai dati o accesso Vercel.
+
+
 ### v2.70 · 2026-11-04
 - Correzione effettiva del caricamento in config.js di `kyv-flow-routes-v269.js`, che ora precede il renderer KYV Workflow Nav. In v2.69 il modulo era presente nell'archivio ma non caricato, quindi il contesto del progetto poteva mancare. Rafforzato anche il test di regressione: non basta confrontare gli indici se la dipendenza è assente.
 - Consolidamento della voce **Fatture**: quando compare nel Percorso il riepilogo «da incassare / incassate / nessuna fattura / indisponibile» appare come stato non azionabile dentro quello stesso collegamento. Eliminato il secondo chip di navigazione che duplicava la funzione. Nessun inserimento o ripartizione parte da solo, e non si confonde lettura fallita con assenza fattura. Le pagine senza voce Fatture mantengono il comportamento precedente.
