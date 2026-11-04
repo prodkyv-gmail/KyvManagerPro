@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-68-safe-mutations-20261104';
+const CACHE_NAME = 'kyv-studio-v2-69-project-journey-20261104';
 const APP_SHELL = [
     './',
     './index.html',
@@ -7,6 +7,7 @@ const APP_SHELL = [
     './kyv-home-charts-v250.js',
     './kyv-home-charts-ui-v250.js',
     './scheda_progetto.html',
+    './sessioni.html',
     './data_quality.html',
     './ascolto.html',
     './kyv_calendar.html',
@@ -82,6 +83,7 @@ const APP_SHELL = [
     './kyv-release-closeout.js',
     './kyv-interest-to-release.js',
     './kyv-version-to-pitch.js',
+    './kyv-flow-routes-v269.js',
     './kyv-workflow-nav.js',
     './kyv-producer-mode.js',
     './kyv-nav-order.js',

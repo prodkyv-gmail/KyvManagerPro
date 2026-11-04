@@ -152,8 +152,8 @@ assert.ok(ui.includes('function hubDetail(id)')&&ui.includes('dialog.showModal()
 assert.ok(ui.includes("showTab(q==='pitches'?'pitches':q==='sessions'?'sessions':'hub')"));
 assert.ok(!read('kyv-music-hub-v259.js').includes('.from('),'Hub is read-only pure projection');
 assert.ok(sw.includes("'./kyv-music-hub-v259.js'"));
-assert.equal(pkg.version,'2.68.0');
-assert.equal(read('VERSION').trim(),'2.68');
+assert.equal(pkg.version,'2.69.0');
+assert.equal(read('VERSION').trim(),'2.69');
 assert.ok(read('guida.html').includes('v2.59'));
 assert.ok(read('kyv-help.js').includes('v2.59'));
 console.log('OK: v2.59 unified creative/project/audio/finance desk, no inferred income or ownership');
