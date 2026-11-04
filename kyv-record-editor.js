@@ -260,7 +260,17 @@
                 if (window.KYV_TOAST) KYV_TOAST.show(message, 'success');
                 else if (window.KYV?.showToast) KYV.showToast(message, 'success');
                 if (current === active && ownsModal()) close();
-                if (typeof options.onSaved === 'function') await options.onSaved(savedTable);
+                // Il database è già stato aggiornato: notifica la ricerca senza eseguire altre scritture.
+                document.dispatchEvent(new CustomEvent('kyv:record-saved', { detail: { table: savedTable } }));
+                // Un errore nel refresh della pagina non deve essere mostrato come fallimento del salvataggio.
+                if (typeof options.onSaved === 'function') {
+                    try { await options.onSaved(savedTable); }
+                    catch (refreshError) {
+                        console.error('[KYV Record Editor] Aggiornamento vista:', refreshError);
+                        if (window.KYV_TOAST) KYV_TOAST.show('Record salvato. Aggiorna la pagina per rivedere i dati.', 'warning');
+                        else if (window.KYV?.showToast) KYV.showToast('Record salvato. Aggiorna la pagina per rivedere i dati.', 'warning');
+                    }
+                }
             } catch (error) {
                 console.error(error);
                 const message = `Salvataggio non riuscito: ${error.message || 'controlla i dati inseriti'}`;

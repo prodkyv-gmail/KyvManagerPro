@@ -1,3 +1,10 @@
+### v2.66 · 2026-11-04
+- Collaudo trasversale automatizzato di ricerca, navigazione, Editor e consenso audio; verifica delle rotte fra progetti, fatture e versioni e dei limiti di ogni modulo.
+- Ricerca globale: pulsante Aggiorna reale, invalidazione su salvataggi espliciti, protezione delle richieste in corso da risultati obsoleti e messaggi corretti quando l'indice non è pronto.
+- Recenti della ricerca visibili solo nella sessione della pagina: nessun titolo di record privato conservato sul dispositivo tra account. Invio su pulsanti e input rispettato.
+- Record Editor: evento di salvataggio solo dopo successo; errore nel refresh della vista separato da un errore del database.
+- Test v2.66, guida e cache PWA allineati. Nessuna migrazione, nessuna scansione automatica o collegamento di audio, nessun accesso a Vercel. Collaudo autenticato su PWA ancora da eseguire.
+
 # Changelog
 
 ### v2.65 · 2026-11-04

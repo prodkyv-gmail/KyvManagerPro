@@ -1,3 +1,13 @@
+## v2.66 — Uso quotidiano di Ricerca, Editor e approvazioni (4 novembre 2026)
+
+**Ricerca globale:** il comando **Aggiorna** nel popup rilegge su richiesta le sette fonti disponibili, con conteggi verificati come in v2.65. Un salvataggio completato nell'Editor o gli eventi espliciti di aggiornamento di fatture/progetti invalidano l'indice senza polling. Una lettura vecchia terminata dopo l'aggiornamento non può sostituire risultati nuovi. Se digiti prima che la verifica sia completata non compare un falso “zero risultati”: attendi la verifica oppure usa **Riprova** in caso di errore. Il tasto Invio apre il risultato solo quando stai digitando nella casella: i pulsanti del popup conservano la propria funzione.
+
+**Riservatezza:** i risultati recenti restano solo nella memoria della pagina corrente, non in localStorage. Cambiare pagina o aprire una nuova sessione azzera i titoli recenti, evitando che un utente diverso sullo stesso dispositivo li legga prima di una nuova ricerca autenticata.
+
+**Editor:** dopo un effettivo salvataggio pubblica un evento per aggiornare l'indice di ricerca. Se il callback di aggiornamento schermata fallisce, il messaggio distingue il record già salvato dall'errore della vista. Le verifiche di concorrenza, i campi modificati e le conferme delle relazioni non cambiano.
+
+**Collaudo:** `npm run check` comprende `tools/test-cross-flow-v266.js` con simulazioni di indicizzazione, invalidazione e concorrenza, percorsi da risultato a scheda, limiti dell'Editor e conferme audio. La scheda `docs/v266-cross-flow-qa.md` elenca il collaudo manuale autenticato non ancora svolto. Nessun dato storico, autorizzazione o processo di creazione progetti è stato modificato. Nessun accesso Vercel.
+
 ## v2.65 — Ricerca globale, Editor e Archivio musicale (4 novembre 2026)
 
 **Ricerca globale:** premi **Cerca** nel menu oppure Cmd+K su Mac o Ctrl+K su PC. La ricerca indicizza i record a cui il tuo account ha accesso in Progetti, Fatture, Invii, Documenti, Versioni, SIAE e IMAIE. Attende il conteggio esatto e legge tutte le pagine necessarie (fino a 30.000 righe per archivio): se una fonte non è verificabile non propone risultati incompleti ma mostra **Ricerca non disponibile** e il pulsante **Riprova**. I risultati visibili sono limitati a 30, con indicazione delle corrispondenze totali. Esc chiude il popup e torna al pulsante di partenza; le frecce navigano tra i risultati e Invio li apre. La ricerca non modifica i record.
