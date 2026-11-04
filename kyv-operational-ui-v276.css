@@ -5,3 +5,10 @@
 .kyv-v276-toolbar :is(input,select){color:#f8fafc}
 .kyv-v276-feedback{display:block;margin:.15rem 0 .75rem;padding:.55rem .8rem;border-radius:.75rem;border:1px solid rgba(148,163,184,.19);background:rgba(148,163,184,.055);color:#cbd5e1;font-size:12px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
 @media(max-width:767px){.kyv-v276-toolbar :is(input,select){font-size:16px}.kyv-v276-toolbar :is(button,a,select,input){touch-action:manipulation}.kyv-v276-feedback{font-size:12px;margin:.45rem 0 .8rem}#editor-tabs{scrollbar-width:thin}#editor-view-status{line-height:1.55;overflow-wrap:anywhere}}
+/* v2.77: Search for columns inside the existing single disclosure. */
+#editor-column-panel .editor-column-panel-head{position:sticky;top:-12px;z-index:2;background:#151923;padding:8px 0 5px}
+#editor-column-panel .editor-column-visible-label{display:flex;align-items:center;gap:8px;min-height:36px;color:#cbd5e1;font-size:12px;font-weight:700}
+#editor-column-panel #editor-column-search{min-height:44px;font-size:16px}
+#editor-column-panel #editor-column-list label{min-height:39px;overflow-wrap:anywhere}
+#editor-column-panel #editor-column-list label[hidden]{display:none!important}
+@media(max-width:767px){#editor-column-panel{max-height:min(65dvh,520px)!important;width:min(88vw,340px)!important}#editor-column-panel #editor-column-list label{min-height:44px}}

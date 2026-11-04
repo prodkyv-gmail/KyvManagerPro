@@ -1,3 +1,15 @@
+## v2.77 — Studio Editor: ricerca efficiente e pannello Colonne (4 novembre 2026)
+
+**Prestazioni:** l'Editor continua a leggere e verificare l'intera tabella con il caricatore preesistente, senza creare nuove query. La cache temporanea `KYV_EDITOR_VIEW_V277` evita di filtrare/ordinare nuovamente gli stessi risultati a ogni `Mostra altre 120 righe` e può restringere l'insieme in modo corretto quando il nuovo testo estende la ricerca precedente. Si invalida su nuova lettura, cambio tabella, errore o salvataggio inline riuscito; le modifiche via popup già richiamano `loadEditorTable`. I criteri di ricerca e ordinamento restano quelli esistenti.
+
+**Ricerca:** in `Filtra tabella corrente` cerca i record anche attraverso le colonne nascoste. La ricerca viene azzerata quando passi a una tabella diversa; quando ricarichi la stessa tabella, inclusi Riprova e salvataggio, il testo resta presente. Nessuna ricerca scrive sul database.
+
+**Colonne:** nello stesso pannello già presente ora trovi `Trova colonna` (nome leggibile o tecnico), `Solo colonne visibili` e un conteggio `visibili / totali · presenti nell'elenco`. Le preferenze restano per tabella nel dispositivo; `Mostra tutte` ripristina la vista. La ricerca delle colonne non filtra i record. È vietato nascondere anche l'ultima colonna. Il pannello supporta un ritorno del focus al pulsante Colonne dopo Esc.
+
+**Schermata mobile:** riga di ricerca del pannello più grande, pannello scorrevole, righe checkbox con aree di tocco da almeno 44 px. Non viene creata una barra aggiuntiva. `Compatta/Larga` modifica soltanto la densità e `Esporta` conserva l'intero dataset caricato, anche le colonne nascoste.
+
+**Limiti:** nessun accesso a Supabase o Vercel durante l'upgrade, nessuna modifica a dati, permessi, schema, query di scrittura, invoice/audio linking o flussi di salvataggio. I test GitHub non sostituiscono un collaudo visivo con login sulla PWA.
+
 ## v2.76 — Coerenza operativa Progetti / Sessioni / Fatture / Studio Editor (4 novembre 2026)
 
 **Progetti mobile:** corretta la regola grafica tardiva di `kyv-layout-polish.js` che sovrascriveva la testata compatta introdotta nella v2.75. Rimangono un solo menu, una sola ricerca e le stesse card.

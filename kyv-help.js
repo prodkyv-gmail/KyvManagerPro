@@ -209,6 +209,8 @@ function getKyvHelpContent(activePage) {
     Object.entries(workflowHelpV276).forEach(([key,body])=>{
       if(guide[key])guide[key].content+='<section class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.76 · Comandi coerenti</h5><p class="text-sm text-kyv-text mt-2">'+body+'</p><a class="text-indigo-300 underline" href="guida.html#v276-workflow">Procedura aggiornata</a></section>';
     });
+    // v2.77 — Inline help for the existing Studio Editor column panel and view cache.
+    if(guide.editor)guide.editor.content+='<section class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.77 · Cercare e scegliere le colonne</h5><ol class="list-decimal pl-5 text-sm text-kyv-text mt-2 space-y-2"><li>Filtra tabella corrente trova record anche nelle colonne nascoste. Mostra altre 120 righe riutilizza il risultato, senza ricalcolare una nuova ricerca o caricare un sottoinsieme non verificato.</li><li>Apri Colonne: Trova colonna cerca per nome e Solo colonne visibili limita le caselle presenti nel pannello. I record non cambiano.</li><li>Deseleziona una colonna per nasconderla, lasciandone almeno una; Mostra tutte la ripristina. Cambiare tabella applica la preferenza propria di quella tabella.</li><li>Compatta/Larga modifica soltanto l’aspetto. CSV esporta anche le colonne nascoste. Riprova dopo errore di lettura conserva la ricerca della stessa tabella.</li></ol><a class="text-indigo-300 underline" href="guida.html#v277-editor">Procedura completa v2.77</a></section>';
     const aliases = { spese: 'documenti' };
     activePage = aliases[activePage] || activePage;
     return guide[activePage] || guide.default;

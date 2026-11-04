@@ -89,8 +89,8 @@ async function tests(){
  assert.ok(!ui.includes('createProjectFromScan'),'No auto-project during scanning');
  assert.ok(!read('kyv-audio-batch-v253.js').includes('.from('),'Batch helper must not touch Supabase');
  assert.ok(sw.includes("'./kyv-audio-batch-v253.js'"));
- assert.equal(JSON.parse(read('package.json')).version,'2.76.0');
- assert.equal(read('VERSION').trim() ,'2.76');
+ assert.equal(JSON.parse(read('package.json')).version,'2.77.0');
+ assert.equal(read('VERSION').trim() ,'2.77');
  assert.ok(read('guida.html').includes('v2.53'));
  assert.ok(read('kyv-help.js').includes('v2.53'));
  console.log('OK: v2.53 multi-cloud batch scan isolated, exact-source dedup, partial results and human-only project actions');

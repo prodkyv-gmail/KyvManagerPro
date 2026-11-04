@@ -33,6 +33,7 @@
     <script src="kyv-priority.js"></script>
     <script src="kyv-schema.js"></script>
     <script src="kyv-editor-columns.js"></script>
+    <script src="kyv-editor-view-v277.js"></script>
     <script src="kyv-editor-read-v267.js"></script>
     <script src="kyv-editor-changes-v268.js"></script>
     <script src="kyv-help.js"></script>
@@ -209,8 +210,13 @@
                         <i data-lucide="list-filter" class="w-4 h-4 sm:mr-2 text-indigo-300"></i><span>Colonne</span>
                     </button>
                     <div id="editor-column-panel" class="hidden absolute right-0 top-full mt-2 z-50 w-[min(88vw,340px)] max-h-[65vh] overflow-y-auto p-3 rounded-xl border border-kyv-border bg-[#151923] shadow-2xl text-white">
-                        <div class="flex justify-between items-center gap-2 mb-2"><strong class="text-xs">Colonne visibili</strong><button type="button" data-action="show-all-columns" class="text-xs text-indigo-300 hover:text-white underline">Mostra tutte</button></div>
-                        <p id="editor-column-note" class="text-[11px] text-kyv-text mb-2">La scelta riguarda solo la visualizzazione. Ricerca, modifica record e CSV usano tutti i dati.</p>
+                        <div class="editor-column-panel-head">
+                            <div class="flex justify-between items-center gap-2 mb-2"><strong class="text-xs">Colonne visibili</strong><button type="button" data-action="show-all-columns" class="text-xs text-indigo-300 hover:text-white underline">Mostra tutte</button></div>
+                            <p id="editor-column-note" class="text-[11px] text-kyv-text mb-2">La scelta riguarda solo la visualizzazione. Ricerca, modifica record e CSV usano tutti i dati.</p>
+                            <input id="editor-column-search" type="search" autocomplete="off" aria-label="Trova colonna nella tabella corrente" placeholder="Trova colonna…" class="w-full rounded-lg border border-slate-500/50 bg-[#0f111a] px-3 py-2 text-sm text-white mb-2">
+                            <label class="editor-column-visible-label"><input id="editor-column-visible-only" type="checkbox" class="accent-indigo-500" /> Solo colonne visibili</label>
+                            <p id="editor-column-selection-count" class="text-[11px] text-slate-300 my-2" role="status" aria-live="polite"></p>
+                        </div>
                         <div id="editor-column-list" class="grid gap-1.5"></div>
                     </div>
                 </div>
@@ -331,12 +337,27 @@
         let editorLoadSerial = 0, editorIsLoading = false;
         const readOnlyTables = new Set(['AUDIO_VERSIONI']);
         let currentSortColumn = null, currentSortDesc = false;
+        const editorViewEngine=window.KYV_EDITOR_VIEW_V277.create({normalize:value=>KYV.normalize(value),parseSort:value=>parseForSort(value)});
         const editorColumnKeys = () => currentEditorData.length ? Object.keys(currentEditorData[0]) : (tableColumnsFallback[currentEditorTable] || []);
         function toggleColumnPanel(open) {
             const panel = document.getElementById('editor-column-panel'),button=document.getElementById('editor-columns-toggle');
             if (!panel || !button) return;
             panel.classList.toggle('hidden', !open);
             button.setAttribute('aria-expanded', String(!!open));
+        }
+        function applyEditorColumnPickerFilters() {
+            const list=document.getElementById('editor-column-list');if(!list)return;
+            const search=KYV.normalize(document.getElementById('editor-column-search')?.value||'');
+            const visibleOnly=!!document.getElementById('editor-column-visible-only')?.checked;
+            let found=0;
+            list.querySelectorAll('label').forEach(label=>{
+                const input=label.querySelector('input[data-editor-column]');if(!input)return;
+                const match=(!visibleOnly||input.checked)&&(!search||KYV.normalize(input.dataset.editorColumn+' '+label.textContent).includes(search));
+                label.hidden=!match;if(match)found++;
+            });
+            const keys=editorColumnKeys(),visible=window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,keys)||keys;
+            const status=document.getElementById('editor-column-selection-count');
+            if(status)status.textContent=visible.length+' di '+keys.length+' colonne visibili · '+found+' nell’elenco';
         }
         function renderColumnPicker() {
             const list = document.getElementById('editor-column-list'); if (!list) return;
@@ -345,6 +366,7 @@
                 ? 'IMPORTO conserva il segno originale SIAE: − è un valore positivo per noi. Colonne nascoste solo nella griglia; ricerca ed esportazione includono tutte.'
                 : 'Colonne nascoste solo nella griglia. Ricerca, modifica record e CSV usano tutti i dati.';
             list.innerHTML = keys.map(key => `<label class="flex items-center gap-2 py-1 px-2 rounded hover:bg-white/5 text-xs cursor-pointer"><input type="checkbox" data-editor-column="${KYV.safeHtml(key)}" ${visible.includes(key)?'checked':''} ${visible.length===1 && visible[0]===key?'disabled':''} class="accent-indigo-500 w-4 h-4"><span class="break-all">${KYV.safeHtml(displayEditorColumnLabel(key))}</span></label>`).join('') || '<p class="text-xs text-kyv-text">Nessuna colonna disponibile.</p>';
+            applyEditorColumnPickerFilters();
         }
         
         // Array per Datalist (Autocompletamento)
@@ -353,8 +375,11 @@
 
         async function loadEditorTable(tableName) {
             const requestId = ++editorLoadSerial;
+            const changingTable=currentEditorTable!==tableName;
+            clearTimeout(window.debounceTimer);
             currentEditorTable = tableName;
             currentEditorData = [];
+            editorViewEngine.setRows([]);
             editorIsLoading = true;
             editorShownRows = EDITOR_ROWS_STEP;
             toggleColumnPanel(false);
@@ -406,6 +431,7 @@
 
                 if (requestId !== editorLoadSerial) return;
                 currentEditorData = processedData;
+                editorViewEngine.setRows(processedData);
                 editorIsLoading = false;
                 if (addButton) {
                     addButton.disabled = readOnly;
@@ -414,13 +440,14 @@
                 }
                 if (exportButton) exportButton.disabled = processedData.length === 0;
                 const searchInput = document.getElementById('editor-search');
-                if (searchInput) searchInput.value = '';
+                if (searchInput && changingTable) searchInput.value = '';
                 refreshEditorView();
                 renderColumnPicker();
             } catch (error) {
                 if (requestId !== editorLoadSerial) return;
                 editorIsLoading = false;
                 currentEditorData = [];
+                editorViewEngine.setRows([]);
                 if (addButton) addButton.disabled = true;
                 if (exportButton) exportButton.disabled = true;
                 DOM.editorThead.innerHTML = '';
@@ -445,21 +472,11 @@
         }
 
         function getEditorViewData() {
-            const searchTxt = KYV.normalize(document.getElementById('editor-search')?.value || '');
-            let rows = currentEditorData.filter(row => !searchTxt || Object.values(row).some(value => value !== null && KYV.normalize(String(value)).includes(searchTxt)));
-            if (currentSortColumn) {
-                rows = rows.map((row, index) => ({ row, index })).sort((left, right) => {
-                    const a = parseForSort(left.row[currentSortColumn]);
-                    const b = parseForSort(right.row[currentSortColumn]);
-                    if (a.empty !== b.empty) return a.empty ? 1 : -1;
-                    let comparison = 0;
-                    if (a.type === 'number' && b.type === 'number') comparison = a.value - b.value;
-                    else comparison = String(a.value).localeCompare(String(b.value), 'it', { numeric: true, sensitivity: 'base' });
-                    if (comparison === 0) comparison = left.index - right.index;
-                    return currentSortDesc ? -comparison : comparison;
-                }).map(item => item.row);
-            }
-            return rows;
+            return editorViewEngine.select({
+                query:document.getElementById('editor-search')?.value||'',
+                sortColumn:currentSortColumn,
+                descending:currentSortDesc
+            });
         }
 
         function updateEditorViewStatus(visibleCount, matchingCount) {
@@ -798,6 +815,7 @@
                 if (!editorIsLoading) { editorShownRows += EDITOR_ROWS_STEP; refreshEditorView(); }
             } 
             else if (action === 'clear-search') {
+                clearTimeout(window.debounceTimer);
                 const input = document.getElementById('editor-search');
                 if (input) input.value = '';
                 editorShownRows = EDITOR_ROWS_STEP;
@@ -844,13 +862,18 @@
             }
         });
 
+        document.getElementById('editor-column-search').addEventListener('input',applyEditorColumnPickerFilters);
+        document.getElementById('editor-column-visible-only').addEventListener('change',applyEditorColumnPickerFilters);
         document.getElementById('editor-column-list').addEventListener('change', e => {
             const input = e.target.closest('input[data-editor-column]'); if (!input) return;
-            if (!window.KYV_EDITOR_COLUMNS?.set(currentEditorTable,input.dataset.editorColumn,input.checked,editorColumnKeys())) { renderColumnPicker(); return; }
+            const key=input.dataset.editorColumn;
+            if (!window.KYV_EDITOR_COLUMNS?.set(currentEditorTable,key,input.checked,editorColumnKeys())) { renderColumnPicker(); return; }
             refreshEditorView(); renderColumnPicker();
+            const restored=[...document.querySelectorAll('#editor-column-list input[data-editor-column]')].find(el=>el.dataset.editorColumn===key);
+            if(restored&&!restored.closest('label')?.hidden)restored.focus();
         });
         document.addEventListener('click',e=>{ if (!e.target.closest('#editor-column-wrap')) toggleColumnPanel(false); });
-        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('editor-column-panel').classList.contains('hidden'))toggleColumnPanel(false);});
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('editor-column-panel').classList.contains('hidden')){toggleColumnPanel(false);document.getElementById('editor-columns-toggle')?.focus();}});
 
         // Conferma eliminazione: tabella e ID congelati all'apertura, invio unico.
         document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
@@ -916,6 +939,7 @@
                 if (currentEditorTable === tableAtEdit) {
                     const localRow = currentEditorData.find(row => String(row[pk]) === String(rowId));
                     if (localRow) localRow[column] = finalVal;
+                    editorViewEngine.invalidate();
                     refreshEditorView();
                 }
                 showToast("Aggiornato");

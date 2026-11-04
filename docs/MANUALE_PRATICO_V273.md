@@ -4,6 +4,16 @@
 
 Questo manuale è la spiegazione corrente delle funzioni di KYVManagerPro. L'app conserva sezioni storiche nelle versioni precedenti: quando il nome di un comando è cambiato, fare riferimento alla sezione *Guida pratica v2.73* di `guida.html` e alla guida **?** contestuale.
 
+## Aggiornamento v2.77 · Studio Editor e colonne
+
+1. Apri **Studio Editor** e scegli la tabella nella barra in alto; al cambio tabella la ricerca riparte vuota, mentre un **Riprova** della stessa tabella mantiene il testo.
+2. Scrivi in **Filtra tabella corrente**: cerca tra tutti i campi del dataset verificato, anche quelli nascosti. **Mostra altre 120 righe** amplia la visualizzazione senza rifare la stessa ricerca e senza alterare i criteri.
+3. Apri **Colonne** e usa **Trova colonna** per cercare il nome della colonna oppure **Solo colonne visibili** per vedere solo i checkbox attivi. Il contatore riferisce visibili, totali e risultati del pannello.
+4. Spunta/deseleziona la colonna desiderata; la griglia si aggiorna, ma non vengono modificati i record. Almeno una colonna resta sempre visibile. **Mostra tutte** ripristina la vista completa della tabella corrente.
+5. Su smartphone il pannello è scorrevole e con controlli grandi; con **Esc** ritorni al pulsante Colonne. **Compatta/Larga** cambia soltanto la densità.
+6. Il **CSV** esporta tutte le colonne del dataset caricato, comprese quelle non visibili. Dopo un salvataggio la cache di visualizzazione è invalidata: il nuovo valore è visibile nella ricerca soltanto dopo aggiornamento verificato.
+7. Il nuovo motore lavora in memoria nella pagina e non genera nuove query, modifiche al database o collegamenti automatici.
+
 ## Aggiornamento v2.76 · Coerenza dei comandi operativi
 
 **Progetti:** su smartphone la testata rimane compatta dopo l'applicazione delle personalizzazioni grafiche. Una sola ricerca, nessun secondo menu.

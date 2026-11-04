@@ -35,7 +35,7 @@ assert.ok(code.includes('kyv-editor-columns.js')&&code.includes('data-action="to
 assert.ok(code.includes('data-action="show-all-columns"'));
 assert.ok(code.includes('data-editor-column'));
 assert.ok(code.includes('KYV_EDITOR_COLUMNS?.visible(currentEditorTable,Object.keys(sourceRow))'));
-assert.ok(code.includes('Object.values(row).some('),'search must include hidden data');
+assert.ok(code.includes('kyv-editor-view-v277.js')&&read('kyv-editor-view-v277.js').includes('Object.values(row).some('),'search must include hidden data through the v2.77 read-only view engine');
 assert.ok(code.includes("const keys = Object.keys(currentEditorData[0]); let csv = keys.join(',')"),'CSV must include hidden data');
 assert.ok(code.includes('IMPORTO conserva il segno originale SIAE'));
 const rights=read('kyv-rights-v7.js'),intel=read('kyv-intelligence-engine-v238.js'),rend=read('rendiconto.html'),guard=read('kyv-siae-import-guard.js');
@@ -52,5 +52,5 @@ const out=window.KYV_INTELLIGENCE_ENGINE.compute({
 assert.equal(out.rows[0].siaeProvisional,75000,'SIAE provisional: signed from our POV');
 assert.equal(out.totals.rightsCash,300,'verified transfer must not be inverted');
 assert.equal(out.totals.verifiedCash,0,'SIAE provisional must not be bank cash');
-assert.ok(read('sw.js').includes('kyv-studio-v2-76-operational-ux-20261104'));
+assert.ok(read('sw.js').includes('kyv-studio-v2-77-editor-views-20261104'));
 console.log('OK: SIAE inverted in calculations only; local per-table column controls preserve data/export.');
