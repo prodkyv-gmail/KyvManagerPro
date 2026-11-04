@@ -7,6 +7,12 @@
 
 # Changelog
 
+### v2.72 · 2026-11-04
+- Progetti: la Vista rapida diventa compatta e propone una sola azione principale, con sezioni native espandibili **Scadenze e note** e **Sessioni, audio e fatture**. Tutti i dati e i link già esistenti restano disponibili con l'ID progetto.
+- Scheda: unificato il controllo della densità di vista in Easy/Completa, rimuovendo il pulsante duplicato “Mostra dettagli”; aggiunti role=group e aria-pressed per accessibilità.
+- Aggiunti test specifici sulla generazione HTML del popup, unicità dell'azione principale e conservazione dei link; aggiornati guida, versione, cache PWA e aspettative dei test. Nessun cambiamento a database, autorizzazioni o deploy Vercel.
+
+
 ### v2.71 · 2026-11-04
 - Pagina Progetti: menu mobile con Esc, Tab, focus di ritorno, aria-expanded e blocco temporaneo della barra inferiore; pagina corrente semanticamente indicata.
 - Impedito il doppio montaggio di navigazioni mobili quando una barra comune esiste già; nessun nuovo observer.

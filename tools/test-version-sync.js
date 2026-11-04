@@ -8,7 +8,7 @@ const configured=config.match(/APP_VERSION:\s*'(\d+\.\d+)'/);
 assert.ok(configured,'APP_VERSION must exist in config.js');
 assert.equal(configured[1],expected,'Published version must match package.json');
 assert.equal(version,expected,'VERSION file must match displayed version');
-assert.equal(expected,'2.71','Audio ownership classification is the v2.48 feature release');
+assert.equal(expected,'2.72','Audio ownership classification is the v2.48 feature release');
 assert.ok(menu.includes('window.KYV_CONFIG?.APP_VERSION'),
   'Sidebar must use dynamic version from config, not stale literal copy');
 assert.ok(projects.includes('<span>Manager Pro</span>'),
@@ -21,7 +21,7 @@ assert.ok(config.includes("document.addEventListener('DOMContentLoaded'"),
   'Safe-mode version update is delayed until DOM is loaded');
 assert.doesNotMatch(menu,/Manager Pro 2\.\d/,'The normal menu must have no stale literal version');
 assert.doesNotMatch(projects,/Manager Pro 2\.\d/,'Progetti must have no stale literal version');
-assert.ok(sw.includes('kyv-studio-v2-71-mobile-disclosures-20261104'),
+assert.ok(sw.includes('kyv-studio-v2-72-project-disclosure-20261104'),
   'The service worker cache must rotate to refresh installed PWA assets');
 assert.ok(sw.includes("await self.skipWaiting()"),'New service worker should activate without waiting for all tabs to close');
 assert.ok(sw.includes("await clients.claim()"),'Active service worker should control subsequent loads');
