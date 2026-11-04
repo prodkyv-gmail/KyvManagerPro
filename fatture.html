@@ -260,7 +260,7 @@
         }
 
         async function fetchFattureCorrelate() {
-            KYV.setText('kyv-invoice-filter-status','Caricamento fatture in corso… La ricerca selezionata sarà mantenuta.');
+            document.getElementById('kyv-invoice-filter-status').textContent = 'Caricamento fatture in corso… La ricerca selezionata sarà mantenuta.';
             document.getElementById('tbody-ft-nopag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; document.getElementById('tbody-ft-pag').innerHTML = '<tr><td colspan="4" class="p-4 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i></td></tr>'; if(window.lucide) lucide.createIcons();
             const errorNode = document.getElementById('kyv-invoice-load-error');
             errorNode?.classList.add('hidden');
@@ -272,7 +272,7 @@
             } catch(e) {
                 correlazioneFattureGlobal = [];
                 correlazioneProjMapGlobal = {};
-                KYV.setText('kyv-invoice-filter-status','Registro fatture non disponibile · Ricarica per riprovare. Ricerca mantenuta; non interpretare i totali come zero.');
+                document.getElementById('kyv-invoice-filter-status').textContent = 'Registro fatture non disponibile · Ricarica per riprovare. Ricerca mantenuta; non interpretare i totali come zero.';
                 console.error('[KYV Fatture] Caricamento non riuscito', e);
                 if(errorNode){
                     errorNode.textContent='Impossibile leggere tutte le fatture o i progetti. Verifica la connessione e usa Ricarica: i totali non sono attendibili fino al completamento della lettura.';
@@ -320,7 +320,7 @@
             });
             const shown=hNopag.length+hPag.length;
             const total=correlazioneFattureGlobal.length;
-            KYV.setText('kyv-invoice-filter-status',`${shown} fatture visualizzate su ${total} ricevute · I totali di incassi e residui si riferiscono ${searchTxt?'alle fatture filtrate dalla ricerca':'alle fatture caricate'}.`);
+            document.getElementById('kyv-invoice-filter-status').textContent = `${shown} fatture visualizzate su ${total} ricevute · I totali di incassi e residui si riferiscono ${searchTxt?'alle fatture filtrate dalla ricerca':'alle fatture caricate'}.`;
             document.getElementById('tot-da-pagare').innerText = fmtEuro.format(sumDaIncassare);
             document.getElementById('tot-pagate').innerText = fmtEuro.format(sumPagate);
             document.getElementById('tot-incassato-complessivo').innerText = fmtEuro.format(sumIncassatoTutti);
