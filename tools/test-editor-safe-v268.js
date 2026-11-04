@@ -1,6 +1,6 @@
 // Regression v2.68: no silent mass overwrites, user intent, related popup context.
 const assert=require('node:assert/strict'),fs=require('node:fs');
-const {collect}=require('../kyv-editor-changes-v268.js');
+const {collect,dateTimeInput}=require('../kyv-editor-changes-v268.js');
 const html=fs.readFileSync('editor.html','utf8'),sw=fs.readFileSync('sw.js','utf8');
 function f(key,value,type='text'){return{dataset:{key},value,type};}
 const opt={getType:key=>key==='Amount'?'numeric':key==='Due'?'date':'text',
@@ -16,11 +16,27 @@ r=collect([f('Note','')],old,new Set(['Note']),opt);
 assert.deepEqual(r.payload,{Note:null},'Explicit clear must be persisted');
 r=collect([f('Amount','26,50')],old,new Set(['Amount']),opt);
 assert.deepEqual(r.payload,{Amount:26.5});
+const stringOpt={...opt,toDbNumber:v=>String(Number(String(v).replace(',','.')))};
+r=collect([f('Amount','26,50')],old,new Set(['Amount']),stringOpt);
+assert.deepEqual(r.payload,{Amount:'26.5'},'KYV.toDbNumber actually returns a numeric string, not Number');
+r=collect([f('Amount','13,50')],old,new Set(['Amount']),stringOpt);
+assert.equal(r.count,0,'Numeric formatted string unchanged must not trigger update');
+r=collect([f('Amount','0')],old,new Set(['Amount']),stringOpt);
+assert.equal(r.payload.Amount,'0','Zero remains a valid explicit numeric value');
 assert.throws(()=>collect([f('Amount','abc')],old,new Set(['Amount']),opt),/Numero non valido/);
 r=collect([f('Title','New title'),f('Note','Keep')],{},new Set(['Title']),opt);
 assert.deepEqual(r.payload,{Title:'New title'},'Creation sends only edited nonempty fields');
 r=collect([f('Due','2026-11-04T10:00','datetime-local')],old,new Set(['Due']),opt);
 assert.equal(r.count,0,'Date enhanced from date to datetime must not cause update');
+const originalStamp='2026-11-04T10:00:00Z';
+const localStamp=dateTimeInput(originalStamp,'timestamptz');
+const stampOptions={...opt,getType:key=>key==='Sent'?'timestamptz':'text',isDateType:t=>t==='timestamptz'};
+r=collect([f('Sent',localStamp,'datetime-local')],{Sent:originalStamp},new Set(['Sent']),stampOptions);
+assert.equal(r.count,0,'Converting timestamptz to local input must not create spurious change');
+const movedLocal=new Date(new Date(originalStamp).getTime()+3600_000);
+const editedStamp=dateTimeInput(movedLocal.toISOString(),'timestamptz');
+r=collect([f('Sent',editedStamp,'datetime-local')],{Sent:originalStamp},new Set(['Sent']),stampOptions);
+assert.deepEqual(r.payload,{Sent:movedLocal.toISOString()},'Timestamp save retains hour and timezone intent');
 r=collect([f('Title','Original title')],old,new Set(['Title']),opt);
 assert.equal(r.count,0,'Reverting user edits produces no update');
 assert.ok(html.includes('modalChangedFields()')&&html.includes('changeSet.payload'),'Diff-only payload used for DB writes');
@@ -36,6 +52,7 @@ assert.ok(!html.includes('currentEditorTable = btn.dataset.table'),'No mutable c
 assert.ok(html.includes('pendingEditorDelete = { table: currentEditorTable, id: btn.dataset.id }'),'Deletion target snapshotted');
 assert.ok(html.includes("new CustomEvent('kyv:record-saved'"),'Search index invalidation happens after saves');
 assert.ok(html.includes('readOnlyTables.has(editorModalTable)'),'Protected archives remain read-only in modal');
+assert.ok(html.includes("isTimestamp ? 'datetime-local'"),'Timestamp must render full date/time instead of truncating to date');
 assert.ok(sw.includes("'./kyv-editor-changes-v268.js'"));
 assert.ok(sw.includes('kyv-studio-v2-68-safe-mutations-20261104'));
 assert.equal(fs.readFileSync('VERSION','utf8').trim(),'2.68');

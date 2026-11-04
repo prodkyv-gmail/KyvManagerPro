@@ -670,13 +670,16 @@
             let html = '';
             keys.forEach(key => {
                 let val = rowData && rowData[key] !== null && rowData[key] !== undefined ? String(rowData[key]) : '';
-                const isDate = key.toLowerCase().includes('data') || key.toLowerCase().includes('date');
-                const inputType = isDate ? 'date' : 'text';
+                const colType = window.KYV_DB?.getType(editorModalTable,key) || 'text';
+                const isTimestamp = ['timestamp','timestamptz','timestampz'].includes(String(colType).toLowerCase());
+                const isDate = isTimestamp || key.toLowerCase().includes('data') || key.toLowerCase().includes('date');
+                const inputType = isTimestamp ? 'datetime-local' : isDate ? 'date' : 'text';
                 const extraStyle = isDate ? 'style="color-scheme: dark;"' : '';
                 let extraAttr = '', placeholder = 'Inserisci...', extraClass = '';
                 if (key === 'ID_PROGETTO' || key === 'Progetto_Collegato') { extraAttr = 'list="projects-list" autocomplete="off"'; placeholder = 'Seleziona il progetto...'; }
                 if (key.toUpperCase() === 'IDFT' || key.toUpperCase() === 'ID_FT') { extraAttr = 'list="invoices-list" autocomplete="off"'; placeholder = 'Seleziona la fattura...'; extraClass = 'auto-fill-invoice'; }
-                if (isDate && val.length >= 10) val = val.substring(0, 10);
+                if (isTimestamp && val) val = KYV_EDITOR_CHANGES_V268.dateTimeInput(val, colType);
+                else if (isDate && val.length >= 10) val = val.substring(0, 10);
                 html += `<div><label class="block text-xs font-semibold text-kyv-text mb-1 uppercase tracking-wide truncate">${KYV.safeHtml(displayEditorColumnLabel(key))}</label><input type="${inputType}" data-key="${KYV.safeHtml(key)}" class="kyv-input dyn-input ${extraClass}" value="${KYV.safeHtml(val)}" placeholder="${KYV.safeHtml(placeholder)}" ${extraAttr} ${extraStyle} ${readOnly ? 'disabled' : ''}></div>`;
             });
             const formRoot = document.getElementById('dynamic-form-fields');
