@@ -40,6 +40,74 @@
         .compact-mode td{padding-top:10px;padding-bottom:10px}.compact-mode .cell-secondary{display:none}.project-row-actions{display:flex;justify-content:flex-end;gap:5px;flex-wrap:wrap}.quick-body{padding:19px 20px;max-height:75vh;overflow:auto}.quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.quick-item{border:1px solid #354058;border-radius:10px;padding:12px;min-width:0}.quick-item small{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.quick-item strong{display:block;font-size:13px;line-height:1.5;overflow-wrap:anywhere}.quick-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.quick-actions a{border:1px solid #525b73;border-radius:10px;padding:9px 12px;color:#e0e7ff;font-weight:800;font-size:12px}.quick-note{margin-top:12px;color:#cbd5e1;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
         @media(max-width:600px){.overview-bar{grid-template-columns:minmax(85px,140px) 1fr 35px;gap:7px}.quick-grid{grid-template-columns:1fr}.advanced-filters label{flex:1 1 42%}.advanced-filters select{width:100%;min-width:0}}
         @media(max-width:820px){body{overflow:auto}.sidebar{position:fixed;z-index:70;left:0;top:0;transform:translateX(-105%);transition:transform .18s ease;box-shadow:20px 0 55px rgba(0,0,0,.45)}body.menu-open .sidebar{transform:translateX(0)}body.menu-open .backdrop{display:block;position:fixed;z-index:65;inset:0;background:rgba(0,0,0,.55)}.mobile-open{display:block}.page{height:auto;min-height:100vh}.header{padding:70px 16px 17px}.header-top{align-items:stretch;flex-direction:column}.title{font-size:32px}.actions{width:100%}.search{flex:1}.search input{width:100%}.content{padding:16px}.table-scroll{max-height:none}.notice{align-items:flex-start;flex-direction:column}.choices{grid-template-columns:1fr}.count{margin-left:4px}}
+
+        /* v2.61 · Progetti safe: layout migliorato senza dipendere da CSS o JS globali. */
+        :root{--safe-radius:16px;--safe-control:44px;--safe-focus:#b8b1ff;--safe-surface:#171e2c;--safe-outline:#3c4960}
+        .header{background:linear-gradient(130deg,#192131,#101722);border-bottom-color:var(--safe-outline)}
+        .title{font-size:clamp(27px,3vw,38px)}.subtitle{max-width:72ch;line-height:1.55;color:#bdc7d8}
+        .search input,.btn,.filter,.open,.advanced-filters select{min-height:var(--safe-control)}
+        .search input,.advanced-filters select{border-color:#5b6a81;background:#0c1625;color:#f8fafc}
+        .search input::placeholder{color:#b6bfd1}
+        .sidebar{background:linear-gradient(180deg,#0e121b,#10141f);border-color:var(--safe-outline)}
+        .nav a,.group summary{min-height:42px}
+        .nav a.active{box-shadow:inset 3px 0 0 var(--indigo2);color:#e8e7ff}
+        .proj-disclosure{border:1px solid var(--safe-outline);border-radius:var(--safe-radius);background:#151c2a;overflow:hidden}
+        .proj-disclosure>summary{display:flex;align-items:center;gap:9px;padding:11px 15px;min-height:48px;cursor:pointer;font-size:13px;font-weight:850;color:#f2f4fb;list-style:none}
+        .proj-disclosure>summary::-webkit-details-marker{display:none}
+        .proj-disclosure>summary::after{content:'+';font-size:22px;color:#b8b1ff;margin-left:auto}
+        .proj-disclosure[open]>summary::after{content:'−'}
+        .proj-disclosure>summary small{font-weight:550;font-size:11px;color:#bfc8d9}
+        #project-advanced-details{margin-top:12px}
+        #project-advanced-details .advanced-filters{margin:0;padding:0 15px 15px;gap:10px}
+        #project-advanced-details .advanced-filters label{color:#d5def0}
+        #project-advanced-details #project-filter-note{margin:0 15px 12px;color:#cac4ff;line-height:1.5}
+        #project-chart-details{margin-bottom:15px}
+        #project-chart-details .overview{margin:0;border:0;border-top:1px solid var(--safe-outline);border-radius:0;background:transparent;box-shadow:none}
+        .table-wrap{border-color:var(--safe-outline);background:#151b29;border-radius:var(--safe-radius);box-shadow:0 10px 28px rgba(0,0,0,.15)}
+        thead{background:#1b2534;color:#c5cddd}
+        td{border-top-color:var(--safe-outline)}
+        .row:hover{background:rgba(129,140,248,.09)}
+        .open{min-height:40px;align-items:center;justify-content:center}
+        .project-title{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+        .artist{color:#aee5fb}
+        .status{background:#222c3d;border-color:#485770;color:#e0e7ff}
+        .quick-grid{gap:10px}
+        .quick-item{background:#192233;border-color:var(--safe-outline);border-radius:12px}
+        .modal-card{max-height:min(92dvh,960px);overflow-y:auto;background:#161e2d;border-color:#5a6b87}
+        .quick-body{max-height:calc(92dvh - 85px)}
+        .quick-actions a{min-height:44px;display:inline-flex;align-items:center}
+        .choice{min-height:95px;border-color:var(--safe-outline);background:#182131}
+        .choice:hover{background:#242e45}
+        .notice{color:#d8f5e5;border-color:#396451;background:rgba(16,185,129,.07);font-size:12px}
+        .notice span:last-child{color:#bac5d7}
+        .filters{scrollbar-width:thin}
+        :is(button,a,input,select,summary,.row):focus-visible{outline:3px solid var(--safe-focus);outline-offset:2px}
+        @media(max-width:820px){
+          .header{padding:70px 15px 17px}
+          .content{padding:14px 14px calc(32px + env(safe-area-inset-bottom,0px))}
+          .table-wrap{border:0;background:transparent;box-shadow:none;overflow:visible}
+          .table-scroll{overflow:visible;max-height:none}
+          .table-scroll table{min-width:0;width:100%;display:block}
+          .table-scroll thead{display:none}
+          .table-scroll tbody{display:grid;gap:12px}
+          .table-scroll tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px 12px;border:1px solid var(--safe-outline);background:#161e2c;border-radius:var(--safe-radius);padding:15px;box-shadow:0 8px 20px rgba(0,0,0,.12)}
+          .table-scroll tr.row td{display:flex;flex-direction:column;min-width:0;padding:0;border:0;overflow-wrap:anywhere}
+          .table-scroll tr.row td:nth-child(1),.table-scroll tr.row td:nth-child(3),.table-scroll tr.row td:nth-child(5){grid-column:1/-1}
+          .table-scroll tr.row td:nth-child(2),.table-scroll tr.row td:nth-child(4){grid-column:auto}
+          .table-scroll tr.row td[data-label]:not(:first-child)::before{content:attr(data-label);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#aab7c9;margin-bottom:5px}
+          .table-scroll .cell-secondary{display:block !important}
+          .table-scroll .project-row-actions{justify-content:flex-start}
+          .table-scroll .project-row-actions :is(a,button){flex:1 1 120px;min-height:44px;font-size:13px}
+          .table-scroll tr:not(.row){display:block}
+          .table-scroll tr:not(.row) td{display:block;width:100%}
+          .count{font-size:11px}
+          .modal{padding:10px}
+          .modal-card{width:100%}
+          .modal-head{padding:14px 16px}
+          .quick-body{padding:14px}
+          .quick-grid{grid-template-columns:1fr}
+        }
+        @media(prefers-reduced-motion:reduce){.row,.sidebar{transition:none}}
     </style>
 </head>
 <body>
@@ -68,6 +136,7 @@
                 <div class="actions"><div class="search"><input id="uscite-search" type="search" autocomplete="off" placeholder="Titolo, artista, prossima azione…" aria-label="Cerca progetti"></div><button class="btn primary" type="button" onclick="openNewProjectChoices()">+ Nuovo</button><button class="btn icon" id="reload" type="button" title="Ricarica" aria-label="Ricarica">↻</button></div>
             </div>
             <div class="filters" id="filters"><button class="filter active" data-filter="RECENTI" type="button">Recenti</button><button class="filter" data-filter="DA_FARE" type="button">Da fare</button><button class="filter" data-filter="ATTESA" type="button">In attesa</button><button class="filter" data-filter="USCITI" type="button">Usciti</button><button class="filter" data-filter="TUTTI" type="button">Tutti</button><span class="count" id="project-count">0 progetti</span></div>
+            <details id="project-advanced-details" class="proj-disclosure"><summary><span>Filtri e ordinamento</span><small id="project-advanced-count" aria-live="polite">Nessun filtro avanzato</small></summary>
             <div class="advanced-filters" role="group" aria-label="Filtri combinabili progetti">
                 <label>Artista<select id="project-artist-filter"><option value="">Tutti gli artisti</option></select></label>
                 <label>Stato<select id="project-status-filter"><option value="">Tutti gli stati</option></select></label>
@@ -77,15 +146,18 @@
                 <button class="btn" id="project-view-toggle" type="button" aria-pressed="true">Vista compatta</button>
             </div>
             <p id="project-filter-note" class="filter-note" role="status"></p>
+            </details>
         </header>
 
         <section class="content">
+            <details id="project-chart-details" class="proj-disclosure"><summary><span>Analisi archivio</span><small>Grafico per stato o fase · dati dell’intero archivio</small></summary>
             <section id="project-overview" class="overview" aria-label="Distribuzione dei progetti">
                 <div class="overview-head"><h2>Panoramica archivio · dati reali</h2><label>Grafico autonomo <select id="project-overview-field" aria-label="Variabile del grafico"><option value="STATO">Stato registrato</option><option value="SVILUPPO">Fase registrata</option></select></label></div>
                 <p id="project-overview-meta" class="overview-legend">Caricamento dati…</p><div id="project-overview-bars" class="overview-bars"></div>
                 <button id="project-overview-more" class="overview-more" type="button" hidden>Mostra tutti gli stati</button>
                 <p class="overview-legend">I conteggi riguardano l'intero archivio, indipendentemente dai filtri della tabella. I campi mancanti sono mostrati come «Non indicato».</p>
             </section>
+            </details>
             <div class="notice"><span>Apri un progetto con «Rapido» per i dati principali, senza caricare le sezioni secondarie.</span><span>Per audio, documenti, fee e modifiche usa «Scheda».</span></div>
             <div class="table-wrap" id="projects-table"><div class="table-scroll"><table><thead><tr><th>Progetto</th><th>Stato</th><th>Prossima azione</th><th>Ultima attività</th><th>Azioni</th></tr></thead><tbody id="tbody-uscite"><tr><td colspan="5" class="empty">Carico i progetti…</td></tr></tbody></table></div></div>
             <div style="display:flex;justify-content:center;margin:12px 0"><button id="project-load-more" class="btn" type="button" hidden>Mostra altri 50</button></div>
@@ -103,7 +175,7 @@
     (function(){
         'use strict';
         const M=window.KYV_PROJECT_V250;
-        const state={db:null,rows:[],filter:'RECENTI',loading:false,artist:'',status:'',phase:'',sort:'activity',shown:50,chartField:'STATO',chartShown:8,compact:true,lastFocus:null};
+        const state={db:null,rows:[],filter:'RECENTI',loading:false,artist:'',status:'',phase:'',sort:'activity',shown:50,chartField:'STATO',chartShown:8,compact:true,lastFocus:null,newProjectFocus:null};
 
         const body=document.getElementById('tbody-uscite');
         const count=document.getElementById('project-count');
@@ -121,8 +193,17 @@
         const activity=p=>Math.max(dateValue(p.updated_at),dateValue(p.Data_Sessione),dateValue(p.Data_Pubblicazione),dateValue(p.created_at),Number(p.ID||0));
         const activityLabel=p=>{const t=Math.max(dateValue(p.updated_at),dateValue(p.Data_Sessione),dateValue(p.Data_Pubblicazione),dateValue(p.created_at));if(!t)return '—';const d=Math.max(0,Math.floor((Date.now()-t)/86400000));if(d===0)return'Oggi';if(d===1)return'Ieri';if(d<45)return`${d} gg fa`;return new Date(t).toLocaleDateString('it-IT');};
 
-        window.openNewProjectChoices=function(){document.getElementById('new-project-choice-modal').classList.add('open');};
-        window.closeNewProjectChoices=function(){document.getElementById('new-project-choice-modal').classList.remove('open');};
+        window.openNewProjectChoices=function(){
+            state.newProjectFocus=document.activeElement;
+            const modal=el('new-project-choice-modal');
+            modal.classList.add('open');
+            modal.querySelector('.close')?.focus();
+        };
+        window.closeNewProjectChoices=function(){
+            el('new-project-choice-modal').classList.remove('open');
+            if(state.newProjectFocus?.isConnected)state.newProjectFocus.focus();
+            state.newProjectFocus=null;
+        };
 
 
         const selectValues=(id,rows,field,allLabel)=>{
@@ -153,6 +234,9 @@
             count.textContent=rows.length+' '+(rows.length===1?'progetto':'progetti')+' nella vista · '+state.rows.length+' totali';
             el('project-filter-note').textContent=(state.phase?'Filtro fase: '+(state.phase==='__missing__'?'Non indicata':state.phase)+' · ':'')+
               (search.value?'Ricerca nell’intero archivio · ':'')+'Le modifiche si effettuano nella Scheda progetto.';
+            const activeAdvanced=[state.artist,state.status,state.phase].filter(Boolean).length+(state.sort!=='activity'?1:0);
+            el('project-advanced-count').textContent=activeAdvanced?
+                activeAdvanced+' '+(activeAdvanced===1?'filtro attivo':'filtri attivi'):'Nessun filtro avanzato';
             const table=el('projects-table');table.classList.toggle('compact-mode',state.compact);
             const toggle=el('project-view-toggle');toggle.textContent=state.compact?'Vista compatta':'Vista dettagliata';
             toggle.setAttribute('aria-pressed',String(state.compact));
@@ -161,12 +245,12 @@
                 const status=text(p.STATO)||(!M.done(p)&&M.nextAction(p)?'In lavorazione':'Stato non indicato');
                 const action=M.nextAction(p)||(M.done(p)?'Progetto chiuso':'Da decidere');
                 const id=encodeURIComponent(String(p.ID));
-                return '<tr class="row" data-id="'+H(p.ID)+'"><td><span class="project-title">'+H(p.TITOLO||'Senza titolo')+'</span>'+
+                return '<tr class="row" data-id="'+H(p.ID)+'"><td data-label="Progetto"><span class="project-title">'+H(p.TITOLO||'Senza titolo')+'</span>'+
                   '<span class="artist">'+H(p.ARTISTA||'Artista non indicato')+'</span></td>'+
-                  '<td><span class="status">'+H(status)+'</span></td>'+
-                  '<td><span class="next">'+H(action)+'</span></td>'+
-                  '<td><span class="muted cell-secondary">'+H(activityLabel(p))+'</span></td>'+
-                  '<td><div class="project-row-actions"><button class="open" data-quick-id="'+H(p.ID)+'" type="button">Rapido</button>'+
+                  '<td data-label="Stato"><span class="status">'+H(status)+'</span></td>'+
+                  '<td data-label="Prossima azione"><span class="next">'+H(action)+'</span></td>'+
+                  '<td data-label="Ultima attività"><span class="muted cell-secondary">'+H(activityLabel(p))+'</span></td>'+
+                  '<td data-label="Azioni"><div class="project-row-actions"><button class="open" data-quick-id="'+H(p.ID)+'" type="button" aria-label="Apri riepilogo rapido di '+H(p.TITOLO||'Senza titolo')+'">Riepilogo</button>'+
                   '<a class="open" href="scheda_progetto.html?id='+id+'">Scheda</a></div></td></tr>';
             }).join('');
             const more=el('project-load-more');more.hidden=rows.length<=state.shown;
@@ -264,6 +348,7 @@
                     if(state.chartField==='STATO'){state.status=key;el('project-status-filter').value=key==='__missing__'?key:(M.distinct(state.rows,'STATO').find(x=>M.fold(x)===key)||'');}
                     else{state.phase=key;el('project-phase-filter').value=key==='__missing__'?key:(M.distinct(state.rows,'SVILUPPO').find(x=>M.fold(x)===key)||'');}
                     state.filter='TUTTI';state.shown=50;
+                    el('project-advanced-details').open=true;
                     filters.forEach(x=>x.classList.toggle('active',x.dataset.filter==='TUTTI'));
                     render();
                 });
@@ -278,7 +363,26 @@
                 body.addEventListener('click',event=>{const b=event.target.closest('[data-quick-id]');if(b)openQuick(b.dataset.quickId,b)});
                 el('project-quick-close').addEventListener('click',closeQuick);
                 el('project-quick-modal').addEventListener('click',event=>{if(event.target===el('project-quick-modal'))closeQuick()});
-                document.addEventListener('keydown',event=>{if(event.key==='Escape'&&el('project-quick-modal').classList.contains('open')){event.preventDefault();closeQuick()}});
+                document.addEventListener('keydown',event=>{
+                    const quick=el('project-quick-modal'),newModal=el('new-project-choice-modal');
+                    const current=quick.classList.contains('open')?quick:newModal.classList.contains('open')?newModal:null;
+                    if(!current)return;
+                    if(event.key==='Escape'){
+                        event.preventDefault();
+                        if(current===quick)closeQuick();else closeNewProjectChoices();
+                        return;
+                    }
+                    if(event.key!=='Tab')return;
+                    const focusable=[...current.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])')]
+                        .filter(node=>node.getClientRects().length);
+                    if(!focusable.length)return;
+                    const first=focusable[0],last=focusable[focusable.length-1];
+                    if(event.shiftKey&&(document.activeElement===first||!current.contains(document.activeElement))){
+                        event.preventDefault();last.focus();
+                    }else if(!event.shiftKey&&(document.activeElement===last||!current.contains(document.activeElement))){
+                        event.preventDefault();first.focus();
+                    }
+                });
                 el('project-view-toggle').setAttribute('aria-pressed','true');
                 document.getElementById('logout').addEventListener('click',async()=>{await state.db.auth.signOut();location.replace('login.html');});
                 await loadProjects();

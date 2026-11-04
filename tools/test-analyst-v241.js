@@ -59,7 +59,7 @@ const page=read('kyv_analyst.html'),ui=read('kyv-analyst-ui-v241.js'),sw=read('s
 for(const x of ['KYV Analyst','kyv-analyst-engine-v241.js','kyv-analyst-ui-v241.js','analyst-status']) assert.ok(page.includes(x));
 for(const x of ['FATTURE_INCASSI_STORNI','KYV_ATTRIBUZIONI_DIRITTI_STORNI','Prossimo_Followup',"count:'exact'"])assert.ok(ui.includes(x));
 assert.doesNotMatch(ui,/\.insert\(|\.update\(|\.upsert\(|\.delete\(|fetch\(['"]https:|api\.openai|api\.anthropic|localStorage/,'Analyst must remain read-only and local');
-assert.ok(sw.includes('kyv-studio-v2-60-design-foundation-20261104'));
+assert.ok(sw.includes('kyv-studio-v2-61-project-clarity-20261104'));
 for(const x of ["'./kyv_analyst.html'","'./kyv-analyst-engine-v241.js'","'./kyv-analyst-ui-v241.js'"])assert.ok(sw.includes(x));
 assert.ok(read('kyv_intelligence.html').includes('kyv_analyst.html'));
 assert.ok(read('kyv_ritorni_progetti.html').includes('kyv_analyst.html'));

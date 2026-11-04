@@ -1,5 +1,12 @@
 # Changelog
 
+### v2.61 · 2026-11-04
+- Progetti safe: grafico globale e filtri avanzati in pannelli nativi richiudibili, conta filtri attivi, apertura automatica del pannello quando si sceglie un intervallo dal grafico; nessun nuovo renderer.
+- Layout mobile della lista in card senza scorrimento tabellare, con etichette e attività datate; popup Riepilogo accessibile da tastiera, con chiusura Esc e restituzione del focus.
+- Scheda Progetto: selettore iniziale compatto (12 risultati, ricerca in tutto l'archivio caricato, massimo 80 risultati visualizzati); pulsante «Cambia progetto» dopo l'apertura.
+- UI della Scheda allineata al tema condiviso; Easy mostra il percorso guidato senza duplicare altri lanciatori, Completa mantiene ogni pannello. Nessun cambiamento su salvataggi, dati, file o database.
+- Guida contestuale/manuale/test dedicati e cache PWA allineati alla v2.61.
+
 ### v2.60 · 2026-11-04
 - Sistema visivo condiviso v2.60 in kyv-theme.css, applicato alle schermate operative compatibili: card, spazio, leggibilità, pulsanti, moduli, focus e mobile; la pagina Progetti safe rimane isolata.
 - Navigazione senza ripetizioni: Tutte le app una sola volta, Fatture in Amministrazione, barra mobile con Ascolto diretto e aria-current stabile, senza riscrittura del collegamento Rubrica.

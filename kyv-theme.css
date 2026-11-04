@@ -973,3 +973,127 @@ body.kyv-v260 > main :is(.card,.metric,.status) {box-shadow: 0 9px 25px rgba(0,0
  body.kyv-v260 .kyv-v260-disclosure > summary {align-items:flex-start;flex-direction:column;}
  body.kyv-v260 .kyv-v260-disclosure > summary::after {display:none;}
 }
+
+
+/* v2.61 — Scheda Progetto: progressive detail and one primary action per mode.
+ * Scoped to the existing common theme. No new renderer or persistence. */
+body.kyv-v260 #project-picker {
+  border-color: var(--kyv-ui-border);
+  background: linear-gradient(145deg,#161e2c,#111826);
+  border-radius: var(--kyv-ui-radius);
+  overflow: hidden;
+}
+body.kyv-v260 #project-picker > summary {
+  padding: 15px 18px;
+  min-height: 54px;
+  color: #f6f8ff;
+  cursor: pointer;
+}
+body.kyv-v260 #project-picker > summary small {
+  color: #bdc7d8;
+  line-height: 1.5;
+  font-size: 12px;
+}
+body.kyv-v260 #project-picker[open] > summary {
+  border-bottom: 1px solid var(--kyv-ui-border);
+}
+body.kyv-v260 #project-results {
+  border-color: var(--kyv-ui-border);
+  background: #111a29;
+  max-height: min(330px,37vh);
+  scrollbar-gutter: stable;
+}
+body.kyv-v260 #project-results .project-result {
+  padding: 13px 15px;
+  min-height: 60px;
+  border-bottom: 1px solid var(--kyv-ui-border);
+}
+body.kyv-v260 #project-results .project-result:focus-visible {
+  outline: 3px solid #b8b1ff;
+  outline-offset: -3px;
+}
+body.kyv-v260 #project-view > section.kyv-card {
+  border-color: var(--kyv-ui-border);
+  border-radius: var(--kyv-ui-radius);
+  background: linear-gradient(150deg,#1b2333,#131b29);
+}
+body.kyv-v260 #hero-title {line-height:1.13;letter-spacing:-.035em;}
+body.kyv-v260 #hero-artist {color:#afe3fa;line-height:1.25;}
+body.kyv-v260 #kyv-song-desk {
+  border-color:var(--kyv-ui-border);
+  background: linear-gradient(145deg,#192334,#131b2a);
+  border-radius:var(--kyv-ui-radius);
+}
+body.kyv-v260 #kyv-song-desk .kyv-desk-card {
+  min-height: 154px;
+  border: 1px solid var(--kyv-ui-border);
+  background: #172031;
+  border-radius: var(--kyv-ui-radius-small);
+}
+body.kyv-v260 #kyv-song-desk .kyv-desk-copy,
+body.kyv-v260 .kyv-project-progressive .kyv-prog-sub {
+  color: #c0c9d8;
+}
+body.kyv-v260 #kyv-song-desk .kyv-desk-button {
+  min-height: 44px;
+  border-color:#5c6b86;
+  background:#232e41;
+  font-size:12px;
+}
+body.kyv-v260 .kyv-project-progressive details {
+  border-color:var(--kyv-ui-border);
+  background: #172031;
+  border-radius:var(--kyv-ui-radius-small);
+}
+body.kyv-v260 .kyv-project-progressive summary {min-height:56px;}
+/* Easy already offers 'Continua progetto': do not show a second next-action launcher
+ * or a second set of shortcuts. Both remain in Completa. */
+body.kyv-v260.kyv-easy-mode #kyv-v2-next,
+body.kyv-v260.kyv-easy-mode .kyv-project-progressive {
+  display: none !important;
+}
+body.kyv-v260 #kyv-easy-wizard .kyv-wizard-dialog {
+  width:min(700px,100%);
+  background:#141c2a;
+  border-color:#65738d;
+  border-radius:var(--kyv-ui-radius);
+}
+body.kyv-v260 #kyv-easy-wizard .kyv-wizard-choice {
+  min-height:84px;
+  background:#1b2638;
+  border-color:var(--kyv-ui-border);
+}
+body.kyv-v260 #kyv-easy-wizard .kyv-wizard-choice:hover {
+  border-color:#9992ff;
+  background:#253149;
+}
+body.kyv-v260 #kyv-easy-wizard .kyv-wizard-intro,
+body.kyv-v260 #kyv-easy-wizard .kyv-wizard-status p {
+  color:#becadd;
+  font-size:13px;
+}
+body.kyv-v260 #quick-edit-modal [data-key] {
+  border-color:#596b84;
+  background:#0e1929;
+  min-height:44px;
+}
+body.kyv-v260 #quick-edit-modal .kyv-advanced-fields {
+  border-color:var(--kyv-ui-border);
+  background:#182235;
+}
+body.kyv-v260 #kyv-easy-mode-switch button {
+  min-height:40px;
+  min-width:65px;
+  font-size:12px;
+}
+@media(max-width:767px){
+ body.kyv-v260 #project-picker > summary {padding:12px 14px;}
+ body.kyv-v260 #project-view > section.kyv-card {padding:16px;}
+ body.kyv-v260 #kyv-song-desk .kyv-desk-card {min-height:140px;}
+ body.kyv-v260 #kyv-easy-wizard .kyv-wizard-dialog {
+  max-height:min(94dvh,900px);
+  width:100%;
+ }
+ body.kyv-v260 #quick-edit-modal {padding:10px;}
+ body.kyv-v260 #quick-edit-modal [data-key] {font-size:16px;}
+}
