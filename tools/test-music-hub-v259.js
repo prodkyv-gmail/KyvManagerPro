@@ -129,6 +129,13 @@ const legacy=H.build({...samples,finance:{ready:true,invoices:[
 assert.equal(legacy.entries.find(x=>x.id==='1').documentedReceiptsCents,0,
  'Legacy PAGATA does not constitute a documented payment');
 assert.equal(legacy.entries.find(x=>x.id==='1').legacyPaidFlags,1);
+const over=H.build({...samples,finance:{ready:true,
+ invoices:[{ID_FT:10,ID_PROGETTO:1,PrezzoUnitario:'100'}],
+ allocations:[{id_ft:10,id_progetto:1,prezzo_unitario:'140'}],
+ payments:[],reversals:[]}},'2026-11-04',w.KYV_INVOICE_LINE);
+assert.equal(over.entries.find(x=>x.id==='1').billedCents,0,'Do not overstate an invoice split beyond its unit price');
+assert.equal(over.entries.find(x=>x.id==='1').billedIncomplete,true,'Excess split needs manual review');
+assert.equal(over.summary.invalidAllocations,1);
 const html=read('kyv_scrivania_creativa.html'),ui=read('kyv-creative-desk-ui-v244.js'),
   sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
 for(const id of ['desk-hub','tab-hub','hub-stats','hub-finance-note','hub-pitch-chart',
