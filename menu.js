@@ -308,6 +308,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
 
     if (window.lucide) lucide.createIcons();
     if (window.KYV_AUTH && typeof KYV_AUTH.bindSidebar === 'function') KYV_AUTH.bindSidebar();
+    document.dispatchEvent(new Event('kyv:sidebar-ready'));
 }
 
 document.addEventListener('keydown', event => {

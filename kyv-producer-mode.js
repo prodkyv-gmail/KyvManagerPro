@@ -96,6 +96,7 @@ function mountSimpleSidebar(){
   const brand=sidebar.querySelector('h1 + p');
   if(brand&&window.KYV_CONFIG)brand.textContent=`Manager Pro ${KYV_CONFIG.APP_VERSION}`;
   if(window.lucide)lucide.createIcons({root:sidebar});
+  document.dispatchEvent(new Event('kyv:producer-nav-ready'));
   return true;
 }
 /* v2.60: the shared menu now renders the correct mobile destinations directly.
