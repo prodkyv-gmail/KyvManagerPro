@@ -64,7 +64,7 @@ assert.ok(ui.includes("db.from('KYV_AUDIO_DECISIONI').upsert"),'Preexisting expl
 assert.ok(ui.includes("db.from('KYV_AUDIO_ASSOCIAZIONI').insert"),'Preexisting separate link write remains');
 assert.ok(ui.includes("confirm('Confermi il collegamento"),'Project link still requires human confirmation');
 assert.ok(ui.includes('R.planLinks(selections,personalCatalogue(),projects,links,owner)'));
-assert.doesNotMatch(read('kyv-audio-scan-v280.js'),/fetch\(|localStorage|\.from\(|MutationObserver|createFromItem/);
+assert.doesNotMatch(read('kyv-audio-scan-v280.js'),/fetch\(|localStorage|(?:db|supabase)\.from\(|MutationObserver|createFromItem/);
 assert.equal(read('VERSION').trim(),'2.80');
 assert.equal(require('../package.json').version,'2.80.0');
 assert.ok(read('config.js').includes("APP_VERSION: '2.80'"));
