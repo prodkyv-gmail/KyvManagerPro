@@ -187,6 +187,9 @@ function getKyvHelpContent(activePage) {
     // v2.71: mobile drawer focus and manually opened secondary disclosures.
     const mobileDisclosureV271 = '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.71 · Mobile e vista Easy</h5><p class="text-sm text-kyv-text mt-2">In Progetti il menu mobile si chiude con Esc; la barra inferiore resta unica e indica la sezione attiva. In Pipeline, Fatture e Rendiconto, Easy e Completa cambiano i dettagli mostrati senza richiudere automaticamente il registro o lo storico già aperto.</p></div>';
     ['progetti','pipeline','fatture','rendiconto'].forEach(key => { if(guide[key]) guide[key].content += mobileDisclosureV271; });
+    // v2.72: native project quick-view disclosures and one Easy/Complete control.
+    const projectDisclosureV272 = '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.72 · Progetto senza pulsanti ripetuti</h5><p class="text-sm text-kyv-text mt-2">In Progetti, la Vista rapida mostra i dati fondamentali e il link Scheda; <b>Scadenze e note</b> e <b>Sessioni, audio e fatture</b> aprono contenuti secondari quando ti servono. Nella Scheda il selettore <b>Easy/Completa</b> è l’unico comando per i dettagli, mentre <b>Continua progetto</b> resta disponibile. Le scelte di collegamento fattura e audio restano volontarie.</p></div>';
+    ['progetti','scheda'].forEach(key => { if(guide[key]) guide[key].content += projectDisclosureV272; });
     const aliases = { spese: 'documenti' };
     activePage = aliases[activePage] || activePage;
     return guide[activePage] || guide.default;

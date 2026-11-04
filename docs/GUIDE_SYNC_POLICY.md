@@ -1,3 +1,6 @@
+### v2.72 — Vista rapida senza azioni ripetute
+Nella Vista rapida della pagina Progetti mantenere le attività di sola lettura principali direttamente visibili e raccogliere note/date e destinazioni secondarie in elementi details/summary nativi, così si evitano nuovi modali e pulsanti ripetuti. La Scheda ha un solo controllo Easy/Completa per il livello di dettaglio: non aggiungere un altro pulsante che replichi la vista Completa. Preservare le azioni manuali già esistenti di collegamento fattura, i filtri globali, la scelta progetto e il consenso audio; no mutazioni automatiche e nessuna modifica al database.
+
 ### v2.71 — Mobile e pannelli progressivi
 Per Progetti safe, riutilizzare la sua navigazione isolata senza introdurre observer globali: controllare focus, Esc/Tab, aria-expanded e la barra rapida quando il menu è aperto. Nel modulo Easy/Completa modificare details.open all'inizializzazione e al cambio di modalità, non durante ogni refresh: l'utente deve poter mantenere aperta una sezione. Nessuna modifica a Supabase o a permessi.
 

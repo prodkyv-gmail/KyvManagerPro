@@ -1,3 +1,11 @@
+## v2.72 — Vista rapida Progetti e Scheda essenziale (4 novembre 2026)
+
+La **Vista rapida** dell'archivio Progetti mostra subito titolo, artista, stato, prossima azione e ultima attività, con un solo collegamento principale **Apri scheda completa**. I dettagli meno frequenti (date di sessione, follow-up, pubblicazione e note) si aprono nel riquadro nativo **Scadenze e note**. I collegamenti secondari per Sessioni, Audio e Collega fattura rimangono disponibili nel riquadro **Sessioni, audio e fatture**. Ogni apertura di un altro progetto riparte dalla vista compatta; non si perde nessuna informazione.
+
+Nella **Scheda progetto** la scelta di vista **Easy/Completa** è il comando unico per mostrare o nascondere i dettagli. L'ulteriore pulsante “Mostra dettagli” è stato rimosso per evitare doppioni, mantenendo **Continua progetto** in Easy e tutti i controlli di modifica nella vista Completa. Gli stati delle scelte sono accessibili (aria-pressed) e il menu del progetto non viene modificato.
+
+Tutti i collegamenti conservano l'identificativo del progetto. Nessuna mutazione automatica di fatture, progetti, file audio o dati storici; nessun accesso Vercel. Per la verifica reale occorre il collaudo autenticato PC/mobile oltre alla CI.
+
 ## v2.71 — Progetti mobile e viste secondarie senza interruzioni (4 novembre 2026)
 
 La pagina **Progetti**, con vista indipendente, ha un menu mobile accessibile: il focus entra nel menu aperto, **Esc** lo chiude e ritorna al pulsante, **Tab** naviga all'interno e lo stato è indicato con aria-expanded. La barra inferiore indica la sezione corrente, è disabilitata mentre il menu è aperto e non viene duplicata se una barra condivisa esiste già.
