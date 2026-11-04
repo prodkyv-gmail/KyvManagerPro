@@ -55,14 +55,22 @@ function toggleMobileMenu(force) {
 }
 
 
+/* Shared contextual help owns its focus rather than leaking keyboard input to the page. */
+let kyvHelpFocusReturn = null;
 function openHelpModal() {
     const modal = document.getElementById('kyv-help-modal');
-    if (modal) modal.classList.remove('hidden');
+    if (!modal || !modal.classList.contains('hidden')) return;
+    kyvHelpFocusReturn = document.activeElement;
+    modal.classList.remove('hidden');
+    modal.querySelector('button[aria-label="Chiudi guida"]')?.focus();
 }
 
 function closeHelpModal() {
     const modal = document.getElementById('kyv-help-modal');
-    if (modal) modal.classList.add('hidden');
+    if (!modal || modal.classList.contains('hidden')) return;
+    modal.classList.add('hidden');
+    if (kyvHelpFocusReturn?.isConnected) kyvHelpFocusReturn.focus();
+    kyvHelpFocusReturn = null;
 }
 
 function renderKyvMobileBottomNav(activePage = 'dashboard') {
@@ -82,7 +90,7 @@ function renderKyvMobileBottomNav(activePage = 'dashboard') {
     nav.className = 'kyv-mobile-bottom-nav md:hidden';
     nav.setAttribute('aria-label', 'Navigazione principale mobile');
     nav.innerHTML = items.map(item => `
-        <a href="${item.href}" class="${activePage === item.page ? 'is-active' : ''}" aria-label="${item.label}">
+        <a href="${item.href}" class="${activePage === item.page ? 'is-active' : ''}" aria-label="${item.label}" ${activePage === item.page ? 'aria-current="page"' : ''}>
             <i data-lucide="${item.icon}"></i>
             <span>${item.label}</span>
         </a>
@@ -303,8 +311,27 @@ function loadKyvSidebar(activePage = 'dashboard') {
 }
 
 document.addEventListener('keydown', event => {
+    const help = document.getElementById('kyv-help-modal');
+    const helpOpen = Boolean(help && !help.classList.contains('hidden'));
+    if (helpOpen && event.key === 'Tab') {
+        const buttons = [...help.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled])')]
+            .filter(el => el.getClientRects().length > 0);
+        if (buttons.length) {
+            const first=buttons[0],last=buttons[buttons.length-1],current=document.activeElement;
+            if (event.shiftKey && (current===first || !help.contains(current))) {
+                event.preventDefault();last.focus();
+            } else if (!event.shiftKey && (current===last || !help.contains(current))) {
+                event.preventDefault();first.focus();
+            }
+        }
+        return;
+    }
     if (event.key !== 'Escape') return;
-    closeHelpModal();
+    if (helpOpen) {
+        event.preventDefault();
+        closeHelpModal();
+        return;
+    }
     const sidebar = document.getElementById('sidebar');
     if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
         toggleMobileMenu(false);
