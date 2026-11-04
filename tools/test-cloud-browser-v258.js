@@ -139,8 +139,8 @@ async function main(){
  assert.ok(sql.includes('KYV_AUDIO_DECISIONI')&&sql.includes('KYV_AUDIO_INDICE'));
  assert.ok(configJs.includes('ONEDRIVE_INDEX_ENABLED: false'));
  assert.ok(sw.includes("'./kyv-cloud-browser-v258.js'"));
- assert.equal(JSON.parse(read('package.json')).version,'2.59.0');
- assert.equal(read('VERSION').trim(),'2.59');
+ assert.equal(JSON.parse(read('package.json')).version,'2.60.0');
+ assert.equal(read('VERSION').trim(),'2.60');
  assert.ok(read('guida.html').includes('v2.58'));
  assert.ok(read('kyv-help.js').includes('v2.58'));
  console.log('OK: v2.58 PKCE and strictly triggered read-only Dropbox + OneDrive discovery');
