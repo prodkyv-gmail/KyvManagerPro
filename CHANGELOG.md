@@ -7,6 +7,14 @@
 
 # Changelog
 
+### v2.67 · 2026-11-04
+- Studio Editor: eliminato il troncamento silenzioso alle prime 1.000 righe. Lettura completa per tabella con paginazione da 500, conteggio esatto, ordinamento stabile per chiave e limite esplicito di 30.000 record.
+- Se la copertura non è verificabile, errore/limite/permesso negato, la griglia non usa risultati parziali e offre Riprova. Risposte obsolete da altri tab non possono sostituire la tabella selezionata.
+- Resa progressiva delle righe: prime 120, pulsante Mostra altre 120. Ricerca, ordinamento e CSV continuano a operare sul dataset completo verificato, indipendentemente dalle colonne nascoste.
+- Indicatori con righe mostrate, corrispondenze e totale verificato; controlli di salvataggio/export bloccati durante letture non complete. Non modificati CRUD, formule, RLS, dati, colonne o segni SIAE.
+- Test automatici con mock, guida contestuale e manuale, versione e cache PWA aggiornati. Nessun accesso a Vercel o collaudo autenticato su produzione.
+
+
 ### v2.65 · 2026-11-04
 - Ricerca globale: letture complete paginate su sette archivi e conteggi esatti, non più limiti silenziosi per tabella; errori, incompletezza, soglia massima e riprova esplicita. Conteggio match totali distinto dai primi 30 risultati mostrati.
 - Popup ricerca: focus iniziale/finale, Tab, Esc e indicazioni ARIA. Pulsante Cerca montato dal menu tramite eventi di completamento senza polling; indice in memoria solo dopo letture integralmente verificate.

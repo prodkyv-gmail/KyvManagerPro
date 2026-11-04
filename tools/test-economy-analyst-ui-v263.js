@@ -104,10 +104,10 @@ for(const path of ['kyv-invoice-line-amount.js','kyv-analyst-engine-v241.js',
  'kyv-home-charts-v250.js','kyv-invoice-reconciliation-v236.js'])
  assert.ok(fs.existsSync(path));
 const pkg=JSON.parse(read('package.json'));
-assert.equal(pkg.version,'2.66.0');
-assert.equal(read('VERSION').trim(),'2.66');
-assert.ok(read('config.js').includes("APP_VERSION: '2.66'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-66-cross-flow-20261104'));
+assert.equal(pkg.version,'2.67.0');
+assert.equal(read('VERSION').trim(),'2.67');
+assert.ok(read('config.js').includes("APP_VERSION: '2.67'"));
+assert.ok(read('sw.js').includes('kyv-studio-v2-67-editor-verified-20261104'));
 assert.equal(pkg.scripts['check:economy-analyst-ui-v263'],'node tools/test-economy-analyst-ui-v263.js');
 assert.ok(pkg.scripts.check.includes('check:economy-analyst-ui-v263'));
 assert.ok(read('guida.html').includes('v2.63')&&read('kyv-help.js').includes('v2.63'));

@@ -33,6 +33,7 @@
     <script src="kyv-priority.js"></script>
     <script src="kyv-schema.js"></script>
     <script src="kyv-editor-columns.js"></script>
+    <script src="kyv-editor-read-v267.js"></script>
     <script src="kyv-help.js"></script>
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
@@ -222,7 +223,7 @@
 
         <div id="editor-view-status" class="px-4 md:px-8 py-2 border-b border-kyv-border/40 bg-[#11141d] text-[11px] text-kyv-text shrink-0" aria-live="polite">Caricamento dati...</div>
 
-        <!-- TABELLA DATI -->
+        <!-- TABELLA DATI; risultati completi verificati, visualizzazione progressiva -->
         <div class="flex-1 overflow-auto bg-kyv-bg relative custom-scrollbar">
             <table class="w-full text-left text-xs whitespace-nowrap border-collapse border-b border-kyv-border/30" id="editor-table-element" data-kyv-native-sort="1" data-kyv-native-filter="1">
                 <thead class="bg-[#0f111a] sticky top-0 z-10 text-kyv-text uppercase tracking-wider text-[10px]" id="editor-thead"></thead>
@@ -230,6 +231,10 @@
                     <tr><td class="p-8 text-center text-kyv-text"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i> Caricamento tabella in corso...</td></tr>
                 </tbody>
             </table>
+            <div id="editor-load-more-wrap" class="hidden flex items-center justify-center gap-3 flex-wrap p-5 border-t border-kyv-border/40">
+                <button type="button" data-action="load-more-rows" id="editor-load-more" class="px-5 py-3 rounded-xl bg-kyv-card border border-indigo-500/50 text-indigo-200 hover:text-white hover:bg-indigo-600/20 text-sm font-bold">Mostra altre 120 righe</button>
+                <span id="editor-load-more-note" class="text-xs text-kyv-text" aria-live="polite"></span>
+            </div>
         </div>
     </main>
 
@@ -314,6 +319,9 @@
         function showToast(msg, isError = false) { return (window.KYV_TOAST ? KYV_TOAST.show(msg, isError ? 'error' : 'success') : KYV.showToast(msg, isError ? 'error' : 'success')); }
 
         let currentEditorTable = 'PROGETTI', currentEditorData = [], currentEditingRowId = null;
+        const EDITOR_ROWS_STEP = 120;
+        let editorShownRows = EDITOR_ROWS_STEP;
+        let editorLoadSerial = 0, editorIsLoading = false;
         const readOnlyTables = new Set(['AUDIO_VERSIONI']);
         let currentSortColumn = null, currentSortDesc = false;
         const editorColumnKeys = () => currentEditorData.length ? Object.keys(currentEditorData[0]) : (tableColumnsFallback[currentEditorTable] || []);
@@ -337,16 +345,22 @@
         let globalInvoicesList = [];
 
         async function loadEditorTable(tableName) {
+            const requestId = ++editorLoadSerial;
             currentEditorTable = tableName;
+            currentEditorData = [];
+            editorIsLoading = true;
+            editorShownRows = EDITOR_ROWS_STEP;
             toggleColumnPanel(false);
-            currentSortColumn = null; // Reset sort
+            currentSortColumn = null;
+            currentSortDesc = false;
             const addButton = document.querySelector('[data-action="add-record"]');
+            const exportButton = document.querySelector('[data-action="export-csv"]');
             const readOnly = readOnlyTables.has(tableName);
-            if(addButton){
-                addButton.disabled = readOnly;
-                addButton.classList.toggle('opacity-40', readOnly);
-                addButton.title = readOnly ? 'Archivio gestito dal flusso audio: sola lettura nello Studio Editor.' : 'Aggiungi record';
-            }
+            if (addButton) addButton.disabled = true;
+            if (exportButton) exportButton.disabled = true;
+            document.getElementById('editor-load-more-wrap')?.classList.add('hidden');
+            const status = document.getElementById('editor-view-status');
+            if (status) status.textContent = 'Lettura e verifica completa dell’archivio ' + tableName + '…';
             
             // UI Update per i Tabs
             document.querySelectorAll('#editor-tabs button').forEach(btn => btn.className = 'px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all');
@@ -360,10 +374,9 @@
             try { 
                 const querySelection = '*';
                 
-                // Fetch data
-                const { data, error } = await supabaseClient.from(tableName).select(querySelection).limit(1000); 
-                if (error) throw error; 
-                
+                // Copertura esatta e paginazione: niente taglio silenzioso alle prime 1.000 righe.
+                const data = await KYV_EDITOR_READ_V267.readComplete(supabaseClient,tableName,tablePKs[tableName] || 'id');
+                if (requestId !== editorLoadSerial) return;
                 let processedData = data;
                 
                 // Hide system columns per SIAE specific tables
@@ -384,14 +397,30 @@
                     });
                 }
 
-                currentEditorData = processedData; 
+                if (requestId !== editorLoadSerial) return;
+                currentEditorData = processedData;
+                editorIsLoading = false;
+                if (addButton) {
+                    addButton.disabled = readOnly;
+                    addButton.classList.toggle('opacity-40', readOnly);
+                    addButton.title = readOnly ? 'Archivio gestito dal flusso audio: sola lettura nello Studio Editor.' : 'Aggiungi record';
+                }
+                if (exportButton) exportButton.disabled = processedData.length === 0;
                 const searchInput = document.getElementById('editor-search');
                 if (searchInput) searchInput.value = '';
-                
                 refreshEditorView();
                 renderColumnPicker();
-            } catch (error) { 
-                DOM.editorTbody.innerHTML = `<tr><td class="p-8 text-center text-red-400">Errore comunicazione Database: ${error.message}</td></tr>`; 
+            } catch (error) {
+                if (requestId !== editorLoadSerial) return;
+                editorIsLoading = false;
+                currentEditorData = [];
+                if (addButton) addButton.disabled = true;
+                if (exportButton) exportButton.disabled = true;
+                DOM.editorThead.innerHTML = '';
+                const message = KYV.safeHtml(error?.message || 'Lettura non disponibile');
+                DOM.editorTbody.innerHTML = `<tr><td class="p-8 text-center text-red-300">Archivio non verificato: ${message}. Nessun risultato parziale mostrato. <button type="button" data-action="retry-table" class="underline text-indigo-200 hover:text-white ml-2">Riprova</button></td></tr>`;
+                if (status) status.textContent = 'Lettura non riuscita · ' + tableName + ' · riprova per usare filtri e CSV.';
+                document.getElementById('editor-load-more-wrap')?.classList.add('hidden');
             }
         }
 
@@ -426,31 +455,42 @@
             return rows;
         }
 
-        function updateEditorViewStatus(visibleCount) {
+        function updateEditorViewStatus(visibleCount, matchingCount) {
             const status = document.getElementById('editor-view-status');
             if (!status) return;
             const search = document.getElementById('editor-search')?.value.trim();
             const sort = currentSortColumn ? ` · Ordinamento: ${currentSortColumn} (${currentSortDesc ? 'decrescente' : 'crescente'})` : '';
             const filter = search ? ` · Filtro: “${search}”` : '';
             const totalCols = editorColumnKeys().length, shownCols = window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,editorColumnKeys()).length ?? totalCols;
-            status.textContent = `${visibleCount} righe visualizzate su ${currentEditorData.length} · Colonne ${shownCols}/${totalCols}${filter}${sort}${currentEditorTable==='ESTRATTO SIAE'?' · SIAE: − nell’originale = entrata per noi; + = uscita per noi':''}`;
+            status.textContent = `${visibleCount} righe mostrate di ${matchingCount} corrispondenze su ${currentEditorData.length} record verificati · Colonne ${shownCols}/${totalCols}${filter}${sort}${currentEditorTable==='ESTRATTO SIAE'?' · SIAE: − nell’originale = entrata per noi; + = uscita per noi':''}`;
         }
 
         function refreshEditorView() {
+            if (editorIsLoading) return;
             const rows = getEditorViewData();
-            renderEditorTable(rows);
-            updateEditorViewStatus(rows.length);
+            const visibleCount = Math.min(rows.length, editorShownRows);
+            renderEditorTable(rows.slice(0, visibleCount));
+            updateEditorViewStatus(visibleCount, rows.length);
+            const wrap = document.getElementById('editor-load-more-wrap');
+            const remaining = rows.length - visibleCount;
+            if (wrap) wrap.classList.toggle('hidden', remaining <= 0);
+            const note = document.getElementById('editor-load-more-note');
+            if (note) note.textContent = remaining > 0 ? remaining + ' righe ancora disponibili' : '';
         }
 
         window.sortTable = function(colName) {
             if (currentSortColumn === colName) currentSortDesc = !currentSortDesc;
             else { currentSortColumn = colName; currentSortDesc = false; }
+            editorShownRows = EDITOR_ROWS_STEP;
             refreshEditorView();
         }
 
         window.debounceFilterEditorTable = function() {
             clearTimeout(window.debounceTimer);
-            window.debounceTimer = setTimeout(refreshEditorView, 180);
+            window.debounceTimer = setTimeout(() => {
+                editorShownRows = EDITOR_ROWS_STEP;
+                refreshEditorView();
+            }, 180);
         }
 
 
@@ -642,10 +682,15 @@
 
         document.addEventListener('click', async (e) => {
             const btn = e.target.closest('[data-action]'); if (!btn) return; const action = btn.dataset.action;
-            if (action === 'load-table') loadEditorTable(btn.dataset.table); 
+            if (action === 'load-table') loadEditorTable(btn.dataset.table);
+            else if (action === 'retry-table') loadEditorTable(currentEditorTable);
+            else if (action === 'load-more-rows') {
+                if (!editorIsLoading) { editorShownRows += EDITOR_ROWS_STEP; refreshEditorView(); }
+            } 
             else if (action === 'clear-search') {
                 const input = document.getElementById('editor-search');
                 if (input) input.value = '';
+                editorShownRows = EDITOR_ROWS_STEP;
                 refreshEditorView();
                 input?.focus();
             }
