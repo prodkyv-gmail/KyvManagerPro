@@ -122,7 +122,17 @@ body{background:#0f111a;color:#f8fafc} html{scroll-behavior:smooth} .guide-secti
       </ol>
     </div>
   </div>
-  <div class="manual-card-soft p-5 mt-4"><h3 class="sub-title mb-3">v2.57 — Controllo archivio audio</h3>
+  <div class="manual-card-soft p-5 mt-4"><h3 class="sub-title mb-3">v2.58 — Dropbox online e OneDrive: ricerca manuale e autorizzata</h3>
+<ol class="list-decimal ml-5 text-kyv-text space-y-2 leading-relaxed">
+<li><b>Dropbox online:</b> in Audio Finder premi <b>Autorizza Dropbox</b>. Per funzionare, l'app Dropbox con la chiave già pubblica deve avere autorizzati il dominio, il redirect esatto <code>/kyv_audio_finder.html</code> e lo scope <code>files.metadata.read</code>. Senza questa configurazione usa ancora l'Archivio Dropbox o il Chooser ufficiale.</li>
+<li>Una volta collegato, indica ad esempio <code>/Musica/Progetti</code> nel campo Cartella e premi <b>Cerca audio nella cartella Dropbox autorizzata</b>. Lasciando il campo vuoto legge a partire dalla radice disponibile all'app. La ricerca è ricorsiva ma limitata a 10 pagine/5.000 elementi; se incompleta lo segnala. Non avviene mai in background.</li>
+<li><b>OneDrive:</b> serve prima registrare un'app SPA nel portale Microsoft Entra, consentire gli account necessari, registrare il redirect esatto, configurare <code>MICROSOFT_CLIENT_ID</code> in <code>config.js</code> e richiedere soltanto <code>Files.Read</code>. Senza queste impostazioni <b>Autorizza OneDrive</b> resta non disponibile.</li>
+<li>Prima di salvare file OneDrive nell'indice serve anche applicare e verificare <code>docs/v258-onedrive-provider.sql</code>, che estende le sole whitelist di provider, e poi impostare <code>ONEDRIVE_INDEX_ENABLED: true</code>. Fino a quel momento la ricerca può produrre soltanto un'anteprima: nessuna scrittura OneDrive.</li>
+<li>Premi <b>Cerca file OneDrive autorizzati</b> dopo aver digitato almeno due caratteri. Microsoft Graph cerca i metadati del tuo Drive e restituisce pagine limitate, non garantisce una scansione esaustiva né la ricerca di tutti i file condivisi.</li>
+<li><b>Revisione:</b> entrambe le ricerche alimentano soltanto la <b>Coda di classificazione Mio / Reference / Da verificare</b>. Verifica tu la proprietà e seleziona esplicitamente cosa salvare. Solo dopo, dal dettaglio del file approvato, puoi collegarlo a un progetto esistente. I file Dropbox trovati via API non ricevono un falso link pubblico; l'hash proprietario Dropbox <code>content_hash</code> non viene trattato come SHA-256 del file.</li>
+</ol>
+<p class="text-kyv-text mt-2"><b>Privacy e limiti:</b> accessi con OAuth PKCE, token soltanto in memoria della pagina, non in Supabase, e disconnessione locale. In sessionStorage resta per pochi minuti solo lo stato di verifica OAuth; ricaricando la pagina occorre riautorizzare. Nessuna creazione progetto, scansione ricorrente, cancellazione o caricamento dei contenuti audio. Collaudo OAuth e database da completare con account reali prima di considerare le funzioni attive.</p></div>
+<div class="manual-card-soft p-5 mt-4"><h3 class="sub-title mb-3">v2.57 — Controllo archivio audio</h3>
   <ol class="list-decimal ml-5 text-kyv-text space-y-2 leading-relaxed">
   <li>Apri <b>Audio Finder → Controllo archivio audio</b>. Il pannello si compila esclusivamente dai metadati già letti nella sessione autenticata: non avvia ulteriori scansioni di PC, telefono o cloud.</li>
   <li><b>Audio da classificare:</b> riguarda soltanto la scansione attualmente aperta. Per vedere il singolo file premi <b>Apri nella scansione corrente</b>; le decisioni «da verificare» salvate in precedenza sono conteggiate separatamente ma, senza metadati indicizzati, non diventano automaticamente file navigabili.</li>

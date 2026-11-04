@@ -7,7 +7,7 @@ if(!F||!G||!C)throw Error('Audio source and consent modules required');
 const T=v=>String(v??'').trim();
 const MAX=5000;
 const SHA=/^[a-f0-9]{64}$/i;
-const sourceNames={drive:'Google Drive configurato',dropbox:'Archivio Dropbox KYV'};
+const sourceNames={drive:'Google Drive configurato',dropbox:'Archivio Dropbox KYV',onedrive:'OneDrive ricerca autorizzata'};
 const key=C.key;
 const has=x=>x!==null&&x!==undefined&&x!=='';
 const fields=['nome_file','size_bytes','modificato_il','percorso_relativo','content_hash','mime_type','link_file'];
@@ -55,12 +55,14 @@ function combine(results=[],limit=MAX){
    reports,warnings,partial:reports.some(x=>x.status!=='complete')||
      reports.some(x=>x.invalid||x.conflicts),total:files.size};
 }
-async function scan({drive=false,dropbox=false,driveReader,dropboxReader,limit=MAX}={}){
+async function scan({drive=false,dropbox=false,onedrive=false,driveReader,dropboxReader,onedriveReader,limit=MAX}={}){
  const tasks=[];
  if(drive){if(typeof driveReader!=='function')throw Error('Connettore Drive non disponibile');
   tasks.push({provider:'drive',read:driveReader});}
  if(dropbox){if(typeof dropboxReader!=='function')throw Error('Archivio Dropbox non disponibile');
   tasks.push({provider:'dropbox',read:dropboxReader});}
+ if(onedrive){if(typeof onedriveReader!=='function')throw Error('Connettore OneDrive non disponibile');
+  tasks.push({provider:'onedrive',read:onedriveReader});}
  if(!tasks.length)throw Error('Seleziona almeno una fonte cloud da controllare');
  const responses=await Promise.all(tasks.map(async task=>{
   try{

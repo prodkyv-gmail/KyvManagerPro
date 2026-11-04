@@ -31,7 +31,8 @@ async function tests(){
  assert.ok(combined.warnings.some(x=>x.includes('limite di pagine')));
  assert.ok(combined.warnings.some(x=>x.includes('non validi')));
  assert.equal(combined.rows.some(x=>x.nome_file==='notaudio.txt'),false);
- assert.throws(()=>B.combine([{provider:'onedrive',rows:[]}]),/non autorizzata/);
+ assert.equal(B.combine([{provider:'onedrive',rows:[]}]).reports.length,1,'OneDrive is a bounded optional provider');
+ assert.throws(()=>B.combine([{provider:'ftp',rows:[]}]),/non autorizzata/);
  assert.throws(()=>B.combine([{provider:'drive',rows:source1}],2),/Oltre 2 file/);
  const conflicting=B.combine([{provider:'drive',rows:[
   make('abc','Brano demo.wav'),make('abc','Brano master.wav','drive','KYV',{size_bytes:4321})
@@ -88,8 +89,8 @@ async function tests(){
  assert.ok(!ui.includes('createProjectFromScan'),'No auto-project during scanning');
  assert.ok(!read('kyv-audio-batch-v253.js').includes('.from('),'Batch helper must not touch Supabase');
  assert.ok(sw.includes("'./kyv-audio-batch-v253.js'"));
- assert.equal(JSON.parse(read('package.json')).version,'2.57.0');
- assert.equal(read('VERSION').trim() ,'2.57');
+ assert.equal(JSON.parse(read('package.json')).version,'2.58.0');
+ assert.equal(read('VERSION').trim() ,'2.58');
  assert.ok(read('guida.html').includes('v2.53'));
  assert.ok(read('kyv-help.js').includes('v2.53'));
  console.log('OK: v2.53 multi-cloud batch scan isolated, exact-source dedup, partial results and human-only project actions');

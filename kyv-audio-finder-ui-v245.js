@@ -1,12 +1,12 @@
 /* KYV Audio Finder v2.45 - metadata-only index, no automatic project links. */
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252,B=window.KYV_AUDIO_BATCH_V253,J=window.KYV_AUDIO_REVIEW_BATCH_V254,A=window.KYV_AUDIO_AUDIT_V257;
+const $=id=>document.getElementById(id),F=window.KYV_AUDIO_FINDER_V245,R=window.KYV_AUDIO_REVIEW_V246,C=window.KYV_AUDIO_CONSENT_V248,G=window.KYV_AUDIO_GROUPS_V249,W=window.KYV_AUDIO_WORKSPACE_V251,I=window.KYV_AUDIO_INCREMENTAL_V252,B=window.KYV_AUDIO_BATCH_V253,J=window.KYV_AUDIO_REVIEW_BATCH_V254,A=window.KYV_AUDIO_AUDIT_V257,CLOUD=window.KYV_CLOUD_BROWSER_V258;
 const T=v=>String(v??'').trim(),H=v=>T(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAX=5000,PAGE=400;
 let db=null,owner='',catalogue=[],links=[],projects=[],sessions=[],decisions=[],preview=[],previewShown=60,selected=null,busy=false,shown=120,reviewItems=[],reviewShown=80,reviewChoices=new Map(),approvedKeys=new Set(),groupKey='',groupShown=24,groupFileShown=35,groupSelected=new Set(),groupProject='',explorerShown=60,transientFiles=new Map(),playerObjectUrl=null,chooserLoad=null,scanReviewGroup='',scanReviewGroupShown=24,scanChecked=new Set(),auditShown=40;
 const info=(v,error=false)=>{const el=$('finder-status');el.textContent=v;el.className='finder-status'+(error?' error':'')};
-const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v)};
+const lock=v=>{busy=v;document.querySelectorAll('[data-finder-action]').forEach(el=>el.disabled=v);if(!v&&$('cloud-dropbox-status'))renderCloudStatus()};
 async function all(table,fields,sort){
  const x=await db.from(table).select(fields,{count:'exact'}).order(sort,{ascending:false}).range(0,PAGE-1);
  if(x.error)throw Error(table+': '+x.error.message);
@@ -70,6 +70,7 @@ function safeCloudLink(f){
  try{const host=new URL(link).hostname;
    if(f.provider==='drive'&&/(^|\.)drive\.google\.com$/i.test(host))return link;
    if(f.provider==='dropbox'&&/(^|\.)dropbox\.com$/i.test(host))return link;
+   if(f.provider==='onedrive'&&(host==='onedrive.live.com'||host==='1drv.ms'||/(^|\.)sharepoint\.com$/i.test(host)))return link;
  }catch{}return null;
 }
 
@@ -126,7 +127,7 @@ function renderExplorer(){
  const approved=explorerApproved(),stats=W.stats(approved),items=explorerRows();
  $('explorer-status').textContent=stats.total+' miei audio approvati · '+stats.linked+' collegati · '+stats.unlinked+
   ' da collegare · '+stats.bySource.local+' locali · '+stats.bySource.drive+' Drive · '+stats.bySource.dropbox+
-  ' Dropbox · '+items.length+' risultati';
+  ' Dropbox · '+stats.bySource.onedrive+' OneDrive · '+items.length+' risultati';
  $('explorer-items').innerHTML=items.slice(0,explorerShown).map(f=>{
   const link=safeCloudLink(f),listen=f.provider==='local'&&transientFiles.has(W.KEY(f));
   return '<div class="explorer-item"><div><strong>'+H(f.nome_file)+'</strong><small>'+
@@ -134,7 +135,7 @@ function renderExplorer(){
    '<small>'+f.linkCount+' collegamenti · '+(f.size_bytes!=null?Number(f.size_bytes).toLocaleString('it-IT')+' byte':'Dimensione ignota')+
    '</small></div><div class="explorer-item-actions">'+
    (listen?'<button type="button" data-explorer-play="'+H(f.id)+'">Ascolta</button>':'')+
-   (link?'<a href="'+H(link)+'" target="_blank" rel="noopener noreferrer">Apri in '+H(f.provider==='drive'?'Drive':'Dropbox')+'</a>':'')+
+   (link?'<a href="'+H(link)+'" target="_blank" rel="noopener noreferrer">Apri in '+H(f.provider==='drive'?'Drive':f.provider==='onedrive'?'OneDrive':'Dropbox')+'</a>':'')+
    '<button type="button" data-explorer-detail="'+H(f.id)+'">Dettaglio / collega</button></div></div>';
  }).join('')||'<p class="explorer-desc">Nessun tuo audio nella ricerca. Seleziona i file da una sorgente, quindi classifica soltanto i tuoi lavori.</p>';
  $('explorer-more').hidden=items.length<=explorerShown;
@@ -174,7 +175,8 @@ function renderDetail(){
  '<h3>Possibili progetti dal nome · da confermare</h3>'+
  (suggest.length?suggest.map(p=>'<button type="button" class="finder-suggestion" data-suggest="'+H(p.id)+'">'+H(p.artist+' · '+p.title)+'<small>'+H(p.reason)+'</small></button>').join(''):'<p>Nessuna corrispondenza precisa.</p>')+
  (same.length?'<p>Possibili duplicati da hash identico: '+H(same.slice(0,8).map(x=>x.nome_file).join(' · '))+'</p>':'')+
- '<p><button type="button" data-new-project="'+H(f.id)+'">Apri proposta progetto / versione (solo su mia scelta)</button></p>';
+ (f.provider==='onedrive'?'<p class="finder-note">Per OneDrive crea il nuovo progetto da Progetti, poi collegalo qui manualmente. La proposta diretta non è ancora abilitata.</p>':
+ '<p><button type="button" data-new-project="'+H(f.id)+'">Apri proposta progetto / versione (solo su mia scelta)</button></p>');
 }
 // v2.49 — all grouping is read-only and uses approved personal audio only.
 function groupList(){
@@ -428,6 +430,69 @@ function listenPreview(index){
  $('explorer-player-wrap').hidden=false;
  $('explorer-player-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
+function renderCloudStatus(){
+ for(const source of ['dropbox','onedrive']){
+  const state=CLOUD.status(source),ready=CLOUD.configured(source,window.KYV_CONFIG||{});
+  const caption=source==='onedrive'?'OneDrive':'Dropbox';
+  $('cloud-'+source+'-status').textContent=!ready?
+   caption+' non configurato: controlla le credenziali pubbliche e l’URI di ritorno OAuth.':
+   state.connected?caption+' collegato temporaneamente · '+state.accountLabel+
+    (source==='onedrive'&&!window.KYV_CONFIG?.ONEDRIVE_INDEX_ENABLED?
+     ' · Solo ricerca: salvataggio richiede migrazione provider.':''):
+    'Non collegato · per cercare i file occorre una tua autorizzazione.';
+  $('finder-'+source+'-connect').disabled=!ready;
+  $('finder-'+source+'-disconnect').disabled=!state.connected;
+  $('finder-'+(source==='onedrive'?'onedrive-search':'dropbox-online')).disabled=!state.connected;
+ }
+}
+async function beginCloud(source){
+ const url=await CLOUD.begin(source,{config:window.KYV_CONFIG||{},url:location.href,
+  storage:window.sessionStorage,crypt:window.crypto});
+ window.location.assign(url);
+}
+async function resumeCloud(){
+ try{
+  const result=await CLOUD.finish({url:location.href,storage:window.sessionStorage,
+   fetcher:window.fetch.bind(window),config:window.KYV_CONFIG||{},
+   historyReplace:path=>history.replaceState(null,'',path)});
+  if(result.handled)info(result.provider+' autorizzato per questa pagina. Avvia tu la ricerca: nessuna scansione automatica.');
+ }catch(e){info('Autorizzazione cloud non completata: '+(e?.message||e),true);}
+ renderCloudStatus();
+}
+function guardScanChanges(){
+ if(preview.some(f=>f._explicit)&&
+   !confirm('Ci sono classificazioni audio non salvate. Vuoi scartarle e iniziare una nuova ricerca cloud?'))return false;
+ return true;
+}
+async function onlineDropbox(){
+ if(!guardScanChanges())return;
+ info('Dropbox online: lettura dei soli metadati della cartella richiesta…');
+ const r=await CLOUD.scanDropbox({path:$('finder-dropbox-folder').value,
+  fetcher:window.fetch.bind(window),pages:10,maxEntries:5000});
+ const note='Ricerca Dropbox online nella cartella '+r.scope+'. '+r.entriesSeen+
+  ' elementi esaminati'+(r.truncated?' · SCANSIONE PARZIALE / da verificare.':' · pagine lette.')+
+  (r.errors.length?' Avvisi: '+r.errors.join(' · '):'')+
+  ' Dropbox content_hash NON è SHA-256 del contenuto: nessun hash viene attribuito per supposizione.';
+ if(!r.rows.length){info('Nessun audio Dropbox trovato nei metadati. '+note,true);return;}
+ previewScan(r.rows,note,null,true);
+ $('finder-preview').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function onlineOneDrive(){
+ if(!guardScanChanges())return;
+ if(!CLOUD.configured('onedrive',window.KYV_CONFIG||{}))throw Error('Configura prima Microsoft Entra e il client ID pubblico');
+ info('OneDrive Graph: ricerca manuale per parola chiave…');
+ const r=await CLOUD.scanOneDrive({query:$('finder-onedrive-query').value,
+  fetcher:window.fetch.bind(window),pages:8,maxEntries:3000});
+ const note='OneDrive Graph: '+r.entriesSeen+' risultati esaminati con Files.Read.'+
+  (r.truncated?' Ricerca parziale, limite di pagine o errore.':' Pagine lette.')+
+  (r.errors.length?' Avvisi: '+r.errors.join(' · '):'')+
+  (!window.KYV_CONFIG?.ONEDRIVE_INDEX_ENABLED?
+   ' ATTENZIONE: sola anteprima. Salvataggio disattivato fino alla migrazione SQL e attivazione esplicita del provider.':'');
+ if(!r.rows.length){info('Nessun audio OneDrive nel risultato della ricerca. '+note,true);return;}
+ previewScan(r.rows,note,null,true);
+ $('finder-preview').scrollIntoView({behavior:'smooth',block:'start'});
+}
 async function readDriveRecords(){
  if(!window.KYV_DRIVE?.listFiles)throw Error('Connettore Google Drive non disponibile');
  const r=await KYV_DRIVE.listFiles({accountId:$('drive-account').value||'all',pages:12,audioOnly:true});
@@ -559,6 +624,8 @@ async function savePreview(){
   info('Nessuna classificazione o modifica selezionata: i file già noti sono rimasti invariati. Nessun dato salvato.');return;
  }
  const plan=C.plan(I.safeRows(preview),owner);
+ if(plan.changes.some(f=>f.provider==='onedrive')&&!window.KYV_CONFIG?.ONEDRIVE_INDEX_ENABLED)
+  throw Error('Salvataggio OneDrive disattivato: esegui prima la migrazione SQL v2.58 e abilita ONEDRIVE_INDEX_ENABLED nella configurazione.');
  if(!confirm('Confermi '+plan.approved.length+' tuoi file da indicizzare o aggiornare, '+plan.excluded+
   ' reference escluse e '+plan.pending+' da verificare? Il programma non crea progetti, non cancella file e non carica audio.'))return;
  info('Verifica dell’indice aggiornato prima del salvataggio…');
@@ -676,6 +743,16 @@ function kindChanged(){
 }
 function boot(){
  $('finder-reload').addEventListener('click',refresh);
+ for(const source of ['dropbox','onedrive']){
+  $('finder-'+source+'-connect').addEventListener('click',()=>run(()=>beginCloud(source)));
+  $('finder-'+source+'-disconnect').addEventListener('click',()=>{
+   CLOUD.disconnect(source);renderCloudStatus();
+   info('Sessione '+source+' scollegata da questa pagina. Nessun file modificato.');
+  });
+ }
+ $('finder-dropbox-online').addEventListener('click',()=>run(onlineDropbox));
+ $('finder-onedrive-search').addEventListener('click',()=>run(onlineOneDrive));
+
  $('audit-query').addEventListener('input',()=>{auditShown=40;renderAudit()});
  $('audit-type').addEventListener('change',()=>{auditShown=40;renderAudit()});
  $('audit-source').addEventListener('change',()=>{auditShown=40;renderAudit()});
@@ -784,6 +861,7 @@ function boot(){
   if(b.dataset.newProject)run(async()=>{
    const f=personalCatalogue().find(x=>String(x.id)===String(b.dataset.newProject));
    if(!f)throw Error('Prima devi approvare il file come tuo');
+   if(f.provider==='onedrive')throw Error('Per OneDrive crea il progetto manualmente da Progetti e collegalo qui; nessuna archiviazione compatibile non verificata.');
    if(active(f.id).some(l=>l.id_progetto!=null))throw Error('Versione già collegata: apri il collegamento esistente per verificarlo.');
    if(!window.KYV_AUDIO_PROJECT?.createFromItem)throw Error('Modulo progetti non disponibile');
    // Only a direct, human-initiated click may open the project creation workflow.
@@ -817,6 +895,7 @@ function boot(){
  const accounts=window.KYV_DRIVE?.accountList?.()||[];
  $('drive-account').innerHTML='<option value="all">Tutti i Drive configurati</option>'+
   accounts.map(a=>'<option value="'+H(a.id)+'"'+(a.url?'':' disabled')+'>'+H(a.label||a.id)+'</option>').join('');
+ resumeCloud();
  refresh();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

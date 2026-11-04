@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-incremental-v252.js"></script><script src="kyv-audio-batch-v253.js"></script><script src="kyv-audio-review-batch-v254.js"></script><script src="kyv-audio-audit-v257.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
+<script src="kyv-drive-bridge.js"></script><script src="kyv-audio-finder-v245.js"></script><script src="kyv-audio-review-v246.js"></script><script src="kyv-audio-consent-v248.js"></script><script src="kyv-audio-groups-v249.js"></script><script src="kyv-audio-workspace-v251.js"></script><script src="kyv-audio-incremental-v252.js"></script><script src="kyv-audio-batch-v253.js"></script><script src="kyv-audio-review-batch-v254.js"></script><script src="kyv-audio-audit-v257.js"></script><script src="kyv-cloud-browser-v258.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-audio-finder-ui-v245.js" defer></script>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#0f111a;color:#f8fafc;font:14px Inter,system-ui,Arial,sans-serif}
@@ -163,7 +163,7 @@
  <select id="audit-source" aria-label="Fonte nel controllo archivio">
   <option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option>
   <option value="drive">Google Drive</option><option value="dropbox">Dropbox</option>
- </select>
+ <option value="onedrive">OneDrive</option></select>
 </div>
 <p class="finder-note">Le statistiche sono globali e si riferiscono ai dati caricati, non a tutti i tuoi dispositivi o cloud. I filtri agiscono sull'elenco; scegli «Tutte le sorgenti» per vedere i progetti senza audio nel catalogo. Le copie SHA-256 possono comprendere più fonti. Nessuna voce è automaticamente un problema.</p>
 <p id="audit-status" class="explorer-status" role="status"></p>
@@ -174,7 +174,7 @@
 <div class="explorer-tools"><div><h2>Esplora i miei brani · v2.51</h2><p class="explorer-desc">Cerca insieme i soli file già approvati come tuoi tra Mac, PC, smartphone, Drive e archivio Dropbox.</p></div><a href="#finder-sources">Aggiungi da una sorgente</a></div>
 <div class="explorer-filters">
 <input id="explorer-query" type="search" aria-label="Cerca su tutte le sorgenti" placeholder="Titolo, nome file, cartella, account…">
-<select id="explorer-source" aria-label="Fonte"><option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+<select id="explorer-source" aria-label="Fonte"><option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option><option value="onedrive">OneDrive</option></select>
 <select id="explorer-account" aria-label="Archivio/account"><option value="">Tutti gli archivi</option></select>
 <select id="explorer-linked" aria-label="Collegamenti"><option value="all">Tutti i miei file</option><option value="linked">Collegati</option><option value="unlinked">Da collegare</option></select>
 <select id="explorer-sort" aria-label="Ordina"><option value="name">Nome A–Z</option><option value="recent">Modifica recente</option><option value="size">Dimensione</option></select>
@@ -212,6 +212,16 @@
 <div class="finder-card"><h2>Dropbox</h2>
 <button type="button" data-finder-action id="finder-dropbox">Leggi archivio audio Dropbox</button>
 <button type="button" id="finder-dropbox-choose" data-finder-action style="margin-top:8px">Scegli audio direttamente da Dropbox</button>
+<div class="finder-sync-note" style="margin-top:12px">
+<strong>Dropbox online · v2.58 (OAuth PKCE)</strong>
+<p class="finder-note">Collegamento temporaneo di sola lettura. La tua app Dropbox deve avere la redirect URI registrata e il permesso <code>files.metadata.read</code>. Se non configurati, continua a usare archivio e Chooser.</p>
+<p id="cloud-dropbox-status" class="finder-note" role="status">Non collegato</p>
+<div class="finder-intake-actions"><button type="button" id="finder-dropbox-connect" data-finder-action>Autorizza Dropbox</button>
+<button type="button" id="finder-dropbox-disconnect">Scollega sessione</button></div>
+<label for="finder-dropbox-folder">Cartella da esaminare (vuoto = radice consentita dall’app)</label>
+<input id="finder-dropbox-folder" type="text" placeholder="/Musica/Progetti" maxlength="1000" style="width:100%">
+<button type="button" id="finder-dropbox-online" data-finder-action style="margin-top:8px">Cerca audio nella cartella Dropbox autorizzata</button>
+</div>
 <small>Indicizza i file già registrati in KYV. Il pulsante Scegli usa il Dropbox Chooser ufficiale: apre una finestra di scelta di file, non un crawler di tutto l'account.</small>
 <a href="kyv_dropbox.html">Apri Archivio Dropbox</a>
 </div>
@@ -223,9 +233,15 @@
 <input id="finder-files" class="finder-input-file" type="file" accept="audio/*,.wav,.mp3,.m4a,.aiff,.aif,.flac,.aac,.ogg,.opus" multiple>
 <small>L’app legge solo cartelle o file che selezioni. Su iPhone usa il selettore File: non è un crawler permanente. Funziona anche su cartelle OneDrive sincronizzate.</small>
 </div>
-<div class="finder-card"><h2>OneDrive online</h2>
-<p>Collegamento diretto Microsoft non ancora attivo. Puoi già indicizzare file dalla cartella OneDrive sincronizzata e autorizzata sul computer.</p>
-<small>In una fase successiva sarà possibile collegare OneDrive con autorizzazione OAuth e Microsoft Graph.</small>
+<div class="finder-card"><h2>OneDrive online · v2.58</h2>
+<p>Ricerca manuale Microsoft Graph con autorizzazione OAuth PKCE e permesso minimo <code>Files.Read</code>, <strong>disponibile dopo la configurazione</strong> di Microsoft Entra e del database. Nessun audio viene scaricato o caricato nel catalogo automaticamente.</p>
+<p id="cloud-onedrive-status" class="finder-note" role="status">Non configurato</p>
+<div class="finder-intake-actions"><button type="button" id="finder-onedrive-connect" data-finder-action>Autorizza OneDrive</button>
+<button type="button" id="finder-onedrive-disconnect">Scollega sessione</button></div>
+<label for="finder-onedrive-query">Cerca in OneDrive per titolo o parte del nome</label>
+<input id="finder-onedrive-query" type="search" placeholder="Titolo del brano o cartella" maxlength="120" style="width:100%">
+<button type="button" id="finder-onedrive-search" data-finder-action style="margin-top:8px">Cerca file OneDrive autorizzati</button>
+<small>Configurazione necessaria: client ID Microsoft, redirect URI SPA esatta, migrazione SQL per il provider. Fino alla sua attivazione usa la selezione dei file OneDrive sincronizzati sul dispositivo.</small>
 </div>
 </section>
 <section id="finder-preview" class="finder-preview" hidden>
@@ -241,7 +257,7 @@
 <p class="finder-note">Demo, mix e master con titolo compatibile sono affiancati per aiutarti a revisionarli. Non è riconoscimento audio e non dimostra che i file appartengano allo stesso brano.</p>
 <div class="scan-groups-controls">
 <input id="scan-group-query" type="search" placeholder="Cerca gruppi per titolo o artista" aria-label="Cerca gruppi">
-<select id="scan-group-source" aria-label="Sorgente gruppi"><option value="">Tutte le sorgenti</option><option value="local">Dispositivo</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+<select id="scan-group-source" aria-label="Sorgente gruppi"><option value="">Tutte le sorgenti</option><option value="local">Dispositivo</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option><option value="onedrive">OneDrive</option></select>
 <select id="scan-group-mode" aria-label="Tipo gruppi"><option value="review">Da esaminare</option><option value="multi">Con più versioni</option><option value="all">Tutti i gruppi</option></select>
 </div>
 <p id="scan-group-summary" class="finder-note" role="status"></p>
@@ -275,7 +291,7 @@
 <p>I file che hai approvato come tuoi vengono raggruppati per nomi simili, per vedere demo, mix, master e altre versioni insieme. <strong>È solo una proposta, non una conferma che appartengano allo stesso brano.</strong> I file senza artista dichiarato restano separati da quelli attribuiti a un artista; cambiare filtro nasconde e deseleziona il gruppo precedente. Se scegli una sorgente, il dettaglio mostra e permette di selezionare <strong>solo i file di quella sorgente</strong>; scegli «Tutte le sorgenti» per rivedere e collegare versioni di archivi diversi. Cambiando sorgente, le selezioni precedenti e il progetto scelto vengono azzerati. La conferma finale mostra il progetto e i nomi dei file. Non vengono creati nuovi progetti o collegamenti automaticamente.</p>
 <div class="finder-group-controls">
 <input type="search" id="finder-group-query" placeholder="Cerca brano o versione in tutte le sorgenti" aria-label="Cerca gruppi audio">
-<select id="finder-group-source" aria-label="Sorgente gruppo"><option value="">Tutte le sorgenti</option><option value="local">Dispositivo locale</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+<select id="finder-group-source" aria-label="Sorgente gruppo"><option value="">Tutte le sorgenti</option><option value="local">Dispositivo locale</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option><option value="onedrive">OneDrive</option></select>
 <select id="finder-group-mode" aria-label="Mostra gruppi"><option value="multi">Più versioni</option><option value="all">Tutti i brani</option><option value="unlinked">Da collegare</option></select>
 </div>
 <p id="finder-group-count" class="finder-note" role="status"></p>
@@ -286,7 +302,7 @@
 <details id="finder-advanced" class="finder-secondary-details"><summary>Dettagli e collegamenti avanzati dei file approvati</summary>
 <div class="finder-controls">
 <input type="search" id="finder-query" aria-label="Cerca file nell'indice" placeholder="Cerca titolo, nome file, sorgente, cartella…">
-<select id="finder-source" aria-label="Filtra per sorgente"><option value="">Tutte le sorgenti</option><option value="local">Locale</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option></select>
+<select id="finder-source" aria-label="Filtra per sorgente"><option value="">Tutte le sorgenti</option><option value="local">Locale</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option><option value="onedrive">OneDrive</option></select>
 <select id="finder-link-status" aria-label="Filtra file collegati"><option value="all">Tutti i file</option><option value="linked">Già collegati</option><option value="unlinked">Non collegati</option></select>
 </div>
 <div class="finder-column">
