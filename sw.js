@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-74-recenti-order-20261104';
+const CACHE_NAME = 'kyv-studio-v2-75-mobile-projects-20261104';
 const APP_SHELL = [
     './',
     './index.html',

@@ -1,3 +1,11 @@
+## v2.75 — Progetti mobile più leggibili e aggiornamento della lista (4 novembre 2026)
+
+La pagina **Progetti** su smartphone usa un'intestazione più compatta, mantiene la ricerca a portata di mano, lascia scorrere orizzontalmente le cinque viste principali e mostra il conteggio **risultati · visualizzati · archivio** fuori dalla barra di navigazione. Le schede hanno una gerarchia visiva più chiara: titolo e artista subito sopra stato e prossima azione, con **Riepilogo** per la lettura rapida e **Scheda** per il dettaglio. Non sono stati creati pulsanti o popup duplicati.
+
+**Aggiornamento operativo:** la modalità **Vista compatta** nasconde la sola data di attività sulla card mobile, mentre **Vista dettagliata** la mostra; la modifica non tocca i record. Il comando **Mostra altri 50** indica le righe effettivamente visualizzate. Se il caricamento fallisce, l'app non presenta i vecchi risultati come attendibili e offre **Riprova caricamento** senza ricaricare la pagina o perdere i filtri; il grafico non mostra una distribuzione obsoleta.
+
+**Come usarla:** aprire Progetti, cercare per titolo/artista/#ID, selezionare la vista, toccare Riepilogo o Scheda; usare Tutti per consultare tutto l'archivio. Non sono state introdotte nuove query, scritture, associazioni audio, migrazioni o modifiche di permessi. Guida in-app, ? contestuale, manuali, test e cache PWA aggiornati; il collaudo visivo autenticato su smartphone resta distinto dai test GitHub.
+
 ## v2.74 — Ordinamento stabile dei 40 progetti Recenti (4 novembre 2026)
 
 **Correzione:** la vista **Recenti** individua sempre prima i 40 progetti con l'attività più recente, indipendentemente dall'ordinamento selezionato. **Titolo A–Z**, **Artista A–Z**, **Follow-up imminente** e **Attività meno recente** cambiano soltanto l'ordine di questi 40 progetti, senza sostituirli con altri dell'archivio. Il criterio di attività usa le date effettivamente registrate; non inventa date mancanti.

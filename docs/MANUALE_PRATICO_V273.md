@@ -4,6 +4,14 @@
 
 Questo manuale è la spiegazione corrente delle funzioni di KYVManagerPro. L'app conserva sezioni storiche nelle versioni precedenti: quando il nome di un comando è cambiato, fare riferimento alla sezione *Guida pratica v2.73* di `guida.html` e alla guida **?** contestuale.
 
+## Aggiornamento v2.75 · Progetti su smartphone
+
+Apri **Progetti**: l'intestazione è compatta e la ricerca rimane accessibile. Scorri le cinque viste orizzontalmente e seleziona il filtro. Il contatore indica **risultati (tutte le corrispondenze), visualizzati (card correnti), archivio (totale verificato)**. Per scorrere archivi lunghi usa **Mostra altri 50**, che aumenta solo le card presentate e non modifica i filtri.
+
+Ogni card riporta **titolo, artista, stato e prossima azione**. Tocca **Riepilogo** per i dati principali in sola lettura, oppure **Scheda** per il progetto completo; il tocco su una parte non interattiva della card apre anch'esso il riepilogo. Il pannello **Filtri e ordinamento** contiene **Vista compatta** e **Vista dettagliata**: la prima omette la data di attività sulla card mobile, la seconda la mostra. Non si alterano i dati.
+
+Se appare **Archivio non disponibile**, premi **Riprova caricamento**: la pagina ricarica solo l'archivio conservando ricerca, stato, fase e artista. Un errore non equivale a nessun progetto e le analisi precedenti non devono comparire come attuali. La vista **Tutti** consulta l'archivio intero caricato e verificato; **#ID** o ricerca testuale possono raggiungere i progetti fuori dai Recenti.
+
 ## Aggiornamento v2.74 · Come funziona Recenti
 
 Quando Recenti è attivo **senza altri criteri**, prima vengono individuati i **40 progetti più recenti per attività effettivamente datata**; solo dopo sono ordinati per Titolo A–Z, Artista A–Z, Follow-up imminente o Attività meno recente. Cambiare ordinamento non fa entrare progetti meno recenti nell'elenco di 40. **Tutti** ordina invece l'intero archivio caricato e verificato. Cerca titolo, artista, parole delle note o **#ID**, oppure imposta filtri avanzati, per cercare anche fuori dai 40; nessun filtro limita la ricerca alle sole righe visibili. **Azzera filtri** ritorna a Recenti. I record privi di data non ricevono date ipotetiche.
