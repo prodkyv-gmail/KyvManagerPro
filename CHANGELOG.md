@@ -7,6 +7,14 @@
 
 # Changelog
 
+### v2.69 · 2026-11-04
+- Percorso contestuale tra Scheda Progetto, Sessioni, Audio Finder e Fatture. Passa l'ID verificato attraverso i parametri già supportati da ciascuna pagina; etichette/URL centralizzati in un modulo puro senza letture o scritture. Nessuna ulteriore barra duplicata: si riusa KYV Workflow Nav.
+- Sessioni Studio ora accetta un progetto contestuale con etichetta, filtro esplicito e via d'uscita “Vedi tutte le sessioni”. La lettura degli archivi non è più silenziosamente limitata a 1.000 record: riusa caricatore completo verificato v2.67, con errore in caso di incompleto.
+- La vista rapida Progetti include un collegamento contestuale alle Sessioni del medesimo brano. Audio Finder pre-seleziona soltanto il contesto esistente: la scelta finale del file e la conferma del collegamento restano azioni dell'utente. Il passaggio a Fatture usa il parametro informativo collegaProgetto, non l'apertura automatica di una ripartizione.
+- Moduli economici, ricerca globale e logiche di salvataggio/consenso restano immutati. Test automatici dei percorsi, guida contestuale, manuale e cache PWA aggiornati. Nessun accesso Vercel né modifica dati DB.
+- Collaudo grafico e autenticato in PWA ancora da effettuare dopo il deploy.
+
+
 ### v2.68 · 2026-11-04
 - Studio Editor: i popup di modifica inviano al database soltanto i campi effettivamente cambiati dall'utente; non riscrivono campi intatti, null storici, dati provenienti da altre integrazioni o valori trasposti dalla UI. Gli inserimenti inviano soltanto i campi compilati intenzionalmente.
 - Indicatore nel popup dei campi ancora da salvare, controllo di chiusura con conferma, avviso nativo in uscita dalla pagina, salvataggio unico con input bloccati durante l'invio e nessun aggiornamento se non ci sono modifiche.

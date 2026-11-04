@@ -17,6 +17,8 @@ function getKyvHelpContent(activePage) {
 
     guide.editor.content += '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.68 · Modifiche sicure nel popup</h5><p class="text-sm text-kyv-text mt-2">Aprendo Modifica, vedi quanti campi sono cambiati. <b>Salva modifiche</b> invia solo le differenze effettive; i campi che non hai toccato non vengono riscritti. Annulla/X chiedono conferma per le modifiche non salvate; il browser può avvisarti se lasci la pagina. Un record collegato si apre qui, senza cambiare la tabella da cui provieni. Prima di Eliminare controlla tabella e ID. Versioni audio è di sola lettura.</p></div>';
 
+    guide.editor.content += '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.69 · Percorso progetto e sessioni</h5><p class="text-sm text-kyv-text mt-2">Nella Scheda progetto il percorso contestuale apre Sessioni, Audio e Fatture mantenendo lo stesso ID progetto. Sessioni mostra il progetto selezionato e consente di tornare a tutte. In Audio Finder nessun file si collega da solo; il collegamento va confermato esplicitamente. In Fatture il passaggio dal percorso non avvia inserimenti o ripartizioni.</p></div>';
+
     guide.dashboard = {
         title: 'Guida contestuale: Panoramica',
         content: `<div class="space-y-5">

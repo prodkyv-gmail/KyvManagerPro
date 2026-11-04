@@ -1,3 +1,13 @@
+## v2.69 — Percorso Progetto → Sessioni → Audio → Fatture (4 novembre 2026)
+
+Dalla **Scheda progetto** hai un percorso compatto e contestuale con i collegamenti **Scheda, Sessioni, Audio, Fatture**, preservando lo stesso ID progetto tra le pagine. È lo stesso componente di navigazione già esistente, non una seconda barra parallela. Da **Progetti → Vista rapida** puoi ora aprire direttamente **Sessioni del progetto**.
+
+**Sessioni** mostra chiaramente quale progetto stai consultando, limita gli elementi operativi a quel progetto e permette di ritornare a **Vedi tutte le sessioni**. Le metriche generali mantengono il loro significato globale. Il caricamento dell'archivio PROGETTI usa paginazione verificata e segnala eventuali errori, senza trattare come completo un elenco tagliato a 1.000 righe.
+
+**Audio Finder** riceve soltanto il progetto come contesto di scelta. Non effettua scansioni, collegamenti o creazioni automatiche: occorrono sempre file approvati, selezione esplicita e conferma. Il passaggio a **Fatture** usa il contesto informativo `collegaProgetto`: non avvia da solo inserimenti o ripartizioni. La voce esplicita **Collega fattura** nella vista rapida mantiene invece la funzione di avvio manuale esistente.
+
+Nessuna modifica a schema, database, permessi, dati creativi o calcoli. Test di codice in CI non equivalgono a collaudo PWA autenticato su PC/smartphone.
+
 ## v2.68 — Studio Editor, modifiche sicure e popup contestuali (4 novembre 2026)
 
 In **Studio Editor**, clicca una riga o *Modifica* per aprire il popup. Il salvataggio **invia solo i campi che hai davvero modificato**: gli altri valori sono preservati e non vengono riscritti, neppure se la UI li mostra in un formato differente. Gli eventuali campi precompilati automaticamente dopo la selezione di una fattura risultano tra quelli cambiati; un campo svuotato intenzionalmente salva `null`.

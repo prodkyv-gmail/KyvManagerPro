@@ -1,7 +1,7 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
-    APP_VERSION: '2.68',
+    APP_VERSION: '2.69',
     // Registrare qui l'Application (client) ID della propria app Microsoft Entra (SPA).
     // Solo Files.Read, redirect https://<dominio>/kyv_audio_finder.html; lasciare vuoto finché non configurata.
     MICROSOFT_CLIENT_ID: '',
@@ -170,11 +170,6 @@ window.KYV_CONFIG = KYV_CONFIG;
     navOrder.async=false;
     navOrder.dataset.kyvNavOrder='1';
     document.head.appendChild(navOrder);
-
-    const journeyRoutes=document.createElement('script');
-    journeyRoutes.src='kyv-flow-routes-v269.js';
-    journeyRoutes.async=false;
-    document.head.appendChild(journeyRoutes);
 
     const workflowNav=document.createElement('script');
     workflowNav.src='kyv-workflow-nav.js';
