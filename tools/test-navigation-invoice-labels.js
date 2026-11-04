@@ -30,11 +30,11 @@ assert.ok(economy.includes("v.kind==='paid'"),'Ledger state has priority over hi
 assert.ok(collections.includes('indicate come incassate'));
 assert.ok(record.includes("if (key === 'PAGATA') return 'Incassata dal cliente';"));
 assert.ok(record.includes("key === 'PAGATA' || key === 'PAGAMENTO'"),'Stored schema unchanged');
-assert.ok(editor.includes("currentEditorTable === 'FATTURE' && key === 'PAGATA' ? 'Incassata dal cliente' : key"));
+assert.ok(editor.includes("tableName === 'FATTURE' && key === 'PAGATA' ? 'Incassata dal cliente' : key"),'Invoice field labels follow the current or related modal table');
 assert.ok(editor.includes('data-col='),'Studio Editor retains original column keys');
 assert.ok(editor.includes('data-sort='),'Sorting retains original column keys');
 assert.ok(read('kyv_ritorni_progetti.html').includes('Incassato storico senza data'),'Bank dates still acknowledged as unknown');
-assert.ok(sw.includes('kyv-studio-v2-67-editor-verified-20261104'));
+assert.ok(sw.includes('kyv-studio-v2-68-safe-mutations-20261104'));
 assert.ok(sw.includes("'./integrazioni.html'"),'Offline PWA shell must include launcher');
 assert.equal(pkg.scripts['check:navigation-invoices'],'node tools/test-navigation-invoice-labels.js');
 assert.ok(pkg.scripts.check.includes('check:navigation-invoices'));

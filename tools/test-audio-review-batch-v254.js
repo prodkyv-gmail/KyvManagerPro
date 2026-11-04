@@ -71,8 +71,8 @@ assert.ok(ui.includes('preview.some(x=>x._explicit)')&&ui.includes('scanChecked.
  'Changing scans must not carry over pending approvals');
 assert.ok(!read('kyv-audio-review-batch-v254.js').includes('.from('),'Grouping engine must not talk to database');
 assert.ok(sw.includes("'./kyv-audio-review-batch-v254.js'"));
-assert.equal(JSON.parse(read('package.json')).version,'2.67.0');
-assert.equal(read('VERSION').trim() ,'2.67');
+assert.equal(JSON.parse(read('package.json')).version,'2.68.0');
+assert.equal(read('VERSION').trim() ,'2.68');
 assert.ok(read('guida.html').includes('v2.54'));
 assert.ok(read('kyv-help.js').includes('v2.54'));
 console.log('OK: v2.54 safe artist-separated groups, checked-only ≤100 review and explicit 2-step approval');

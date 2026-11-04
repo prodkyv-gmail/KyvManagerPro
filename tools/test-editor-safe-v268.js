@@ -1,0 +1,75 @@
+// Regression v2.68: no silent mass overwrites, user intent, related popup context.
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const {collect,dateTimeInput}=require('../kyv-editor-changes-v268.js');
+const html=fs.readFileSync('editor.html','utf8'),sw=fs.readFileSync('sw.js','utf8');
+function f(key,value,type='text'){return{dataset:{key},value,type};}
+const opt={getType:key=>key==='Amount'?'numeric':key==='Due'?'date':'text',
+ isNumericType:t=>t==='numeric',isDateType:t=>t==='date',
+ toDbNumber:v=>Number(String(v).replace(',','.')),toDbDate:v=>v};
+let old={Title:'Original title',Note:'Keep',Amount:13.50,Due:'2026-11-04T10:00:00Z',Link_ID:13};
+let forms=[f('Title','New title'),f('Note','Keep'),f('Amount','13,50'),f('Due','2026-11-04','date'),f('Link_ID','13')];
+let r=collect(forms,old,new Set(['Title','Note','Amount','Due','Link_ID']),opt);
+assert.deepEqual(r,{payload:{Title:'New title'},count:1});
+r=collect(forms,old,new Set(),opt);
+assert.equal(r.count,0,'Untouched fields must never overwrite old values');
+r=collect([f('Note','')],old,new Set(['Note']),opt);
+assert.deepEqual(r.payload,{Note:null},'Explicit clear must be persisted');
+r=collect([f('Amount','26,50')],old,new Set(['Amount']),opt);
+assert.deepEqual(r.payload,{Amount:26.5});
+const stringOpt={...opt,toDbNumber:v=>String(Number(String(v).replace(',','.')))};
+r=collect([f('Amount','26,50')],old,new Set(['Amount']),stringOpt);
+assert.deepEqual(r.payload,{Amount:'26.5'},'KYV.toDbNumber actually returns a numeric string, not Number');
+r=collect([f('Amount','13,50')],old,new Set(['Amount']),stringOpt);
+assert.equal(r.count,0,'Numeric formatted string unchanged must not trigger update');
+r=collect([f('Amount','0')],old,new Set(['Amount']),stringOpt);
+assert.equal(r.payload.Amount,'0','Zero remains a valid explicit numeric value');
+assert.throws(()=>collect([f('Amount','abc')],old,new Set(['Amount']),opt),/Numero non valido/);
+r=collect([f('Title','New title'),f('Note','Keep')],{},new Set(['Title']),opt);
+assert.deepEqual(r.payload,{Title:'New title'},'Creation sends only edited nonempty fields');
+r=collect([f('Due','2026-11-04T10:00','datetime-local')],old,new Set(['Due']),opt);
+assert.equal(r.count,0,'Date enhanced from date to datetime must not cause update');
+const originalStamp='2026-11-04T10:00:00Z';
+const localStamp=dateTimeInput(originalStamp,'timestamptz');
+const stampOptions={...opt,getType:key=>key==='Sent'?'timestamptz':'text',isDateType:t=>t==='timestamptz'};
+r=collect([f('Sent',localStamp,'datetime-local')],{Sent:originalStamp},new Set(['Sent']),stampOptions);
+assert.equal(r.count,0,'Converting timestamptz to local input must not create spurious change');
+const movedLocal=new Date(new Date(originalStamp).getTime()+3600_000);
+const editedStamp=dateTimeInput(movedLocal.toISOString(),'timestamptz');
+r=collect([f('Sent',editedStamp,'datetime-local')],{Sent:originalStamp},new Set(['Sent']),stampOptions);
+assert.deepEqual(r.payload,{Sent:movedLocal.toISOString()},'Timestamp save retains hour and timezone intent');
+r=collect([f('Title','Original title')],old,new Set(['Title']),opt);
+assert.equal(r.count,0,'Reverting user edits produces no update');
+assert.ok(html.includes('modalChangedFields()')&&html.includes('changeSet.payload'),'Diff-only payload used for DB writes');
+assert.ok(!html.includes('document.querySelectorAll(\'.dyn-input\').forEach(inp =>'),'All-fields update was removed');
+assert.ok(html.includes("editorModalTouched.add(key)"),'Track touched fields');
+assert.ok(html.includes("editorModalTouched.add(other.dataset.key)"),'Programmatic invoice auto-fill is intentional');
+assert.ok(html.includes('closeEditorModal()')&&html.includes('Hai modifiche non salvate'),'Dirty close warning');
+assert.ok(html.includes("window.addEventListener('beforeunload'"),'Navigation away protected');
+assert.ok(html.includes("editorModalSaving = true"),'No duplicate submissions');
+assert.ok(html.includes("update(changeSet.payload,{count:'exact'})"),'Check affected rows on update');
+assert.ok(html.includes("delete({count:'exact'})"),'Check affected rows on delete');
+assert.ok(html.includes("if (count === 0) throw new Error"),'Never report success for zero affected rows');
+assert.ok(html.includes('editorInlineWrites++')&&html.includes('editorInlineWrites = Math.max'),'Track in-flight inline saves');
+assert.ok(html.includes('editorInlineWrites &&'),'Warn before leaving during inline update');
+assert.ok(html.includes('displayEditorColumnLabel(key,editorModalTable)'),'Reference modal uses reference table field labels');
+assert.ok(html.includes('const targetTable = btn.dataset.table'),'References use isolated modal target');
+assert.ok(html.includes('openDynamicModal(targetId,targetTable,data)'),'References preserve main table');
+assert.ok(!html.includes('currentEditorTable = btn.dataset.table'),'No mutable cross-reference tab switch');
+assert.ok(html.includes('pendingEditorDelete = { table: currentEditorTable, id: btn.dataset.id }'),'Deletion target snapshotted');
+assert.ok(html.includes("new CustomEvent('kyv:record-saved'"),'Search index invalidation happens after saves');
+assert.ok(html.includes('readOnlyTables.has(editorModalTable)'),'Protected archives remain read-only in modal');
+assert.ok(html.includes("isTimestamp ? 'datetime-local'"),'Timestamp must render full date/time instead of truncating to date');
+for(const filename of ['kyv-editor-project-fields.js','kyv-editor-invoice-fields.js','kyv-editor-primary-fields.js']){
+ const source=fs.readFileSync(filename,'utf8');
+ assert.ok(source.includes('KYV_EDITOR_ACTIVE_MODAL_TABLE'),'Modal decorators must follow actual reference table: '+filename);
+}
+assert.ok(fs.readFileSync('kyv-editor-relations.js','utf8').includes('select.disabled=input.disabled'),'Read-only reference selectors remain disabled');
+assert.ok(html.includes('window.KYV_EDITOR_ACTIVE_MODAL_TABLE = null'),'Closing modal resets its target context');
+assert.ok(sw.includes("'./kyv-editor-changes-v268.js'"));
+assert.ok(sw.includes('kyv-studio-v2-68-safe-mutations-20261104'));
+assert.equal(fs.readFileSync('VERSION','utf8').trim(),'2.68');
+assert.equal(require('../package.json').version,'2.68.0');
+assert.ok(require('../package.json').scripts.check.includes('check:editor-safe-v268'));
+assert.ok(fs.readFileSync('guida.html','utf8').includes('v2.68'));
+assert.ok(fs.readFileSync('kyv-help.js','utf8').includes('v2.68'));
+console.log('OK: v2.68 user-touched-only writes, unsaved guard, reference isolation, deletion target and notifications');

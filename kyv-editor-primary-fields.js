@@ -57,14 +57,15 @@ function enhanceCombo(input,values){
   document.addEventListener('pointerdown',e=>{if(!host.contains(e.target))menu.hidden=true;},{capture:true});
 }
 async function enhanceModal(){
-  const cfg=CONFIG[state.currentTable];if(!cfg)return;
+  const targetTable=window.KYV_EDITOR_ACTIVE_MODAL_TABLE;
+  const cfg=CONFIG[targetTable];if(!cfg)return;
   const root=document.getElementById('dynamic-form-fields');if(!root)return;
-  const vals=await valuesFor(state.currentTable,cfg.recurrent);
-  if(!root.isConnected||!CONFIG[state.currentTable])return;
+  const vals=await valuesFor(targetTable,cfg.recurrent);
+  if(!root.isConnected||window.KYV_EDITOR_ACTIVE_MODAL_TABLE!==targetTable)return;
   root.querySelectorAll('.dyn-input[data-key]').forEach(input=>{
     const key=input.dataset.key;
     if(cfg.date.includes(key)&&input.tagName==='INPUT'){
-      input.type=key.startsWith('Data_')&&state.currentTable==='INVII_AUDIO'?'datetime-local':'date';
+      input.type=key.startsWith('Data_')&&targetTable==='INVII_AUDIO'?'datetime-local':'date';
       if(input.type==='datetime-local'&&input.value)input.value=String(input.value).slice(0,16);
       input.title='Scegli data e ora'; return;
     }
@@ -92,7 +93,7 @@ function wrap(){
   const load=window.loadEditorTable,render=window.renderEditorTable,modal=window.openDynamicModal;
   window.loadEditorTable=async function(table){state.currentTable=table||state.currentTable;const cfg=CONFIG[state.currentTable];if(cfg)valuesFor(state.currentTable,cfg.recurrent,true).catch(()=>{});return load.apply(this,arguments);};
   window.renderEditorTable=function(data){const r=render.apply(this,arguments);if(CONFIG[state.currentTable])decorateRows(data);return r;};
-  window.openDynamicModal=function(){const r=modal.apply(this,arguments);if(CONFIG[state.currentTable])setTimeout(()=>enhanceModal().catch(err=>console.warn('[KYV primary editor]',err)),0);return r;};
+  window.openDynamicModal=function(){const r=modal.apply(this,arguments);if(CONFIG[window.KYV_EDITOR_ACTIVE_MODAL_TABLE])setTimeout(()=>enhanceModal().catch(err=>console.warn('[KYV primary editor]',err)),0);return r;};
   state.wrapped=true;return true;
 }
 function boot(){ensureStyle();let n=0;const apply=()=>{wrap();bindRows();n++;return state.wrapped&&document.getElementById('editor-tbody');};if(apply())return;const t=setInterval(()=>{if(apply()||n>=30)clearInterval(t);},150);setTimeout(()=>clearInterval(t),5000);}

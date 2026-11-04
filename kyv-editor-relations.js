@@ -267,6 +267,7 @@ async function enhanceModalRelations(){
     const spec=relationSpec(key);
     if(!spec)continue;
     const select=document.createElement('select');
+    select.disabled=input.disabled;
     select.className=`kyv-input dyn-input kyv-editor-relation-select${spec.kind==='invoice'?' auto-fill-invoice':''}`;
     select.dataset.key=key;
     select.dataset.kyvSearchable='true';
