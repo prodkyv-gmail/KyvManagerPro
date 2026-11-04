@@ -1,5 +1,11 @@
 # Changelog
 
+### v2.58 · 2026-11-04
+- Dropbox: nuovo percorso OAuth PKCE temporaneo e ricerca ricorsiva di sola lettura avviata manualmente su cartelle autorizzate, con paginazione limitata e avvisi per scansioni parziali. Restano archivio e Chooser precedenti.
+- OneDrive: predisposti OAuth Microsoft e ricerca per testo con Graph Files.Read; non operativi senza configurazione client ID/SPA. Salvataggio disabilitato finché non viene applicata e verificata la migrazione SQL dei provider e attivato il flag.
+- Risultati cloud indirizzati soltanto alla coda di revisione manuale; nessun progetto o audio creato, nessun token memorizzato. Dropbox content_hash non viene scambiato per SHA-256.
+- Test automatici PKCE/ricerca, documentazione e versione/cache aggiornati. Nessun accesso Vercel, migrazione applicata o collaudo provider reale.
+
 ### v2.57 · 2026-11-04
 - Audio Finder: introdotto «Controllo archivio audio», solo in lettura e dai metadati autenticati già caricati.
 - Indicatori per file ancora da classificare nella scansione corrente, audio personali senza progetto, gruppi con SHA-256 identico e progetti senza file personali collegati nel catalogo.
