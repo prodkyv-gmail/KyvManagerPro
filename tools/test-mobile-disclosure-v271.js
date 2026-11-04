@@ -11,7 +11,7 @@ assert.ok(page.includes("if(event.key==='Escape'){event.preventDefault();setSafe
 assert.ok(page.includes('if(event.shiftKey&&(document.activeElement===first'),'Shift+Tab traps focus');
 assert.ok(page.includes('body.menu-open .kyv-safe-mobile-nav{visibility:hidden;pointer-events:none}'),'Bottom bar hidden behind drawer');
 assert.ok(polish.includes("!document.getElementById('kyv-mobile-bottom-nav')"),'Do not append a second bottom bar');
-assert.ok(polish.includes('aria-label="Navigazione rapida mobile"'),'Safe nav needs accessible label');
+assert.ok(polish.includes("nav.setAttribute('aria-label','Navigazione rapida mobile')"),'Safe nav needs accessible label');
 assert.ok(polish.includes('aria-current="page"'),'Safe nav indicates active section');
 assert.ok(polish.includes("nav.inert=document.body.classList.contains('menu-open')"),'Bar matches current drawer state');
 assert.ok(easy.includes("wrap.setAttribute('role','group')"),'View switch is an accessible group');
