@@ -50,7 +50,7 @@
   function sourceFromItem(item){ return String(item?.source || item?.driveLabel || item?.driveEmail || item?.Tipo_File || item?.type || '').trim(); }
   function sourceKind(item){
     const verified=String(item?.provider||'').toLowerCase();
-    if(['local','drive','dropbox'].includes(verified)) return verified;
+    if(['local','drive','dropbox','onedrive'].includes(verified)) return verified;
     const blob = `${sourceFromItem(item)} ${linkFromItem(item)} ${item?.webViewLink || ''} ${item?.webContentLink || ''}`.toLowerCase();
     if(blob.includes('dropbox')) return 'dropbox';
     if(blob.includes('drive.google') || blob.includes('google') || /\bdrive\b/.test(blob) || item?.driveEmail || item?.driveLabel || item?.webViewLink || item?.webContentLink) return 'drive';
@@ -415,6 +415,7 @@
 
   async function archiveVersion(db,item,project,values){
     const kind=sourceKind(item);
+    if(kind==='onedrive')throw new Error('La modalità compatibilità non supporta OneDrive; usare il collegamento Finder a un progetto esistente.');
     if(kind==='local')throw new Error('L’archiviazione locale richiede il salvataggio atomico v2.23; non viene creato un falso link Drive.');
     return kind==='dropbox' ? archiveDropbox(db,item,project,values) : archiveDrive(db,item,project,values);
   }
