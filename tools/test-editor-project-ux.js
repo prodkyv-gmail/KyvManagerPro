@@ -3,6 +3,7 @@ function read(path){return fs.readFileSync(path,'utf8');}
 function assert(cond,msg){if(!cond){console.error('FAIL:',msg);process.exit(1);}}
 const fields=read('kyv-editor-project-fields.js');
 const nav=read('kyv-nav-order.js');
+const producer=read('kyv-producer-mode.js');
 const config=read('config.js');
 const sw=read('sw.js');
 
@@ -14,8 +15,13 @@ assert(fields.includes("type==='date'"),'i campi data non vengono preservati com
 assert(fields.includes("tr.dataset.kyvProjectRowId"),'le righe progetto non sono marcate per apertura modifica');
 assert(fields.includes("isInteractiveTarget(event.target)"),'il click riga non protegge controlli interattivi');
 assert(fields.includes("cell.removeAttribute('contenteditable')"),'Progetti mantiene editing inline in conflitto col click riga');
-assert(nav.includes("a[href=\"ascolto.html\"]")&&nav.includes("a[href=\"pipeline.html\"]"),'riordino Ascolto/Pipeline mancante');
-assert(nav.includes('Pipeline & opportunità'),'etichetta Pipeline non aggiornata');
+const primary=producer.split('const primary=[')[1]?.split('];')[0]||'';
+const tools=producer.split('const tools=[')[1]?.split('];')[0]||'';
+assert(primary.includes("['ascolto.html'")&&primary.includes("['pipeline.html'"),'Ascolto/Pipeline devono essere nel menu primario');
+assert(primary.indexOf("['pipeline.html'")>primary.indexOf("['ascolto.html'"),'Pipeline deve seguire Ascolto nella sorgente del menu');
+assert(primary.includes('Pipeline & opportunità'),'etichetta Pipeline non aggiornata');
+assert(!tools.includes("['pipeline.html'"),'Pipeline deve comparire una sola volta');
+assert(!nav.includes('setInterval(')&&!nav.includes('insertBefore('),'Il vecchio nav-order non deve più riordinare il DOM');
 assert(config.includes("editorProjectFields.src='kyv-editor-project-fields.js'"),'config non carica smart fields');
 assert(config.includes("navOrder.src='kyv-nav-order.js'"),'config non carica ordine navigazione');
 assert(sw.includes("'./kyv-editor-project-fields.js'"),'PWA non include smart fields');

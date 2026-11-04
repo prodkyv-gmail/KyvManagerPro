@@ -66,6 +66,18 @@ body{background:#0f111a;color:#f8fafc} html{scroll-behavior:smooth} .guide-secti
 </section>
 
 <section id="guida-creativa" class="guide-section manual-card p-5 md:p-7">
+<div class="manual-card-soft p-5 mt-4">
+<h3 class="sub-title mb-3">v2.64 — Consolidamento grafico, mobile e accessibilità</h3>
+<ol class="list-decimal ml-5 text-kyv-text space-y-2 leading-relaxed">
+<li><b>Home Oggi:</b> la lista <b>Attività da chiudere</b> resta visibile senza dover aprire un secondo pannello. <b>Stato operativo</b> rimane richiamabile dal proprio pannello. La nuova azione è presente una sola volta nella testata produttore; la barra rapida contiene le altre destinazioni.</li>
+<li><b>Grafici e amministrazione:</b> le sezioni <b>Fatture per tipologia</b> e <b>Grafici di approfondimento</b> introdotte nella v2.63 restano nella loro posizione originale. Il sistema grafico non le sposta più dentro un ulteriore contenitore, evitando duplicazioni e mantenendo i rispettivi filtri indipendenti.</li>
+<li><b>Menu:</b> <b>Pipeline &amp; opportunità</b> compare direttamente subito dopo <b>Ascolto</b> nel menu Produttore. Non è più necessario aspettare che uno script sposti il collegamento dopo il caricamento. Le cinque destinazioni della barra inferiore restano Home, Agenda, Nuovo, Progetti e Ascolto; quella attiva è segnalata anche ai lettori di schermo.</li>
+<li><b>Guida contestuale:</b> apri il punto interrogativo, usa Tab / Maiusc+Tab per muoverti dentro la finestra, chiudi con Esc o Chiudi guida. La tastiera ritorna al pulsante che aveva aperto la guida. Il menu mobile conserva la propria gestione separata di Esc.</li>
+<li><b>Tabelle:</b> quando vengono aggiunte righe tramite paginazione, filtri o aggiornamento, la vista responsive applica le etichette solo ai nuovi elementi. Le etichette già inserite manualmente non vengono sovrascritte; se cambia l'intestazione della tabella, quelle automatiche vengono aggiornate. Le tabelle modificabili e di importazione continuano a usare lo scorrimento per non alterare l'editor.</li>
+<li><b>Mobile:</b> controlli principali con area tattile leggibile, focus visibile, indicazioni per le tabelle scorrevoli, modali adatti allo schermo e preferenze per movimento ridotto.</li>
+</ol>
+<p class="text-kyv-text mt-3"><b>Nota:</b> questi sono miglioramenti di presentazione e gestione del DOM. Non cambiano alcuna ricerca database, record, ruolo di accesso, calcolo fiscale, estratto SIAE, pagamento, fee o associazione audio. Il collaudo visivo nell'app autenticata è distinto dalla suite automatica.</p></div>
+
 <div class="manual-card-soft p-5 mt-4"><h3 class="sub-title mb-3">v2.62 — Scrivania musicale, Sessioni e Piazzamenti</h3>
 <ol class="list-decimal ml-5 text-kyv-text space-y-2 leading-relaxed">
 <li><b>Tre schede distinte:</b> Scrivania musicale raccoglie il riepilogo dei progetti in sola lettura; Sessioni e Piazzamenti sono i luoghi in cui si registrano o modificano i rispettivi dati. Il riepilogo creativo non sostituisce i moduli originali.</li>

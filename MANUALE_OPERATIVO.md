@@ -1,3 +1,15 @@
+## v2.64 — Navigazione, tabelle e popup su mobile (4 novembre 2026)
+
+**Oggi:** quando apri Home, la lista **Attività da chiudere** rimane in primo piano. L'area **Stato operativo** è richiesta solo quando vuoi approfondire; il **Controllo amministrativo** contiene i KPI storici. Per i grafici apri **Grafici di approfondimento**, per le tipologie di fattura apri **Fatture per tipologia**: non esiste più un ulteriore pannello duplicato che nasconda quelle due aree. Il pulsante **Nuovo** è nella sezione principale, mentre Agenda, Progetti, Ascolto e Pipeline sono collegamenti rapidi.
+
+**Menu:** nel menu Produttore trovi **Pipeline & opportunità** subito dopo **Ascolto**, senza modifiche dell'ordine dopo il caricamento. Sul telefono, la barra inferiore contiene Home, Agenda, Nuovo, Progetti e Ascolto e indica il percorso attivo.
+
+**Guida:** apri il pulsante **?**. Il focus si sposta nel popup e Tab/Maiusc+Tab circolano fra i suoi comandi. Esc chiude prima il popup della guida; il focus torna al pulsante ?. Quando la guida non è aperta, Esc può chiudere il menu laterale mobile.
+
+**Tabelle:** le schede semplici possono adattarsi a card sul telefono; le tabelle con molte colonne e le aree di modifica/importazione si scorrono orizzontalmente senza perdere il contenuto. Le righe aggiunte vengono etichettate una sola volta e le etichette scelte da te restano tali. I dati caricati e i valori delle celle non sono trasformati da questa operazione.
+
+I miglioramenti v2.64 non cambiano il valore delle fee, le classificazioni audio, gli incassi, gli estratti SIAE o le attribuzioni. L'uso in produzione va verificato separatamente.
+
 ## v2.63 — Utilizzo rapido di Home, Economia e Analyst (4 novembre 2026)
 
 **Home:** consulta subito le attività da chiudere, i prossimi follow-up e i valori sintetici. Per i grafici apri **Grafici di approfondimento**: i filtri di fatturato emesso per tipologia, distribuzione per stato/fase e numero di progetti per artista sono indipendenti. Per la vista storica **PAGATA per tipologia** apri **Fatture per tipologia**; una spunta storica non dimostra la data di un pagamento. Se una lettura non riesce, la pagina segnala **dati non verificabili** e sostituisce gli importi con un trattino anziché un falso zero.

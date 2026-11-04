@@ -1406,3 +1406,83 @@ body.kyv-v260 .kyv-invoice-status-details>summary:focus-visible{
 @media(prefers-reduced-motion:reduce){
  body.kyv-v260 .kyv-economy-extras>summary span{transition:none;}
 }
+
+
+/* v2.64 · Shared touch/focus polish. Keep original functional controls and Safe Projects isolated. */
+body.kyv-v260 #kyv-mobile-bottom-nav a[aria-current="page"] {
+ color: #fff;
+ background: rgba(139,131,255,.2) !important;
+ border-color: rgba(185,178,255,.5) !important;
+ box-shadow: inset 0 3px 0 #b9b4ff;
+}
+body.kyv-v260 #kyv-mobile-bottom-nav a:focus-visible,
+body.kyv-v260 #sidebar nav a:focus-visible,
+body.kyv-v260 .kyv-nav-group > summary:focus-visible {
+ outline: 3px solid var(--kyv-ui-focus);
+ outline-offset: 2px;
+}
+body.kyv-v260 #kyv-help-modal [aria-label="Chiudi guida"] {
+ min-width: 44px;
+ min-height: 44px;
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+}
+body.kyv-v260 #kyv-help-modal a,
+body.kyv-v260 #kyv-help-modal button {
+ min-height: 44px;
+}
+body.kyv-v260 #kyv-help-modal [role="status"] {line-height:1.5}
+body.kyv-v260 #kyv-help-modal .custom-scrollbar {
+ scrollbar-gutter: stable;
+ overscroll-behavior: contain;
+}
+body.kyv-v260 .kyv-table-shell {min-width:0;}
+body.kyv-v260 .kyv-table-hint {
+ display:flex;
+ align-items:center;
+ gap:8px;
+ padding:7px 12px;
+ font-size:12px;
+ font-weight:650;
+ color:#d2deee;
+ background:#1d2b3f;
+ border-bottom:1px solid var(--kyv-ui-border);
+}
+body.kyv-v260 .kyv-responsive-table td[data-label] {
+ overflow-wrap:anywhere;
+}
+body.kyv-v260 .kyv-table-shell :is(button,a,select,input):focus-visible {
+ outline:3px solid var(--kyv-ui-focus);
+ outline-offset:2px;
+}
+body.kyv-v260 #kyv-dashboard-ops-collapses > .kyv-panel {
+ border:1px solid var(--kyv-ui-border);
+ border-radius:var(--kyv-ui-radius);
+ background:linear-gradient(140deg,#192234,#121a28);
+}
+body.kyv-v260 #kyv-dashboard-ops-collapses > .kyv-panel .activity-filter {
+ min-height:40px;
+}
+body.kyv-v260 #kyv-dashboard-control > summary,
+body.kyv-v260 #kyv-dashboard-status-collapse > summary {
+ min-height:48px;
+}
+@media(max-width:767px) {
+ body.kyv-v260 #kyv-mobile-bottom-nav a {
+  min-height:50px;
+  min-width:0;
+  padding-block:7px;
+ }
+ body.kyv-v260 #kyv-help-modal > div {
+  width: min(100%,calc(100vw - 16px));
+  max-height:calc(100dvh - 16px);
+ }
+ body.kyv-v260 #kyv-help-modal .custom-scrollbar {min-height:0;}
+ body.kyv-v260 .kyv-table-hint {font-size:12px;}
+ body.kyv-v260 #kyv-dashboard-ops-collapses > .kyv-panel {padding:14px;}
+}
+@media(prefers-reduced-motion:reduce) {
+ body.kyv-v260 #kyv-dashboard-ops-collapses .activity-filter {transition:none;}
+ body.kyv-v260 #kyv-mobile-bottom-nav a{transition:none;}
+}

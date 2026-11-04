@@ -10,6 +10,7 @@ const primary=[
   ['progetti.html','Progetti','music-2','progetti'],
   ['kyv_scrivania_creativa.html','Scrivania creativa','calendar-range','creative'],
   ['ascolto.html','Ascolto','headphones','ascolto'],
+  ['pipeline.html','Pipeline & opportunità','columns-3','pipeline'],
   ['kyv_audio_finder.html','Audio Finder','search-check','audiofinder'],
   ['integrazioni.html','Tutte le app','grid-3x3','integrazioni']
 ];
@@ -30,7 +31,6 @@ const tools=[
   ['editor.html','Studio Editor','database','editor'],
   ['archivio_musicale.html','Archivio musicale','archive','archivio'],
   ['assistente.html','Percorso brano','route','assistente'],
-  ['pipeline.html','Pipeline','columns-3','pipeline'],
   ['importexport.html','Import / Export','arrow-down-up','importexport'],
   ['diagnostica.html','Diagnostica','activity','diagnostica'],
   ['guida.html','Manuale','book-open','guida']
@@ -115,12 +115,25 @@ function fixMobileNav(){
   return true;
 }
 
+/* v2.64: mount only when the sidebar exists; stop observing as soon as it is ready.
+   Avoid recomputing full navigation after every unrelated DOM mutation for six seconds. */
 function watchNavigation(){
-  const apply=()=>{mountSimpleSidebar();fixMobileNav();};
-  apply();
-  const observer=new MutationObserver(apply);
+  const apply=()=>{
+    const nav=document.querySelector('#sidebar nav');
+    if(!nav)return false;
+    mountSimpleSidebar();
+    fixMobileNav();
+    return true;
+  };
+  if(apply())return;
+  const observer=new MutationObserver(()=>{
+    if(apply())observer.disconnect();
+  });
   observer.observe(document.documentElement,{childList:true,subtree:true});
-  setTimeout(()=>{apply();observer.disconnect();},6000);
+  setTimeout(()=>{
+    observer.disconnect();
+    apply();
+  },3500);
 }
 
 function collapseNode(node,{id,title,subtitle,icon='chevron-down',pastel='lavender'}={}){
@@ -144,16 +157,8 @@ function collapseOperationalPanels(){
   holder.className='space-y-3 mb-6';
   pulse.parentNode.insertBefore(holder,pulse);
 
-  if(parts[0]){
-    holder.appendChild(parts[0]);
-    const activity=collapseNode(parts[0],{
-      id:'kyv-dashboard-activity-collapse',
-      title:'Attività da chiudere',
-      subtitle:'Follow-up, sessioni e cose da completare. Apri solo quando ti serve.',
-      pastel:'mint'
-    });
-    if(activity)holder.appendChild(activity);
-  }
+  // The operational task list is the primary purpose of Oggi: keep it visible.
+  if(parts[0])holder.appendChild(parts[0]);
   if(parts[1]){
     holder.appendChild(parts[1]);
     const ops=collapseNode(parts[1],{
@@ -183,7 +188,7 @@ function dashboardProducerMode(){
 
   const quick=document.querySelector('.kyv-quick-actions');
   if(quick){
-    quick.innerHTML=`<a href="acquisisci_audio.html"><i data-lucide="circle-plus" class="w-4 h-4 mr-2 text-cyan-300"></i>Nuovo</a><a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a><a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a><a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a><a href="pipeline.html"><i data-lucide="columns-3" class="w-4 h-4 mr-2 text-amber-300"></i>Pipeline</a>`;
+    quick.innerHTML=`<a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a><a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a><a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a><a href="pipeline.html"><i data-lucide="columns-3" class="w-4 h-4 mr-2 text-amber-300"></i>Pipeline</a>`;
   }
 
   const pulse=document.getElementById('studio-pulse');
@@ -195,8 +200,8 @@ function dashboardProducerMode(){
   const body=controlBox.querySelector('#kyv-dashboard-control-body');
   const candidates=[];
   const metrics=document.getElementById('val-fee')?.closest('.grid'); if(metrics)candidates.push(metrics);
-  const types=document.getElementById('tipo-ft-cards')?.closest('.mb-6'); if(types)candidates.push(types);
-  ['chartAndamento','chartTopArtisti'].forEach(id=>{const grid=document.getElementById(id)?.closest('div.grid');if(grid)candidates.push(grid);});
+  // v2.63 owns the independent type/chart disclosures. Never relocate their
+  // DOM nodes into a second container (that broke their native disclosure state).
   [...new Set(candidates)].forEach(node=>body.appendChild(node));
   if(!body.children.length)controlBox.remove();
 

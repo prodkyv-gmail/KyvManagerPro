@@ -1,7 +1,9 @@
-// kyv-responsive.js - miglioramenti UX responsive non invasivi
+// KYV v2.64 — responsive tables: incremental DOM work, no duplicate renders or writes.
 (function () {
+    'use strict';
     const MOBILE_CARD_MAX_COLUMNS = 6;
     const LARGE_TABLE_MIN_COLUMNS = 7;
+    const tableHeaders = new WeakMap();
 
     function isProbablyEditableTable(table) {
         return Boolean(
@@ -12,57 +14,112 @@
         );
     }
 
-    function enhanceTable(table) {
+    function tableHeaderState(table) {
+        const headers = Array.from(table.querySelectorAll('thead th'))
+            .map(th => th.textContent.trim().replace(/\s+/g, ' '));
+        const firstRow = table.querySelector('tr');
+        const columnCount = headers.length || (firstRow ? firstRow.children.length : 0);
+        return { headers, columnCount, signature: JSON.stringify(headers) };
+    }
+
+    function enhanceTable(table, newRows = null) {
         if (!table) return;
         const alreadyEnhanced = table.dataset.kyvEnhanced === '1';
+        const { headers, columnCount, signature } = tableHeaderState(table);
+        const previousSignature = tableHeaders.get(table);
+        tableHeaders.set(table, signature);
         table.dataset.kyvEnhanced = '1';
         table.classList.add('kyv-responsive-table');
 
-        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim().replace(/\s+/g, ' '));
-        const columnCount = headers.length || (table.querySelector('tr') ? table.querySelector('tr').children.length : 0);
-
-        Array.from(table.querySelectorAll('tbody tr')).forEach(row => {
+        // Revisit all rows only at first mount or when the actual table headings change.
+        // On normal list pagination, work is proportional to just the rows inserted.
+        const rows = !alreadyEnhanced || newRows === null || previousSignature !== signature
+            ? table.querySelectorAll('tbody tr')
+            : newRows;
+        Array.from(rows).forEach(row => {
             Array.from(row.children).forEach((cell, index) => {
-                if (!cell.getAttribute('data-label')) cell.setAttribute('data-label', headers[index] || `Campo ${index + 1}`);
+                if (!cell.getAttribute('data-label') || cell.dataset.kyvAutoLabel === '1') {
+                    cell.setAttribute('data-label', headers[index] || `Campo ${index + 1}`);
+                    cell.dataset.kyvAutoLabel = '1';
+                }
             });
         });
 
         const shouldCard = columnCount > 0 && columnCount <= MOBILE_CARD_MAX_COLUMNS && !isProbablyEditableTable(table);
         const shouldScroll = columnCount >= LARGE_TABLE_MIN_COLUMNS || isProbablyEditableTable(table);
-        if (shouldCard) table.classList.add('kyv-card-mode');
-        if (shouldScroll) table.classList.add('kyv-scroll-mode');
+        table.classList.toggle('kyv-card-mode', shouldCard);
+        table.classList.toggle('kyv-scroll-mode', shouldScroll);
 
         const wrapper = table.parentElement;
-        if (!alreadyEnhanced && wrapper && !wrapper.dataset.kyvTableHint && (wrapper.classList.contains('overflow-x-auto') || wrapper.classList.contains('overflow-auto') || shouldScroll)) {
+        if (!alreadyEnhanced && wrapper && !wrapper.dataset.kyvTableHint &&
+                (wrapper.classList.contains('overflow-x-auto') ||
+                 wrapper.classList.contains('overflow-auto') || shouldScroll)) {
             wrapper.dataset.kyvTableHint = '1';
             wrapper.classList.add('kyv-table-shell', 'kyv-scroll-fade');
             const hint = document.createElement('div');
             hint.className = 'kyv-table-hint';
-            hint.innerHTML = '<span>↔</span><span>Scorri la tabella lateralmente</span>';
+            hint.innerHTML = '<span aria-hidden="true">↔</span><span>Scorri la tabella lateralmente</span>';
             wrapper.insertBefore(hint, table);
         }
     }
 
     function enhanceTables(root = document) {
-        root.querySelectorAll('table').forEach(enhanceTable);
+        if (root.matches && root.matches('table')) enhanceTable(root);
+        root.querySelectorAll('table').forEach(table => enhanceTable(table));
     }
 
     function markReadableContainers() {
         document.querySelectorAll('main > section').forEach(section => section.classList.add('kyv-readable-width'));
-        document.querySelectorAll('.bg-kyv-card.p-5, .bg-kyv-card.p-6, .bg-kyv-card.rounded-xl').forEach(card => card.classList.add('kyv-metric-card'));
+        document.querySelectorAll('.bg-kyv-card.p-5, .bg-kyv-card.p-6, .bg-kyv-card.rounded-xl')
+            .forEach(card => card.classList.add('kyv-metric-card'));
     }
 
     function observeDynamicTables() {
         const mo = new MutationObserver(mutations => {
+            const changed = new Map();
+            const queue = (table, row = null) => {
+                if (!table || table.tagName !== 'TABLE') return;
+                if (!changed.has(table)) changed.set(table, row ? new Set([row]) : null);
+                else if (row === null) changed.set(table, null);
+                else changed.get(table)?.add(row);
+            };
             for (const mutation of mutations) {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType !== 1) return;
-                    if (node.matches && node.matches('table')) enhanceTable(node);
-                    const table = node.closest ? node.closest('table') : null;
-                    if (table) enhanceTable(table);
-                    if (node.querySelectorAll) enhanceTables(node);
+                    if (node.matches('table')) {
+                        queue(node);
+                        return;
+                    }
+                    if (node.matches('tr')) {
+                        const table = node.closest('table');
+                        if (node.closest('thead')) queue(table);
+                        else queue(table, node);
+                    } else if (node.matches('td,th')) {
+                        const table = node.closest('table');
+                        if (node.closest('thead')) queue(table);
+                        else queue(table, node.closest('tr'));
+                    } else if (node.matches('thead,tbody')) {
+                        queue(node.closest('table'));
+                    }
+                    // A newly attached section may contain full tables and/or row batches.
+                    if (node.querySelectorAll) {
+                        node.querySelectorAll('table').forEach(table => queue(table));
+                        node.querySelectorAll('tr').forEach(row => {
+                            const table = row.closest('table');
+                            if (row.closest('thead')) queue(table);
+                            else queue(table, row);
+                        });
+                    }
                 });
+                // A row may be extended in place (cell added to an existing tr).
+                const target = mutation.target;
+                if (target?.nodeType === 1 && target.matches('tr')) {
+                    const table = target.closest('table');
+                    if (target.closest('thead')) queue(table);
+                    else queue(table, target);
+                }
             }
+            changed.forEach((rows, table) => enhanceTable(table, rows));
         });
         mo.observe(document.body, { childList: true, subtree: true });
     }
