@@ -83,7 +83,12 @@ function build(data={},dateToday='2026-11-04',line=root.KYV_INVOICE_LINE){
      }
      allocated.set(p.id,(allocated.get(p.id)||0)+CENTS(v));
     }
-    projectParts=[...allocated].map(([pid,cents])=>({p:infos.get(pid),cents,split:true}));
+    const sum=[...allocated.values()].reduce((n,v)=>n+v,0);
+    if(invoiceCents!==null&&sum>invoiceCents){
+     // A split exceeding the invoice's unit price cannot be presented as verified billings.
+     totals.invalidAllocations++;
+     projectParts=[...allocated].map(([pid])=>({p:infos.get(pid),cents:null,split:true}));
+    }else projectParts=[...allocated].map(([pid,cents])=>({p:infos.get(pid),cents,split:true}));
    }else if(direct){
     projectParts=[{p:direct,cents:invoiceCents,split:false}];
    }
