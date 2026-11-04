@@ -48,6 +48,7 @@ const APP_SHELL = [
     './kyv-intelligence-engine-v238.js',
     './kyv-siae-amount.js',
     './kyv-editor-columns.js',
+    './kyv-editor-view-v277.js',
     './kyv-editor-read-v267.js',
     './kyv-editor-changes-v268.js',
     './editor.html',
