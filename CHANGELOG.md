@@ -1,5 +1,13 @@
 # Changelog
 
+### v2.65 · 2026-11-04
+- Ricerca globale: letture complete paginate su sette archivi e conteggi esatti, non più limiti silenziosi per tabella; errori, incompletezza, soglia massima e riprova esplicita. Conteggio match totali distinto dai primi 30 risultati mostrati.
+- Popup ricerca: focus iniziale/finale, Tab, Esc e indicazioni ARIA. Pulsante Cerca montato dal menu tramite eventi di completamento senza polling; indice in memoria solo dopo letture integralmente verificate.
+- Studio Editor: casella di ricerca rinominata e descritta come filtro della tabella corrente; nessun cambiamento a CRUD o colonne.
+- Archivio musicale: conteggi verificati e paginazione per tutti gli archivi di confronto; blocco di inserimenti con copertura incompleta; l'eventuale archivio unificato davvero assente conserva il fallback legacy.
+- Associazione audio: somiglianza per nome solo suggerita, nessun progetto preselezionato per nuovi file, scelta manuale e conferme finali originali mantenute; azioni multiple denominate «Rivedi» anziché «Inserisci».
+- Nuovi test di copertura database simulata, permessi/errore e separazione suggestion/selection; cache, versione e guide sincronizzate.
+
 ### v2.64 · 2026-11-04
 - Producer Mode: Pipeline & opportunità direttamente dopo Ascolto, eliminato riordino del menu tramite polling di 6 secondi; montaggio sidebar disconnette subito l'observer appena pronto, una sola voce Pipeline.
 - Home: Attività da chiudere visibili senza apertura di un secondo pannello, Stato operativo facoltativo, CTA Nuovo senza duplicati; grafici e fatture per tipologia restano dentro i rispettivi pannelli della v2.63 senza riallocazioni DOM.
