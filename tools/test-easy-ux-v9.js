@@ -9,7 +9,7 @@ assert.ok(easy.includes("body.kyv-easy-mode #tabs"),'Easy mode must hide technic
 assert.ok(easy.includes("body.kyv-easy-mode #hero-badges"),'Easy mode must reduce hero metadata');
 assert.ok(easy.includes("body.kyv-easy-mode #global-stats"),'Easy mode must reduce picker stats');
 assert.ok(easy.includes('Continua progetto'),'primary wizard CTA missing');
-assert.ok(easy.includes('Mostra dettagli'),'detail progressive disclosure missing');
+assert.ok(!easy.includes('Mostra dettagli'),'Do not render a second details button: the complete mode switch owns this action');
 for(const task of ['Produzione','Invio / follow-up','Release','Fattura / incasso','Aggiorna dati']) assert.ok(easy.includes(task),task+' wizard task missing');
 assert.ok(easy.includes('ESSENTIAL_FIELDS'),'essential quick-edit field set missing');
 assert.ok(easy.includes('Campi avanzati · diritti, link ed economia'),'advanced fields disclosure missing');
