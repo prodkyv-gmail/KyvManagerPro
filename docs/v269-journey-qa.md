@@ -4,7 +4,7 @@ Prove manuali PWA desktop/mobile, non eseguite dalla CI e senza modifiche a dati
 
 1. Progetti → apri Vista rapida su un progetto esistente: premi Sessioni del progetto e verifica ID, titolo e artista.
 2. Sessioni mostra etichetta progetto e dati solo del progetto selezionato; premi Vedi tutte le sessioni e verifica il ritorno alla pagina generale. Le metriche della pagina restano globali.
-3. Da Scheda Progetto usa il Percorso: Scheda → Sessioni → Audio → Fatture; ogni pagina deve mantenere l'ID senza chiedere di riscegliere il brano.
+3. Da Scheda Progetto usa il Percorso: Scheda → Sessioni → Audio → Fatture; ogni pagina deve mantenere l'ID senza chiedere di riscegliere il brano. Poi cambia progetto nella stessa scheda senza ricaricarla: il percorso deve aggiornare subito l'ID per tutti i link, senza riutilizzare quello del progetto precedente.
 4. Da Audio Finder aperto con parametro project controlla che venga indicato il progetto nella scelta di destinazione, ma **nessuna** nuova associazione, scansione, proposta di progetto o inserimento parta automaticamente.
 5. Fatture aperte con collegaProgetto non devono attivare la finestra di ripartizione. Verifica che il link di ritorno riporti alla scheda del progetto selezionato.
 6. Per il comando manuale Collega fattura nella Vista rapida, deve continuare ad aprirsi il flusso di ripartizione esistente: nessuna conferma automatica.
