@@ -1,3 +1,11 @@
+## v2.70 — Navigazione senza duplicati (4 novembre 2026)
+
+La barra **Percorso** della Scheda progetto carica ora il modulo di navigazione corretto e mantiene il progetto fra Scheda, Sessioni, Audio Finder e Fatture. È stata eliminata una duplicazione: lo stato della fattura (incassata, da incassare, non emessa o non disponibile) viene mostrato come **etichetta informativa nella voce Fatture**, non in un secondo collegamento. In caso di errore di lettura non viene dedotto che non esistano fatture; nessuna azione di modifica o ripartizione parte dalla navigazione.
+
+Nella Scheda rimane **un solo riquadro principale “Prossima azione”** quando l'Hub operativo è disponibile; il vecchio riquadro resta utilizzabile come ripiego se l'Hub non si carica. Cambiare progetto nella scheda aggiorna anche il riepilogo fatture del progetto corrente.
+
+Sicurezza: nessuna scrittura implicita, modifica dei dati storici, nuove tabelle o intervento Vercel. I controlli automatici verificano le dipendenze e le regressioni, ma non sostituiscono la verifica visiva autenticata su PC/smartphone.
+
 ## v2.69 — Percorso Progetto → Sessioni → Audio → Fatture (4 novembre 2026)
 
 Dalla **Scheda progetto** hai un percorso compatto e contestuale con i collegamenti **Scheda, Sessioni, Audio, Fatture**, preservando lo stesso ID progetto tra le pagine. È lo stesso componente di navigazione già esistente, non una seconda barra parallela. Da **Progetti → Vista rapida** puoi ora aprire direttamente **Sessioni del progetto**.

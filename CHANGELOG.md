@@ -7,6 +7,14 @@
 
 # Changelog
 
+### v2.70 · 2026-11-04
+- Correzione effettiva del caricamento in config.js di `kyv-flow-routes-v269.js`, che ora precede il renderer KYV Workflow Nav. In v2.69 il modulo era presente nell'archivio ma non caricato, quindi il contesto del progetto poteva mancare. Rafforzato anche il test di regressione: non basta confrontare gli indici se la dipendenza è assente.
+- Consolidamento della voce **Fatture**: quando compare nel Percorso il riepilogo «da incassare / incassate / nessuna fattura / indisponibile» appare come stato non azionabile dentro quello stesso collegamento. Eliminato il secondo chip di navigazione che duplicava la funzione. Nessun inserimento o ripartizione parte da solo, e non si confonde lettura fallita con assenza fattura. Le pagine senza voce Fatture mantengono il comportamento precedente.
+- Nella scheda progetto lo stato delle fatture segue subito la selezione di un altro progetto, anche se due progetti hanno lo stesso titolo.
+- Una sola scheda «Prossima azione»: il riepilogo nell'Hub progetto è prioritario; quello nell'hero v2 rimane come ripiego soltanto se l'Hub non è disponibile. Tutte le sezioni e le azioni già esistenti restano accessibili.
+- Aggiornati test, guida contestuale, manuale, policy documentale e cache PWA. Nessuna modifica allo schema o ai dati. Il collaudo PWA autenticato resta necessario dopo la distribuzione.
+
+
 ### v2.69 · 2026-11-04
 - Percorso contestuale tra Scheda Progetto, Sessioni, Audio Finder e Fatture. Passa l'ID verificato attraverso i parametri già supportati da ciascuna pagina; etichette/URL centralizzati in un modulo puro senza letture o scritture. Nessuna ulteriore barra duplicata: si riusa KYV Workflow Nav.
 - Sessioni Studio ora accetta un progetto contestuale con etichetta, filtro esplicito e via d'uscita “Vedi tutte le sessioni”. La lettura degli archivi non è più silenziosamente limitata a 1.000 record: riusa caricatore completo verificato v2.67, con errore in caso di incompleto.

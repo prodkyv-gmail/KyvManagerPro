@@ -87,6 +87,10 @@ function renderHero(current,next){
   const badges=document.getElementById('hero-badges');if(badges&&!document.getElementById('kyv-v2-status-badge'))badges.insertAdjacentHTML('afterbegin',`<span id="kyv-v2-status-badge" class="kyv-chip border-indigo-500/25 bg-indigo-500/10 text-indigo-100"><i data-lucide="activity" class="w-3 h-3"></i>${H(p.STATO||'Stato non indicato')}</span>`);
   let box=document.getElementById('kyv-v2-next');if(!box){box=document.createElement('div');box.id='kyv-v2-next';const actions=hero.querySelector('.flex.flex-wrap.items-start');if(actions)actions.insertAdjacentElement('beforebegin',box);else hero.appendChild(box);}
   box.className=`kyv-v2-next ${next.tone==='due'?'due':next.tone==='ready'?'ready':''}`;
+  // Keep the hero action accessible if the consolidated hub failed to render.
+  const hasPrimaryNext=Boolean(document.querySelector('#kyv-project-hub-v3 .kyv-hub3-next'));
+  box.hidden=hasPrimaryNext;
+  box.style.display=hasPrimaryNext?'none':'';
   box.innerHTML=`<div><p class="kyv-v2-kicker">Prossima azione</p><strong>${H(next.title)}</strong><p>${H(next.detail)}</p></div><button type="button" data-v2-next>Vai al blocco</button>`;
   box.querySelector('[data-v2-next]')?.addEventListener('click',()=>document.getElementById(next.target)?.scrollIntoView({behavior:'smooth',block:'start'}));
 }

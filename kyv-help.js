@@ -181,6 +181,9 @@ function getKyvHelpContent(activePage) {
     // v2.69: stessa guida di percorso, visibile nelle pagine operative e non nell'editor tecnico.
     const journeyHelp = '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.69 · Percorso progetto</h5><p class="text-sm text-kyv-text mt-2">Da Scheda o Vista rapida Progetti puoi aprire Sessioni, Audio e Fatture mantenendo il progetto selezionato. Sessioni offre <b>Vedi tutte le sessioni</b>. Audio Finder richiede sempre una selezione e conferma esplicita dei file: nessun collegamento automatico. Il link Fatture apre il contesto informativo senza avviare un inserimento o una ripartizione.</p></div>';
     ['progetti','scheda','sessioni','audiofinder','fatture'].forEach(key => { if(guide[key]) guide[key].content += journeyHelp; });
+    // v2.70: actionable navigation stays unique; status is informational.
+    const simplerJourney = '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.70 · Un solo comando per funzione</h5><p class="text-sm text-kyv-text mt-2">Nel Percorso del progetto <b>Fatture</b> include lo stato senza aggiungere un secondo pulsante. «Non disponibili» significa errore di lettura, non assenza di fatture. L’Hub operativo mantiene una sola <b>Prossima azione</b>; il pannello precedente resta di ripiego se l’Hub non si carica. Nessun file audio viene associato senza tua conferma.</p></div>';
+    ['progetti','scheda','sessioni','audiofinder','fatture'].forEach(key => { if(guide[key]) guide[key].content += simplerJourney; });
     const aliases = { spese: 'documenti' };
     activePage = aliases[activePage] || activePage;
     return guide[activePage] || guide.default;
