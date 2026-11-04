@@ -31,7 +31,6 @@ const tools=[
   ['archivio_musicale.html','Archivio musicale','archive','archivio'],
   ['assistente.html','Percorso brano','route','assistente'],
   ['pipeline.html','Pipeline','columns-3','pipeline'],
-  ['integrazioni.html','Tutte le app','grid-3x3','integrazioni'],
   ['importexport.html','Import / Export','arrow-down-up','importexport'],
   ['diagnostica.html','Diagnostica','activity','diagnostica'],
   ['guida.html','Manuale','book-open','guida']
@@ -82,7 +81,7 @@ function currentKey(){
 }
 function item([href,label,icon,key]){
   const active=currentKey()===key;
-  return `<li><a href="${href}" class="flex items-center px-3 py-2.5 rounded-xl transition-all text-sm font-bold ${active?'bg-indigo-500/10 text-indigo-200 border border-indigo-500/25':'text-kyv-text hover:text-white hover:bg-kyv-border/50 border border-transparent'}"><i data-lucide="${icon}" class="w-4 h-4 mr-3 ${key==='nuovo'?'text-cyan-300':'text-slate-300'}"></i><span>${label}</span></a></li>`;
+  return `<li><a href="${href}" ${active ? 'aria-current="page"' : ''} class="flex items-center px-3 py-2.5 rounded-xl transition-all text-sm font-bold ${active?'bg-indigo-500/10 text-indigo-200 border border-indigo-500/25':'text-kyv-text hover:text-white hover:bg-kyv-border/50 border border-transparent'}"><i data-lucide="${icon}" class="w-4 h-4 mr-3 ${key==='nuovo'?'text-cyan-300':'text-slate-300'}"></i><span>${label}</span></a></li>`;
 }
 function details(label,icon,entries,open){
   return `<details class="kyv-nav-group" ${open?'open':''}><summary><i data-lucide="${icon}"></i><span>${label}</span><i data-lucide="chevron-down" class="kyv-chevron w-4 h-4"></i></summary><ul class="space-y-1">${entries.map(item).join('')}</ul></details>`;
@@ -99,20 +98,23 @@ function mountSimpleSidebar(){
   if(window.lucide)lucide.createIcons({root:sidebar});
   return true;
 }
+/* v2.60: the shared menu now renders the correct mobile destinations directly.
+   Only synchronize ARIA state; do not replace or rewrite links a second time. */
 function fixMobileNav(){
   const nav=document.getElementById('kyv-mobile-bottom-nav');
-  if(!nav||nav.dataset.producerMode==='1')return false;
+  if(!nav)return false;
+  const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+  nav.querySelectorAll('a[href]').forEach(link=>{
+    const href=link.getAttribute('href')?.split('?')[0];
+    const active=href===path||(path==='scheda_progetto.html'&&href==='progetti.html');
+    link.classList.toggle('is-active',active);
+    if(active)link.setAttribute('aria-current','page');
+    else link.removeAttribute('aria-current');
+  });
   nav.dataset.producerMode='1';
-  const rubrica=nav.querySelector('a[href="clienti.html"]');
-  if(rubrica){
-    rubrica.href='ascolto.html';
-    rubrica.setAttribute('aria-label','Ascolto');
-    rubrica.classList.toggle('is-active',currentKey()==='ascolto');
-    rubrica.innerHTML='<i data-lucide="headphones"></i><span>Ascolto</span>';
-  }
-  if(window.lucide)lucide.createIcons({root:nav});
   return true;
 }
+
 function watchNavigation(){
   const apply=()=>{mountSimpleSidebar();fixMobileNav();};
   apply();
