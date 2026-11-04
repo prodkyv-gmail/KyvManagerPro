@@ -7,6 +7,13 @@
 
 # Changelog
 
+### v2.78 + v2.79 · 2026-11-04 (rilascio integrato v2.79)
+- Studio Editor: i campi del popup esistente sono organizzati in cinque sezioni; aggiunti Trova un campo, Solo modificati e contatore campi/sezioni. Nessun input cancellato/disabilitato dalla ricerca e nessun nuovo popup.
+- Barra Salva/Annulla sempre visibile, etichette associate agli input, layout su una colonna da smartphone, focus/aria-hidden migliorati. Payload diff-only e guardie di salvataggio/chiusura invariati.
+- Stile condiviso e circoscritto a Progetti, Sessioni, Fatture e Studio Editor: focus, leggibilità, scrollbar, spaziature e aree touch, senza duplicare comandi.
+- Aggiornati guida, ? contestuale, manuali, test delle due fasi, assets PWA, VERSION e cache offline.
+- Nessuna modifica al database, ai dati storici o ai segni SIAE.
+
 ### v2.77 · 2026-11-04
 - Studio Editor: cache di sola visualizzazione per risultati filtrati e ordinati, riuso su Mostra altre 120 righe e restringimento incrementale durante la ricerca; invalidazione su nuova lettura, errore o salvataggio inline.
 - Il caricamento della stessa tabella preserva la ricerca, mentre passare a una tabella diversa continua ad azzerarla. I caricamenti restano completi e verificati; nessuna nuova query o scrittura.

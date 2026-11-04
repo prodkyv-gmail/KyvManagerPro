@@ -123,10 +123,10 @@ async function run(){
  addCtx.addResults([{id:'audio-1',name:'Demo omonimo'}]);
  assert.equal(state.results[0].projectId,'41','A manually chosen project must not be overwritten');
  const pkg=JSON.parse(read('package.json'));
- assert.equal(pkg.version,'2.77.0');
- assert.equal(read('VERSION').trim(),'2.77');
- assert.ok(read('config.js').includes("APP_VERSION: '2.77'"));
- assert.ok(read('sw.js').includes('kyv-studio-v2-77-editor-views-20261104'));
+ assert.equal(pkg.version,'2.79.0');
+ assert.equal(read('VERSION').trim(),'2.79');
+ assert.ok(read('config.js').includes("APP_VERSION: '2.79'"));
+ assert.ok(read('sw.js').includes('kyv-studio-v2-79-integrated-modal-ux-20261104'));
  assert.equal(pkg.scripts['check:search-archive-v265'],'node tools/test-search-archive-v265.js');
  assert.ok(pkg.scripts.check.includes('check:search-archive-v265'));
  assert.ok(read('guida.html').includes('v2.65'));

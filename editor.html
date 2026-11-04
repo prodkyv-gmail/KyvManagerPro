@@ -36,6 +36,7 @@
     <script src="kyv-editor-view-v277.js"></script>
     <script src="kyv-editor-read-v267.js"></script>
     <script src="kyv-editor-changes-v268.js"></script>
+    <script src="kyv-editor-modal-v278.js"></script>
     <script src="kyv-help.js"></script>
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
@@ -141,8 +142,9 @@
     </style>
     <link rel="stylesheet" href="kyv-theme.css">
     <link rel="stylesheet" href="kyv-operational-ui-v276.css">
+    <link rel="stylesheet" href="kyv-workspace-ui-v279.css">
 </head>
-<body class="flex h-screen overflow-hidden antialiased text-sm editor-compact">
+<body class="flex h-screen overflow-hidden antialiased text-sm editor-compact kyv-v279-workspace">
 
     <!-- Contenitore Sidebar -->
     <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
@@ -247,20 +249,30 @@
     </main>
 
     <!-- MODAL GENERICA (INSERT & UPDATE) -->
-    <div id="modal-dynamic" aria-hidden="true" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div id="modal-dynamic" aria-hidden="true" aria-modal="true" role="dialog" aria-labelledby="dynamic-modal-title" aria-describedby="editor-modal-change-status" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
         <div class="bg-kyv-card border border-kyv-border rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden transform scale-95 transition-transform duration-300 mx-4 max-h-[90vh] flex flex-col" id="modal-dynamic-content">
             <div class="px-6 py-4 border-b border-kyv-border flex justify-between items-center bg-kyv-bg/50 shrink-0">
                 <h3 class="text-lg font-bold text-white flex items-center" id="dynamic-modal-title"><i data-lucide="database" class="w-5 h-5 mr-2 text-indigo-400"></i> Gestione Record</h3>
-                <button data-action="close-modal" data-target="modal-dynamic" class="text-kyv-text hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" data-action="close-modal" data-target="modal-dynamic" aria-label="Chiudi modifica record" class="text-kyv-text hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <form id="form-dynamic" class="p-6 overflow-y-auto custom-scrollbar flex-1">
-                <!-- I <datalist> per gli autocompletamenti verranno inseriti qui -->
-                <div id="dynamic-form-fields" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-                
-                <div id="editor-modal-change-status" class="pt-4 text-xs text-kyv-text" aria-live="polite">Nessuna modifica da salvare</div>
-                <div class="pt-4 flex justify-end space-x-3 mt-4 border-t border-kyv-border/50">
-                    <button type="button" data-action="close-modal" data-target="modal-dynamic" class="px-4 py-2 text-sm font-medium text-kyv-text hover:text-white transition-colors">Annulla</button>
-                    <button type="submit" id="btn-dynamic-salva" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors flex items-center shadow-lg shadow-indigo-500/20"><i data-lucide="save" class="w-4 h-4 mr-2"></i> Salva</button>
+            <form id="form-dynamic" class="kyv-v279-modal-form">
+                <div id="editor-modal-scroll" class="kyv-v279-modal-scroll custom-scrollbar">
+                    <div id="editor-modal-controls" class="kyv-v279-modal-tools" role="group" aria-label="Consulta i campi del record">
+                        <label for="editor-modal-field-search" class="kyv-v279-search-label">Trova un campo</label>
+                        <div class="kyv-v279-modal-tools-row">
+                            <input id="editor-modal-field-search" type="search" autocomplete="off" placeholder="Nome, descrizione, riferimento…" aria-label="Trova campo nel record" class="kyv-input" />
+                            <label class="kyv-v279-changed-toggle"><input id="editor-modal-only-changed" type="checkbox" /> Solo modificati</label>
+                        </div>
+                        <p id="editor-modal-fields-status" role="status" aria-live="polite" class="kyv-v279-fields-status">Campi disponibili…</p>
+                    </div>
+                    <!-- Stessi input originali: soltanto organizzati in sezioni visive. -->
+                    <div id="dynamic-form-fields" class="kyv-v279-fields-container"></div>
+                    <p id="editor-modal-empty-fields" hidden class="kyv-v279-empty">Nessun campo corrisponde alla ricerca. Cancella il testo o disattiva «Solo modificati».</p>
+                </div>
+                <div id="editor-modal-change-status" class="kyv-v279-change-status" aria-live="polite">Nessuna modifica da salvare</div>
+                <div class="kyv-v279-modal-actions">
+                    <button type="button" data-action="close-modal" data-target="modal-dynamic" class="kyv-v279-cancel">Annulla</button>
+                    <button type="submit" id="btn-dynamic-salva" class="kyv-v279-save bg-indigo-600 hover:bg-indigo-500 text-white"><i data-lucide="save" class="w-4 h-4 mr-2"></i> Salva</button>
                 </div>
             </form>
         </div>
@@ -330,6 +342,7 @@
 
         let currentEditorTable = 'PROGETTI', currentEditorData = [], currentEditingRowId = null;
         let editorModalTable = null, editorModalOriginal = null, editorModalOpen = false, editorModalSaving = false;
+        let editorModalFocusReturn = null;
         let editorModalTouched = new Set(), pendingEditorDelete = null, editorDeleteBusy = false;
         let editorInlineWrites = 0;
         const EDITOR_ROWS_STEP = 120;
@@ -626,6 +639,7 @@
         }
 
         function updateModalStatus() {
+            if (editorModalOpen) refreshEditorModalFieldView();
             const label = document.getElementById('editor-modal-change-status');
             const save = document.getElementById('btn-dynamic-salva');
             if (!label || !save || !editorModalOpen) return;
@@ -641,6 +655,35 @@
             save.innerHTML = modalHasRecord() ? '<i data-lucide="save" class="w-4 h-4 mr-2"></i> Salva modifiche' : '<i data-lucide="plus" class="w-4 h-4 mr-2"></i> Crea record';
         }
 
+        // Filtering here changes only visibility: every original input remains in the form.
+        function refreshEditorModalFieldView() {
+            const root=document.getElementById('dynamic-form-fields');
+            if(!root)return;
+            const query=document.getElementById('editor-modal-field-search')?.value||'';
+            const changedOnly=!!document.getElementById('editor-modal-only-changed')?.checked;
+            let shown=0,total=0,sections=0;
+            root.querySelectorAll('[data-editor-modal-section]').forEach(section=>{
+                let inSection=0;
+                section.querySelectorAll('[data-editor-modal-field]').forEach(field=>{
+                    total++;
+                    const key=field.dataset.editorModalField;
+                    const input=field.querySelector('.dyn-input[data-key]');
+                    const show=window.KYV_EDITOR_MODAL_V278.matchesField(key,field.dataset.editorModalLabel||'',query,changedOnly,editorModalTouched);
+                    field.hidden=!show;
+                    if(show){shown++;inSection++;}
+                    // No input is removed/disabled by presentation filtering.
+                });
+                section.hidden=!inSection;
+                if(inSection)sections++;
+            });
+            const info=document.getElementById('editor-modal-fields-status');
+            if(info)info.textContent=shown+' di '+total+' campi mostrati · '+sections+' sezioni';
+            const empty=document.getElementById('editor-modal-empty-fields');
+            if(empty)empty.hidden=shown>0;
+        }
+        document.getElementById('editor-modal-field-search').addEventListener('input',refreshEditorModalFieldView);
+        document.getElementById('editor-modal-only-changed').addEventListener('change',refreshEditorModalFieldView);
+
         function closeEditorModal(force = false) {
             if (!editorModalOpen) return true;
             if (editorModalSaving && !force) return false;
@@ -649,9 +692,17 @@
             modal.classList.add('opacity-0');
             document.getElementById('modal-dynamic-content').classList.add('scale-95');
             editorModalOpen = false;
+            modal.setAttribute('aria-hidden','true');
             window.KYV_EDITOR_ACTIVE_MODAL_TABLE = null;
             editorModalTouched = new Set();
-            setTimeout(() => { if (!editorModalOpen) modal.classList.add('hidden'); }, 300);
+            const focusReturn=editorModalFocusReturn;
+            editorModalFocusReturn=null;
+            setTimeout(() => {
+                if(!editorModalOpen){
+                    modal.classList.add('hidden');
+                    if(focusReturn?.isConnected)focusReturn.focus();
+                }
+            },300);
             return true;
         }
 
@@ -661,6 +712,7 @@
             editorModalTable = tableOverride || currentEditorTable;
             currentEditingRowId = rowId;
             const modal = document.getElementById('modal-dynamic');
+            editorModalFocusReturn=document.activeElement;
             const hasRecord = modalHasRecord();
             const pk = tablePKs[editorModalTable] || 'id';
             const rowData = rowOverride || (hasRecord ? currentEditorData.find(row => String(row[pk]) === String(rowId)) : null);
@@ -668,6 +720,8 @@
             editorModalOriginal = hasRecord ? { ...rowData } : {};
             editorModalTouched = new Set();
             editorModalOpen = true;
+            document.getElementById('editor-modal-field-search').value='';
+            document.getElementById('editor-modal-only-changed').checked=false;
             const readOnly = readOnlyTables.has(editorModalTable);
             document.getElementById('dynamic-modal-title').innerHTML = readOnly
                 ? `<i data-lucide="eye" class="w-5 h-5 mr-2 text-indigo-300"></i> Dettaglio (${KYV.safeHtml(editorModalTable)}) · sola lettura`
@@ -688,8 +742,8 @@
                 globalInvoicesList.forEach(invoice => { datalistHtml += `<option value="${KYV.safeHtml(invoice.ID_FT)}">Fattura N° ${KYV.safeHtml(invoice.Numero || '-')} - ${KYV.safeHtml(invoice.Denominazione || '')}</option>`; });
                 datalistHtml += '</datalist>';
             }
-            let html = '';
-            keys.forEach(key => {
+            const allFieldHtml = new Map();
+            keys.forEach((key,index) => {
                 let val = rowData && rowData[key] !== null && rowData[key] !== undefined ? String(rowData[key]) : '';
                 const colType = window.KYV_DB?.getType(editorModalTable,key) || 'text';
                 const isTimestamp = ['timestamp','timestamptz','timestampz'].includes(String(colType).toLowerCase());
@@ -701,18 +755,26 @@
                 if (key.toUpperCase() === 'IDFT' || key.toUpperCase() === 'ID_FT') { extraAttr = 'list="invoices-list" autocomplete="off"'; placeholder = 'Seleziona la fattura...'; extraClass = 'auto-fill-invoice'; }
                 if (isTimestamp && val) val = KYV_EDITOR_CHANGES_V268.dateTimeInput(val, colType);
                 else if (isDate && val.length >= 10) val = val.substring(0, 10);
-                html += `<div><label class="block text-xs font-semibold text-kyv-text mb-1 uppercase tracking-wide truncate">${KYV.safeHtml(displayEditorColumnLabel(key,editorModalTable))}</label><input type="${inputType}" data-key="${KYV.safeHtml(key)}" class="kyv-input dyn-input ${extraClass}" value="${KYV.safeHtml(val)}" placeholder="${KYV.safeHtml(placeholder)}" ${extraAttr} ${extraStyle} ${readOnly ? 'disabled' : ''}></div>`;
+                const label=displayEditorColumnLabel(key,editorModalTable);
+                const fieldId='kyv-editor-field-'+index;
+                allFieldHtml.set(key,`<div class="kyv-v279-field" data-editor-modal-field="${KYV.safeHtml(key)}" data-editor-modal-label="${KYV.safeHtml(label)}"><label for="${fieldId}" class="kyv-v279-field-label">${KYV.safeHtml(label)}</label><input id="${fieldId}" type="${inputType}" data-key="${KYV.safeHtml(key)}" class="kyv-input dyn-input ${extraClass}" value="${KYV.safeHtml(val)}" placeholder="${KYV.safeHtml(placeholder)}" ${extraAttr} ${extraStyle} ${readOnly ? 'disabled' : ''}></div>`);
             });
+            const grouped=window.KYV_EDITOR_MODAL_V278.groupFields(keys);
+            const html=grouped.map(group=>`<section class="kyv-v279-field-section" data-editor-modal-section="${group.id}" aria-label="${KYV.safeHtml(group.title)}"><div class="kyv-v279-section-header"><div><h4>${KYV.safeHtml(group.title)}</h4><p>${KYV.safeHtml(group.hint)}</p></div><span class="kyv-v279-section-count">${group.keys.length} campi</span></div><div class="kyv-v279-field-grid">${group.keys.map(key=>allFieldHtml.get(key)).join('')}</div></section>`).join('');
             const formRoot = document.getElementById('dynamic-form-fields');
             formRoot.innerHTML = html + datalistHtml;
             window.KYV_EDITOR_ACTIVE_MODAL_TABLE = editorModalTable;
             if (window.KYV_FIELD_MEMORY && !readOnly) KYV_FIELD_MEMORY.attachDynamicInputs(formRoot, editorModalTable);
             modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden','false');
+            document.getElementById('editor-modal-only-changed').disabled=readOnly;
             updateModalStatus();
             setTimeout(() => {
                 if (!editorModalOpen) return;
                 modal.classList.remove('opacity-0');
                 document.getElementById('modal-dynamic-content').classList.remove('scale-95');
+                const firstInput=formRoot.querySelector('.dyn-input:not([disabled])');
+                (firstInput||document.getElementById('editor-modal-field-search'))?.focus();
                 if (window.lucide) lucide.createIcons({root: modal});
             }, 10);
         }

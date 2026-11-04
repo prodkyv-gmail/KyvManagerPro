@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-77-editor-views-20261104';
+const CACHE_NAME = 'kyv-studio-v2-79-integrated-modal-ux-20261104';
 const APP_SHELL = [
     './',
     './index.html',
@@ -51,6 +51,7 @@ const APP_SHELL = [
     './kyv-editor-view-v277.js',
     './kyv-editor-read-v267.js',
     './kyv-editor-changes-v268.js',
+    './kyv-editor-modal-v278.js',
     './editor.html',
     './kyv-invoice-line-amount.js',
     './kyv-invoice-split-v247.js',
@@ -59,6 +60,7 @@ const APP_SHELL = [
     './kyv-theme.css',
     './kyv-responsive.css',
     './kyv-operational-ui-v276.css',
+    './kyv-workspace-ui-v279.css',
     './config.js',
     './kyv-core.js',
     './kyv-auth.js',

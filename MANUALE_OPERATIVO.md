@@ -1,3 +1,13 @@
+## v2.78 + v2.79 — Popup Studio Editor e grafica operativa coordinati (4 novembre 2026)
+
+**Unico rilascio PWA v2.79**, con le due fasi integrate per non intervenire due volte sugli stessi componenti.
+
+**v2.78 — Modifica del record nel popup preesistente:** il form `#form-dynamic` e i campi `.dyn-input[data-key]` non cambiano. L'helper di presentazione `kyv-editor-modal-v278.js` li suddivide in cinque sezioni visive, nascondendo quelle vuote: Dati principali, Collegamenti e riferimenti, Date e scadenze, Importi e condizioni economiche, Altri dettagli. `Trova un campo` filtra per nome tecnico/etichetta e `Solo modificati` filtra i soli campi toccati: nessun input è disabilitato o rimosso dalla ricerca. Il numero di campi e sezioni visibili è sempre indicato. La barra inferiore con numero di modifiche, Salva/Annulla resta visibile durante lo scorrimento. Restano invariati `modalChangedFields()`, conferma delle modifiche non salvate e blocco dei salvataggi doppi. Apertura e chiusura aggiornano aria-hidden e focus.
+
+**v2.79 — Stile coordinato:** il nuovo `kyv-workspace-ui-v279.css` è caricato soltanto nelle pagine Progetti, Sessioni, Fatture e Studio Editor. Lo stile è circoscritto a `body.kyv-v279-workspace`: migliora focus, contrasto, spaziatura, scrollbar, aree touch e popup, senza nuove barre o nuovi menu e senza alterare l'header mobile di Progetti.
+
+**Vincoli:** nessuna modifica a Supabase, database, dati storici, autorizzazioni, invoice/audio link, sign SIAE, query o payload diff-only; nessuna ricerca che scriva sul database. La verifica sulla PWA 2.77 già confermata non sostituisce quella per il rilascio 2.79. Test v2.78 e v2.79 e regressioni precedenti vengono eseguiti via GitHub Actions prima del merge.
+
 ## v2.77 — Studio Editor: ricerca efficiente e pannello Colonne (4 novembre 2026)
 
 **Prestazioni:** l'Editor continua a leggere e verificare l'intera tabella con il caricatore preesistente, senza creare nuove query. La cache temporanea `KYV_EDITOR_VIEW_V277` evita di filtrare/ordinare nuovamente gli stessi risultati a ogni `Mostra altre 120 righe` e può restringere l'insieme in modo corretto quando il nuovo testo estende la ricerca precedente. Si invalida su nuova lettura, cambio tabella, errore o salvataggio inline riuscito; le modifiche via popup già richiamano `loadEditorTable`. I criteri di ricerca e ordinamento restano quelli esistenti.

@@ -32,10 +32,10 @@ const root={};vm.runInNewContext(help,{window:root});
 for(const key of ['progetti','sessioni','fatture','editor'])assert.ok(root.KYV_HELP.getContent(key).content.includes('v2.76 · Comandi coerenti'),key+' contextual help');
 assert.ok(read('MANUALE_OPERATIVO.md').includes('v2.76 — Coerenza operativa'));
 assert.ok(read('docs/MANUALE_PRATICO_V273.md').includes('Aggiornamento v2.76'));
-assert.equal(read('VERSION').trim(),'2.77');
-assert.equal(require('../package.json').version,'2.77.0');
-assert.ok(read('config.js').includes("APP_VERSION: '2.77'"));
-assert.ok(sw.includes('kyv-studio-v2-77-editor-views-20261104')&&sw.includes("'./kyv-operational-ui-v276.css'"));
+assert.equal(read('VERSION').trim(),'2.79');
+assert.equal(require('../package.json').version,'2.79.0');
+assert.ok(read('config.js').includes("APP_VERSION: '2.79'"));
+assert.ok(sw.includes('kyv-studio-v2-79-integrated-modal-ux-20261104')&&sw.includes("'./kyv-operational-ui-v276.css'"));
 assert.ok(require('../package.json').scripts.check.includes('check:workflow-ux-v276'));
 for(const [name,page] of [['project',project],['session',session],['invoice',invoice],['editor',editor]]){
  for(const part of page.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)){
