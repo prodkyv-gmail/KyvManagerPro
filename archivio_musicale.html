@@ -41,7 +41,7 @@
             </header>
 
             <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
-                <article class="kyv-card p-5"><div class="flex items-start gap-3"><div class="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0"><i data-lucide="hard-drive" class="w-5 h-5 text-emerald-300"></i></div><div class="flex-1"><h2 class="text-lg font-black text-white">Google Drive</h2><p class="text-xs text-kyv-text mt-1">Apri il flusso singolo: scegli tu il file, poi KYV controlla duplicati e versioni senza scansionare il Drive.</p></div></div><a href="acquisisci_audio.html?source=drive" class="mt-4 w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="folder-plus" class="w-4 h-4 mr-2"></i>Nuovo progetto da Drive</a><p class="text-xs text-kyv-text mt-3">Evita i timeout 504 e non espone elenchi di file cloud.</p></article>
+                <article class="kyv-card p-5"><div class="flex items-start gap-3"><div class="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0"><i data-lucide="hard-drive" class="w-5 h-5 text-emerald-300"></i></div><div class="flex-1"><h2 class="text-lg font-black text-white">Google Drive</h2><p class="text-xs text-kyv-text mt-1">Apri il flusso singolo: scegli tu il file, poi KYV controlla duplicati e versioni senza scansionare il Drive.</p></div></div><a href="acquisisci_audio.html?source=drive" class="mt-4 w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs"><i data-lucide="folder-plus" class="w-4 h-4 mr-2"></i>Scegli un file da Drive</a><p class="text-xs text-kyv-text mt-3">Il file non genera un progetto automaticamente: sei tu a decidere se collegarlo, crearne uno o ignorarlo.</p></article>
                 <article class="kyv-card p-5"><div class="flex items-start gap-3"><div class="w-11 h-11 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0"><i data-lucide="cloud" class="w-5 h-5 text-blue-300"></i></div><div class="flex-1"><h2 class="text-lg font-black text-white">Dropbox</h2><p class="text-xs text-kyv-text mt-1">Il link singolo è il percorso affidabile; il Chooser resta disponibile quando il dominio Dropbox è autorizzato.</p></div></div><div class="grid sm:grid-cols-2 gap-3 mt-4"><a href="acquisisci_audio.html?source=dropbox" class="inline-flex items-center justify-center px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs"><i data-lucide="folder-plus" class="w-4 h-4 mr-2"></i>Usa un link</a><button id="dropbox-pick" class="px-4 py-3 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-100 font-black text-xs"><i data-lucide="folder-search" class="w-4 h-4 inline mr-2"></i>Apri Chooser</button></div><p id="dropbox-message" class="text-xs text-kyv-text mt-3">Nessun file scelto in questa ricerca.</p></article>
             </section>
 
@@ -50,8 +50,8 @@
             <section id="summary" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5"></section>
 
             <section class="kyv-card p-4 mb-4 sticky top-0 z-20 backdrop-blur-xl bg-[#151923]/95">
-                <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-center"><div class="relative"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-kyv-text"></i><input id="result-search" class="kyv-input pl-10" placeholder="Cerca file, artista, progetto o cartella..."></div><select id="status-filter" class="kyv-input md:w-56"><option value="all">Tutti gli stati</option><option value="existing">Già inseriti</option><option value="version">Nuove versioni</option><option value="review">Da verificare</option><option value="new">Nuovi brani</option></select><button id="select-visible" class="px-4 py-3 rounded-xl border border-kyv-border text-white font-black text-xs">Seleziona inseribili</button></div>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3 pt-3 border-t border-kyv-border"><p id="visible-count" class="text-xs text-kyv-text">Nessun risultato.</p><div class="flex gap-2"><button id="clear-results" class="px-4 py-2.5 rounded-xl border border-kyv-border text-kyv-text font-black text-xs">Pulisci risultati</button><button id="process-selected" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs disabled:opacity-40" disabled><i data-lucide="folder-input" class="w-4 h-4 inline mr-2"></i>Inserisci selezionati <span id="selected-count">0</span></button></div></div>
+                <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-center"><div class="relative"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-kyv-text"></i><input id="result-search" class="kyv-input pl-10" placeholder="Cerca file, artista, progetto o cartella..."></div><select id="status-filter" class="kyv-input md:w-56"><option value="all">Tutti gli stati</option><option value="existing">Già inseriti</option><option value="version">Nuove versioni</option><option value="review">Da verificare</option><option value="new">Nuovi brani</option></select><button id="select-visible" class="px-4 py-3 rounded-xl border border-kyv-border text-white font-black text-xs">Seleziona per revisione</button></div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3 pt-3 border-t border-kyv-border"><p id="visible-count" class="text-xs text-kyv-text">Nessun risultato.</p><div class="flex gap-2"><button id="clear-results" class="px-4 py-2.5 rounded-xl border border-kyv-border text-kyv-text font-black text-xs">Pulisci risultati</button><button id="process-selected" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs disabled:opacity-40" disabled><i data-lucide="folder-input" class="w-4 h-4 inline mr-2"></i>Rivedi selezionati <span id="selected-count">0</span></button></div></div>
             </section>
 
             <section id="result-list" class="space-y-3 pb-12"><div class="kyv-card p-12 text-center text-kyv-text border-dashed"><i data-lucide="audio-lines" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>Avvia una ricerca Drive oppure scegli file da Dropbox.</div></section>
@@ -147,7 +147,9 @@ function addResults(items){
     const map=new Map(state.results.map(r=>[r.key,r]));
     (items||[]).filter(i=>window.KYV_AUDIO_PROJECT?.isAudioItem(i)).forEach(item=>{
         const key=resultKey(item),previous=map.get(key),classification=classify(item);
-        map.set(key,{key,item,...classification,projectId:previous?.projectId||classification.projectId});
+        // The filename can suggest a project, but must never select it for the user.
+        map.set(key,{key,item,...classification,suggestedProjectId:classification.projectId||'',
+          projectId:previous?.projectId||''});
     });
     state.results=[...map.values()];
     renderAll();
@@ -168,10 +170,28 @@ function setReferenceStatus(kind,message){
     box.innerHTML=`<div class="flex items-start gap-3"><i data-lucide="${icons[kind]}" class="w-5 h-5 mt-0.5 shrink-0"></i><div><p class="font-black text-sm">${kind==='ok'?'Controllo duplicati v2.23 attivo':kind==='warning'?'Modalità compatibilità':'Confronto archivi bloccato'}</p><p class="text-xs mt-1 leading-relaxed opacity-90">${H(message)}</p></div></div>`;
     lucide.createIcons();
 }
+/* An incomplete reference archive can hide duplicates. Fail closed instead of
+   allowing creation/association on a silent .limit(2500) truncation. */
+const REFERENCE_PAGE_SIZE=500,REFERENCE_MAX_ROWS=30000;
 async function readRequiredTable(table){
-    const {data,error}=await db.from(table).select('*').limit(2500);
-    if(error)throw new Error(`${table}: ${error.message||'lettura non riuscita'}`);
-    return data||[];
+    const rows=[];let expected=null;
+    for(let offset=0;offset<=REFERENCE_MAX_ROWS;offset+=REFERENCE_PAGE_SIZE){
+        const {data,error,count}=await db.from(table)
+            .select('*',offset===0?{count:'exact'}:{})
+            .range(offset,offset+REFERENCE_PAGE_SIZE-1);
+        if(error){const ex=new Error(`${table}: ${error.message||'lettura non riuscita'}`);ex.code=error.code;throw ex;}
+        if(!Array.isArray(data))throw new Error(`${table}: risposta non verificabile`);
+        if(offset===0){
+            if(!Number.isSafeInteger(count)||count<0)throw new Error(`${table}: totale archivio non verificabile`);
+            expected=count;
+            if(expected>REFERENCE_MAX_ROWS)throw new Error(`${table}: ${expected} righe oltre il limite di sicurezza di ${REFERENCE_MAX_ROWS}`);
+        }
+        rows.push(...data);
+        if(rows.length>=expected)break;
+        if(!data.length)throw new Error(`${table}: lettura incompleta (${rows.length}/${expected})`);
+    }
+    if(rows.length!==expected)throw new Error(`${table}: lettura incompleta (${rows.length}/${expected})`);
+    return rows;
 }
 async function loadReferenceData({silent=false}={}){
     state.referenceReady=false;state.referenceError='';setControlsDisabled(true);
@@ -179,8 +199,9 @@ async function loadReferenceData({silent=false}={}){
         const [projects,audio,docs]=await Promise.all([
             readRequiredTable('PROGETTI'),readRequiredTable('DROPBOX_AUDIO_FILES'),readRequiredTable('DOCUMENTI_PROGETTO')
         ]);
-        const {data:unified,error:unifiedError}=await db.from('AUDIO_VERSIONI').select('*').limit(5000);
-        if(unifiedError&&!isMissingUnifiedTable(unifiedError))throw new Error(`AUDIO_VERSIONI: ${unifiedError.message||'lettura non riuscita'}`);
+        let unified=[],unifiedError=null;
+        try{unified=await readRequiredTable('AUDIO_VERSIONI');}
+        catch(error){if(isMissingUnifiedTable(error))unifiedError=error;else throw error;}
         state.projects=projects.sort((a,b)=>projectLabel(a).localeCompare(projectLabel(b),'it',{numeric:true}));
         state.dropboxArchive=audio;
         state.driveArchive=docs.filter(audioDoc);
@@ -201,7 +222,7 @@ async function loadReferenceData({silent=false}={}){
     }
 }
 function projectOptions(selected=''){
-    return `<option value="">Crea o scegli durante l'inserimento</option>`+state.projects.map(p=>`<option value="${H(p.ID)}" ${String(p.ID)===String(selected)?'selected':''}>${H(projectLabel(p))} · #${H(p.ID)}</option>`).join('');
+    return `<option value="">Decidi durante l'inserimento (nessun progetto selezionato)</option>`+state.projects.map(p=>`<option value="${H(p.ID)}" ${String(p.ID)===String(selected)?'selected':''}>${H(projectLabel(p))} · #${H(p.ID)}</option>`).join('');
 }
 function statusBadge(r){
     const cls={emerald:'border-emerald-500/25 bg-emerald-500/10 text-emerald-100',violet:'border-violet-500/25 bg-violet-500/10 text-violet-100',amber:'border-amber-500/25 bg-amber-500/10 text-amber-100',sky:'border-sky-500/25 bg-sky-500/10 text-sky-100'}[r.tone];
@@ -221,7 +242,7 @@ function renderResults(){
     if(!rows.length){box.innerHTML='<div class="kyv-card p-12 text-center text-kyv-text border-dashed"><i data-lucide="search-x" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>Nessun file con questi filtri.</div>';lucide.createIcons();return}
     box.innerHTML=rows.map(r=>{
         const i=r.item,existing=r.status==='existing',selected=state.selected.has(r.key),p=state.projects.find(x=>String(x.ID)===String(r.projectId));
-        return `<article class="archive-row kyv-card p-4 ${selected?'is-selected':''}" data-key="${H(r.key)}" data-status="${r.status}"><input data-action="select" type="checkbox" class="w-5 h-5 accent-indigo-500" ${selected?'checked':''} ${existing||!state.referenceReady?'disabled':''} aria-label="Seleziona ${H(itemName(i))}"><div class="min-w-0"><div class="flex items-center gap-2"><span class="text-[10px] uppercase tracking-wider font-black ${i.source==='dropbox'?'text-blue-300':'text-emerald-300'}">${i.source==='dropbox'?'Dropbox':'Google Drive'}</span>${i.driveLabel?`<span class="text-[10px] text-kyv-text">${H(i.driveLabel)}</span>`:''}</div><h3 class="font-black text-white mt-1 truncate">${H(itemName(i))}</h3><p class="text-[11px] text-kyv-text mt-1 truncate">${H([i.folder,i.size,i.updated||i.date].filter(Boolean).join(' · '))}</p></div><div>${statusBadge(r)}<p class="text-[11px] text-kyv-text mt-2 leading-relaxed">${H(r.reason)}</p></div><div data-wide>${existing?`<p class="text-xs text-emerald-200 font-bold">${p?H(projectLabel(p)):'Archivio audio'}</p>`:`<label class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Progetto da collegare</label><select data-action="project" class="kyv-input mt-1 text-xs">${projectOptions(r.projectId)}</select>`}</div><div data-actions class="flex gap-2 justify-end">${itemLink(i)?`<a href="${H(itemLink(i))}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg border border-kyv-border text-white text-xs font-black">Apri</a>`:''}${existing&&r.projectId?`<a href="scheda_progetto.html?id=${encodeURIComponent(r.projectId)}" class="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-100 text-xs font-black">Progetto</a>`:`<button data-action="manage" ${!state.referenceReady?'disabled':''} class="px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-100 text-xs font-black disabled:opacity-40">${r.projectId?'Collega':'Gestisci'}</button>`}</div></article>`;
+        return `<article class="archive-row kyv-card p-4 ${selected?'is-selected':''}" data-key="${H(r.key)}" data-status="${r.status}"><input data-action="select" type="checkbox" class="w-5 h-5 accent-indigo-500" ${selected?'checked':''} ${existing||!state.referenceReady?'disabled':''} aria-label="Seleziona ${H(itemName(i))}"><div class="min-w-0"><div class="flex items-center gap-2"><span class="text-[10px] uppercase tracking-wider font-black ${i.source==='dropbox'?'text-blue-300':'text-emerald-300'}">${i.source==='dropbox'?'Dropbox':'Google Drive'}</span>${i.driveLabel?`<span class="text-[10px] text-kyv-text">${H(i.driveLabel)}</span>`:''}</div><h3 class="font-black text-white mt-1 truncate">${H(itemName(i))}</h3><p class="text-[11px] text-kyv-text mt-1 truncate">${H([i.folder,i.size,i.updated||i.date].filter(Boolean).join(' · '))}</p></div><div>${statusBadge(r)}<p class="text-[11px] text-kyv-text mt-2 leading-relaxed">${H(r.reason)}</p></div><div data-wide>${existing?`<p class="text-xs text-emerald-200 font-bold">${p?H(projectLabel(p)):'Archivio audio'}</p>`:`<label class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Progetto da collegare (scelta manuale)</label><select data-action="project" class="kyv-input mt-1 text-xs">${projectOptions(r.projectId)}</select>`}</div><div data-actions class="flex gap-2 justify-end">${itemLink(i)?`<a href="${H(itemLink(i))}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg border border-kyv-border text-white text-xs font-black">Apri</a>`:''}${existing&&r.projectId?`<a href="scheda_progetto.html?id=${encodeURIComponent(r.projectId)}" class="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-100 text-xs font-black">Progetto</a>`:`<button data-action="manage" ${!state.referenceReady?'disabled':''} class="px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-100 text-xs font-black disabled:opacity-40">${r.projectId?'Collega':'Gestisci'}</button>`}</div></article>`;
     }).join('');
     lucide.createIcons();
 }
@@ -231,7 +252,10 @@ function renderSelection(){
     document.getElementById('process-selected').disabled=!state.referenceReady||!count;
 }
 function renderAll(){
-    state.results=state.results.map(r=>{const classification=classify(r.item);return {...r,...classification,projectId:r.projectId||classification.projectId}});
+    state.results=state.results.map(r=>{const classification=classify(r.item);
+        return {...r,...classification,suggestedProjectId:classification.projectId||'',
+          projectId:r.projectId||(classification.status==='existing'?classification.projectId:'')};
+    });
     renderSummary();renderResults();renderSelection();
 }
 async function scanDrive(){
@@ -272,7 +296,7 @@ async function manageRow(r){
 }
 async function processSelected(){
     const keys=[...state.selected];if(!keys.length||!state.referenceReady)return;
-    if(!confirm(`Vuoi gestire ${keys.length} file selezionati? I file con progetto scelto saranno collegati; per gli altri KYV ti chiederà come procedere.`))return;
+    if(!confirm(`Vuoi revisionare ${keys.length} file selezionati? Solo i progetti scelti manualmente saranno collegati; per gli altri dovrai scegliere o confermare ogni creazione.`))return;
     const btn=document.getElementById('process-selected');btn.disabled=true;
     let completed=0,failed=0,cancelled=0;
     for(const key of keys){
