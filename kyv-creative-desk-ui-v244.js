@@ -11,7 +11,7 @@ const pitchStates=['da_proporre','inviato','in_ascolto','interessato','opzionato
 const recipients=['artista','a_r','etichetta','publisher','management','altro'];
 const friendly={in_lavorazione:'In lavorazione',demo:'Demo',proposta:'Proposta',produzione:'Produzione',pubblicazione:'Pubblicazione dichiarata',accantonato:'Accantonato',da_proporre:'Da proporre',inviato:'Inviato',in_ascolto:'In ascolto',interessato:'Interessato',opzionato:'Opzionato',confermato:'Confermato',rifiutato:'Rifiutato',a_r:'A&R',scrittura:'Scrittura',registrazione:'Registrazione',revisione:'Revisione',etichetta:'Etichetta',artista:'Artista',publisher:'Publisher',management:'Management',altro:'Altro'};
 const label=v=>friendly[v]||text(v).replaceAll('_',' ');
-let client=null,data=null,busy=false,shownArchived=false;
+let client=null,data=null,busy=false,shownArchived=false,hubModel=null,hubShown=30,financeWarning='';
 const LIMIT=10000,SIZE=500;
 function status(s,error=false){$('desk-status').textContent=s;$('desk-status').className='desk-status'+(error?' error':'');}
 async function read(table,columns,order){
@@ -29,24 +29,41 @@ async function read(table,columns,order){
 }
 async function refresh(){
  if(busy)return;busy=true;$('desk-content').hidden=true;
+ if($('hub-project-modal')?.open)$('hub-project-modal').close();
  try{
   client=client||window.KYV?.createSupabaseClient?.();
   if(!client)throw Error('Sessione autenticata non disponibile');
   status('Lettura completa delle sessioni, dei pitch e dei progetti…');
-  const [sessions,links,pitches,events,sessionEvents,projects,audioLinks,audioFiles]=await Promise.all([
+  const [sessions,links,pitches,events,sessionEvents,projects,audioLinks,audioFiles,audioDecisions]=await Promise.all([
    read('KYV_SESSIONI','id,data_sessione,titolo,tipo,partecipanti,luogo,durata_minuti,esito,note,archiviata,created_at,updated_at','data_sessione'),
    read('KYV_SESSIONI_PROGETTI','id,id_sessione,id_progetto,note,annullato,created_at','created_at'),
    read('KYV_PIAZZAMENTI','id,id_progetto,destinatario,tipo_destinatario,referente,data_invio,stato,prossimo_followup,data_risposta,note,archiviata,created_at,updated_at','created_at'),
    read('KYV_PIAZZAMENTI_EVENTI','id,id_piazzamento,tipo,nota,created_at','created_at'),
    read('KYV_SESSIONI_EVENTI','id,id_sessione,tipo,nota,created_at','created_at'),
-   read('PROGETTI','ID,TITOLO,ARTISTA,STATO,FEE,Data_Pubblicazione','ID'),
+   read('PROGETTI','ID,TITOLO,ARTISTA,STATO,SVILUPPO,FEE,Data_Pubblicazione','ID'),
    read('KYV_AUDIO_ASSOCIAZIONI','id,id_audio,id_progetto,id_sessione,confermata,annullata','created_at'),
-   read('KYV_AUDIO_INDICE','id,nome_file,provider,link_file','ultimo_avvistamento')
+   read('KYV_AUDIO_INDICE','id,nome_file,provider,account_label,external_key,link_file','ultimo_avvistamento'),
+   read('KYV_AUDIO_DECISIONI','provider,account_label,external_key,decision','updated_at')
   ]);
-  data={sessions,links,pitches,events,sessionEvents,projects,audioLinks,audioFiles};
-  fillProjects();render();$('desk-content').hidden=false;
-  status('Dati aggiornati. Sessioni e piazzamenti restano distinti dalle fatture e dai diritti incassati.');
- }catch(e){data=null;status('Impossibile verificare l’archivio: '+e.message,true);}
+  const economy=await Promise.allSettled([
+   read('FATTURE','ID_FT,Numero,Numero_Originale,Data,Denominazione,PrezzoUnitario,PAGATA,ID_PROGETTO','ID_FT'),
+   read('FATTURE_RIPARTIZIONI','id,id_ft,id_progetto,prezzo_unitario','id'),
+   read('FATTURE_INCASSI','ID_INCASSO,ID_FT,Data,Importo','ID_INCASSO'),
+   read('FATTURE_INCASSI_STORNI','ID_STORNO,ID_INCASSO,Data','ID_STORNO')
+  ]);
+  const financeReady=economy.every(x=>x.status==='fulfilled');
+  const finance=financeReady?{ready:true,invoices:economy[0].value,
+    allocations:economy[1].value,payments:economy[2].value,reversals:economy[3].value}:null;
+  financeWarning=financeReady?'':economy.filter(x=>x.status==='rejected').map(x=>
+    String(x.reason?.message||x.reason)).join(' · ');
+  data={sessions,links,pitches,events,sessionEvents,projects,audioLinks,audioFiles,audioDecisions,finance};
+  hubModel=window.KYV_MUSIC_HUB_V259.build(data,
+    new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'}),window.KYV_INVOICE_LINE);
+  hubShown=30;fillProjects();fillHubFilters();render();$('desk-content').hidden=false;
+  status('Dati creativi aggiornati. '+(financeReady?
+    'Economia disponibile con fatture e incassi distinti.':
+    'Economia non completamente leggibile: il riepilogo monetario è sospeso, senza inventare importi.'));
+ }catch(e){data=null;hubModel=null;status('Impossibile verificare l’archivio: '+e.message,true);}
  finally{busy=false;}
 }
 const projectName=id=>{const p=data?.projects.find(p=>text(p.ID)===text(id));return p?(p.TITOLO||'Senza titolo')+' · '+(p.ARTISTA||'—')+' (#'+p.ID+')':'Progetto #'+id;};
@@ -60,6 +77,135 @@ function fillProjects(){
   box.innerHTML='<option value="">Seleziona un progetto</option>'+list.map(p=>'<option value="'+p.ID+'">'+H(projectName(p.ID))+'</option>').join('');
   if(Array.from(box.options).some(o=>o.value===old))box.value=old;
  }
+}
+
+const fmtEuro=v=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(v)||0);
+const feeText=v=>v===null?'Non documentata':fmtEuro(v);
+function fillHubFilters(){
+ if(!hubModel)return;
+ const make=(id,values)=>{
+  const el=$(id),before=el.value;
+  el.innerHTML='<option value="">'+(id==='hub-artist'?'Tutti gli artisti':'Tutti gli stati')+'</option>'+
+   [...new Set(values.map(text).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it'))
+    .map(value=>'<option value="'+H(value)+'">'+H(value)+'</option>').join('');
+  el.value=Array.from(el.options).some(x=>x.value===before)?before:'';
+ };
+ make('hub-artist',hubModel.entries.map(x=>x.artist));
+ make('hub-status',hubModel.entries.map(x=>x.status));
+}
+function hubFiltered(){
+ if(!hubModel)return[];
+ return window.KYV_MUSIC_HUB_V259.filter(hubModel,{
+  query:$('hub-search').value,artist:$('hub-artist').value,
+  status:$('hub-status').value,mode:$('hub-mode').value});
+}
+function renderHub(){
+ if(!hubModel)return;
+ const summ=hubModel.summary;
+ const cards=[
+  ['Progetti in archivio',summ.projects,'Tutti i progetti letti'],
+  ['Con sessioni registrate',summ.projectsWithSession,'Solo relazioni KYV_SESSIONI_PROGETTI'],
+  ['Con audio personali',summ.projectsWithApprovedAudio,'Solo classificazioni Mio + link confermati'],
+  ['Con piazzamenti',summ.projectsWithPitch,'Solo nuove proposte documentate'],
+  ['Follow-up scaduti',summ.overduePitches,'Scadenza registrata, non prova mancata risposta']
+ ];
+ if(summ.financeAvailable){
+  cards.push(['Fatture con progetto',summ.invoicesLinked,'Attribuzione diretta o quote esplicite'],
+   ['Quote fatturate assegnate',fmtEuro(summ.billedCents/100),
+     'PrezzoUnitario e ripartizioni, non il totale fiscale']);
+ }
+ $('hub-stats').innerHTML=cards.map(([title,value,note])=>
+  '<article class="desk-stat"><small>'+H(title)+'</small><strong>'+H(value)+'</strong>'+
+  '<small>'+H(note)+'</small></article>').join('');
+ $('hub-finance-note').textContent=summ.financeAvailable?
+  'Economia: quote fatturate assegnate ai progetti con ID esplicito; incassi documentati solo per fatture con progetto diretto.'+
+   ' Gli incassi delle fatture multi-progetto NON vengono distribuiti per supposizione.'+
+   (summ.invalidAllocations?' '+summ.invalidAllocations+' righe di ripartizione da verificare.':'')+
+   (summ.missingLineAmounts?' '+summ.missingLineAmounts+' importi PrezzoUnitario mancanti/non validi.':'')+
+   (summ.legacyPaidFlags?' '+summ.legacyPaidFlags+' flag PAGATA legacy non conteggiati come movimenti di incasso.':''):
+  'Riepilogo fatture e incassi non disponibile: '+financeWarning+
+   '. Le cifre non vengono sostituite con zero. Apri Fatture per verifica.';
+ const pitchStages=['da_proporre','inviato','in_ascolto','interessato','opzionato','confermato','rifiutato','accantonato'];
+ const activity=pitchStages.map(stage=>[stage,data.pitches.filter(p=>!p.archiviata&&p.stato===stage).length]);
+ const biggest=Math.max(1,...activity.map(x=>x[1]));
+ $('hub-pitch-chart').innerHTML=activity.filter(x=>x[1]>0).map(([name,count])=>
+  '<div class="hub-chart-row"><span>'+H(label(name))+'</span><div class="hub-chart-bar">'+
+  '<div class="hub-chart-fill" style="width:'+Math.min(100,Math.round(count/biggest*100))+'%"></div></div>'+
+  '<span>'+count+'</span></div>').join('')||
+  '<p class="desk-method">Non ci sono piazzamenti attivi registrati; nessuna conversione ricostruita.</p>';
+ const matched=hubFiltered(),list=matched.slice(0,hubShown);
+ $('hub-count').textContent=matched.length+' progetti corrispondenti · '+list.length+
+  ' mostrati. Filtri indipendenti da Sessioni/Piazzamenti.';
+ $('hub-rows').innerHTML=list.map(p=>{
+  const cash=summ.financeAvailable?(p.invoiceCount?
+   '<small>Quote fatturate: '+H(fmtEuro(p.billedCents/100))+
+   (p.billedIncomplete?' (parziali, dati da verificare)':'')+
+   ' · '+p.invoiceCount+' fatture</small>':
+   '<small>Nessuna fattura associata esplicitamente</small>'):
+   '<small>Economia non leggibile in questa sessione</small>';
+  return '<article class="hub-project"><small>'+H(p.artist||'Artista non indicato')+
+    ' · Progetto #'+H(p.id)+'</small><h3>'+H(p.title)+'</h3>'+
+    '<small>'+H(p.status||'Stato non indicato')+
+    (p.releaseDate?' · Pubblicazione dichiarata: '+H(p.releaseDate):'')+'</small>'+
+    '<div class="hub-markers">'+
+    '<span class="hub-marker">'+p.sessionCount+' sessioni</span>'+
+    '<span class="hub-marker">'+p.pitchCount+' piazzamenti</span>'+
+    '<span class="hub-marker">'+p.audioCount+' audio personali</span>'+
+    (p.overdue?'<span class="hub-marker warn">'+p.overdue+' follow-up da verificare</span>':'')+
+    '</div><small>Fee indicata: '+H(feeText(p.fee))+
+    (p.fee===0?' · Zero non significa insoluto':'')+'</small>'+
+    cash+
+    '<button type="button" data-hub-project="'+H(p.id)+'">Apri riepilogo</button></article>';
+ }).join('')||'<p class="desk-empty">Nessun progetto corrisponde ai filtri. Rimuovi i filtri oppure aggiorna i dati.</p>';
+ $('hub-more').hidden=matched.length<=hubShown;
+ $('hub-more').textContent='Mostra altri '+Math.min(30,matched.length-hubShown)+' progetti';
+}
+function hubDetail(id){
+ const p=hubModel?.entries.find(x=>x.id===text(id));if(!p)return;
+ const parts=[];
+ const list=(items,fn,empty)=>items.length?'<ul>'+items.slice(0,40).map(x=>'<li>'+fn(x)+'</li>').join('')+
+  (items.length>40?'<li>Altri '+(items.length-40)+' elementi: apri le sezioni complete.</li>':'')+
+  '</ul>':'<p>'+H(empty)+'</p>';
+ parts.push('<h3>'+H(p.artist?p.artist+' · '+p.title:p.title)+' <small>#'+H(p.id)+'</small></h3>');
+ parts.push('<p>Stato: '+H(p.status||'Non indicato')+
+  (p.development?' · '+H(p.development):'')+'</p>');
+ parts.push('<nav class="hub-detail-links"><a href="scheda_progetto.html?id='+encodeURIComponent(p.id)+
+  '">Scheda Progetto</a><a href="kyv_audio_finder.html?project='+encodeURIComponent(p.id)+
+  '">Audio Finder</a><a href="fatture.html">Fatture e incassi</a>'+
+  '<a href="kyv_scrivania_creativa.html?tab=pitches">Piazzamenti</a></nav>');
+ parts.push('<h4>Sessioni documentate ('+p.sessionCount+')</h4>'+list(p.sessions,
+  x=>H(x.data_sessione+' · '+x.titolo+' · '+label(x.esito)),
+  'Nessuna sessione collegata nel nuovo archivio, non significa che il lavoro non sia avvenuto.'));
+ parts.push('<h4>Proposte e follow-up ('+p.pitchCount+')</h4>'+list(p.pitches,
+  x=>H(x.destinatario+' · '+label(x.stato))+
+    (x.prossimo_followup?' · Follow-up: '+H(x.prossimo_followup):''),
+  'Nessuna proposta registrata in questa scrivania.'));
+ parts.push('<h4>Audio confermati personali ('+p.audioCount+')</h4>'+list(p.audio,
+  x=>H(x.nome_file+' · '+x.provider),
+  'Nessun audio personale collegato direttamente al progetto nel catalogo. Non sono conteggiati file non classificati o audio di sole sessioni.'));
+ parts.push('<h4>Fee e fatture</h4><p>Fee progetto: '+H(feeText(p.fee))+
+  (p.fee===0?' · non genera un credito da incassare.':' · è un dato distinto dalle fatture.')+'</p>');
+ if(!hubModel.summary.financeAvailable)parts.push(
+  '<p>Fatture e incassi non verificabili: '+H(financeWarning)+'. Apri Fatture per il dettaglio.</p>');
+ else{
+  parts.push('<p>Fatture collegate esplicitamente: '+p.invoiceCount+
+   ' · Quote fatturate: '+H(fmtEuro(p.billedCents/100))+
+   (p.billedIncomplete?' (importi incompleti)':'')+'</p>');
+  parts.push('<p>Incassi da movimenti di pagamento attribuibili solo a fatture con un progetto diretto: '+
+   H(fmtEuro(p.documentedReceiptsCents/100))+'. '+
+   (p.legacyPaidFlags?p.legacyPaidFlags+' flag PAGATA legacy non sono un movimento documentato. ':'')+
+   (p.splitInvoiceCount?p.splitInvoiceCount+' fatture multi-progetto: incassi non ripartiti automaticamente. ':'')+
+   (p.receiptUnknownCount?p.receiptUnknownCount+' importi non verificabili. ':'')+
+   'Per il saldo attendibile usa Fatture → Riconciliazione.</p>');
+  parts.push(list(p.invoiceRecords,x=>H(x.number+' · '+x.date+
+   ' · '+(x.split?'Quota ripartita':'Attribuzione diretta')+
+   ' · '+(x.amountCents===null?'PrezzoUnitario da verificare':fmtEuro(x.amountCents/100))),
+  'Nessuna fattura collegata esplicitamente. Non significa necessariamente che ci siano crediti da emettere.'));
+ }
+ parts.push('<p class="desk-method">Dati in sola lettura. Le sessioni storiche non sono ricostruite automaticamente; nessun invio o progetto viene creato da questo riepilogo.</p>');
+ $('hub-project-body').innerHTML=parts.join('');
+ const dialog=$('hub-project-modal');
+ if(!dialog.open)dialog.showModal();
 }
 function render(){
  if(!data)return;
@@ -97,6 +243,7 @@ function render(){
  $('desk-followups').innerHTML=rep.overdue.slice(0,12).map(p=>'<li><b>'+H(p.destinatario)+'</b> · '+H(projectName(p.id_progetto))+' · '+H(p.prossimo_followup)+'</li>').join('')||'<li>Nessun follow-up scaduto nel nuovo archivio.</li>';
  $('desk-session-count').textContent=filtered.length+' sessioni mostrate';
  $('desk-pitch-count').textContent=pitches.length+' piazzamenti mostrati';
+ renderHub();
 }
 function resetSession(){
  $('session-form').reset();$('session-id').value='';
@@ -107,7 +254,7 @@ function resetPitch(){
  $('pitch-form').reset();$('pitch-id').value='';$('pitch-submit').textContent='Registra proposta';
 }
 function showTab(tab){
- for(const name of ['sessions','pitches']){
+ for(const name of ['hub','sessions','pitches']){
   $('desk-'+name).hidden=name!==tab;
   $('tab-'+name).setAttribute('aria-selected',String(name===tab));
  }
@@ -208,8 +355,17 @@ async function notePitch(id){
 function bind(){
  $('desk-app-version').textContent='v'+(window.KYV_CONFIG?.APP_VERSION||'');
  $('desk-refresh').addEventListener('click',refresh);
+ $('tab-hub').addEventListener('click',()=>showTab('hub'));
  $('tab-sessions').addEventListener('click',()=>showTab('sessions'));
  $('tab-pitches').addEventListener('click',()=>showTab('pitches'));
+ for(const field of ['hub-search','hub-artist','hub-status','hub-mode'])
+  $(field).addEventListener(field==='hub-search'?'input':'change',()=>{hubShown=30;renderHub();});
+ $('hub-more').addEventListener('click',()=>{hubShown+=30;renderHub();});
+ $('hub-rows').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-hub-project]');
+  if(b)hubDetail(b.dataset.hubProject);
+ });
+ $('hub-close').addEventListener('click',()=>$('hub-project-modal').close());
  $('desk-search').addEventListener('input',render);
  $('desk-archived').addEventListener('change',e=>{shownArchived=e.target.checked;render();});
  $('session-form').addEventListener('submit',e=>{e.preventDefault();mutate(saveSession);});
@@ -233,7 +389,7 @@ function bind(){
  });
  resetSession();
  const q=new URLSearchParams(location.search).get('tab');
- showTab(q==='pitches'?'pitches':'sessions');
+ showTab(q==='pitches'?'pitches':q==='sessions'?'sessions':'hub');
  refresh();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
