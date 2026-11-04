@@ -41,15 +41,16 @@ li a{flex-shrink:0;font-size:13px}.note{font-size:12px;color:#94a3b8}
 <body class="kyv-v260">
 <header>
 <div><small class="note">Economia · KYV Intelligence</small><h1>KYV Analyst <small class="note" id="kyv-analyst-app-version"></small></h1></div>
-<nav aria-label="Navigazione amministrativa"><a href="index.html">Home</a><a href="integrazioni.html">Tutte le app</a><a href="kyv_intelligence.html">← Intelligence</a><a href="kyv_ritorni_progetti.html">Ritorno dei progetti</a><a href="fatture.html">Fatture</a><a href="guida.html#guida-analyst" aria-label="Guida KYV Analyst">Guida ?</a><a href="progetti.html">Progetti</a></nav>
+<nav aria-label="Navigazione amministrativa"><a href="fatture.html">Economia</a><a href="kyv_intelligence.html">Andamento mensile / annuale</a><a href="progetti.html">Progetti</a><a href="guida.html#guida-analyst" aria-label="Guida KYV Analyst">Guida ?</a></nav>
 </header>
 <main>
-<p>Il tuo primo analista economico e operativo. Esamina fatture per voce, progetti e diritti attribuiti, segnala lacune e risponde a domande frequenti. <strong>Questa versione usa regole esplicite, non un modello AI generativo</strong>: non invia dati finanziari a servizi AI esterni e non modifica i tuoi archivi.</p>
+<p>Verifica i risultati economici documentati, le informazioni mancanti e i principali rischi di attribuzione. <strong>Analisi locale a regole, senza IA generativa né modifiche agli archivi.</strong> Per registrare o riconciliare un incasso usa Economia.</p>
 <button type="button" id="analyst-reload">Rileggi e aggiorna i dati</button>
 <div id="analyst-status" class="status" role="status">Caricamento…</div>
 <section id="analyst-content" hidden>
-<h2>Situazione attuale</h2>
+<h2>Verifiche principali</h2>
 <div id="analyst-metrics" class="grid" aria-label="Indicatori calcolati"></div>
+<details id="analyst-creative-details" class="kyv-v263-disclosure"><summary>Approfondimento creativo <small>Sessioni, piazzamenti e fee zero · spiegazioni e limiti</small></summary>
 <h2>Sessioni e piazzamenti documentati <small class="note">v2.44</small></h2>
 <p>Le nuove sessioni e proposte sono registrate separatamente dai brani storici. Il tempo investito viene conteggiato soltanto se hai inserito la durata; nessun tasso di conversione viene dedotto automaticamente.</p>
 <div id="analyst-creative-desk" class="grid" aria-label="Nuovi indicatori creativi"></div>
@@ -57,6 +58,13 @@ li a{flex-shrink:0;font-size:13px}.note{font-size:12px;color:#94a3b8}
 <h2>Sessioni creative e progetti con fee zero</h2>
 <p>Nel lavoro di scrittura musicale una sessione può non essere retribuita e il pezzo può non essere prodotto o pubblicato. È parte dell'attività creativa, <strong>non un insoluto</strong>. Gli stati indicati nelle schede non sostituiscono la verifica delle pubblicazioni.</p>
 <div id="creative-funnel-metrics" class="grid" aria-label="Indicatori sulle sessioni creative"></div>
+</details>
+<section class="card kyv-analyst-chart" aria-label="Concentrazione del fatturato attribuito">
+<div class="kyv-analyst-chart-head"><div><h2>Fatturato attribuito per artista</h2><p class="note">Solo importi unitari fatturati assegnati esplicitamente a progetti e artisti. Non comprende diritti futuri, fee promesse o incassi non attribuibili.</p></div>
+<label for="analyst-artist-limit">Mostra <select id="analyst-artist-limit"><option value="5">Primi 5</option><option value="10">Primi 10</option><option value="20">Primi 20</option></select></label></div>
+<p id="analyst-artist-note" class="note" role="status"></p>
+<div id="analyst-artist-chart" class="kyv-analyst-chart-rows" aria-label="Graduatoria artisti per fatturato attribuito"></div>
+</section>
 <div class="columns">
 <section class="card actions">
 <h2>Verifiche prioritarie</h2>
