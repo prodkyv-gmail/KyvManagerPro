@@ -93,8 +93,9 @@ body.kyv-safe-projects-polished .open{background:rgba(139,131,255,.11)!important
   #kyv-agenda-actions{max-height:52vh}
 }
 @media(max-width:820px){
-  body.kyv-safe-projects-polished .header{padding:68px 16px 14px!important}
-  body.kyv-safe-projects-polished .title{font-size:27px!important}
+  /* v2.76: Late-injected polish must respect the compact project mobile header. */
+  body.kyv-safe-projects-polished .header{padding:calc(12px + env(safe-area-inset-top,0px)) 14px 12px!important}
+  body.kyv-safe-projects-polished .title{font-size:25px!important}
   body.kyv-safe-projects-polished .subtitle{font-size:12px!important}
   body.kyv-safe-projects-polished .content{padding:6px 16px calc(92px + env(safe-area-inset-bottom))!important}
   body.kyv-safe-projects-polished .table-wrap{border-radius:14px!important}

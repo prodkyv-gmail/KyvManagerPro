@@ -7,6 +7,14 @@
 
 # Changelog
 
+### v2.76 · 2026-11-04
+- Unificati touch target, focus e semantica dei controlli nelle barre operative esistenti di Sessioni, Economia e Studio Editor, senza introdurre nuove barre o popup.
+- Progetti mobile: risolto override tardivo nella testata di kyv-layout-polish.js che invalidava il layout compatto v2.75.
+- Sessioni: contatore di progetti filtrati e timeline (24 visibili sul totale effettivo), metriche generali esplicitamente non filtrate; in caso di errore rimossi risultati e KPI stantii.
+- Fatture: Ricarica e salvataggi non azzerano più la ricerca. Contatore fatture visualizzate/ricevute e spiegazione del perimetro dei totali filtrati.
+- Studio Editor: etichette accessibili per menu, Esporta, Aggiungi e densità; stato aria-pressed sincronizzato.
+- Guide completa e ?, manuali, test e cache PWA aggiornati; nessun accesso Supabase/Vercel e nessuna scrittura o migrazione.
+
 ### v2.75 · 2026-11-04
 - Restyling della pagina Progetti su mobile: header compatto, ricerca e viste raggiungibili, card leggibili con gerarchia titolo/artista/stato/azione e collegamenti Riepilogo/Scheda non duplicati.
 - Unico conteggio spostato fuori dallo scroll delle viste: corrispondenze totali, record già visualizzati e archivio verificato; Mostra altri 50 coerente.

@@ -4,6 +4,16 @@
 
 Questo manuale è la spiegazione corrente delle funzioni di KYVManagerPro. L'app conserva sezioni storiche nelle versioni precedenti: quando il nome di un comando è cambiato, fare riferimento alla sezione *Guida pratica v2.73* di `guida.html` e alla guida **?** contestuale.
 
+## Aggiornamento v2.76 · Coerenza dei comandi operativi
+
+**Progetti:** su smartphone la testata rimane compatta dopo l'applicazione delle personalizzazioni grafiche. Una sola ricerca, nessun secondo menu.
+
+**Sessioni Studio:** digita nel campo Cerca e seleziona il filtro. Sotto il titolo compare quante schede progetto corrispondono nell'archivio caricato e quanti eventi sono mostrati dei complessivi della timeline (max 24 in lista). I numeri delle quattro metriche sono dell'intero archivio caricato, non del filtro. In caso di errore: indicatori non disponibili (—), premi Ricarica senza perdere i criteri.
+
+**Fatture / Economia:** la ricerca agisce su righe e totali; il riepilogo riporta fatture visualizzate/ricevute e specifica il perimetro dei calcoli. Dopo un salvataggio, un import o il pulsante Ricarica la ricerca resta invariata; svuotala se vuoi tutte le fatture. In caso di errore non trattare — come zero.
+
+**Studio Editor:** una sola barra di azioni, con Esporta, Aggiungi, Colonne, Compatta/Larga, e stato leggibile sotto. Le impostazioni Colonne e densità cambiano solo la presentazione, mai i valori. Su smartphone i controlli sono accessibili e da almeno 44 px.
+
 ## Aggiornamento v2.75 · Progetti su smartphone
 
 Apri **Progetti**: l'intestazione è compatta e la ricerca rimane accessibile. Scorri le cinque viste orizzontalmente e seleziona il filtro. Il contatore indica **risultati (tutte le corrispondenze), visualizzati (card correnti), archivio (totale verificato)**. Per scorrere archivi lunghi usa **Mostra altri 50**, che aumenta solo le card presentate e non modifica i filtri.

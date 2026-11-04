@@ -8,7 +8,7 @@ const sw=fs.readFileSync('sw.js','utf8');
 const header=html.split('<header class="kyv-economy-header')[1]?.split('</header>')[0]||'';
 assert.ok(header,'The Economy page has an explicit scoped header');
 assert.ok(header.includes('class="kyv-economy-header-layout"'),'Header uses an independent vertical layout');
-assert.ok(header.includes('class="kyv-economy-toolbar"'),'Actions must have dedicated wrapping layout');
+assert.ok(header.includes('class="kyv-economy-toolbar kyv-v276-toolbar"'),'Actions retain the wrapping layout and shared touch styling');
 assert.ok(header.includes('role="group" aria-label="Comandi Economia"'),'Toolbar is labelled for accessibility');
 assert.ok(header.includes('class="kyv-economy-search"'),'Search is a flexible, full-width-safe item');
 for(const label of ['correlazione-search','kyv_liquidazioni.html','kyv_intelligence.html','correlazione.html','kyv-aruba-open','data-kyv-new-table="FATTURE"','fetchFattureCorrelate()']){
@@ -27,5 +27,5 @@ assert.match(css,/@media\s*\(max-width:\s*767px\)[\s\S]*?\.kyv-economy-toolbar\s
 assert.match(css,/@media\s*\(max-width:\s*767px\)[\s\S]*?\.kyv-economy-search\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/,'Mobile search occupies an entire row');
 assert.match(css,/\.kyv-economy-toolbar > button\s*\{[^}]*white-space:\s*normal\s*!important;/,'Long dynamic and static button labels can wrap');
 assert.match(css,/\.kyv-economy-toolbar > button\[aria-label="Ricarica fatture"\]/,'Reload action is not forgotten');
-assert.ok(sw.includes("kyv-studio-v2-75-mobile-projects-20261104"),'Updated PWA cache is required');
+assert.ok(sw.includes("kyv-studio-v2-76-operational-ux-20261104"),'Updated PWA cache is required');
 console.log('OK: Economy toolbar keeps search, seven actions, and dynamic reconciliation button visible at narrow widths');
