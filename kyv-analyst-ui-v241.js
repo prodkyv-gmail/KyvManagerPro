@@ -50,6 +50,23 @@ function showAnswer(question){
  $('answer-meta').textContent='Situazione registrata al '+response.asOf+' · analisi basata solo sulle tabelle KYVManagerPro';
  $('answer-panel').hidden=false;
 }
+function renderArtistChart(){
+ if(!report)return;
+ const count=Number($('analyst-artist-limit').value)||5;
+ const entries=report.artistRanks.filter(x=>Number.isFinite(x.amount)&&x.amount>0);
+ const shown=entries.slice(0,count);
+ const max=Math.max(1,...shown.map(x=>x.amount));
+ $('analyst-artist-note').textContent=shown.length+' di '+entries.length+
+  ' artisti con importi attribuiti · '+euro(report.linkedTotal)+
+  ' fatturato attribuito complessivo. Lunghezza barre relativa all’artista con importo massimo.';
+ $('analyst-artist-chart').innerHTML=shown.map((r,i)=>{
+  const width=Math.max(1,Math.round(r.amount/max*100));
+  return '<div class="kyv-analyst-artist-row"><div class="kyv-analyst-artist-label"><span>'+
+   (i+1)+'. '+H(r.artist)+'</span><strong>'+H(euro(r.amount))+'</strong></div>'+
+   '<div class="kyv-analyst-artist-track" aria-hidden="true"><span style="width:'+width+'%"></span></div>'+
+   '<small>'+Number(r.projects).toLocaleString('it-IT')+' progetti con fatturato attribuito</small></div>';
+ }).join('')||'<p class="empty">Nessun fatturato attribuito direttamente ai progetti: impossibile costruire una graduatoria attendibile.</p>';
+}
 function renderSuggestions(){
  if(!report)return;
  const stats=report.results.stats;
@@ -84,6 +101,7 @@ function renderSuggestions(){
     ['Ore registrate',c.datedDurationSessions?(c.durationMin/60).toFixed(1).replace('.',','):'Non disponibili','Solo durate realmente inserite']];
   $('analyst-creative-desk').innerHTML=lines.map(v=>'<button class="metric pressable" type="button" data-ask="Quanti piazzamenti ho registrato e quali follow-up dei pitch sono scaduti?"><small>'+H(v[0])+'</small><strong>'+H(v[1])+'</strong><small>'+H(v[2])+'</small></button>').join('');
  }
+ renderArtistChart();
  $('analyst-footnote').textContent='Lettura completa: '+stats.projects+' progetti · '+stats.invoiceLines+' voci fattura · '+report.source.rights.length+' liquidazioni. Nessun dato è stato modificato.';
 }
 async function refresh(){
@@ -125,6 +143,7 @@ function init(){
  $('analyst-metrics').addEventListener('click',ask);
  $('analyst-creative-desk').addEventListener('click',ask);
  $('analyst-form').addEventListener('submit',e=>{e.preventDefault();if(!report)return;showAnswer($('analyst-query').value);});
+ $('analyst-artist-limit').addEventListener('change',renderArtistChart);
  $('analyst-reload').addEventListener('click',refresh);
  refresh();
 }
