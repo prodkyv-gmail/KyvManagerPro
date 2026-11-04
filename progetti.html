@@ -126,6 +126,51 @@
           .quick-body{padding:14px}
           .quick-grid{grid-template-columns:1fr}
         }
+        /* v2.75 — Mobile-first project list, one toolbar and legible in-card actions. */
+        .project-visible-count{font-size:12px;font-weight:850;color:#e2e8f0;white-space:normal;margin:0}
+        .project-row-actions .open:last-child{background:rgba(99,102,241,.28);border-color:#7878f8;color:#fff}
+        @media(max-width:820px){
+          .mobile-open{top:max(12px,env(safe-area-inset-top,0px));left:12px}
+          .header{padding:calc(12px + env(safe-area-inset-top,0px)) 14px 12px}
+          .header-top{gap:10px;align-items:stretch}
+          .header-top>div:first-child{padding-left:52px;min-height:44px}
+          .title{font-size:25px;line-height:1.1;margin-top:2px}
+          .subtitle{display:none}
+          .actions{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:stretch;gap:7px}
+          .search{min-width:0}
+          .search input{width:100%;min-width:0;font-size:16px}
+          .actions .btn{min-height:44px}
+          .filters{margin-top:12px;padding-bottom:8px;gap:7px;overflow-x:auto;overscroll-behavior-x:contain}
+          .filters .filter{min-height:44px;flex:0 0 auto}
+          .project-filter-status{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;margin:7px 0 2px;align-items:center}
+          .project-visible-count{grid-column:1/-1;font-size:12px;color:#f8fafc}
+          .project-filter-status .filter-note{font-size:11px;line-height:1.4}
+          .project-filter-status #project-clear-filters{justify-self:end}
+          #project-advanced-details{margin-top:9px}
+          .content{padding:12px 12px calc(28px + env(safe-area-inset-bottom,0px))}
+          .notice{display:none}
+          .table-scroll tbody{gap:10px}
+          .table-scroll tr.row{gap:10px 8px;padding:13px;grid-template-columns:minmax(0,1fr) auto}
+          .table-scroll tr.row td:nth-child(1){grid-column:1/-1}
+          .table-scroll tr.row td:nth-child(2){grid-column:1/-1}
+          .table-scroll tr.row td:nth-child(3){grid-column:1/-1}
+          .table-scroll tr.row td:nth-child(4){grid-column:1/-1}
+          .table-wrap.compact-mode .table-scroll tr.row td:nth-child(4){display:none}
+          .project-title{font-size:16px;line-height:1.35}
+          .artist{font-size:13px;margin-top:4px}
+          .status{font-size:12px;padding:7px 10px;align-self:flex-start}
+          .next{font-size:13px;line-height:1.4}
+          .table-scroll tr.row td:nth-child(5){grid-column:1/-1;border-top:1px solid #324057;padding-top:10px}
+          .table-scroll .project-row-actions{justify-content:stretch;gap:9px}
+          .table-scroll .project-row-actions :is(a,button){flex:1 1 0;min-width:0;min-height:44px;font-size:13px}
+          #project-load-more{min-height:48px;width:min(100%,420px)}
+        }
+        @media(max-width:390px){
+          .actions{grid-template-columns:minmax(0,1fr) auto auto;gap:5px}
+          .actions .btn.primary{padding:9px 8px;font-size:12px}
+          .actions .btn.icon{width:44px}
+          .search input{padding:10px 9px}
+        }
         @media(prefers-reduced-motion:reduce){.row,.sidebar{transition:none}}
     </style>
 </head>
@@ -154,8 +199,8 @@
                 <div><div class="eyebrow">Lavoro creativo</div><h1 class="title">Progetti</h1><p class="subtitle">Trova il brano e apri la sua scheda. Nessun caricamento secondario rallenta questa vista.</p></div>
                 <div class="actions"><div class="search"><input id="uscite-search" type="search" autocomplete="off" placeholder="Titolo, artista, note o #ID…" aria-label="Cerca progetti nell'intero archivio" aria-describedby="project-filter-note"></div><button class="btn primary" type="button" onclick="openNewProjectChoices()">+ Nuovo</button><button class="btn icon" id="reload" type="button" title="Ricarica" aria-label="Ricarica">↻</button></div>
             </div>
-            <div class="filters" id="filters" role="group" aria-label="Viste principali dei progetti"><button class="filter active" data-filter="RECENTI" type="button" aria-pressed="true">Recenti</button><button class="filter" data-filter="DA_FARE" type="button" aria-pressed="false">Da fare</button><button class="filter" data-filter="ATTESA" type="button" aria-pressed="false">In attesa</button><button class="filter" data-filter="USCITI" type="button" aria-pressed="false">Usciti</button><button class="filter" data-filter="TUTTI" type="button" aria-pressed="false">Tutti</button><span class="count" id="project-count">0 progetti</span></div>
-            <div class="project-filter-status"><p id="project-filter-note" class="filter-note" role="status" aria-live="polite">Recenti mostra i 40 progetti più recenti; l'ordinamento scelto cambia solo il loro ordine. Seleziona Tutti per l'intero archivio.</p><button class="btn" id="project-clear-filters" type="button" hidden aria-label="Azzera ricerca, filtri e ordinamento">Azzera filtri</button></div>
+            <div class="filters" id="filters" role="group" aria-label="Viste principali dei progetti"><button class="filter active" data-filter="RECENTI" type="button" aria-pressed="true">Recenti</button><button class="filter" data-filter="DA_FARE" type="button" aria-pressed="false">Da fare</button><button class="filter" data-filter="ATTESA" type="button" aria-pressed="false">In attesa</button><button class="filter" data-filter="USCITI" type="button" aria-pressed="false">Usciti</button><button class="filter" data-filter="TUTTI" type="button" aria-pressed="false">Tutti</button></div>
+            <div class="project-filter-status"><span class="count project-visible-count" id="project-count" aria-live="polite">Carico progetti…</span><p id="project-filter-note" class="filter-note" role="status" aria-live="polite">Recenti mostra i 40 progetti più recenti; l'ordinamento scelto cambia solo il loro ordine. Seleziona Tutti per l'intero archivio.</p><button class="btn" id="project-clear-filters" type="button" hidden aria-label="Azzera ricerca, filtri e ordinamento">Azzera filtri</button></div>
             <details id="project-advanced-details" class="proj-disclosure"><summary><span>Filtri e ordinamento</span><small id="project-advanced-count" aria-live="polite">Nessun filtro avanzato</small></summary>
             <div class="advanced-filters" role="group" aria-label="Filtri combinabili progetti">
                 <label>Artista<select id="project-artist-filter"><option value="">Tutti gli artisti</option></select></label>
@@ -176,7 +221,7 @@
                 <p class="overview-legend">I conteggi riguardano l'intero archivio, indipendentemente dai filtri della tabella. I campi mancanti sono mostrati come «Non indicato».</p>
             </section>
             </details>
-            <div class="notice"><span>Apri un progetto con «Rapido» per i dati principali, senza caricare le sezioni secondarie.</span><span>Per audio, documenti, fee e modifiche usa «Scheda».</span></div>
+            <div class="notice"><span>Apri un progetto con «Riepilogo» per i dati principali, senza caricare le sezioni secondarie.</span><span>Per audio, documenti, fee e modifiche usa «Scheda».</span></div>
             <div class="table-wrap" id="projects-table"><div class="table-scroll"><table><thead><tr><th>Progetto</th><th>Stato</th><th>Prossima azione</th><th>Ultima attività</th><th>Azioni</th></tr></thead><tbody id="tbody-uscite"><tr><td colspan="5" class="empty">Carico i progetti…</td></tr></tbody></table></div></div>
             <div style="display:flex;justify-content:center;margin:12px 0"><button id="project-load-more" class="btn" type="button" hidden>Mostra altri 50</button></div>
         </section>
@@ -266,7 +311,7 @@
         }
         function render(){
             const rows=visibleRows();
-            count.textContent=rows.length+' '+(rows.length===1?'progetto':'progetti')+' nella vista · '+state.rows.length+' totali';
+            count.textContent=rows.length+' '+(rows.length===1?'risultato':'risultati')+' · '+Math.min(rows.length,state.shown)+' visualizzati · '+state.rows.length+' in archivio';
             // One always-visible summary and one reset control, even when advanced filters stay folded.
             const viewLabels={RECENTI:'Recenti (40 per attività)',DA_FARE:'Da fare',ATTESA:'In attesa',USCITI:'Usciti',TUTTI:'Tutti'};
             const hasFilters=Boolean(search.value.trim()||state.artist||state.status||state.phase||state.sort!=='activity'||state.filter!=='RECENTI');
@@ -303,7 +348,7 @@
                   '<a class="open" href="scheda_progetto.html?id='+id+'">Scheda</a></div></td></tr>';
             }).join('');
             const more=el('project-load-more');more.hidden=rows.length<=state.shown;
-            more.textContent='Mostra altri '+Math.min(50,rows.length-state.shown)+' ('+state.shown+' di '+rows.length+')';
+            more.textContent='Mostra altri '+Math.min(50,rows.length-state.shown)+' ('+Math.min(state.shown,rows.length)+' di '+rows.length+' visualizzati)';
             body.querySelectorAll('[data-id]').forEach(row=>row.addEventListener('click',event=>{
                 if(event.target.closest('a,button'))return;
                 openQuick(row.dataset.id,row);
@@ -358,6 +403,8 @@
         async function loadProjects(){
             if(state.loading)return;
             state.loading=true;
+            count.textContent='Caricamento in corso…';
+            el('project-load-more').hidden=true;
             body.innerHTML='<tr><td colspan="5" class="empty">Carico i progetti…</td></tr>';
             try{
                 // Full paginated read: no hidden 500-project limit and no search only in the displayed page.
@@ -379,7 +426,10 @@
                 render();
             }catch(error){
                 console.error('[KYV Safe Projects]',error);
-                body.innerHTML=`<tr><td colspan="5" class="empty" style="color:#fda4af">Impossibile caricare i progetti: ${H(error.message||'errore sconosciuto')}<br><button class="btn" style="margin-top:12px" onclick="location.reload()">Riprova</button></td></tr>`;
+                state.rows=[];count.textContent='Archivio non disponibile';
+                el('project-overview-meta').textContent='Distribuzione non disponibile: riprova il caricamento.';
+                el('project-overview-bars').replaceChildren();
+                body.innerHTML=`<tr><td colspan="5" class="empty" style="color:#fda4af">Impossibile caricare i progetti: ${H(error.message||'errore sconosciuto')}<br><button class="btn" type="button" data-project-retry style="margin-top:12px">Riprova caricamento</button></td></tr>`;
             }finally{state.loading=false;}
         }
 
@@ -418,7 +468,7 @@
                 });
                 el('project-view-toggle').addEventListener('click',()=>{state.compact=!state.compact;render()});
                 el('project-load-more').addEventListener('click',()=>{state.shown+=50;render()});
-                body.addEventListener('click',event=>{const b=event.target.closest('[data-quick-id]');if(b)openQuick(b.dataset.quickId,b)});
+                body.addEventListener('click',event=>{const retry=event.target.closest('[data-project-retry]');if(retry){loadProjects();return;}const b=event.target.closest('[data-quick-id]');if(b)openQuick(b.dataset.quickId,b)});
                 el('project-quick-close').addEventListener('click',closeQuick);
                 el('project-quick-modal').addEventListener('click',event=>{if(event.target===el('project-quick-modal'))closeQuick()});
                 document.addEventListener('keydown',event=>{

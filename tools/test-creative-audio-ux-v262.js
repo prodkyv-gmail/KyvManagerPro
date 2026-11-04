@@ -126,10 +126,10 @@ for(const token of [
  'body.kyv-v260 .finder-workflow-details','body.kyv-v260 #finder-explorer'
 ])assert.ok(theme.includes(token),'Shared CSS missing '+token);
 const pkg=JSON.parse(read('package.json')),sw=read('sw.js');
-assert.equal(pkg.version,'2.74.0');
-assert.equal(read('VERSION').trim(),'2.74');
-assert.ok(read('config.js').includes("APP_VERSION: '2.74'"));
-assert.ok(sw.includes('kyv-studio-v2-74-recenti-order-20261104'));
+assert.equal(pkg.version,'2.75.0');
+assert.equal(read('VERSION').trim(),'2.75');
+assert.ok(read('config.js').includes("APP_VERSION: '2.75'"));
+assert.ok(sw.includes('kyv-studio-v2-75-mobile-projects-20261104'));
 assert.equal(pkg.scripts['check:creative-audio-ux-v262'],'node tools/test-creative-audio-ux-v262.js');
 assert.ok(pkg.scripts.check.includes('check:creative-audio-ux-v262'));
 assert.ok(read('guida.html').includes('v2.62'));

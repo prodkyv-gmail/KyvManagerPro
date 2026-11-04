@@ -1,3 +1,6 @@
+### v2.75 — Lista Progetti mobile e ripresa da errore
+Intervenire sulla pagina Progetti safe esistente senza montare un secondo menu, barra o popup. Le cinque viste restano in un solo gruppo con scorrimento orizzontale; il contatore deve distinguere risultati, righe mostrate e archivio. La modalità compatta influisce soltanto sulla data visualizzata e non modifica i record. Dopo errore di caricamento non mostrare risultati o grafici stantii: Riprova deve rifare la lettura, conservando i criteri, senza ricaricare la PWA. Il test v2.75, la Guida completa e il manuale contestuale devono descrivere gli stessi comandi. Nessuna scrittura o modifica allo schema.
+
 ### v2.74 — Semantica coerente di Recenti
 I 40 progetti della vista Recenti vengono selezionati prima per attività registrata, senza date inventate. Il parametro di ordinamento riordina solo questo gruppo e non ne modifica l'appartenenza. Ricerca, filtri aggiuntivi e vista Tutti operano invece sull'intero archivio caricato e verificato. Mantenere una sola barra filtri e un solo comando Azzera. Nella stessa PR aggiornare Progetti, Guida completa, ? contestuale, manuale, versioni, cache e test v2.74. Non modificare associazioni, dati, schema, permessi o fatture.
 

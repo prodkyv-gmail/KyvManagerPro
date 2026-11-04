@@ -1,0 +1,36 @@
+// KYV v2.75 — mobile project reading, one count, non-destructive retry.
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const read=p=>fs.readFileSync(p,'utf8');
+const page=read('progetti.html'),guide=read('guida.html'),help=read('kyv-help.js');
+const src=page.slice(page.lastIndexOf('<script>')+8,page.lastIndexOf('</script>'));
+new vm.Script(src,{filename:'progetti.html:inline'});
+for(const id of ['uscite-search','project-count','project-clear-filters','project-load-more','project-view-toggle','project-filter-note'])
+ assert.equal((page.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id+' must be unique');
+assert.equal((page.match(/data-filter="/g)||[]).length,5,'Only one group of five main filters');
+assert.ok(page.includes('.header-top>div:first-child{padding-left:52px'),'Mobile header must reserve room for the existing menu');
+assert.ok(page.includes('.filters .filter{min-height:44px'),'All mobile filter pills must be touch-size');
+assert.ok(page.includes('.project-visible-count{grid-column:1/-1'),'Count must remain readable outside scrolling filters');
+assert.ok(page.indexOf('id="project-count"')>page.indexOf('id="filters"'),'Count is outside horizontal filter group');
+assert.ok(page.includes(".table-wrap.compact-mode .table-scroll tr.row td:nth-child(4){display:none}"),'Compact mobile cards suppress date cell');
+assert.ok(page.includes(".project-row-actions .open:last-child"),'The complete project action must look primary');
+assert.ok(page.includes("count.textContent=rows.length+' '"),'Counts must use verified matching rows');
+assert.ok(page.includes("Math.min(rows.length,state.shown)")&&page.includes("state.rows.length+' in archivio'"),'Displayed vs matching counts are distinct');
+assert.ok(page.includes("data-project-retry")&&page.includes("if(retry){loadProjects();return;}"),'Retry stays in the same page');
+assert.ok(page.includes("state.rows=[];count.textContent='Archivio non disponibile'"),'Failed loads must not claim old data');
+assert.ok(page.includes("el('project-overview-bars').replaceChildren()"),'Stale histogram must be cleared on load error');
+assert.ok(!page.includes('onclick="location.reload()"'),'Reload must not erase active mobile filters');
+assert.ok(page.includes("state.db.from('PROGETTI').select('*',{count:'exact'})"),'Existing verified read remains');
+assert.ok(page.includes("M.filterRows(state.rows"),'No duplicate filter engine');
+assert.ok(page.includes('data-quick-id')&&page.includes('scheda_progetto.html?id='),'Both distinct project actions remain');
+assert.doesNotMatch(src,/\.from\(['"]PROGETTI['"]\)\.(?:insert|update|upsert|delete)\(/,'No project writes in mobile UI');
+assert.ok(guide.includes('id="v275-mobile"')&&guide.includes('Riprova caricamento'),'Guide must include current mobile flow');
+const host={};vm.runInNewContext(help,{window:host});
+assert.ok(host.KYV_HELP.getContent('progetti').content.includes('v2.75 · Progetti sul telefono'),'Contextual guide synchronized');
+assert.ok(read('MANUALE_OPERATIVO.md').includes('v2.75 — Progetti mobile'));
+assert.ok(read('docs/MANUALE_PRATICO_V273.md').includes('Aggiornamento v2.75'));
+assert.equal(read('VERSION').trim(),'2.75');
+assert.equal(JSON.parse(read('package.json')).version,'2.75.0');
+assert.ok(read('config.js').includes("APP_VERSION: '2.75'"));
+assert.ok(read('sw.js').includes('kyv-studio-v2-75-mobile-projects-20261104'));
+assert.ok(JSON.parse(read('package.json')).scripts.check.includes('check:mobile-projects-v275'));
+console.log('OK: v2.75 mobile project UX, list counts, safe reload and updated help');
