@@ -208,7 +208,7 @@ async function scanOneDrive({query,fetcher,pages=8,maxEntries=3000}={}){
  if(!driveId)throw Error('Identità OneDrive non disponibile');
  // Graph search q uses OData single-quote escaping, then encode URI for URL path.
  const escaped=term.replace(/'/g,"''");
- let next='https://graph.microsoft.com/v1.0/me/drive/root/search(q=\''+encodeURIComponent(escaped)+'\')?$top=200';
+ let next='https://graph.microsoft.com/v1.0/me/drive/root/search(q=\''+encodeURIComponent(escaped).replace(/'/g,'%27')+'\')?$top=200';
  let hasMore=true,seen=0,invalid=0;const rows=[],errors=[];
  for(let i=0;i<pages&&hasMore&&seen<maxEntries;i++){
   let data;
