@@ -27,7 +27,7 @@ for(const id of [
 assert.ok(desk.includes('<details id="desk-creative-insights"'));
 assert.ok(desk.includes('<details id="hub-pitch-analysis"'));
 assert.ok(desk.includes('<details id="hub-more-filters"'));
-assert.ok(desk.includes('class="desk-form-extras wide"'));
+assert.ok(desk.includes('class="desk-disclosure desk-form-extras wide"'));
 assert.ok(desk.includes('<details id="session-more-fields"'));
 assert.ok(desk.includes('<details id="pitch-more-fields"'));
 assert.ok(creative.includes('const creativeQueries={sessions:\'\',pitches:\'\'}'),
