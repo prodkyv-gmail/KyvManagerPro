@@ -20,7 +20,7 @@ assert.ok(invoices.includes("aria-label','Fatture · "), 'Accessible combined in
 assert.ok(hub.includes("repeatedNext.style.display='none'"),'Primary hub hides duplicate next-action banner');
 assert.ok(sheet.includes("const hasPrimaryNext=Boolean(document.querySelector('#kyv-project-hub-v3 .kyv-hub3-next'))"),'Hero remains fallback');
 assert.ok(sheet.includes("box.style.display=hasPrimaryNext?'none':''"),'Fallback returns if hub is absent');
-assert.doesNotMatch(routes,/\\.(insert|update|upsert|delete)\\(/,'Journey helper must not write data');
+assert.doesNotMatch(routes,/\.(insert|update|upsert|delete)\(/,'Journey helper must not write data');
 assert.ok(sw.includes("'./kyv-flow-routes-v269.js'"),'PWA caches route helper');
 assert.ok(sw.includes('kyv-studio-v2-70-ui-consolidation-20261104'),'PWA version bumped');
 assert.ok(config.includes("APP_VERSION: '2.70'"));
@@ -28,4 +28,32 @@ assert.equal(read('VERSION').trim(),'2.70');
 assert.equal(require('../package.json').version,'2.70.0');
 assert.ok(require('../package.json').scripts.check.includes('check:ui-consolidation-v270'));
 assert.ok(guide.includes('v2.70')&&help.includes('v2.70'),'Help and guide synchronized');
+// Small DOM-free runtime simulation of the real invoice status renderer: no duplicate link.
+const start=invoices.indexOf('function mountContextChip(projectId,rows){');
+const stop=invoices.indexOf('\nasync function refreshContext',start);
+assert.ok(start>=0&&stop>start,'Invoice renderer was found');
+const link={dataset:{},children:[],href:'fatture.html?collegaProgetto=41',
+  title:'',tagName:'A',appendChild(node){this.children.push(node);},
+  querySelector(q){return q==='[data-kyv-invoice-state]'?this.children.find(x=>x.dataset?.kyvInvoiceState==='1')||null:null;},
+  setAttribute(k,v){this[k]=v;}};
+let duplicateAppend=0;
+const nav={querySelector:q=>q==='[data-kyv-workflow="invoice"]'?link:null,
+  appendChild(){duplicateAppend++;}};
+const doc={getElementById:id=>id==='kyv-workflow-nav'?nav:null,
+  createElement:tag=>({tagName:tag.toUpperCase(),dataset:{},textContent:'',className:''})};
+const sandbox={document:doc,summary:rows=>rows.length
+  ?{kind:'open',short:'Da incassare',detail:'F-5 · €100 · da incassare'}
+  :{kind:'none',short:'Nessuna fattura',detail:'Nessuna fattura collegata'},
+  contextHref:()=>'',toneClass:()=>''};
+const mounted=vm.runInNewContext(invoices.slice(start,stop)+'\nmountContextChip',sandbox);
+assert.equal(mounted('41',[{ID_FT:5}]),true);
+assert.equal(link.children.length,1,'One informational state inside canonical link');
+assert.equal(link.href,'fatture.html?collegaProgetto=41','No implicit invoice edit/create navigation');
+assert.equal(link.querySelector('[data-kyv-invoice-state]').textContent,'Da incassare');
+assert.equal(mounted('41',null),true);
+assert.equal(link.querySelector('[data-kyv-invoice-state]').textContent,'Non disponibili','Read failure is not interpreted as no invoices');
+assert.equal(link.children.length,1,'Repeat render must not duplicate badge');
+assert.equal(mounted('41',[]),true);
+assert.equal(link.querySelector('[data-kyv-invoice-state]').textContent,'Nessuna fattura');
+assert.equal(duplicateAppend,0,'No second invoice action may be appended');
 console.log('OK: v2.70 route helper, one invoice action, one next-action panel, safe fallbacks');
