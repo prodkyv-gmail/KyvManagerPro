@@ -19,3 +19,6 @@ Stato: **da verificare sull'app installata/autenticata**. I test Node/GitHub Act
 15. Documenta qui eventuali problemi con schermata, azione, risultato atteso, risultato osservato e log console (senza credenziali).
 
 Riferimento automatico: `npm run check` + `node tools/test-cross-flow-v266.js`.
+
+## Registro esito collaudo manuale
+Compilare soltanto dopo una prova autenticata: data, dispositivo/browser, versione PWA visualizzata, funzione, esito e passi per riprodurre eventuali problemi. Non includere credenziali o contenuti audio privati.
