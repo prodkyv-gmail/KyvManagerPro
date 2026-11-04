@@ -1,3 +1,13 @@
+## v2.61 — Come usare Progetti e Scheda Progetto (4 novembre 2026)
+
+In **Progetti** trovi sempre la ricerca sull'intero archivio e i cinque filtri rapidi. Quando ti serve un filtro specifico, apri **Filtri e ordinamento**: seleziona Artista/Stato/Fase, scegli l'ordine e osserva quanti filtri sono attivi; con **Azzera filtri** torni al punto iniziale. Apri **Analisi archivio** per scegliere il grafico per Stato o Fase: le barre contano tutti i progetti caricati e sono indipendenti dalla lista filtrata. Cliccare una barra filtra i progetti e apre il filtro corrispondente.
+
+Su smartphone non è necessario trascinare una tabella larga: ogni progetto appare come una scheda con titolo, artista, stato, prossima azione, attività e pulsanti. **Riepilogo** è un popup in sola lettura che si chiude con Esc o il pulsante ×; **Scheda** apre la sezione completa e permette gli interventi già esistenti. L'opzione Nuovo presenta ancora le modalità di cattura e selezione manuali.
+
+Nella **Scheda Progetto**, il selettore **Cerca o cambia progetto** elenca inizialmente 12 risultati per non ingombrare; scrivi artista, titolo, management, label o ISRC per cercare nei dati caricati (fino a 80 risultati visualizzati). Quando apri un brano, il selettore si richiude come **Cambia progetto**. In modalità **Easy**, usa **Continua progetto** per scegliere Produzione, Invio, Release, Economia o Modifica: non vedrai doppioni della prossima azione e dei blocchi di navigazione. In **Completa** restano disponibili tutti i pannelli e i campi. Entrambe le viste utilizzano lo stesso database e gli stessi salvataggi protetti.
+
+Non sono state alterate le regole di associazione audio, il valore delle fee, le date mancanti, i dati storici o i diritti delle operazioni.
+
 ## v2.60 — Navigazione semplificata e nuova base grafica (4 novembre 2026)
 
 **Dove andare.** Le voci principali del menu includono Oggi, Agenda, Nuovo, Progetti, Scrivania creativa, Ascolto, Audio Finder e Tutte le app. Fatture emesse si trova in Amministrazione; non compare una seconda volta in Ogni giorno. Il gruppo Strumenti contiene gli strumenti specializzati senza ripetere Tutte le app. Sul telefono la barra inferiore apre direttamente Ascolto e non sostituisce più Rubrica dopo il caricamento. Puoi raggiungere i contatti da Strumenti/Launcher o dalla schermata dedicata.
