@@ -1,3 +1,12 @@
+## Aggiornamento congiunto v2.78/v2.79 · Popup Editor e grafica
+
+1. In Studio Editor apri il popup **Modifica**: mostra le categorie Dati principali, Collegamenti, Date, Economia, Altri dettagli, solo quando contengono campi.
+2. **Trova un campo** cerca etichette e nomi tecnici. **Solo modificati** mostra solo quelli su cui hai lavorato; i campi nascosti non perdono alcun valore e rimangono nel modulo.
+3. La barra di stato indica campi e sezioni visibili e, in basso, il numero di modifiche ancora non salvate. **Salva/Annulla** sono raggiungibili sempre mentre scorri.
+4. **Esc/Annulla** con modifiche non salvate richiede conferma; salvataggi concorrenti restano bloccati. La ricerca del popup non cambia le query o il CSV.
+5. Su smartphone il popup usa una colonna e controlli grandi; Progetti, Sessioni, Fatture ed Editor usano stessi criteri di contrasto, focus, spaziatura e scroll, senza duplicazioni.
+6. Testare la PWA aggiornata a 2.79: la verifica precedente v2.77 è già acquisita, ma non sostituisce il controllo della nuova versione.
+
 # KYVManagerPro — Manuale pratico dettagliato v2.73
 
 **Data:** 4 novembre 2026 · **Versione:** 2.73

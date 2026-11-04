@@ -1,0 +1,63 @@
+/* KYVManagerPro v2.79 — shared, scoped styling for existing operational views.
+   No new navigation, controls or mutation observers. Deliberately avoid mobile header padding. */
+.kyv-v279-workspace{--kyv-v279-outline:#afa7ff;--kyv-v279-hairline:rgba(148,163,184,.23);--kyv-v279-surface:#151923;--kyv-v279-muted:#b7c1d2}
+.kyv-v279-workspace :is(button,a,input,select,textarea):focus-visible{outline:2px solid var(--kyv-v279-outline);outline-offset:3px}
+.kyv-v279-workspace :is(.kyv-v276-toolbar,.kyv-economy-toolbar) :is(button,a,select,input){min-height:42px}
+.kyv-v279-workspace :is(.kyv-v276-feedback,#editor-view-status,#project-filter-note){color:var(--kyv-v279-muted);line-height:1.55}
+.kyv-v279-workspace #editor-tabs{scrollbar-width:thin;scrollbar-color:#525c70 transparent}
+.kyv-v279-workspace .custom-scrollbar{scrollbar-width:thin;scrollbar-color:#525c70 rgba(15,17,26,.2)}
+.kyv-v279-workspace .custom-scrollbar::-webkit-scrollbar{width:10px;height:10px}
+.kyv-v279-workspace .custom-scrollbar::-webkit-scrollbar-thumb{background:#525c70;border-radius:10px;border:2px solid #10131b}
+.kyv-v279-workspace :is(#project-overview,#kyv-invoice-cash-summary>*,#session-results-status){border-color:var(--kyv-v279-hairline)}
+.kyv-v279-workspace :is(.filter,.kyv-v276-toolbar button,#editor-tabs button){touch-action:manipulation}
+.kyv-v279-workspace #modal-dynamic-content{max-height:min(92dvh,860px);max-width:min(940px,calc(100vw - 18px));width:100%;box-shadow:0 24px 80px rgba(0,0,0,.52)}
+.kyv-v279-workspace #modal-dynamic-content>.border-b{padding:18px 22px;gap:12px}
+.kyv-v279-workspace #dynamic-modal-title{min-width:0;overflow-wrap:anywhere}
+.kyv-v279-workspace #modal-dynamic [data-action="close-modal"]{min-width:42px;min-height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px}
+.kyv-v279-modal-form{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.kyv-v279-modal-scroll{flex:1;min-height:0;overflow:auto;padding:18px 22px;overscroll-behavior:contain}
+.kyv-v279-modal-tools{position:sticky;top:-18px;background:linear-gradient(180deg,#171c29 0%,#151923 95%);z-index:5;border:1px solid var(--kyv-v279-hairline);border-radius:12px;padding:12px;margin-bottom:17px;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+.kyv-v279-search-label{font-size:12px;color:#d4d8e6;display:block;margin-bottom:7px;font-weight:700}
+.kyv-v279-modal-tools-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.kyv-v279-modal-tools-row .kyv-input{min-width:190px;flex:1;height:44px;min-height:44px;font-size:16px}
+.kyv-v279-changed-toggle{display:flex;align-items:center;gap:8px;min-height:42px;color:#d9ddea;white-space:nowrap;font-weight:600;font-size:12px;cursor:pointer}
+.kyv-v279-changed-toggle input{width:17px;height:17px;accent-color:#817aff}
+.kyv-v279-fields-status{color:#bfc9da;font-size:12px;line-height:1.55;margin-top:7px}
+.kyv-v279-fields-container{display:flex;flex-direction:column;gap:16px}
+.kyv-v279-field-section{background:rgba(12,16,25,.35);border:1px solid var(--kyv-v279-hairline);border-radius:13px;padding:15px}
+.kyv-v279-section-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.kyv-v279-section-header h4{color:#f2f4fa;font-size:15px;font-weight:800;line-height:1.4}
+.kyv-v279-section-header p{color:#aeb8c9;font-size:12px;margin-top:3px;line-height:1.5}
+.kyv-v279-section-count{flex-shrink:0;color:#c4bfff;border-radius:999px;border:1px solid rgba(151,140,255,.32);background:rgba(99,102,241,.1);padding:4px 8px;font-size:11px}
+.kyv-v279-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.kyv-v279-field{min-width:0}
+.kyv-v279-field-label{display:block;margin-bottom:7px;color:#cbd5e1;font-size:12px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.kyv-v279-field .kyv-input{width:100%;min-height:43px;color:#f4f6fa}
+.kyv-v279-field[hidden],.kyv-v279-field-section[hidden],.kyv-v279-empty[hidden]{display:none!important}
+.kyv-v279-empty{padding:16px;border:1px dashed #6366f1;border-radius:10px;color:#cbd5e1;font-size:13px}
+.kyv-v279-change-status{padding:12px 22px;color:#c6cedd;font-size:12px;border-top:1px solid var(--kyv-v279-hairline);background:#151a25;line-height:1.5}
+.kyv-v279-modal-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:12px 22px calc(12px + env(safe-area-inset-bottom,0px));background:#10141d;border-top:1px solid var(--kyv-v279-hairline);flex-shrink:0}
+.kyv-v279-modal-actions button{min-height:44px;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700}
+.kyv-v279-cancel{color:#c5cfdd;border:1px solid #3b4558;background:#1e2533}
+.kyv-v279-save{display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(99,102,241,.18)}
+.kyv-v279-save:disabled{opacity:.5;cursor:not-allowed}
+@media(min-width:1000px){.kyv-v279-field-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:767px){
+ .kyv-v279-workspace :is(.kyv-v276-toolbar,.kyv-economy-toolbar) :is(button,a,select,input){min-height:44px}
+ .kyv-v279-workspace #modal-dynamic{padding:8px;align-items:center}
+ .kyv-v279-workspace #modal-dynamic-content{max-height:calc(100dvh - 16px);max-width:100%;margin:0;border-radius:14px}
+ .kyv-v279-modal-scroll{padding:12px 13px}
+ .kyv-v279-modal-tools{top:-12px;padding:12px}
+ .kyv-v279-modal-tools-row{align-items:stretch;gap:5px}
+ .kyv-v279-modal-tools-row .kyv-input{width:100%;flex-basis:100%}
+ .kyv-v279-field-grid{grid-template-columns:minmax(0,1fr)}
+ .kyv-v279-field-section{padding:13px}
+ .kyv-v279-section-header{gap:9px}
+ .kyv-v279-section-header h4{font-size:14px}
+ .kyv-v279-section-header p{font-size:11px}
+ .kyv-v279-change-status{padding:10px 14px}
+ .kyv-v279-modal-actions{padding:10px 13px calc(10px + env(safe-area-inset-bottom,0px));gap:9px}
+ .kyv-v279-modal-actions button{flex:1;padding:10px}
+ .kyv-v279-workspace #dynamic-modal-title{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){.kyv-v279-workspace #modal-dynamic,.kyv-v279-workspace #modal-dynamic-content{transition:none!important}}
