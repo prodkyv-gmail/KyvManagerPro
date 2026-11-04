@@ -7,6 +7,7 @@ const APP_SHELL = [
     './kyv-home-charts-v250.js',
     './kyv-home-charts-ui-v250.js',
     './scheda_progetto.html',
+    './sessioni.html',
     './data_quality.html',
     './ascolto.html',
     './kyv_calendar.html',

@@ -461,6 +461,12 @@ body{background:#0f111a;color:#f8fafc} html{scroll-behavior:smooth} .guide-secti
   <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5"><div><div class="mini-label mb-2">Ricerca file su richiesta</div><h2 class="section-title">Archivio Musicale</h2><p class="text-kyv-text mt-2"><span class="kbd">archivio_musicale.html</span></p></div><a href="archivio_musicale.html" class="open-link">Apri modulo</a></div>
   <div class="grid xl:grid-cols-2 gap-5 mt-6"><div class="manual-card-soft p-5"><h3 class="sub-title">Funzione e utilità</h3><p class="text-kyv-text leading-relaxed mt-2">Cerca audio su Google Drive oppure permette di scegliere più file da Dropbox. Prima dell'inserimento confronta ogni risultato con progetti e versioni già archiviate.</p><h3 class="sub-title mt-5">Stati</h3><ul class="text-kyv-text leading-relaxed mt-2 space-y-2"><li><b>Già inserito</b>: duplicato certo e non selezionabile.</li><li><b>Nuova versione</b>: possibile progetto esistente da confermare.</li><li><b>Da verificare</b>: stesso nome o file Drive modificato.</li><li><b>Nuovo brano</b>: nessuna corrispondenza.</li></ul></div><div class="manual-card-soft p-5"><h3 class="sub-title">Procedura consigliata</h3><ol class="list-decimal ml-5 text-kyv-text leading-relaxed mt-2 space-y-2"><li>Avvia una ricerca Drive o apri Dropbox.</li><li>Filtra e controlla gli stati.</li><li>Seleziona soltanto i file utili.</li><li>Conferma o modifica il progetto suggerito.</li><li>Inserisci i selezionati e verifica la Scheda Progetto.</li></ol><div class="callout mt-5"><b>Regola:</b> la somiglianza del titolo non collega automaticamente un file.</div></div></div>
 </section>
+  <div class="manual-card-soft p-5 mt-5">
+    <h3 class="sub-title">v2.69 — Dal progetto alle sessioni, all'audio e alle fatture</h3>
+    <p class="text-kyv-text mt-2">Apri un progetto dalla lista. Nella <b>Scheda</b> usa il piccolo <b>Percorso</b> per visitare <b>Sessioni</b>, <b>Audio</b> o <b>Fatture</b> mantenendo il contesto dello stesso progetto. Nella <b>Vista rapida Progetti</b> trovi anche <b>Sessioni del progetto</b>.</p>
+    <p class="text-kyv-text mt-2">La pagina Sessioni indica quale progetto stai consultando; clicca <b>Vedi tutte le sessioni</b> per rimuovere il filtro. I progetti sono letti integralmente e verificati per non perdere silenziosamente record oltre la prima pagina.</p>
+    <p class="text-kyv-text mt-2">In Audio Finder il progetto ricevuto è solo il contesto: <b>nessun file viene associato automaticamente</b>. In Economia, il collegamento <b>Fatture</b> mostra il progetto di provenienza senza avviare operazioni di modifica. Solo il comando esplicito di collegamento fattura apre il flusso di ripartizione esistente.</p>
+  </div>
 <section id="progetti" class="guide-section manual-card p-5 md:p-7">
   <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
     <div>
@@ -626,12 +632,6 @@ body{background:#0f111a;color:#f8fafc} html{scroll-behavior:smooth} .guide-secti
   </div>
   <div class="mt-6 overflow-x-auto"><h3 class="sub-title mb-3">Bottoni: cosa fanno e perché servono</h3><table class="field-table w-full"><thead><tr><th>Bottone</th><th>Funzione / utilità</th></tr></thead><tbody><tr><td><b>Scarica template CSV della tabella</b></td><td>Crea CSV con separatore italiano ; e intestazioni reali.</td></tr><tr><td><b>Sfoglia nel PC</b></td><td>Seleziona file CSV/Excel locale.</td></tr><tr><td><b>Importa nel DB</b></td><td>Scrive i record nuovi in Supabase dopo controlli.</td></tr></tbody></table></div>
 </section>
-  <div class="manual-card-soft p-5 mt-5">
-    <h3 class="sub-title">v2.69 — Dal progetto alle sessioni, all'audio e alle fatture</h3>
-    <p class="text-kyv-text mt-2">Apri un progetto dalla lista. Nella <b>Scheda</b> usa il piccolo <b>Percorso</b> per visitare <b>Sessioni</b>, <b>Audio</b> o <b>Fatture</b> mantenendo il contesto dello stesso progetto. Nella <b>Vista rapida Progetti</b> trovi anche <b>Sessioni del progetto</b>.</p>
-    <p class="text-kyv-text mt-2">La pagina Sessioni indica quale progetto stai consultando; clicca <b>Vedi tutte le sessioni</b> per rimuovere il filtro. I progetti sono letti integralmente e verificati per non perdere silenziosamente record oltre la prima pagina.</p>
-    <p class="text-kyv-text mt-2">In Audio Finder il progetto ricevuto è solo il contesto: <b>nessun file viene associato automaticamente</b>. In Economia, il collegamento <b>Fatture</b> mostra il progetto di provenienza senza avviare operazioni di modifica. Solo il comando esplicito di collegamento fattura apre il flusso di ripartizione esistente.</p>
-  </div>
 <section id="editor" class="guide-section manual-card p-5 md:p-7">
   <div class="manual-card-soft p-5 mt-5">
     <h3 class="sub-title">v2.68 — Modifica solo ciò che cambi</h3>

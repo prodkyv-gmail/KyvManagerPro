@@ -20,7 +20,8 @@ assert.equal(routes.parse('/scheda_progetto.html','?id=abc&projectId=41'),'41');
 for(const value of ['','abc','0','1x','1&tab=delete','-4','999999999999999999999999']){
  assert.equal(routes.hrefs(value),null,'Unsafe ID should not build actions: '+value);
 }
-assert.equal(routes.hrefs('00041').audio,'kyv_audio_finder.html?project=00041');
+assert.equal(routes.hrefs('00041').audio,'kyv_audio_finder.html?project=41','Normalize leading zeroes to canonical Supabase IDs');
+assert.equal(routes.parse('/sessioni.html','?projectId=00041'),'41');
 const nav=read('kyv-workflow-nav.js'),config=read('config.js');
 assert.ok(nav.includes("'sessioni.html','kyv_audio_finder.html','fatture.html'"));
 assert.ok(nav.includes("['session','calendar-clock','Sessioni']"));
@@ -41,6 +42,7 @@ assert.ok(finder.includes("const project=params.get('project')"),'Audio Finder u
 assert.ok(finder.includes("$('link-project').value=project"),'Audio Finder still requires an explicit submit');
 assert.doesNotMatch(read('kyv-flow-routes-v269.js'),/\.(?:insert|update|upsert|delete)\(/);
 assert.ok(read('sw.js').includes("'./kyv-flow-routes-v269.js'"));
+assert.ok(read('sw.js').includes("'./sessioni.html'"),'Sessioni shell is available offline when cached');
 assert.ok(read('sw.js').includes("'./kyv-editor-read-v267.js'"));
 assert.ok(read('sw.js').includes('kyv-studio-v2-69-project-journey-20261104'));
 assert.ok(read('config.js').includes("APP_VERSION: '2.69'"));
@@ -49,4 +51,5 @@ assert.equal(require('../package.json').version,'2.69.0');
 assert.ok(require('../package.json').scripts.check.includes('check:project-journey-v269'));
 assert.ok(read('guida.html').includes('v2.69'));
 assert.ok(read('kyv-help.js').includes('v2.69'));
+assert.ok(read('kyv-help.js').includes("['progetti','scheda','sessioni','audiofinder','fatture']"),'Context help belongs to the journey pages');
 console.log('OK: v2.69 contextual project routes and verified Session reads, no automatic writes');

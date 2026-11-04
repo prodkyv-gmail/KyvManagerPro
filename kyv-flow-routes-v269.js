@@ -16,7 +16,8 @@
  });
  function validId(value){
   const id=String(value??'').trim();
-  return /^\d{1,20}$/.test(id)&&/[1-9]/.test(id)?id:'';
+  if(!/^\d{1,20}$/.test(id)||!/[1-9]/.test(id))return '';
+  return id.replace(/^0+/,'');
  }
  function parse(path,search){
   const page=String(path||'').split('/').pop().toLowerCase()||'index.html';
