@@ -919,7 +919,7 @@ body.kyv-v260 [hidden] { display:none !important; }
   body.kyv-v260 :is(.desk-quicklinks,.finder-links) {gap: 7px;}
   body.kyv-v260 :is(.desk-quicklinks a,.finder-links a) {flex: 1 1 auto;min-height: 44px;}
   body.kyv-v260 .hub-modal {
-    width: min(100vw - 14px,840px);
+    width: min(calc(100vw - 14px),840px);
     max-height: calc(100dvh - 20px);
     padding: 15px;
   }
@@ -928,4 +928,48 @@ body.kyv-v260 [hidden] { display:none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   body.kyv-v260 :is(.desk-stat,.hub-project,.finder-card,.explorer-item) {transition:none;}
+}
+
+/* v2.60 shared disclosure for secondary sections; native details keeps controls accessible. */
+body.kyv-v260 .kyv-v260-disclosure {
+  border: 1px solid var(--kyv-ui-border);
+  background: #121a2a;
+  border-radius: var(--kyv-ui-radius);
+  margin: 15px 0;
+  overflow: clip;
+}
+body.kyv-v260 .kyv-v260-disclosure > summary {
+  cursor: pointer;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 16px;
+  list-style: none;
+  color: #f2f4ff;
+  font-weight: 780;
+}
+body.kyv-v260 .kyv-v260-disclosure > summary::-webkit-details-marker {display: none;}
+body.kyv-v260 .kyv-v260-disclosure > summary::after {content: '+'; color: #b9b4ff; font-size: 22px; margin-left: auto;}
+body.kyv-v260 .kyv-v260-disclosure[open] > summary::after {content: '−';}
+body.kyv-v260 .kyv-v260-disclosure > summary small {font-size: 12px; color: #bac6db; font-weight: 500;}
+body.kyv-v260 .kyv-v260-disclosure > :not(summary) {margin-inline: 12px;}
+body.kyv-v260 .kyv-v260-disclosure > .batch-scan {background: transparent; border: 0; box-shadow: none; margin-top: 0;}
+body.kyv-v260 .kyv-v260-disclosure > .finder-sync-note {margin: 12px; border: 0; background: transparent;}
+body.kyv-v260 :is(.desk-header,.finder-head) {background: linear-gradient(130deg,#171f2e,#111723) !important;}
+body.kyv-v260 > header {
+  background: linear-gradient(120deg,#192132,#111826);
+  border-bottom-color: var(--kyv-ui-border);
+}
+body.kyv-v260 > main :is(.card,.metric) {
+  border: 1px solid var(--kyv-ui-border);
+  border-radius: var(--kyv-ui-radius);
+  background: linear-gradient(140deg,#17202f,#131b29);
+}
+body.kyv-v260 > main .metric strong {color: #e7e4ff; font-size: clamp(21px,1.7vw,26px);}
+body.kyv-v260 > main :is(.card,.metric,.status) {box-shadow: 0 9px 25px rgba(0,0,0,.12);}
+@media(max-width:650px){
+ body.kyv-v260 .kyv-v260-disclosure > summary {align-items:flex-start;flex-direction:column;}
+ body.kyv-v260 .kyv-v260-disclosure > summary::after {display:none;}
 }
