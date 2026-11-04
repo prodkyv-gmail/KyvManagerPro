@@ -155,6 +155,17 @@ body{background:#0f111a;color:#f8fafc} html{scroll-behavior:smooth} .guide-secti
 </section>
 
 <section id="guida-audiofinder" class="guide-section manual-card p-5 md:p-7">
+<div class="manual-card-soft p-5 mt-4">
+<h3 class="sub-title mb-3">v2.65 — Ricerca globale verificata e archivio audio senza collegamenti automatici</h3>
+<ol class="list-decimal ml-5 text-kyv-text space-y-2 leading-relaxed">
+<li><b>Ricerca globale (Cmd/Ctrl+K):</b> apri dal pulsante <b>Cerca</b> nel menu o dalla tastiera. La ricerca attraversa progetti, fatture, invii, documenti, versioni, SIAE e IMAIE solo attraverso i dati accessibili con il tuo account. All'apertura legge e verifica le pagine degli archivi, non si ferma silenziosamente alle prime 1.500–3.000 righe.</li>
+<li><b>Copertura reale:</b> il conteggio dei risultati distingue quanti elementi corrispondono e quanti vengono mostrati (i primi 30). Se un archivio non risponde, non dà un conteggio esatto, si interrompe o supera il limite di sicurezza documentato, viene mostrato <b>Ricerca non disponibile</b> e il pulsante <b>Riprova</b>. Non viene presentato un insieme parziale come una ricerca completa. Il limite di sicurezza per singola tabella è 30.000 righe, oltre il quale va utilizzata la ricerca specifica dell'archivio.</li>
+<li><b>Navigazione:</b> i risultati sono raggruppati per tipo di record; Tab/Maiusc+Tab rimangono nella finestra, Esc chiude e riporta il focus al comando iniziale. L'indice è mantenuto in memoria solo dopo una lettura completamente verificata; il comando <b>Aggiorna</b> forza una nuova lettura quando disponibile.</li>
+<li><b>Studio Editor:</b> il campo <b>Filtra tabella corrente</b> cerca soltanto nei dati caricati della tabella selezionata. Per cercare in più archivi usa la ricerca globale. Le colonne nascoste, le modifiche protette e l'esportazione mantengono le loro funzioni.</li>
+<li><b>Archivio musicale:</b> gli audio trovati vengono confrontati con tutte le pagine verificabili degli archivi di riferimento. I file omonimi possono produrre un suggerimento, ma <b>non selezionano automaticamente un progetto di destinazione</b>. Il menu <b>Progetto da collegare (scelta manuale)</b> parte vuoto per file non ancora archiviati. I pulsanti <b>Seleziona per revisione</b> e <b>Rivedi selezionati</b> aprono il percorso di verifica, non autorizzano creazioni automatiche.</li>
+<li><b>Sicurezza:</b> se il confronto con gli archivi è incompleto o non verificabile, le azioni di associazione/inserimento vengono bloccate. L'eventuale tabella unificata mancante mantiene la compatibilità legacy già prevista, senza dichiarare una verifica riuscita per altri errori. La finestra finale di creazione/collegamento continua a richiedere una scelta e una conferma esplicita.</li>
+</ol><p class="text-kyv-text mt-3">Questa versione non crea progetti, non importa file audio autonomamente, non ricalcola fatture o royalty, non modifica alcun record esistente e non cambia i permessi di accesso.</p></div>
+
 <div class="manual-card-soft p-5 mt-4"><h3 class="sub-title mb-3">v2.62 — Audio Finder organizzato per attività</h3>
 <ol class="list-decimal ml-5 text-kyv-text space-y-2 leading-relaxed">
 <li><b>1 · I miei brani:</b> la vista iniziale <b>Esplora i miei brani</b> mostra solo audio già classificati e approvati come tuoi. Ricerca, sorgente, account, collegamenti e ordinamento sono separati dai controlli di revisione.</li>
