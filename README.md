@@ -1,3 +1,13 @@
+## v2.68 — Studio Editor, modifiche sicure e popup contestuali (4 novembre 2026)
+
+In **Studio Editor**, clicca una riga o *Modifica* per aprire il popup. Il salvataggio **invia solo i campi che hai davvero modificato**: gli altri valori sono preservati e non vengono riscritti, neppure se la UI li mostra in un formato differente. Gli eventuali campi precompilati automaticamente dopo la selezione di una fattura risultano tra quelli cambiati; un campo svuotato intenzionalmente salva `null`.
+
+Il popup indica quanti campi sono cambiati; se premi **Annulla** o **X** senza salvare, chiede conferma prima di scartare le modifiche. Se esci dalla pagina con modifiche pendenti, il browser può mostrare il suo avviso. Durante **Salva modifiche** non puoi avviare un doppio invio; per un record invariato l'app non esegue scritture.
+
+Un record collegato si apre **nel popup** e il salvataggio mantiene visibile la tabella di partenza. Prima di **Elimina Record** viene riportato tabella e ID; l'obiettivo resta quello selezionato, anche se altri eventi aggiornano la UI. I record di **Versioni audio** rimangono di sola lettura. Ricerca globale aggiorna l'indice dopo i salvataggi completati quando necessario.
+
+Questa versione non cambia database, schema, autorizzazioni o archivi audio. I test automatizzati non sostituiscono il collaudo manuale in una sessione autenticata della PWA.
+
 ## v2.67 — Studio Editor: archivio completo e griglia progressiva (4 novembre 2026)
 
 **Lettura verificata:** apri Studio Editor, scegli una tabella e attendi che il contatore riporti i record verificati. La lettura non è più limitata silenziosamente a 1.000 record: usa pagine da 500, conteggio esatto e ordinamento per chiave. Se il totale è sconosciuto, il permesso nega la lettura, una pagina manca o l'archivio supera 30.000 righe, non mostra un elenco parziale come completo e propone **Riprova**. Le risposte tardive di un tab precedente non sovrascrivono il tab corrente.

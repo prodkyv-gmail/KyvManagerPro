@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-67-editor-verified-20261104';
+const CACHE_NAME = 'kyv-studio-v2-68-safe-mutations-20261104';
 const APP_SHELL = [
     './',
     './index.html',
@@ -48,6 +48,7 @@ const APP_SHELL = [
     './kyv-siae-amount.js',
     './kyv-editor-columns.js',
     './kyv-editor-read-v267.js',
+    './kyv-editor-changes-v268.js',
     './editor.html',
     './kyv-invoice-line-amount.js',
     './kyv-invoice-split-v247.js',

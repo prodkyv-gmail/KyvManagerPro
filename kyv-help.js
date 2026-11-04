@@ -15,6 +15,8 @@ function getKyvHelpContent(activePage) {
     };
     guide.editor.content += '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.67 · Ricerca completa, griglia leggera</h5><p class="text-sm text-kyv-text mt-2">La tabella corrente viene caricata in pagine da 500 con conteggio esatto, fino al limite dichiarato di 30.000 record. Se la verifica non riesce, premi <b>Riprova</b>: non vengono mostrati record parziali. Nella griglia sono visibili inizialmente <b>120 righe</b>; premi <b>Mostra altre 120 righe</b> quando serve. Ricerca, ordinamento ed esportazione CSV usano tutti i record caricati, anche le righe non visibili e le colonne nascoste. Se cambi tab mentre carica, la risposta precedente viene scartata. Nessuna modifica al salvataggio o alle regole SIAE.</p></div>';
 
+    guide.editor.content += '<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.68 · Modifiche sicure nel popup</h5><p class="text-sm text-kyv-text mt-2">Aprendo Modifica, vedi quanti campi sono cambiati. <b>Salva modifiche</b> invia solo le differenze effettive; i campi che non hai toccato non vengono riscritti. Annulla/X chiedono conferma per le modifiche non salvate; il browser può avvisarti se lasci la pagina. Un record collegato si apre qui, senza cambiare la tabella da cui provieni. Prima di Eliminare controlla tabella e ID. Versioni audio è di sola lettura.</p></div>';
+
     guide.dashboard = {
         title: 'Guida contestuale: Panoramica',
         content: `<div class="space-y-5">

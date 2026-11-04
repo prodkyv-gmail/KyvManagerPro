@@ -7,6 +7,14 @@
 
 # Changelog
 
+### v2.68 · 2026-11-04
+- Studio Editor: i popup di modifica inviano al database soltanto i campi effettivamente cambiati dall'utente; non riscrivono campi intatti, null storici, dati provenienti da altre integrazioni o valori trasposti dalla UI. Gli inserimenti inviano soltanto i campi compilati intenzionalmente.
+- Indicatore nel popup dei campi ancora da salvare, controllo di chiusura con conferma, avviso nativo in uscita dalla pagina, salvataggio unico con input bloccati durante l'invio e nessun aggiornamento se non ci sono modifiche.
+- I riferimenti incrociati si aprono in popup con tabella/ID di destinazione espliciti senza sostituire la griglia di provenienza. Eliminazioni con tabella e ID fissati alla richiesta e pulsante disattivato durante l'operazione.
+- Archivio AUDIO_VERSIONI rimane sola lettura anche nel popup. I salvataggi verificati notificano la ricerca globale per invalidare la sua cache temporanea.
+- Test automatici specifici (compresi null/date/numeri/autofill), guide e cache PWA aggiornate. Nessuna migrazione o modifica di dati, regole fiscali, formule o proprietà audio. Nessun accesso Vercel.
+
+
 ### v2.67 · 2026-11-04
 - Studio Editor: eliminato il troncamento silenzioso alle prime 1.000 righe. Lettura completa per tabella con paginazione da 500, conteggio esatto, ordinamento stabile per chiave e limite esplicito di 30.000 record.
 - Se la copertura non è verificabile, errore/limite/permesso negato, la griglia non usa risultati parziali e offre Riprova. Risposte obsolete da altri tab non possono sostituire la tabella selezionata.
