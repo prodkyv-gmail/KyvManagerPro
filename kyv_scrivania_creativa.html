@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://unpkg.com/lucide@0.468.0"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
-<script src="kyv-creative-desk-v244.js"></script>
+<script src="kyv-creative-desk-v244.js"></script><script src="kyv-invoice-line-amount.js"></script><script src="kyv-music-hub-v259.js"></script>
 <script src="kyv-creative-desk-ui-v244.js" defer></script>
 <link rel="stylesheet" href="kyv-responsive.css"><link rel="stylesheet" href="kyv-theme.css">
 <style>
@@ -44,6 +44,33 @@ a{color:#c7d2fe}button:focus-visible,input:focus-visible,textarea:focus-visible,
 .desk-empty{padding:12px;color:#94a3b8}small{color:#94a3b8}
 #desk-link-dialog{border:1px solid #818cf8;padding:16px;margin:15px 0;border-radius:12px;background:#1e293b}
 #desk-link-dialog[hidden],section[hidden],#desk-content[hidden]{display:none!important}
+
+.hub-main{background:linear-gradient(135deg,#151f32,#121827)}
+.hub-main h3{font-size:14px;font-weight:850;margin:10px 0;color:#f8fafc}
+.hub-filters{display:grid;grid-template-columns:minmax(180px,2fr) repeat(3,minmax(140px,1fr));gap:9px;margin:15px 0}
+.hub-filters input,.hub-filters select{background:#0f172a;border:1px solid #64748b;color:#f8fafc;border-radius:9px;padding:10px;width:100%;min-width:0}
+.hub-rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px;margin:10px 0}
+.hub-project{border:1px solid #485873;border-radius:12px;background:#101827;padding:15px;min-width:0}
+.hub-project h3{margin:4px 0;font-size:16px;overflow-wrap:anywhere}
+.hub-project small{font-size:12px;color:#cbd5e1;display:block;line-height:1.5}
+.hub-project .hub-markers{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.hub-marker{font-size:11px;color:#e0e7ff;border:1px solid #64748b;padding:5px 8px;border-radius:14px}
+.hub-marker.warn{border-color:#eab308;color:#fde68a}
+.hub-project button{margin-top:12px}
+.hub-graph{margin:12px 0;border:1px solid #41516e;background:#101827;border-radius:12px;padding:12px}
+.hub-chart-row{display:grid;grid-template-columns:minmax(110px,165px) minmax(80px,1fr) 35px;align-items:center;gap:10px;margin:7px 0;font-size:12px;color:#cbd5e1}
+.hub-chart-bar{height:10px;border-radius:8px;background:#334155;overflow:hidden}
+.hub-chart-fill{height:100%;background:#818cf8}
+.hub-modal{width:min(850px,calc(100% - 20px));max-height:86vh;overflow-y:auto;padding:20px;border:1px solid #818cf8;background:#151c2c;color:#f8fafc;border-radius:15px}
+.hub-modal::backdrop{background:rgba(0,0,0,.82)}
+.hub-modal h3{font-size:20px;font-weight:850;margin-bottom:8px}
+.hub-modal h4{font-size:14px;font-weight:850;color:#e0e7ff;margin:14px 0 6px}
+.hub-modal p,.hub-modal li{font-size:13px;line-height:1.65;color:#cbd5e1;margin-bottom:7px}
+.hub-modal .hub-detail-links{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0}
+.hub-modal .hub-detail-links a{font-size:12px}
+.hub-modal ul{padding-left:19px;list-style:disc}
+@media(max-width:1050px){.hub-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:590px){.hub-filters{grid-template-columns:1fr}.hub-rows{grid-template-columns:1fr}.desk-tabs{flex-wrap:wrap}.hub-chart-row{grid-template-columns:100px 1fr 28px}}
 </style>
 </head><body class="flex h-screen overflow-hidden">
 <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
@@ -66,10 +93,40 @@ a{color:#c7d2fe}button:focus-visible,input:focus-visible,textarea:focus-visible,
 <label><input id="desk-archived" type="checkbox"> Mostra archiviati</label>
 </div>
 <div class="desk-tabs" role="tablist" aria-label="Aree della scrivania">
-<button id="tab-sessions" type="button" aria-selected="true" role="tab" aria-controls="desk-sessions">Sessioni</button>
+<button id="tab-hub" type="button" aria-selected="true" role="tab" aria-controls="desk-hub">Scrivania musicale</button>
+<button id="tab-sessions" type="button" aria-selected="false" role="tab" aria-controls="desk-sessions">Sessioni</button>
 <button id="tab-pitches" type="button" aria-selected="false" role="tab" aria-controls="desk-pitches">Piazzamenti</button>
 </div>
-<section id="desk-sessions" role="tabpanel" aria-labelledby="tab-sessions">
+<section id="desk-hub" role="tabpanel" aria-labelledby="tab-hub">
+<div class="desk-panel hub-main">
+<div class="explorer-tools"><div><h2>Scrivania musicale · v2.59</h2>
+<p class="desk-method">Una vista unica per progetto, sessioni effettivamente registrate, invii, audio che hai approvato come tuoi, fee e fatture collegate esplicitamente. Non sposta, modifica o completa i dati storici.</p></div>
+<a href="guida.html#guida-creativa">Guida alla scrivania</a></div>
+<div id="hub-stats" class="desk-stats" aria-label="Indicatori unificati"></div>
+<p id="hub-finance-note" class="desk-method" role="status"></p>
+<div class="hub-graph" aria-label="Piazzamenti per stato nel nuovo archivio">
+<h3>Stati dei piazzamenti registrati</h3><div id="hub-pitch-chart"></div></div>
+<div class="hub-filters" aria-label="Filtri indipendenti della scrivania musicale">
+<input id="hub-search" type="search" aria-label="Cerca progetti, sessioni e destinatari" placeholder="Cerca brano, artista, sessione, destinatario…">
+<select id="hub-artist" aria-label="Artista"><option value="">Tutti gli artisti</option></select>
+<select id="hub-status" aria-label="Stato del progetto"><option value="">Tutti gli stati</option></select>
+<select id="hub-mode" aria-label="Tipo di progetto">
+<option value="all">Tutti i progetti</option>
+<option value="sessions">Con sessioni registrate</option>
+<option value="pitches">Con piazzamenti registrati</option>
+<option value="in_ascolto">In ascolto</option>
+<option value="overdue">Con follow-up scaduto</option>
+<option value="audio">Con audio personali collegati</option>
+<option value="noaudio">Senza audio personale in KYV</option>
+<option value="invoices">Con fatture collegate</option>
+</select>
+</div>
+<p id="hub-count" class="desk-method" role="status"></p>
+<div id="hub-rows" class="hub-rows"></div>
+<button type="button" id="hub-more" hidden>Mostra altri progetti</button>
+</div>
+</section>
+<section id="desk-sessions" role="tabpanel" aria-labelledby="tab-sessions" hidden>
 <div class="desk-cols">
 <section class="desk-panel"><h2>Registra o modifica una sessione</h2>
 <form id="session-form" class="desk-form">
@@ -117,6 +174,7 @@ a{color:#c7d2fe}button:focus-visible,input:focus-visible,textarea:focus-visible,
 </section>
 </div>
 </div></div></main>
+<dialog id="hub-project-modal" class="hub-modal" aria-label="Dettaglio unificato del progetto"><div id="hub-project-body"></div><button type="button" id="hub-close" class="quiet">Chiudi</button></dialog>
 <script>
   loadKyvSidebar('creative');
   if(window.lucide)lucide.createIcons();
