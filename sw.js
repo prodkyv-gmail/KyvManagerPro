@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-59-unified-music-20261104';
+const CACHE_NAME = 'kyv-studio-v2-60-design-foundation-20261104';
 const APP_SHELL = [
     './',
     './index.html',
