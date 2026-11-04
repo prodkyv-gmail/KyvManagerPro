@@ -31,7 +31,8 @@ async function tests(){
  assert.ok(combined.warnings.some(x=>x.includes('limite di pagine')));
  assert.ok(combined.warnings.some(x=>x.includes('non validi')));
  assert.equal(combined.rows.some(x=>x.nome_file==='notaudio.txt'),false);
- assert.throws(()=>B.combine([{provider:'onedrive',rows:[]}]),/non autorizzata/);
+ assert.equal(B.combine([{provider:'onedrive',rows:[]}]).reports.length,1,'OneDrive is a bounded optional provider');
+ assert.throws(()=>B.combine([{provider:'ftp',rows:[]}]),/non autorizzata/);
  assert.throws(()=>B.combine([{provider:'drive',rows:source1}],2),/Oltre 2 file/);
  const conflicting=B.combine([{provider:'drive',rows:[
   make('abc','Brano demo.wav'),make('abc','Brano master.wav','drive','KYV',{size_bytes:4321})
