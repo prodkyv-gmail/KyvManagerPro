@@ -8,7 +8,7 @@ const sw=fs.readFileSync('sw.js','utf8');
 const header=html.split('<header class="kyv-economy-header')[1]?.split('</header>')[0]||'';
 assert.ok(header,'The Economy page has an explicit scoped header');
 assert.ok(header.includes('class="kyv-economy-header-layout"'),'Header uses an independent vertical layout');
-assert.ok(header.includes('class="kyv-economy-toolbar"'),'Actions must have dedicated wrapping layout');
+assert.ok(header.includes('class="kyv-economy-toolbar kyv-v276-toolbar"'),'Actions retain the wrapping layout and shared touch styling');
 assert.ok(header.includes('role="group" aria-label="Comandi Economia"'),'Toolbar is labelled for accessibility');
 assert.ok(header.includes('class="kyv-economy-search"'),'Search is a flexible, full-width-safe item');
 for(const label of ['correlazione-search','kyv_liquidazioni.html','kyv_intelligence.html','correlazione.html','kyv-aruba-open','data-kyv-new-table="FATTURE"','fetchFattureCorrelate()']){
