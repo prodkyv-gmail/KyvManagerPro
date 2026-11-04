@@ -35,7 +35,7 @@ assert.ok(code.includes('kyv-editor-columns.js')&&code.includes('data-action="to
 assert.ok(code.includes('data-action="show-all-columns"'));
 assert.ok(code.includes('data-editor-column'));
 assert.ok(code.includes('KYV_EDITOR_COLUMNS?.visible(currentEditorTable,Object.keys(sourceRow))'));
-assert.ok(code.includes('Object.values(row).some('),'search must include hidden data');
+assert.ok(code.includes('kyv-editor-view-v277.js')&&read('kyv-editor-view-v277.js').includes('Object.values(row).some('),'search must include hidden data through the v2.77 read-only view engine');
 assert.ok(code.includes("const keys = Object.keys(currentEditorData[0]); let csv = keys.join(',')"),'CSV must include hidden data');
 assert.ok(code.includes('IMPORTO conserva il segno originale SIAE'));
 const rights=read('kyv-rights-v7.js'),intel=read('kyv-intelligence-engine-v238.js'),rend=read('rendiconto.html'),guard=read('kyv-siae-import-guard.js');
