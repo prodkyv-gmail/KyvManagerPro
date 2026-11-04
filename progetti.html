@@ -284,6 +284,7 @@
                (text(p.NOTE)?'<p class="quick-note"><strong>Note</strong>\n'+H(text(p.NOTE).slice(0,700))+(text(p.NOTE).length>700?'… (continua nella scheda)':'')+'</p>':'')+
                '<nav class="quick-actions" aria-label="Apri sezioni del progetto">'+
                '<a href="scheda_progetto.html?id='+encodeURIComponent(p.ID)+'">Apri scheda completa</a>'+
+               '<a href="sessioni.html?projectId='+encodeURIComponent(p.ID)+'">Sessioni del progetto</a>'+
                '<a href="kyv_audio_finder.html?project='+encodeURIComponent(p.ID)+'">Audio del progetto</a>'+
                '<a href="fatture.html?ripartizione_progetto='+encodeURIComponent(p.ID)+'">Collega fattura</a>'+
                '</nav><p class="muted" style="margin-top:12px">Vista rapida in sola lettura. Nessun dato modificato.</p>';

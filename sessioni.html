@@ -22,6 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
     <script src="https://unpkg.com/lucide@0.468.0"></script>
     <script src="config.js"></script>
+    <script src="kyv-editor-read-v267.js"></script>
     <script src="kyv-drive-bridge.js"></script>
     <script src="kyv-core.js"></script>
     <script src="kyv-toast.js"></script>
@@ -92,6 +93,11 @@
                     </button>
                 </div>
             </header>
+
+            <div id="session-project-context" class="hidden mb-6 rounded-xl border border-cyan-400/25 bg-cyan-400/5 p-4 flex flex-wrap items-center justify-between gap-3" role="status" aria-live="polite">
+                <div class="min-w-0"><span class="text-[10px] uppercase tracking-wider text-cyan-300 font-black">Sessioni del progetto selezionato</span><p id="session-project-context-label" class="text-sm font-bold text-white break-words mt-1"></p></div>
+                <a href="sessioni.html" class="px-3 py-2 rounded-lg border border-cyan-400/30 text-cyan-200 hover:text-white text-xs font-bold">Vedi tutte le sessioni</a>
+            </div>
 
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6" id="session-metrics">
                 <div class="kyv-panel p-4 kyv-metric-card"><p class="text-[10px] uppercase tracking-wider text-kyv-text font-black">Oggi</p><h3 id="metric-oggi" class="text-2xl font-black mt-1">0</h3><p class="text-xs text-kyv-text mt-1">sessioni/data lavoro</p></div>
@@ -414,10 +420,25 @@
             }
         });
 
+        function selectedJourneyProjectId() {
+            return window.KYV_FLOW_ROUTES_V269?.fromLocation(location)||'';
+        }
+        function renderSessionProjectContext() {
+            const id=selectedJourneyProjectId(),wrap=document.getElementById('session-project-context');
+            if(!wrap)return;
+            wrap.classList.toggle('hidden',!id);
+            if(!id)return;
+            const project=progetti.find(row=>String(row.ID)===id);
+            document.getElementById('session-project-context-label').textContent=project
+                ? [project.ARTISTA,project.TITOLO].filter(Boolean).join(' · ')+' (#'+id+')'
+                : 'Progetto #'+id+' non trovato nell’archivio verificato.';
+        }
         function filteredRows() {
             const q = KYV.normalize(document.getElementById('session-search').value);
+            const selectedProject=selectedJourneyProjectId();
             const mode = document.getElementById('session-filter').value;
             return progetti.filter(row => {
+                if(selectedProject&&String(row.ID)!==selectedProject)return false;
                 if (q && !projectSearchBlob(row).includes(q)) return false;
                 const sessionDelta = daysFromToday(row.Data_Sessione);
                 const releaseDelta = daysFromToday(row.Data_Pubblicazione);
@@ -432,6 +453,7 @@
             });
         }
         function renderSessioni() {
+            renderSessionProjectContext();
             const rows = filteredRows();
             const now30 = 30;
             const todayCount = progetti.filter(r => daysFromToday(r.Data_Sessione) === 0).length;
@@ -471,12 +493,14 @@
             try {
                 document.getElementById('timeline-list').innerHTML = emptyState('Caricamento sessioni...', 'Sto leggendo i progetti da Supabase.', 'loader-2');
                 if (window.lucide) lucide.createIcons();
-                const { data, error } = await supabaseClient.from('PROGETTI').select('*').order('Data_Sessione', { ascending: true, nullsFirst: false });
-                if (error) throw error;
-                progetti = data || [];
+                // Lettura verificata, non limitata silenziosamente al primo blocco Supabase.
+                if(!window.KYV_EDITOR_READ_V267)throw new Error('Caricatore completo dei progetti non disponibile.');
+                progetti = await KYV_EDITOR_READ_V267.readComplete(supabaseClient,'PROGETTI','ID');
                 renderSessioni();
             } catch (err) {
                 console.error(err);
+                progetti = [];
+                renderSessionProjectContext();
                 document.getElementById('timeline-list').innerHTML = emptyState('Errore caricamento', err.message || 'Impossibile leggere i progetti.', 'triangle-alert');
                 KYV.showToast('Errore caricamento sessioni.', 'error');
                 if (window.lucide) lucide.createIcons();

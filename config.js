@@ -171,6 +171,11 @@ window.KYV_CONFIG = KYV_CONFIG;
     navOrder.dataset.kyvNavOrder='1';
     document.head.appendChild(navOrder);
 
+    const journeyRoutes=document.createElement('script');
+    journeyRoutes.src='kyv-flow-routes-v269.js';
+    journeyRoutes.async=false;
+    document.head.appendChild(journeyRoutes);
+
     const workflowNav=document.createElement('script');
     workflowNav.src='kyv-workflow-nav.js';
     workflowNav.async=false;
