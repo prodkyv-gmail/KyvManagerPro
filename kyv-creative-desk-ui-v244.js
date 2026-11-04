@@ -11,7 +11,8 @@ const pitchStates=['da_proporre','inviato','in_ascolto','interessato','opzionato
 const recipients=['artista','a_r','etichetta','publisher','management','altro'];
 const friendly={in_lavorazione:'In lavorazione',demo:'Demo',proposta:'Proposta',produzione:'Produzione',pubblicazione:'Pubblicazione dichiarata',accantonato:'Accantonato',da_proporre:'Da proporre',inviato:'Inviato',in_ascolto:'In ascolto',interessato:'Interessato',opzionato:'Opzionato',confermato:'Confermato',rifiutato:'Rifiutato',a_r:'A&R',scrittura:'Scrittura',registrazione:'Registrazione',revisione:'Revisione',etichetta:'Etichetta',artista:'Artista',publisher:'Publisher',management:'Management',altro:'Altro'};
 const label=v=>friendly[v]||text(v).replaceAll('_',' ');
-let client=null,data=null,busy=false,shownArchived=false,hubModel=null,hubShown=30,financeWarning='';
+let client=null,data=null,busy=false,shownArchived=false,hubModel=null,hubShown=30,financeWarning='',currentTab='hub';
+const creativeQueries={sessions:'',pitches:''};
 const LIMIT=10000,SIZE=500;
 function status(s,error=false){$('desk-status').textContent=s;$('desk-status').className='desk-status'+(error?' error':'');}
 async function read(table,columns,order){
@@ -59,7 +60,12 @@ async function refresh(){
   data={sessions,links,pitches,events,sessionEvents,projects,audioLinks,audioFiles,audioDecisions,finance};
   hubModel=window.KYV_MUSIC_HUB_V259.build(data,
     new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'}),window.KYV_INVOICE_LINE);
-  hubShown=30;fillProjects();fillHubFilters();render();$('desk-content').hidden=false;
+  hubShown=30;fillProjects();fillHubFilters();
+  const targetProject=new URLSearchParams(location.search).get('project');
+  if(targetProject&&data.projects.some(p=>String(p.ID)===targetProject)&&!$('pitch-project').value){
+   $('pitch-project').value=targetProject; // Read-only preselection: no submission, no new project.
+  }
+  render();$('desk-content').hidden=false;
   status('Dati creativi aggiornati. '+(financeReady?
     'Economia disponibile con fatture e incassi distinti.':
     'Economia non completamente leggibile: il riepilogo monetario è sospeso, senza inventare importi.'));
@@ -133,6 +139,10 @@ function renderHub(){
   '<div class="hub-chart-fill" style="width:'+Math.min(100,Math.round(count/biggest*100))+'%"></div></div>'+
   '<span>'+count+'</span></div>').join('')||
   '<p class="desk-method">Non ci sono piazzamenti attivi registrati; nessuna conversione ricostruita.</p>';
+ const activeAdvanced=[$('hub-artist').value,$('hub-status').value].filter(Boolean).length+
+  ($('hub-mode').value!=='all'?1:0);
+ $('hub-active-filters').textContent=activeAdvanced?
+  activeAdvanced+' '+(activeAdvanced===1?'filtro attivo':'filtri attivi'):'Nessun filtro avanzato';
  const matched=hubFiltered(),list=matched.slice(0,hubShown);
  $('hub-count').textContent=matched.length+' progetti corrispondenti · '+list.length+
   ' mostrati. Filtri indipendenti da Sessioni/Piazzamenti.';
@@ -172,7 +182,7 @@ function hubDetail(id){
  parts.push('<nav class="hub-detail-links"><a href="scheda_progetto.html?id='+encodeURIComponent(p.id)+
   '">Scheda Progetto</a><a href="kyv_audio_finder.html?project='+encodeURIComponent(p.id)+
   '">Audio Finder</a><a href="fatture.html">Fatture e incassi</a>'+
-  '<a href="kyv_scrivania_creativa.html?tab=pitches">Piazzamenti</a></nav>');
+  '<a href="kyv_scrivania_creativa.html?tab=pitches&project='+encodeURIComponent(p.id)+'">Piazzamenti</a></nav>');
  parts.push('<h4>Sessioni documentate ('+p.sessionCount+')</h4>'+list(p.sessions,
   x=>H(x.data_sessione+' · '+x.titolo+' · '+label(x.esito)),
   'Nessuna sessione collegata nel nuovo archivio, non significa che il lavoro non sia avvenuto.'));
@@ -222,8 +232,9 @@ function render(){
  $('desk-summary').innerHTML=cards.map(x=>'<article class="desk-stat"><small>'+H(x[0])+'</small><strong>'+H(x[1])+'</strong><small>'+H(x[2])+'</small></article>').join('');
  $('desk-method').textContent=rep.caveat+' '+rep.feeCaveat;
  const sessions=data.sessions.filter(s=>shownArchived||!s.archiviata);
- const search=text($('desk-search').value).toLocaleLowerCase('it-IT');
- const filtered=sessions.filter(s=>!search||(s.titolo+' '+s.partecipanti+' '+s.luogo).toLocaleLowerCase('it-IT').includes(search));
+ const sessionSearch=text(creativeQueries.sessions).toLocaleLowerCase('it-IT');
+ const pitchSearch=text(creativeQueries.pitches).toLocaleLowerCase('it-IT');
+ const filtered=sessions.filter(s=>!sessionSearch||(s.titolo+' '+s.partecipanti+' '+s.luogo).toLocaleLowerCase('it-IT').includes(sessionSearch));
  $('session-rows').innerHTML=filtered.map(s=>{
   const projectLinks=data.links.filter(l=>l.id_sessione===s.id&&!l.annullato);
   const names=projectLinks.map(l=>'<a href="scheda_progetto.html?id='+encodeURIComponent(l.id_progetto)+'">'+H(projectName(l.id_progetto))+'</a>').join(' · ');
@@ -233,7 +244,7 @@ function render(){
   const actions='<div class="desk-actions"><button type="button" data-edit-session="'+H(s.id)+'">Modifica</button><button type="button" data-link-session="'+H(s.id)+'">Collega brano</button><button type="button" data-archive-session="'+H(s.id)+'">'+(s.archiviata?'Ripristina':'Archivia')+'</button></div>';
   return '<article class="desk-entry"><div class="desk-entry-body"><b>'+H(s.titolo)+'</b><small>'+H(s.data_sessione)+' · '+H(label(s.tipo))+' · '+H(label(s.esito))+(s.archiviata?' · Archiviata':'')+'</small><small>'+H(s.partecipanti||'Partecipanti non indicati')+(s.durata_minuti?' · '+s.durata_minuti+' min':' · Durata non registrata')+'</small><small>'+H(s.luogo||'')+'</small><div class="desk-links">'+(names||'<span>Non collegata a un progetto</span>')+'</div><div class="desk-links"><a href="kyv_audio_finder.html?session='+encodeURIComponent(s.id)+'">Audio Finder · '+attached.length+' file</a>'+attached.map(f=>' · '+H(f.nome_file)).join('')+'</div><details><summary>Storico esiti ('+history.length+')</summary>'+history.slice(0,8).map(e=>'<p>'+H(e.created_at.slice(0,10))+' · '+H(e.nota)+'</p>').join('')+'</details><div class="desk-actions">'+pending.map(l=>'<button type="button" class="quiet" data-unlink-id="'+H(l.id)+'" title="Scollega senza cancellare il progetto">Scollega #'+H(l.id_progetto)+'</button>').join('')+'</div></div>'+actions+'</article>';
  }).join('')||'<p class="desk-empty">Nessuna sessione trovata. Inseriscila soltanto se è stata effettivamente svolta.</p>';
- const pitches=data.pitches.filter(p=>shownArchived||!p.archiviata).filter(p=>!search||[p.destinatario,p.referente,projectName(p.id_progetto)].join(' ').toLocaleLowerCase('it-IT').includes(search));
+ const pitches=data.pitches.filter(p=>shownArchived||!p.archiviata).filter(p=>!pitchSearch||[p.destinatario,p.referente,projectName(p.id_progetto)].join(' ').toLocaleLowerCase('it-IT').includes(pitchSearch));
  $('pitch-rows').innerHTML=pitches.map(p=>{
   const history=data.events.filter(e=>e.id_piazzamento===p.id).slice(0,5);
   const alert=day(p.prossimo_followup)&&p.prossimo_followup<now&&!['rifiutato','confermato','accantonato'].includes(p.stato);
@@ -243,20 +254,39 @@ function render(){
  $('desk-followups').innerHTML=rep.overdue.slice(0,12).map(p=>'<li><b>'+H(p.destinatario)+'</b> · '+H(projectName(p.id_progetto))+' · '+H(p.prossimo_followup)+'</li>').join('')||'<li>Nessun follow-up scaduto nel nuovo archivio.</li>';
  $('desk-session-count').textContent=filtered.length+' sessioni mostrate';
  $('desk-pitch-count').textContent=pitches.length+' piazzamenti mostrati';
- renderHub();
+ if(currentTab==='hub')renderHub();
 }
 function resetSession(){
  $('session-form').reset();$('session-id').value='';
  $('session-date').value=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'});
  $('session-submit').textContent='Registra sessione';
+ $('session-more-fields').open=false;
 }
 function resetPitch(){
  $('pitch-form').reset();$('pitch-id').value='';$('pitch-submit').textContent='Registra proposta';
+ $('pitch-more-fields').open=false;
 }
 function showTab(tab){
+ if(!['hub','sessions','pitches'].includes(tab))tab='hub';
+ if(currentTab!=='hub')creativeQueries[currentTab]=$('desk-search').value;
+ currentTab=tab;
+ document.body.dataset.creativeTab=tab;
+ $('desk-legacy-tools').hidden=tab==='hub';
+ if(tab!=='hub'){
+  $('desk-search').value=creativeQueries[tab];
+  const hint=tab==='sessions'?'Cerca titolo, partecipanti o studio…':'Cerca destinatario, referente o progetto…';
+  $('desk-search').placeholder=hint;
+  $('desk-search').setAttribute('aria-label',hint);
+ }
  for(const name of ['hub','sessions','pitches']){
   $('desk-'+name).hidden=name!==tab;
-  $('tab-'+name).setAttribute('aria-selected',String(name===tab));
+  const button=$('tab-'+name),active=name===tab;
+  button.setAttribute('aria-selected',String(active));
+  button.tabIndex=active?0:-1;
+ }
+ if(data){
+  if(tab==='hub')renderHub();
+  else render();
  }
 }
 function editSession(id){
@@ -264,6 +294,7 @@ function editSession(id){
  $('session-id').value=s.id;
  for(const [field,value] of [['title',s.titolo],['date',s.data_sessione],['type',s.tipo],['people',s.partecipanti],['place',s.luogo],['minutes',s.durata_minuti],['outcome',s.esito],['notes',s.note]])$('session-'+field).value=value??'';
  $('session-submit').textContent='Salva modifiche';
+ $('session-more-fields').open=true;
  showTab('sessions');$('session-form').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function editPitch(id){
@@ -271,6 +302,7 @@ function editPitch(id){
  $('pitch-id').value=p.id;
  for(const [field,value] of [['project',p.id_progetto],['recipient',p.destinatario],['recipient-type',p.tipo_destinatario],['contact',p.referente],['sent',p.data_invio],['stage',p.stato],['followup',p.prossimo_followup],['response',p.data_risposta],['notes',p.note]])$('pitch-'+field).value=value??'';
  $('pitch-submit').textContent='Salva modifiche';
+ $('pitch-more-fields').open=true;
  showTab('pitches');$('pitch-form').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function validateString(v,min,max,label){const t=text(v);if(t.length<min||t.length>max)throw Error(label+': lunghezza non valida');return t;}
@@ -358,15 +390,26 @@ function bind(){
  $('tab-hub').addEventListener('click',()=>showTab('hub'));
  $('tab-sessions').addEventListener('click',()=>showTab('sessions'));
  $('tab-pitches').addEventListener('click',()=>showTab('pitches'));
+ document.querySelector('.desk-tabs').addEventListener('keydown',event=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  const names=['hub','sessions','pitches'],index=names.indexOf(currentTab);
+  const next=event.key==='Home'?0:event.key==='End'?names.length-1:
+   (index+(event.key==='ArrowRight'?1:-1)+names.length)%names.length;
+  event.preventDefault();showTab(names[next]);$('tab-'+names[next]).focus();
+ });
  for(const field of ['hub-search','hub-artist','hub-status','hub-mode'])
   $(field).addEventListener(field==='hub-search'?'input':'change',()=>{hubShown=30;renderHub();});
  $('hub-more').addEventListener('click',()=>{hubShown+=30;renderHub();});
+ $('hub-clear').addEventListener('click',()=>{
+  $('hub-search').value='';$('hub-artist').value='';$('hub-status').value='';
+  $('hub-mode').value='all';hubShown=30;renderHub();$('hub-search').focus();
+ });
  $('hub-rows').addEventListener('click',e=>{
   const b=e.target.closest('button[data-hub-project]');
   if(b)hubDetail(b.dataset.hubProject);
  });
  $('hub-close').addEventListener('click',()=>$('hub-project-modal').close());
- $('desk-search').addEventListener('input',render);
+ $('desk-search').addEventListener('input',()=>{if(currentTab!=='hub')creativeQueries[currentTab]=$('desk-search').value;render();});
  $('desk-archived').addEventListener('change',e=>{shownArchived=e.target.checked;render();});
  $('session-form').addEventListener('submit',e=>{e.preventDefault();mutate(saveSession);});
  $('pitch-form').addEventListener('submit',e=>{e.preventDefault();mutate(savePitch);});
