@@ -195,6 +195,8 @@ function getKyvHelpContent(activePage) {
     Object.entries(detailedHelpV273).forEach(([key, content]) => {
       if (guide[key]) guide[key].content += '<section class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5" aria-label="Procedura dettagliata v2.73">'+content+'</section>';
     });
+    // v2.74 — same contextual module, not a duplicate help popup.
+    if(guide.progetti)guide.progetti.content += '<section class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.74 · Perché Recenti non cambia quando ordino?</h5><p class="text-sm text-kyv-text mt-2">Recenti seleziona sempre i 40 progetti più recenti in base alle date registrate; Titolo A–Z, Artista A–Z e gli altri ordinamenti riordinano solo questi 40. Se vuoi ordinare tutti i progetti premi Tutti. La ricerca per titolo, artista o #ID e i filtri avanzati cercano in tutto l’archivio caricato e verificato; Azzera filtri ripristina Recenti.</p><a class="text-indigo-300 underline" href="guida.html#v273-search">Istruzioni dettagliate</a></section>';
     const aliases = { spese: 'documenti' };
     activePage = aliases[activePage] || activePage;
     return guide[activePage] || guide.default;

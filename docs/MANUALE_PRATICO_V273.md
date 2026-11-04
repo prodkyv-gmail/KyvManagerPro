@@ -4,6 +4,12 @@
 
 Questo manuale è la spiegazione corrente delle funzioni di KYVManagerPro. L'app conserva sezioni storiche nelle versioni precedenti: quando il nome di un comando è cambiato, fare riferimento alla sezione *Guida pratica v2.73* di `guida.html` e alla guida **?** contestuale.
 
+## Aggiornamento v2.74 · Come funziona Recenti
+
+Quando Recenti è attivo **senza altri criteri**, prima vengono individuati i **40 progetti più recenti per attività effettivamente datata**; solo dopo sono ordinati per Titolo A–Z, Artista A–Z, Follow-up imminente o Attività meno recente. Cambiare ordinamento non fa entrare progetti meno recenti nell'elenco di 40. **Tutti** ordina invece l'intero archivio caricato e verificato. Cerca titolo, artista, parole delle note o **#ID**, oppure imposta filtri avanzati, per cercare anche fuori dai 40; nessun filtro limita la ricerca alle sole righe visibili. **Azzera filtri** ritorna a Recenti. I record privi di data non ricevono date ipotetiche.
+
+**Esempio pratico:** se il progetto ID 41 non è tra i 40 più recenti, passare a Tutti oppure digitare `#41`; ordinare per Titolo A–Z senza cambiare vista non lo recupera. Se imposti anche Da fare, verifica che lo stato del progetto sia compatibile; in caso contrario azzera i filtri.
+
 ## 1. Ricerca in Progetti: istruzioni passo passo
 
 1. Aprire **Progetti**, verificare se la vista è **Recenti** (max 40 schede senza altri criteri) oppure **Tutti**.

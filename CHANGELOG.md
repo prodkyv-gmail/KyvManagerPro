@@ -7,6 +7,11 @@
 
 # Changelog
 
+### v2.74 · 2026-11-04
+- Corretto l'ordinamento Recenti: prima si selezionano i 40 con attività più recente, poi si applica il criterio di visualizzazione solo entro il gruppo. Prima il sort poteva alterare i 40 visibili.
+- Ricerca testuale, ID esatto e filtri avanzati continuano a usare tutto l'archivio verificato; Tutti ordina l'intero archivio. Nessuna nuova query, scrittura, duplicazione UI o variazione di dati.
+- Messaggi Progetti, Guida completa, ? contestuale, manuali, versione/cache PWA e test v2.74 aggiornati. Non è stato eseguito collaudo autenticato o intervento su Vercel.
+
 ### v2.73 · 2026-11-04
 - Ricerca Progetti: supporto a ID esatto con #41 o id:41, più ID nelle ricerche generali; mantenuto il limite 40 soltanto per Recenti senza criteri.
 - Stato dei filtri leggibile fuori dal pannello avanzato; unico pulsante Azzera filtri visibile se ci sono criteri, anche con la disclosure chiusa. Viste principali con aria-pressed e conteggi chiari.
