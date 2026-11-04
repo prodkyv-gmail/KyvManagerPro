@@ -57,7 +57,8 @@ assert.equal(A.filterFindings(snapshot,{source:'local',type:'projects'}).length,
 assert.equal(A.filterFindings(snapshot,{query:'LA DOVE',type:'duplicates'}).length,1,'Accent-insensitive search');
 assert.equal(A.filterFindings(snapshot,{query:'Sissi',type:'projects'}).length,1);
 assert.equal(A.filterFindings(snapshot,{type:'pending',source:'drive'}).length,1);
-assert.throws(()=>A.filterFindings(snapshot,{source:'onedrive'}),/Sorgente/);
+assert.equal(A.filterFindings(snapshot,{source:'onedrive'}).length,0,'OneDrive is valid but not approved here');
+assert.throws(()=>A.filterFindings(snapshot,{source:'ftp'}),/Sorgente/);
 assert.throws(()=>A.filterFindings(snapshot,{type:'hidden'}),/Filtro/);
 assert.equal(A.report().summary.approved,0);
 const source=read('kyv-audio-audit-v257.js'),ui=read('kyv-audio-finder-ui-v245.js'),
