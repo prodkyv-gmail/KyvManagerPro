@@ -56,6 +56,7 @@ async function begin(provider,{config={},url,storage,crypt,now=Date.now()}={}){
   auth.searchParams.set('client_id',appId);
   auth.searchParams.set('response_type','code');
   auth.searchParams.set('token_access_type','online');
+  auth.searchParams.set('scope','files.metadata.read');
  }else{
   auth=new URL('https://login.microsoftonline.com/common/oauth2/v2.0/authorize');
   auth.searchParams.set('client_id',appId);
@@ -110,6 +111,7 @@ async function finish({url,storage,fetcher,now=Date.now(),config={},historyRepla
  const body=await response.json();
  if(!T(body.access_token)||!Number.isFinite(Number(body.expires_in))||Number(body.expires_in)<1)
   throw Error('Il provider non ha restituito un access token valido');
+ if(pending.provider==='dropbox'&&!T(body.account_id))throw Error('L’account Dropbox non è identificabile: nessun token salvato.');
  const accountLabel=pending.provider==='dropbox'?
   'Dropbox OAuth '+T(body.account_id).slice(0,90):
   'OneDrive (autorizzato)';
