@@ -71,7 +71,7 @@
                     <div>
                         <p class="kyv-eyebrow">Hub progetto</p>
                         <h2 class="text-3xl sm:text-4xl font-black tracking-tight mt-1">Scheda progetto</h2>
-                        <p class="text-kyv-text mt-2 text-xs sm:text-sm max-w-3xl">Produzione, documenti, diritti ed economia del brano in un solo posto.</p>
+                        <p class="text-kyv-text mt-2 text-xs sm:text-sm max-w-3xl">Concentrati sul prossimo passo. Per gli approfondimenti usa la vista Completa.</p>
                     </div>
                 </div>
                 <div class="flex gap-2 w-full xl:w-auto">
@@ -82,7 +82,7 @@
 
             <details id="project-picker" class="kyv-card mb-6 overflow-hidden" open>
                 <summary class="kyv-picker-summary">
-                    <span><strong>Cerca o cambia progetto</strong><small>Seleziona il brano da aprire</small></span>
+                    <span><strong>Cerca o cambia progetto</strong><small>Cerca per titolo, artista o codice: la ricerca riguarda tutti i progetti caricati</small></span>
                     <i data-lucide="chevron-down" class="w-5 h-5"></i>
                 </summary>
                 <div class="p-4 sm:p-5 pt-2">
@@ -253,12 +253,22 @@
         function updateStats(){ KYV.setText('stat-projects', state.projects.length); KYV.setText('stat-audio', state.stats.audio); KYV.setText('stat-invii', state.stats.invii); KYV.setText('stat-docs', state.stats.documenti); }
         function renderProjectResults(){
             const q=N(document.getElementById('project-search')?.value||'');
-            const rows=state.projects.filter(p=>!q || N([p.TITOLO,p.ARTISTA,p.AUTORI,p.MANAGEMENT,p.Label,p.Codice_ISRC,p.STATO].join(' ')).includes(q)).slice(0,80);
+            const matches=state.projects.filter(p=>!q || N([p.TITOLO,p.ARTISTA,p.AUTORI,p.MANAGEMENT,p.Label,p.Codice_ISRC,p.STATO].join(' ')).includes(q));
+            const rows=matches.slice(0,q?80:12);
             const el=document.getElementById('project-results');
             if(!rows.length){ el.innerHTML='<div class="p-4 text-center text-kyv-text text-xs">Nessun progetto trovato.</div>'; return; }
-            el.innerHTML=rows.map(p=>`<button class="project-result w-full text-left p-3 flex items-start justify-between gap-3 transition-colors ${state.current && String(state.current.ID)===String(p.ID)?'bg-indigo-500/10':''}" onclick="selectProject('${String(p.ID).replaceAll("'","\\'")}')"><span class="min-w-0"><strong class="block text-white truncate">${H(p.TITOLO || 'Senza titolo')}</strong><em class="not-italic block text-cyan-200 text-xs font-bold truncate mt-0.5">${H(p.ARTISTA || 'Artista non indicato')}</em><small class="block text-kyv-text truncate mt-1">${H([p.MANAGEMENT,p.Label,p.STATO].filter(Boolean).join(' · ') || 'Nessun referente/stato')}</small></span><span class="kyv-chip shrink-0">#${H(p.ID)}</span></button>`).join('');
+            el.innerHTML='<p class="px-3 py-2 text-[11px] text-kyv-text bg-kyv-card/60">'+
+                (q?('Mostrati '+rows.length+' di '+matches.length+' corrispondenze nell’archivio.'):
+                    ('Ultimi '+rows.length+' progetti disponibili. Digita per cercare nell’intero archivio.'))+'</p>'+
+                rows.map(p=>`<button class="project-result w-full text-left p-3 flex items-start justify-between gap-3 transition-colors ${state.current && String(state.current.ID)===String(p.ID)?'bg-indigo-500/10':''}" onclick="selectProject('${String(p.ID).replaceAll("'","\\'")}')"><span class="min-w-0"><strong class="block text-white truncate">${H(p.TITOLO || 'Senza titolo')}</strong><em class="not-italic block text-cyan-200 text-xs font-bold truncate mt-0.5">${H(p.ARTISTA || 'Artista non indicato')}</em><small class="block text-kyv-text truncate mt-1">${H([p.MANAGEMENT,p.Label,p.STATO].filter(Boolean).join(' · ') || 'Nessun referente/stato')}</small></span><span class="kyv-chip shrink-0">#${H(p.ID)}</span></button>`).join('');
         }
-        window.selectProject = async function(id){ const p=state.projects.find(x=>String(x.ID)===String(id)); if(!p) return; const token=++state.loadToken; const shouldEdit=new URLSearchParams(location.search).get('edit')==='1'; state.current=p; setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden'); try{ const related=await loadProjectData(p); if(token!==state.loadToken) return; Object.assign(state,related); buildCurrentView(); renderProjectResults(); document.getElementById('project-view').classList.remove('hidden'); if(window.KYV_AUDIO_LINKED_V245) window.KYV_AUDIO_LINKED_V245.showProject(p.ID); const picker=document.getElementById('project-picker'); if(picker) picker.removeAttribute('open'); if(shouldEdit) window.openQuickEdit(); } finally{ if(token===state.loadToken){ setLoading(false); if(window.lucide) lucide.createIcons(); } } }
+        window.selectProject = async function(id){ const p=state.projects.find(x=>String(x.ID)===String(id)); if(!p) return; const token=++state.loadToken; const shouldEdit=new URLSearchParams(location.search).get('edit')==='1'; state.current=p; setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden'); try{ const related=await loadProjectData(p); if(token!==state.loadToken) return; Object.assign(state,related); buildCurrentView(); renderProjectResults(); document.getElementById('project-view').classList.remove('hidden'); if(window.KYV_AUDIO_LINKED_V245) window.KYV_AUDIO_LINKED_V245.showProject(p.ID); const picker=document.getElementById('project-picker');
+                if(picker){
+                    picker.removeAttribute('open');
+                    const title=picker.querySelector('.kyv-picker-summary strong');
+                    if(title)title.textContent='Cambia progetto';
+                }
+                if(shouldEdit) window.openQuickEdit(); } finally{ if(token===state.loadToken){ setLoading(false); if(window.lucide) lucide.createIcons(); } } }
 
         function matchByProjectId(rows, p){ return (rows||[]).filter(r=>has(r.ID_PROGETTO) && String(r.ID_PROGETTO)===String(p.ID)); }
         function matchByTitle(rows, p, titleFields=['Titolo','TITOLO_OPERA','Progetto']){ const pt=N(p.TITOLO); if(!pt) return []; return (rows||[]).filter(r=>titleFields.some(f=>N(r[f]).includes(pt)||pt.includes(N(r[f])))); }
