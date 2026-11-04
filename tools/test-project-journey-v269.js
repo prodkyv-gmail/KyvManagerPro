@@ -49,10 +49,10 @@ assert.doesNotMatch(read('kyv-flow-routes-v269.js'),/\.(?:insert|update|upsert|d
 assert.ok(read('sw.js').includes("'./kyv-flow-routes-v269.js'"));
 assert.ok(read('sw.js').includes("'./sessioni.html'"),'Sessioni shell is available offline when cached');
 assert.ok(read('sw.js').includes("'./kyv-editor-read-v267.js'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-79-integrated-modal-ux-20261104'));
-assert.ok(read('config.js').includes("APP_VERSION: '2.79'"));
-assert.equal(read('VERSION').trim(),'2.79');
-assert.equal(require('../package.json').version,'2.79.0');
+assert.ok(read('sw.js').includes('kyv-studio-v2-80-guided-audio-scan-20261104'));
+assert.ok(read('config.js').includes("APP_VERSION: '2.80'"));
+assert.equal(read('VERSION').trim(),'2.80');
+assert.equal(require('../package.json').version,'2.80.0');
 assert.ok(require('../package.json').scripts.check.includes('check:project-journey-v269'));
 assert.ok(read('guida.html').includes('v2.69'));
 assert.ok(read('kyv-help.js').includes('v2.69'));

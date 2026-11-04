@@ -1,3 +1,15 @@
+## v2.80 — Audio Finder: scansione locale/cloud guidata e protezione delle decisioni (4 novembre 2026)
+
+**Novità concrete:** in Audio Finder → Aggiungi audio, un riepilogo delle sorgenti indica soltanto le funzionalità/configurazioni visibili da browser: File/Cartelle (selettore, non crawler), crittografia HTTPS, account Drive configurati, Dropbox archivio/Chooser/OAuth e OneDrive OAuth/indice. La configurazione non implica autenticazione o accesso verificato. Non è stato introdotto alcun nuovo connettore né un permesso più ampio.
+
+**Locale Mac/PC/iOS/Android:** selezioni esplicitamente una cartella o dei file. Il preflight (`kyv-audio-scan-v280.js`) accetta al massimo 5.000 elementi, conta solo audio supportati e mostra quanti file non audio sono stati ignorati; nessuna selezione audio lascia intatta la revisione precedente. La preparazione dell'identificativo SHA-256 è **solo sui metadati** (percorso relativo, dimensione, data di modifica) e aggiorna un contatore ogni 80 file. Non sono mai letti/trasferiti i byte audio. Su smartphone puoi selezionare file dal sistema; la cartella non è garantita da ogni browser. Nessun accesso permanente, scansione nascosta o background.
+
+**Cloud:** Drive riutilizza `KYV_DRIVE.listFiles`; Dropbox riutilizza archivio/Chooser/OAuth; OneDrive mantiene OAuth opzionale con salvataggio disattivato finché la migrazione/abilitazione già richiesta non è completata. Gli stati di ricerca restano parziali quando il provider lo dichiara o le pagine sono limitate; nessuna incompletezza viene presentata come un censimento completo.
+
+**Salvaguardia:** selezione locale, lettura Drive, Dropbox (archivio e Chooser), ricerca online Dropbox/OneDrive e nuova autorizzazione OAuth chiedono la conferma di abbandono delle classificazioni `_explicit` **prima** di eseguire altre letture o navigare via OAuth. Annullare lascia intatta la coda di revisione. La schermata mostra l'esatta copertura, con conteggio unico per provider/account/identificativo, e spiega che altri dispositivi/account/cartelle non sono inclusi.
+
+**Invarianti critiche:** `KYV_AUDIO_DECISIONI` e `KYV_AUDIO_INDICE` sono scritti soltanto dal salvataggio confermato già presente; `KYV_AUDIO_ASSOCIAZIONI` solo da collegamento manuale confermato. La ricerca/coda non creano progetti, non deducono diritti dal nome, non caricano audio e non mutano schema, storico, permessi o servizi. Il motore precedente di suggerimenti, gruppi e approvazione rimane invariato. Test autonomi v2.80 e test precedenti vengono eseguiti su GitHub prima del merge.
+
 ## v2.78 + v2.79 — Popup Studio Editor e grafica operativa coordinati (4 novembre 2026)
 
 **Unico rilascio PWA v2.79**, con le due fasi integrate per non intervenire due volte sugli stessi componenti.

@@ -7,6 +7,13 @@
 
 # Changelog
 
+### v2.80 · 2026-11-04
+- Audio Finder: riepilogo onesto di selettori disponibili e provider configurati; nessun accesso cloud o automatico implicito.
+- Preflight della selezione locale (massimo 5.000 file, audio riconosciuti e non audio ignorati), indicatore di avanzamento di preparazione metadati e riselezione dello stesso file/cartella dopo annullamento.
+- Prima di cambiare sorgente o autorizzazione, conferma preventiva per le classificazioni ancora da salvare; nessuna lettura costosa o redirezione OAuth prima della decisione.
+- La coda di revisione indica la copertura effettiva delle identità provider/account/ID ed evidenzia i limiti di file, cartelle e account non scelti.
+- Salvataggi, link audio-progetto, proprietà dichiarata, migrazioni OneDrive, permessi e audio originali invariati; aggiornati test, guida e cache PWA.
+
 ### v2.78 + v2.79 · 2026-11-04 (rilascio integrato v2.79)
 - Studio Editor: i campi del popup esistente sono organizzati in cinque sezioni; aggiunti Trova un campo, Solo modificati e contatore campi/sezioni. Nessun input cancellato/disabilitato dalla ricerca e nessun nuovo popup.
 - Barra Salva/Annulla sempre visibile, etichette associate agli input, layout su una colonna da smartphone, focus/aria-hidden migliorati. Payload diff-only e guardie di salvataggio/chiusura invariati.

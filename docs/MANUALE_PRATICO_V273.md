@@ -1,3 +1,13 @@
+## Aggiornamento v2.80 · Audio Finder e selezione controllata
+
+1. Apri **Audio Finder → Aggiungi audio da PC, smartphone o cloud**. Nella nuova sezione Sorgenti disponibili puoi leggere le funzioni del browser e gli account/connettori configurati; non è una verifica dei permessi né una scansione globale.
+2. **Mac/PC**: seleziona una cartella o un gruppo di file, anche in directory OneDrive sincronizzate. **iPhone/Android**: scegli i file col selettore del sistema; una PWA non legge automaticamente tutte le cartelle.
+3. Il preflight accetta massimo 5.000 elementi, conta gli audio supportati e ignora gli altri; il testo sotto il selettore segnala avanzamento dell'identificazione *solo dai metadati*, senza leggere i byte audio. Se non ci sono audio validi, la coda attuale resta disponibile.
+4. **Cloud**: scegli Drive (connettore), Dropbox (archivio/Chooser/OAuth) o OneDrive (OAuth opzionale), se configurato. La disponibilità reale dipende da account, permessi, paginazione e abilitazione OneDrive; nessun salvataggio automatico.
+5. Con classificazioni non salvate, una nuova selezione o una nuova autorizzazione cloud richiede di confermare la sostituzione; se annulli mantieni la precedente revisione.
+6. La barra **Copertura effettiva** della revisione mostra quanti file unici per origine sono stati esaminati. Il numero esclude cartelle/account non scelti e ricerche parziali non concluse.
+7. Spunta e classifica solo i tuoi brani. Premi **Salva le classificazioni** e poi, separatamente, collega a un tuo progetto dopo una conferma. La scelta non crea un progetto implicitamente.
+
 ## Aggiornamento congiunto v2.78/v2.79 · Popup Editor e grafica
 
 1. In Studio Editor apri il popup **Modifica**: mostra le categorie Dati principali, Collegamenti, Date, Economia, Altri dettagli, solo quando contengono campi.
