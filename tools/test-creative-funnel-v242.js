@@ -53,7 +53,7 @@ assert.ok(page.includes('creative-funnel-metrics'));
 assert.ok(ui.includes('report.funnel')&&ui.includes('creative-funnel-metrics'));
 assert.ok(ui.includes('Quante sessioni creative con fee zero'));
 assert.ok(returns.includes('Una sessione con FEE=0'));
-assert.ok(sw.includes('kyv-studio-v2-73-search-guide-20261104'));
+assert.ok(sw.includes('kyv-studio-v2-74-recenti-order-20261104'));
 assert.ok(sw.includes("'./kyv-creative-funnel-v242.js'"));
 assert.equal(pkg.scripts['check:creative-funnel-v242'],'node tools/test-creative-funnel-v242.js');
 assert.ok(pkg.scripts.check.includes('check:creative-funnel-v242'));
