@@ -1,3 +1,13 @@
+## v2.65 — Ricerca globale, Editor e Archivio musicale (4 novembre 2026)
+
+**Ricerca globale:** premi **Cerca** nel menu oppure Cmd+K su Mac o Ctrl+K su PC. La ricerca indicizza i record a cui il tuo account ha accesso in Progetti, Fatture, Invii, Documenti, Versioni, SIAE e IMAIE. Attende il conteggio esatto e legge tutte le pagine necessarie (fino a 30.000 righe per archivio): se una fonte non è verificabile non propone risultati incompleti ma mostra **Ricerca non disponibile** e il pulsante **Riprova**. I risultati visibili sono limitati a 30, con indicazione delle corrispondenze totali. Esc chiude il popup e torna al pulsante di partenza; le frecce navigano tra i risultati e Invio li apre. La ricerca non modifica i record.
+
+**Studio Editor:** la casella **Filtra tabella corrente** filtra solo il dataset già caricato per la tabella selezionata. Non è il motore di ricerca di tutto il database. Per esplorare tutte le aree usa Cerca dal menu. Colonne e operazioni di modifica continuano a essere gestite dal modulo originale.
+
+**Archivio musicale:** la ricerca e il confronto dei file audio rileggono e verificano gli archivi di riferimento senza il precedente taglio alle prime 2.500 o 5.000 righe. In assenza di copertura completa compare un messaggio di errore e gli inserimenti restano disabilitati. Quando un file somiglia al titolo di un tuo progetto, KYV lo segnala come possibile versione ma non lo preseleziona nella casella **Progetto da collegare (scelta manuale)**. Tu puoi scegliere un progetto esistente oppure usare il flusso **Crea un nuovo progetto** nella successiva finestra di conferma. **Seleziona per revisione** e **Rivedi selezionati** aiutano con più file ma mantengono le conferme necessarie. I file già archiviati mantengono il loro effettivo progetto collegato.
+
+Non sono stati creati o collegati progetti durante l'aggiornamento. Nessuna scansione nascosta di PC o cloud, nessuna scrittura di nuove versioni senza tua selezione, nessuna migrazione o modifica a fatture/SIAE/diritti.
+
 ## v2.64 — Navigazione, tabelle e popup su mobile (4 novembre 2026)
 
 **Oggi:** quando apri Home, la lista **Attività da chiudere** rimane in primo piano. L'area **Stato operativo** è richiesta solo quando vuoi approfondire; il **Controllo amministrativo** contiene i KPI storici. Per i grafici apri **Grafici di approfondimento**, per le tipologie di fattura apri **Fatture per tipologia**: non esiste più un ulteriore pannello duplicato che nasconda quelle due aree. Il pulsante **Nuovo** è nella sezione principale, mentre Agenda, Progetti, Ascolto e Pipeline sono collegamenti rapidi.
