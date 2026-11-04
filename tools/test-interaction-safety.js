@@ -99,7 +99,7 @@ assert.ok(responsiveMenus.includes('.kyv-sheet-values label'), 'I valori nei men
 assert.ok(responsiveMenus.includes('.kyv-cell-editor input'), 'Anche i menu/campi intelligenti dello Studio Editor devono essere ridimensionati');
 
 // PWA: gli asset di sicurezza devono essere nello stesso ciclo cache del deploy.
-assert.match(sw, /kyv-studio-v2-60-design-foundation-20261104/, 'Il service worker deve ruotare la cache per l’UX Progetti dello Studio Editor');
+assert.match(sw, /kyv-studio-v2-61-project-clarity-20261104/, 'Il service worker deve ruotare la cache per l’UX Progetti dello Studio Editor');
 for (const asset of ['kyv-record-editor.js','kyv-project-invoices.js','kyv-project-finance-summary.js','kyv-project-hub-v3.js','kyv-project-timeline-v10.js','kyv-pipeline-v4.js','kyv-today-home-v5.js','kyv-economy-v6.js','kyv-rights-v7.js','kyv-siae-import-guard.js','kyv-global-search-v8.js','kyv-easy-ux-v9.js','kyv-easy-secondary-v9.js','kyv-release-closeout.js','kyv-project-edit-safety.js','kyv-sheet-controls.js','kyv-sheet-responsive-menus.js','kyv-sheet-dropdown-fix.js','kyv-editor-relations.js','kyv-editor-project-fields.js','kyv-editor-primary-fields.js','kyv-nav-order.js']) {
   assert.ok(sw.includes(`'./${asset}'`), `${asset} deve essere incluso nell’APP_SHELL`);
 }
