@@ -55,10 +55,10 @@ assert.ok(html.includes("document.getElementById('editor-columns-toggle')?.focus
 assert.match(css,/#editor-column-panel #editor-column-list label\[hidden\]\{display:none!important\}/);
 assert.match(css,/@media\(max-width:767px\)/);
 assert.doesNotMatch(src,/\.from\(|MutationObserver|localStorage|fetch\(/,'View helper must have no DB, observer or storage access');
-assert.equal(read('VERSION').trim(),'2.79');
-assert.equal(require('../package.json').version,'2.79.0');
-assert.ok(read('config.js').includes("APP_VERSION: '2.79'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-79-integrated-modal-ux-20261104'));
+assert.equal(read('VERSION').trim(),'2.80');
+assert.equal(require('../package.json').version,'2.80.0');
+assert.ok(read('config.js').includes("APP_VERSION: '2.80'"));
+assert.ok(read('sw.js').includes('kyv-studio-v2-80-guided-audio-scan-20261104'));
 assert.ok(read('sw.js').includes("'./kyv-editor-view-v277.js'"));
 assert.ok(read('guida.html').includes('id="v277-editor"'));
 const h={};vm.runInNewContext(read('kyv-help.js'),{window:h});
