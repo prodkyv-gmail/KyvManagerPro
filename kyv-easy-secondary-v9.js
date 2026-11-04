@@ -44,7 +44,9 @@ function headerActions(){
 function ensureSwitch(){
  if(document.getElementById('kyv-easy-secondary-switch'))return true;
  const host=headerActions();if(!host)return false;
- const wrap=document.createElement('div');wrap.id='kyv-easy-secondary-switch';wrap.className='kyv-easy-switch';wrap.innerHTML='<button type="button" data-mode="easy">Easy</button><button type="button" data-mode="complete">Completa</button><small>vista</small>';
+ const wrap=document.createElement('div');wrap.id='kyv-easy-secondary-switch';wrap.className='kyv-easy-switch';wrap.setAttribute('role','group');
+ wrap.setAttribute('aria-label','Densità della vista');
+ wrap.innerHTML='<button type="button" data-mode="easy" aria-pressed="false">Easy</button><button type="button" data-mode="complete" aria-pressed="false">Completa</button><small>vista</small>';
  host.insertAdjacentElement('afterbegin',wrap);
  wrap.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));
  return true;
@@ -95,12 +97,22 @@ function preparePipeline(){
 
 function syncDetails(){
  const economy=document.getElementById('kyv-economy-register'),rights=document.getElementById('kyv-rights-history');
- [economy,rights].filter(Boolean).forEach(d=>{d.open=mode==='complete';});
+ // Apply the current mode once per disclosure and on explicit mode changes only.
+ // Repeated data refreshes must not collapse a panel the user deliberately opened.
+ [economy,rights].filter(Boolean).forEach(d=>{
+   if(d.dataset.kyvModeApplied===mode)return;
+   d.open=mode==='complete';
+   d.dataset.kyvModeApplied=mode;
+ });
 }
 function refreshUi(){
  document.body.classList.toggle('kyv-easy-mode',mode==='easy');
  document.body.classList.toggle('kyv-complete-mode',mode==='complete');
- document.querySelectorAll('#kyv-easy-secondary-switch [data-mode]').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===mode));
+ document.querySelectorAll('#kyv-easy-secondary-switch [data-mode]').forEach(btn=>{
+   const active=btn.dataset.mode===mode;
+   btn.classList.toggle('active',active);
+   btn.setAttribute('aria-pressed',String(active));
+ });
  syncDetails();
 }
 function setMode(next){

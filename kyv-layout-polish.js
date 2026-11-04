@@ -101,7 +101,7 @@ body.kyv-safe-projects-polished .open{background:rgba(139,131,255,.11)!important
   .kyv-safe-mobile-nav{position:fixed;display:flex;left:max(.65rem,env(safe-area-inset-left,.65rem));right:max(.65rem,env(safe-area-inset-right,.65rem));bottom:calc(.65rem + env(safe-area-inset-bottom,0px));z-index:64;padding:.42rem;border:1px solid rgba(255,255,255,.11);border-radius:1.25rem;background:rgba(11,13,19,.92);backdrop-filter:blur(18px);box-shadow:0 20px 60px rgba(0,0,0,.45)}
   .kyv-safe-mobile-nav a{flex:1;min-width:0;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.12rem;border-radius:.9rem;color:#94a3b8;font-size:9px;font-weight:850;text-align:center}
   .kyv-safe-mobile-nav a strong{font-size:14px;line-height:1;font-weight:800}
-  .kyv-safe-mobile-nav a.is-active{color:#fff;background:rgba(139,131,255,.16);border:1px solid rgba(139,131,255,.22)}
+  .kyv-safe-mobile-nav a.is-active,.kyv-safe-mobile-nav a[aria-current="page"]{color:#fff;background:rgba(139,131,255,.16);border:1px solid rgba(139,131,255,.22)}.kyv-safe-mobile-nav a:focus-visible{outline:3px solid #b8b1ff;outline-offset:2px}
   .kyv-calendar-connection-compact .space-y-3{grid-template-columns:1fr!important}
   .kyv-calendar-connection-compact #btn-sync{width:100%!important}
 }
@@ -130,11 +130,12 @@ function polishProjects(){
   if(eyebrow)eyebrow.textContent='Workspace produttore';
   const subtitle=document.querySelector('.subtitle');
   if(subtitle)subtitle.textContent='Apri rapidamente il progetto, controlla lo stato e la prossima azione.';
-  if(!document.querySelector('.kyv-safe-mobile-nav')){
+  if(!document.querySelector('.kyv-safe-mobile-nav')&&!document.getElementById('kyv-mobile-bottom-nav')){
     const nav=document.createElement('nav');
     nav.className='kyv-safe-mobile-nav';
-    nav.setAttribute('aria-label','Navigazione rapida');
-    nav.innerHTML='<a href="index.html"><strong>⌂</strong><span>Oggi</span></a><a href="kyv_calendar.html"><strong>□</strong><span>Agenda</span></a><a href="acquisisci_audio.html"><strong>＋</strong><span>Nuovo</span></a><a href="progetti.html" class="is-active"><strong>♫</strong><span>Progetti</span></a><a href="ascolto.html"><strong>▶</strong><span>Ascolto</span></a>';
+    nav.setAttribute('aria-label','Navigazione rapida mobile');
+    nav.innerHTML='<a href="index.html" aria-label="Oggi"><strong>⌂</strong><span>Oggi</span></a><a href="kyv_calendar.html" aria-label="Agenda"><strong>□</strong><span>Agenda</span></a><a href="acquisisci_audio.html" aria-label="Nuovo"><strong>＋</strong><span>Nuovo</span></a><a href="progetti.html" class="is-active" aria-label="Progetti" aria-current="page"><strong>♫</strong><span>Progetti</span></a><a href="ascolto.html" aria-label="Ascolto"><strong>▶</strong><span>Ascolto</span></a>';
+    nav.inert=document.body.classList.contains('menu-open');
     document.body.appendChild(nav);
   }
 }
