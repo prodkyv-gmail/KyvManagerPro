@@ -182,9 +182,15 @@
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-kyv-text"></i>
                             <input type="search" id="correlazione-search" placeholder="Numero, cliente, progetto…" class="w-full bg-kyv-bg border border-kyv-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:border-indigo-500 outline-none transition-colors" oninput="applyCorrelazioneFilters()">
                         </div>
-                        <a href="kyv_liquidazioni.html" class="kyv-row-primary whitespace-nowrap" title="Liquidazioni diritti non fatturate">SIAE / IMAIE</a>
-                        <a href="kyv_intelligence.html" class="kyv-row-primary whitespace-nowrap" aria-label="Apri KYV Intelligence" title="Analisi mensili e pluriennali">KYV Intelligence</a>
-                        <a href="correlazione.html" class="kyv-row-primary whitespace-nowrap" aria-label="Apri correlazioni fatture" title="Correlazioni"><i data-lucide="git-merge" class="w-4 h-4"></i><span class="hidden sm:inline">Correlazioni</span></a>
+                        <details class="kyv-economy-extras" id="kyv-economy-extras">
+                            <summary>Analisi e strumenti <span aria-hidden="true">+</span></summary>
+                            <nav class="kyv-economy-extras-links" aria-label="Strumenti economici secondari">
+                                <a href="kyv_liquidazioni.html" class="kyv-row-primary" title="Liquidazioni diritti non fatturate">SIAE / IMAIE</a>
+                                <a href="kyv_intelligence.html" class="kyv-row-primary" aria-label="Apri KYV Intelligence" title="Analisi mensili e pluriennali">KYV Intelligence</a>
+                                <a href="kyv_analyst.html" class="kyv-row-primary">KYV Analyst</a>
+                                <a href="correlazione.html" class="kyv-row-primary" aria-label="Apri correlazioni fatture" title="Correlazioni">Correlazioni</a>
+                            </nav>
+                        </details>
                         <button type="button" id="kyv-aruba-open" class="kyv-primary-action whitespace-nowrap" title="Importa fatture elettroniche XML Aruba"><i data-lucide="file-up" class="w-4 h-4 mr-2"></i>Importa XML Aruba</button>
                         <button type="button" id="kyv-split-new" class="kyv-primary-action whitespace-nowrap" title="Una fattura con più progetti"><i data-lucide="copy-plus" class="w-4 h-4 mr-2"></i>Nuova multi-progetto</button>
                         <button type="button" data-kyv-new-table="FATTURE" class="kyv-primary-action whitespace-nowrap"><i data-lucide="plus" class="w-4 h-4 mr-2"></i>Nuova</button>
@@ -216,17 +222,17 @@
                     </div>
                 </section>
                 <!-- DA INCASSARE -->
-                <div>
-                    <h3 class="text-red-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> FATTURE DA INCASSARE</span><span class="text-lg bg-red-900/30 px-4 py-1 rounded-lg border border-red-500/30 font-black tracking-wide" id="tot-da-pagare">€ 0,00</span></h3>
+                <details id="kyv-invoice-open-details" class="kyv-invoice-status-details" open>
+                    <summary><h3 class="text-red-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> FATTURE DA INCASSARE</span><span class="text-lg bg-red-900/30 px-4 py-1 rounded-lg border border-red-500/30 font-black tracking-wide" id="tot-da-pagare">€ 0,00</span></h3></summary>
                     <p class="text-xs text-slate-300 mb-3">Include fatture mai incassate e fatture parzialmente incassate: il totale è il <strong>saldo residuo</strong>.</p>
                     <div class="bg-red-900/10 rounded-xl border border-red-500/20 overflow-hidden shadow-lg"><div class="overflow-x-auto"><table class="kyv-card-mode w-full text-left text-sm whitespace-nowrap"><thead class="bg-red-900/20 text-red-300 uppercase tracking-wider text-[10px] border-b border-red-500/20"><tr><th class="px-6 py-3 font-semibold">N° / Data</th><th class="px-6 py-3 font-semibold">Denominazione</th><th class="px-6 py-3 font-semibold">Descrizione & Progetto</th><th class="px-6 py-3 font-semibold">Importo</th></tr></thead><tbody class="divide-y divide-red-500/10" id="tbody-ft-nopag"></tbody></table></div></div>
-                </div>
+                </details>
                 <!-- INCASSATE: storico PAGATA=SI letto come cliente ha saldato -->
-                <div>
-                    <h3 class="text-emerald-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="check-circle-2" class="w-5 h-5 mr-2"></i> FATTURE INCASSATE</span><span class="text-lg bg-emerald-900/30 px-4 py-1 rounded-lg border border-emerald-500/30 font-black tracking-wide" id="tot-pagate">€ 0,00</span></h3>
+                <details id="kyv-invoice-paid-details" class="kyv-invoice-status-details">
+                    <summary><h3 class="text-emerald-400 font-bold mb-4 flex items-center justify-between"><span class="flex items-center"><i data-lucide="check-circle-2" class="w-5 h-5 mr-2"></i> FATTURE INCASSATE</span><span class="text-lg bg-emerald-900/30 px-4 py-1 rounded-lg border border-emerald-500/30 font-black tracking-wide" id="tot-pagate">€ 0,00</span></h3></summary>
                     <p class="text-xs text-slate-300 mb-3">Qui compaiono solo le fatture interamente saldate. Gli acconti delle fatture ancora aperte sono mostrati nel riepilogo superiore.</p>
                     <div class="bg-emerald-900/10 rounded-xl border border-emerald-500/20 overflow-hidden shadow-lg"><div class="overflow-x-auto"><table class="kyv-card-mode w-full text-left text-sm whitespace-nowrap"><thead class="bg-emerald-900/20 text-emerald-300 uppercase tracking-wider text-[10px] border-b border-emerald-500/20"><tr><th class="px-6 py-3 font-semibold">N° / Data</th><th class="px-6 py-3 font-semibold">Denominazione</th><th class="px-6 py-3 font-semibold">Descrizione & Progetto</th><th class="px-6 py-3 font-semibold">Importo</th></tr></thead><tbody class="divide-y divide-emerald-500/10" id="tbody-ft-pag"></tbody></table></div></div>
-                </div>
+                </details>
             </div>
         </section>
     </main>

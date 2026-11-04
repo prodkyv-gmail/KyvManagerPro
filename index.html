@@ -94,33 +94,36 @@
             <div class="kyv-quick-actions mb-6" aria-label="Azioni rapide">
                 <a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a>
                 <a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a>
-                <a href="sessioni.html"><i data-lucide="calendar-clock" class="w-4 h-4 mr-2 text-cyan-300"></i>Sessioni</a>
+                <a href="kyv_scrivania_creativa.html?tab=sessions"><i data-lucide="calendar-clock" class="w-4 h-4 mr-2 text-cyan-300"></i>Sessioni</a>
                 <a href="fatture.html"><i data-lucide="receipt" class="w-4 h-4 mr-2 text-emerald-300"></i>Fatture</a>
                 <a href="documenti.html"><i data-lucide="folder-lock" class="w-4 h-4 mr-2 text-sky-300"></i>Documenti</a>
                 <a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a>
             </div>
 
+            <p id="home-data-status" class="text-xs text-slate-300 mb-4" role="status">In attesa di dati autenticati. Importi non ancora verificati.</p>
             <!-- CARDS TOTALI -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(139,131,255,.18)">
                     <div class="flex items-center"><i data-lucide="file-signature" class="w-4 h-4 text-indigo-300 mr-2"></i><p class="kyv-metric-label">Fee concordate</p></div>
-                    <h3 class="kyv-metric-value text-white" id="val-fee">€ 0,00</h3>
+                    <h3 class="kyv-metric-value text-white" id="val-fee">—</h3>
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(180,122,255,.16)">
                     <div class="flex items-center"><i data-lucide="receipt" class="w-4 h-4 text-purple-300 mr-2"></i><p class="kyv-metric-label">Fatturato</p></div>
-                    <div><h3 class="kyv-metric-value text-purple-100" id="val-fatturato">€ 0,00</h3><p class="text-[10px] text-amber-300/80 font-medium mt-2" id="val-da-incassare">Da incassare (flag): € 0,00</p></div>
+                    <div><h3 class="kyv-metric-value text-purple-100" id="val-fatturato">—</h3><p class="text-[10px] text-amber-300/80 font-medium mt-2" id="val-da-incassare">Da incassare (flag): non ancora disponibile</p></div>
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(68,215,182,.16)">
                     <div class="flex items-center"><i data-lucide="banknote" class="w-4 h-4 text-emerald-300 mr-2"></i><p class="kyv-metric-label">Incassato (flag)</p></div>
-                    <h3 class="kyv-metric-value text-emerald-300" id="val-incassato">€ 0,00</h3><p class="text-[10px] text-kyv-text mt-2">Stima dal flag PAGATA. Incassi bancari verificati in Fatture.</p>
+                    <h3 class="kyv-metric-value text-emerald-300" id="val-incassato">—</h3><p class="text-[10px] text-kyv-text mt-2">Stima dal flag PAGATA. Incassi bancari verificati in Fatture.</p>
                 </div>
                 <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(255,114,133,.15)">
                     <div class="flex items-center"><i data-lucide="trending-down" class="w-4 h-4 text-rose-300 mr-2"></i><p class="kyv-metric-label">Uscite</p></div>
-                    <h3 class="kyv-metric-value text-rose-300" id="val-uscite">€ 0,00</h3>
+                    <h3 class="kyv-metric-value text-rose-300" id="val-uscite">—</h3>
                 </div>
             </div>
 
-            <!-- CARDS TIPO FT -->
+            <!-- v2.63: billed-by-type is secondary to today's operational actions. -->
+            <details id="home-billing-types-details" class="kyv-v263-disclosure mb-6">
+              <summary>Fatture per tipologia <small>Indicatore storico basato sul flag PAGATA · per incassi verificati apri Economia</small></summary>
             <div class="mb-6">
                 <div class="flex items-center mb-3">
                     <i data-lucide="wallet" class="w-5 h-5 text-emerald-400 mr-2"></i>
@@ -130,6 +133,8 @@
                     <div class="text-kyv-text text-xs italic">Calcolo in corso...</div>
                 </div>
             </div>
+
+            </details>
 
             <!-- CONTROL CENTER OPERATIVO -->
             <div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 mb-6" id="studio-pulse">
@@ -163,6 +168,9 @@
                 </div>
             </div>
 
+            <details id="home-analytics-details" class="kyv-v263-disclosure mb-6">
+              <summary>Grafici di approfondimento <small>Fatturato emesso, stati dei progetti e numero di brani per artista · tre filtri indipendenti</small></summary>
+              <p class="text-xs text-kyv-text px-4 pt-3 mb-2">Sono grafici descrittivi dell'archivio: il fatturato usa il valore unitario delle voci. Il conteggio degli artisti indica progetti, non incassi.</p>
             <!-- GRAFICI COMPATTATI E MIGLIORATI -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
                 <!-- Grafico Andamento Eloquente (Stacked Bar) -->
@@ -199,6 +207,7 @@
                     </div>
                 </div>
             </div>
+            </details>
         </section>
     </main>
 
@@ -275,7 +284,19 @@
 
                 renderStudioPulse(projData, fatData, docsData, audioData);
                 updateDashboardCharts(projData, fatData);
-            } catch (err) { console.error("Errore dashboard:", err); }
+                document.getElementById('home-data-status').textContent =
+                    'Dashboard aggiornata con i dati letti. Fatturato = righe PrezzoUnitario; PAGATA è solo un flag storico. Per la riconciliazione degli incassi apri Economia.';
+            } catch (err) {
+                console.error("Errore dashboard:", err);
+                document.getElementById('home-data-status').textContent =
+                    'Dati non verificabili: impossibile aggiornare la panoramica. Verifica accesso e archivi in Economia.';
+                for(const id of ['val-fee','val-fatturato','val-incassato','val-uscite'])
+                    document.getElementById(id).textContent='—';
+                document.getElementById('val-da-incassare').textContent =
+                    'Da incassare (flag): non disponibile';
+                document.getElementById('tipo-ft-cards').textContent =
+                    'Riepilogo non disponibile. Nessun importo sostituito con zero.';
+            }
         }
         let dashboardActivities = [];
         let activeActivityFilter = 'all';
@@ -525,6 +546,17 @@
                 }
             });
 
+            // Chart.js may measure a closed <details> as zero width.
+            // Resize existing charts when the user opens the panel; never refetch data.
+            const analytics=document.getElementById('home-analytics-details');
+            analytics?.addEventListener('toggle',()=>{
+                if(!analytics.open)return;
+                requestAnimationFrame(()=>{
+                    for(const chart of [chartAndamentoInstance,chartStatiInstance,chartTopArtistiInstance]){
+                        chart?.resize();
+                    }
+                });
+            });
             fetchDashboardData();
             if(window.lucide) lucide.createIcons();
         });
