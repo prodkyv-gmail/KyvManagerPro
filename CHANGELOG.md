@@ -1,5 +1,12 @@
 # Changelog
 
+### v2.64 · 2026-11-04
+- Producer Mode: Pipeline & opportunità direttamente dopo Ascolto, eliminato riordino del menu tramite polling di 6 secondi; montaggio sidebar disconnette subito l'observer appena pronto, una sola voce Pipeline.
+- Home: Attività da chiudere visibili senza apertura di un secondo pannello, Stato operativo facoltativo, CTA Nuovo senza duplicati; grafici e fatture per tipologia restano dentro i rispettivi pannelli della v2.63 senza riallocazioni DOM.
+- Guida contestuale: focus sul controllo di chiusura, ciclo Tab/Maiusc+Tab, Esc prioritario sul dialogo e ripristino del focus sul pulsante che ha aperto il popup; barra mobile con aria-current.
+- Responsive: etichette applicate alle sole nuove righe, mantenute le etichette manuali, rilettura completa solo su cambio reale delle intestazioni; ridotti i ricalcoli inutili del MutationObserver.
+- Rifiniti focus da tastiera, indicazioni di scorrimento tabelle e aree touch mobile nel tema condiviso; test regression dedicati, guida e cache PWA sincronizzati. Nessuna modifica a database, audio o regole fiscali.
+
 ### v2.63 · 2026-11-04
 - Home: priorità operative subito visibili; fatture per tipologia PAGATA e grafici dettagliati in pannelli richiudibili, Chart.js ridimensionato all'apertura senza nuove letture. Collegamento Sessioni alla Scrivania creativa attuale. Gli errori mostrano dati non disponibili, non falsi zeri.
 - Economia: funzioni operative mantenute; link amministrativi raccolti in Analisi e strumenti; registro suddiviso in Fatture da incassare aperte e Fatture incassate richiudibili, con totali ancora visibili e nessuna modifica a incassi/acconti/ripartizioni.
