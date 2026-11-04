@@ -46,6 +46,12 @@ assert.ok(html.includes("editorModalTouched.add(other.dataset.key)"),'Programmat
 assert.ok(html.includes('closeEditorModal()')&&html.includes('Hai modifiche non salvate'),'Dirty close warning');
 assert.ok(html.includes("window.addEventListener('beforeunload'"),'Navigation away protected');
 assert.ok(html.includes("editorModalSaving = true"),'No duplicate submissions');
+assert.ok(html.includes("update(changeSet.payload,{count:'exact'})"),'Check affected rows on update');
+assert.ok(html.includes("delete({count:'exact'})"),'Check affected rows on delete');
+assert.ok(html.includes("if (count === 0) throw new Error"),'Never report success for zero affected rows');
+assert.ok(html.includes('editorInlineWrites++')&&html.includes('editorInlineWrites = Math.max'),'Track in-flight inline saves');
+assert.ok(html.includes('editorInlineWrites &&'),'Warn before leaving during inline update');
+assert.ok(html.includes('displayEditorColumnLabel(key,editorModalTable)'),'Reference modal uses reference table field labels');
 assert.ok(html.includes('const targetTable = btn.dataset.table'),'References use isolated modal target');
 assert.ok(html.includes('openDynamicModal(targetId,targetTable,data)'),'References preserve main table');
 assert.ok(!html.includes('currentEditorTable = btn.dataset.table'),'No mutable cross-reference tab switch');

@@ -12,5 +12,7 @@ Checklist per prova manuale autenticata (non eseguita da CI). Evitare prove dist
 8. Prova la conferma eliminazione con dati di test autorizzati: tabella e ID corrispondono al record iniziale e doppio clic non invia due richieste.
 9. Apri una versione audio dal suo archivio: nessun pulsante Salva attivo e nessun input modificabile.
 10. Su mobile e desktop verifica Escape/chiusura, indicatore campi modificati, pulsanti durante il salvataggio e avviso prima di lasciare la pagina.
+11. Se un aggiornamento/eliminazione non tocca nessun record (per esempio il record è scomparso), il popup segnala il problema anziché un falso messaggio di successo; gli input restano disponibili per gestire l'errore.
+12. Una modifica inline in corso deve segnalare l'eventuale rischio di uscita fino al completamento della scrittura.
 
 Non sono state aggiunte migrazioni. Vercel e database di produzione restano invariati.

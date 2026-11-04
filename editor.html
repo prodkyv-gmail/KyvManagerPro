@@ -324,6 +324,7 @@
         let currentEditorTable = 'PROGETTI', currentEditorData = [], currentEditingRowId = null;
         let editorModalTable = null, editorModalOriginal = null, editorModalOpen = false, editorModalSaving = false;
         let editorModalTouched = new Set(), pendingEditorDelete = null, editorDeleteBusy = false;
+        let editorInlineWrites = 0;
         const EDITOR_ROWS_STEP = 120;
         let editorShownRows = EDITOR_ROWS_STEP;
         let editorLoadSerial = 0, editorIsLoading = false;
@@ -499,9 +500,9 @@
         }
 
 
-        function displayEditorColumnLabel(key) {
+        function displayEditorColumnLabel(key, tableName = currentEditorTable) {
             // Il campo tecnico FATTURE.PAGATA resta invariato per compatibilità.
-            return currentEditorTable === 'FATTURE' && key === 'PAGATA' ? 'Incassata dal cliente' : key;
+            return tableName === 'FATTURE' && key === 'PAGATA' ? 'Incassata dal cliente' : key;
         }
 
         function getEditorColumnClass(key) {
@@ -681,7 +682,7 @@
                 if (key.toUpperCase() === 'IDFT' || key.toUpperCase() === 'ID_FT') { extraAttr = 'list="invoices-list" autocomplete="off"'; placeholder = 'Seleziona la fattura...'; extraClass = 'auto-fill-invoice'; }
                 if (isTimestamp && val) val = KYV_EDITOR_CHANGES_V268.dateTimeInput(val, colType);
                 else if (isDate && val.length >= 10) val = val.substring(0, 10);
-                html += `<div><label class="block text-xs font-semibold text-kyv-text mb-1 uppercase tracking-wide truncate">${KYV.safeHtml(displayEditorColumnLabel(key))}</label><input type="${inputType}" data-key="${KYV.safeHtml(key)}" class="kyv-input dyn-input ${extraClass}" value="${KYV.safeHtml(val)}" placeholder="${KYV.safeHtml(placeholder)}" ${extraAttr} ${extraStyle} ${readOnly ? 'disabled' : ''}></div>`;
+                html += `<div><label class="block text-xs font-semibold text-kyv-text mb-1 uppercase tracking-wide truncate">${KYV.safeHtml(displayEditorColumnLabel(key,editorModalTable))}</label><input type="${inputType}" data-key="${KYV.safeHtml(key)}" class="kyv-input dyn-input ${extraClass}" value="${KYV.safeHtml(val)}" placeholder="${KYV.safeHtml(placeholder)}" ${extraAttr} ${extraStyle} ${readOnly ? 'disabled' : ''}></div>`;
             });
             const formRoot = document.getElementById('dynamic-form-fields');
             formRoot.innerHTML = html + datalistHtml;
@@ -730,7 +731,7 @@
         });
 
         window.addEventListener('beforeunload', event => {
-            if (!editorModalSaving && (!editorModalOpen || !modalChangedFields().count)) return;
+            if (!editorInlineWrites && !editorModalSaving && (!editorModalOpen || !modalChangedFields().count)) return;
             event.preventDefault();
             event.returnValue = '';
         });
@@ -759,10 +760,11 @@
             const pk = tablePKs[savedTable] || 'id';
             try {
                 let query = supabaseClient.from(savedTable);
-                const { error } = modalHasRecord()
-                    ? await query.update(changeSet.payload).eq(pk, savedId)
+                const { error, count } = modalHasRecord()
+                    ? await query.update(changeSet.payload,{count:'exact'}).eq(pk, savedId)
                     : await query.insert([changeSet.payload]);
                 if (error) throw error;
+                if (modalHasRecord() && count === 0) throw new Error('Nessun record aggiornato. Potrebbe essere stato eliminato o non essere modificabile.');
                 closeEditorModal(true);
                 showToast(modalHasRecord() ? 'Modifiche salvate.' : 'Record creato.');
                 try { document.dispatchEvent(new CustomEvent('kyv:record-saved', { detail: {table: savedTable, id: savedId} })); }
@@ -858,8 +860,9 @@
             button.textContent = 'Eliminazione in corso…';
             const pk = tablePKs[target.table] || 'id';
             try {
-                const { error } = await supabaseClient.from(target.table).delete().eq(pk, target.id);
+                const { error, count } = await supabaseClient.from(target.table).delete({count:'exact'}).eq(pk, target.id);
                 if (error) throw error;
+                if (count === 0) throw new Error('Nessun record eliminato. Potrebbe essere stato già rimosso o non essere autorizzato.');
                 pendingEditorDelete = null;
                 showToast('Record eliminato.');
                 document.getElementById('modal-delete').classList.add('opacity-0');
@@ -896,6 +899,7 @@
             const pk = tablePKs[tableAtEdit] || 'id';
             const rowId = cell.dataset.id;
             const column = cell.dataset.col;
+            editorInlineWrites++;
             try {
                 let payload = {}; let finalVal = newVal === '' ? null : newVal;
                 const colType = window.KYV_DB?.getType(tableAtEdit, column) || 'text';
@@ -903,8 +907,9 @@
                 if (finalVal !== null && window.KYV_DB?.isDateType(colType)) finalVal = KYV.toDbDate(finalVal);
                 payload[column] = finalVal; 
                  
-                const { error } = await supabaseClient.from(tableAtEdit).update(payload).eq(pk, rowId); 
+                const { error, count } = await supabaseClient.from(tableAtEdit).update(payload,{count:'exact'}).eq(pk, rowId);
                 if (error) throw error;
+                if (count === 0) throw new Error('Il record non è stato aggiornato.');
 
                 if (currentEditorTable === tableAtEdit) {
                     const localRow = currentEditorData.find(row => String(row[pk]) === String(rowId));
@@ -915,8 +920,8 @@
                 try { document.dispatchEvent(new CustomEvent('kyv:record-saved', {detail:{table:tableAtEdit,id:rowId}})); }
                 catch (notifyError) { console.warn('[KYV Studio Editor] Notifica salvataggio inline:',notifyError); }
             } catch (err) { 
-                cell.innerText = oldVal; cell.classList.remove('animate-pulse'); showToast("Errore salvataggio inline", true); 
-            }
+                cell.innerText = oldVal; cell.classList.remove('animate-pulse'); showToast("Errore salvataggio inline", true);
+            } finally { editorInlineWrites = Math.max(0,editorInlineWrites-1); }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
