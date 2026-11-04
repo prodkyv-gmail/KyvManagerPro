@@ -171,6 +171,16 @@ window.KYV_CONFIG = KYV_CONFIG;
     navOrder.dataset.kyvNavOrder='1';
     document.head.appendChild(navOrder);
 
+    // v2.70: load the shared route contract *before* the workflow nav.
+    // Missing this asset makes the v2.69 contextual links silently disappear.
+    if(!document.querySelector('script[data-kyv-flow-routes-v269]')){
+        const journeyRoutes=document.createElement('script');
+        journeyRoutes.src='kyv-flow-routes-v269.js';
+        journeyRoutes.async=false;
+        journeyRoutes.dataset.kyvFlowRoutesV269='1';
+        document.head.appendChild(journeyRoutes);
+    }
+
     const workflowNav=document.createElement('script');
     workflowNav.src='kyv-workflow-nav.js';
     workflowNav.async=false;

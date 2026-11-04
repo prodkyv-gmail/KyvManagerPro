@@ -143,6 +143,10 @@ function render(){
       ${lane(financeTone,'Economia',financeStatus,finance.rows.length?euro(finance.total):'Nessuna fattura',finance.rows.length?(finance.openTotal>0?euro(finance.openTotal)+' aperti':finance.paidCount+'/'+finance.rows.length+' incassate'):'Verifica quando emettere la fattura','economy','badge-euro')}
     </div>`;
   hub.querySelectorAll('[data-hub3-target]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.hub3Target)));
+  // This is the canonical next-action panel. Suppress the duplicated hero banner
+  // only when the hub was really rendered, leaving the hero as fallback.
+  const repeatedNext=document.getElementById('kyv-v2-next');
+  if(repeatedNext){repeatedNext.hidden=true;repeatedNext.style.display='none';}
   window.dispatchEvent(new CustomEvent('kyv:project-hub-v3-ready',{detail:{projectId:p.ID}}));
   if(window.lucide)lucide.createIcons({root:hub});
   return true;
