@@ -1,3 +1,13 @@
+## v2.63 — Utilizzo rapido di Home, Economia e Analyst (4 novembre 2026)
+
+**Home:** consulta subito le attività da chiudere, i prossimi follow-up e i valori sintetici. Per i grafici apri **Grafici di approfondimento**: i filtri di fatturato emesso per tipologia, distribuzione per stato/fase e numero di progetti per artista sono indipendenti. Per la vista storica **PAGATA per tipologia** apri **Fatture per tipologia**; una spunta storica non dimostra la data di un pagamento. Se una lettura non riesce, la pagina segnala **dati non verificabili** e sostituisce gli importi con un trattino anziché un falso zero.
+
+**Economia:** le funzioni operative più comuni restano in testata: ricerca, import XML Aruba, fattura multi-progetto, nuova fattura e ricarica. Il pulsante di riconciliazione incassi continua ad apparire nel modulo di pagamenti quando disponibile. Apri **Analisi e strumenti** per SIAE/IMAIE, KYV Intelligence, KYV Analyst e correlazioni. Il registro mostra subito **Fatture da incassare** con saldo residuo; premi **Fatture incassate** per aprire l'elenco dei saldi interamente ricevuti. Gli acconti compaiono nel riepilogo e nelle fatture ancora aperte: non vengono impropriamente spostati tra le saldate.
+
+**KYV Analyst:** seleziona le verifiche principali oppure inserisci una domanda supportata dal motore a regole. Il grafico **Fatturato attribuito per artista** mostra soltanto valori attribuiti esplicitamente tramite progetti. Scegli **Primi 5, Primi 10 o Primi 20**: la selezione non modifica i filtri della Home, i dati amministrativi o le risposte. Apri **Approfondimento creativo** per consultare indicatori su sessioni, piazzamenti e fee zero. Il fatturato attribuito non va confuso con il totale fiscale emesso, e i progetti senza fatture non sono automaticamente progetti in perdita.
+
+**KYV Intelligence** resta la schermata dedicata a confronti mensili e pluriennali con date dei movimenti verificate. Nessun dato è stato migrato o ricalcolato dal restyling.
+
 ## v2.62 — Scrivania creativa e Audio Finder: istruzioni (4 novembre 2026)
 
 In **Scrivania creativa** puoi cambiare fra **Scrivania musicale**, **Sessioni** e **Piazzamenti**. Nel riepilogo musicale cerca per brano/artista/destinatario, apri **Filtri per artista, stato e attività** se vuoi filtri aggiuntivi, oppure apri **Analisi dei piazzamenti** per il grafico dell'intero archivio. **Azzera filtri** modifica solo questa panoramica. In Sessioni e Piazzamenti le ricerche sono indipendenti: puoi passare dall'una all'altra senza perdere il testo digitato. Apri **Indicatori di sessioni e piazzamenti** per il riepilogo generale, senza avere numeri duplicati sullo schermo.
