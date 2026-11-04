@@ -1,3 +1,11 @@
+## v2.73 — Ricerca, filtri e guida pratica dettagliata (4 novembre 2026)
+
+In **Progetti**, il riepilogo dei filtri è ora visibile anche senza aprire il pannello avanzato, con un unico **Azzera filtri** disponibile quando esistono criteri attivi. Ricerca esatta per **#ID / id:ID**, vista Recenti esplicitamente limitata a 40 risultati quando non sono impostati filtri, tasti di scelta con stato accessibile e ricerca sull'intero archivio caricato. Le operazioni restano di sola lettura.
+
+La **Guida completa** apre ora con un capitolo v2.73 esteso, organizzato in ricerca, scheda, sessioni, audio, fatture, diritti, editor e risoluzione problemi. Include istruzioni in sequenza, esempi e significato dei pulsanti. Anche la guida contestuale **?** è stata ampliata per i moduli principali. Il manuale tecnico dedicato è in `docs/MANUALE_PRATICO_V273.md`. Le vecchie sezioni restano disponibili come archivio storico.
+
+Nessuna modifica a dati, schema, permessi o deployment Vercel.
+
 ## v2.72 — Vista rapida Progetti e Scheda essenziale (4 novembre 2026)
 
 La **Vista rapida** dell'archivio Progetti mostra subito titolo, artista, stato, prossima azione e ultima attività, con un solo collegamento principale **Apri scheda completa**. I dettagli meno frequenti (date di sessione, follow-up, pubblicazione e note) si aprono nel riquadro nativo **Scadenze e note**. I collegamenti secondari per Sessioni, Audio e Collega fattura rimangono disponibili nel riquadro **Sessioni, audio e fatture**. Ogni apertura di un altro progetto riparte dalla vista compatta; non si perde nessuna informazione.
