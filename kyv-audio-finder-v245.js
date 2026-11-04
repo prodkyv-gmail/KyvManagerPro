@@ -13,7 +13,7 @@ function safeUrl(v){
 }
 function record({provider,account='',externalKey,name,path='',mime='',size=null,modified=null,hash=null,url=null,origin='scansione'}={}){
  const p=str(provider),f=str(name),key=str(externalKey),acc=str(account);
- if(!['local','drive','dropbox'].includes(p))throw Error('Sorgente audio non supportata');
+ if(!['local','drive','dropbox','onedrive'].includes(p))throw Error('Sorgente audio non supportata');
  if(!isAudio(f,mime))throw Error('File non audio');
  if(!key||key.length>600||!f||f.length>500||acc.length>180)throw Error('Identificativo o nome non valido');
  const n=size===null||size===''?null:Number(size);
