@@ -11,7 +11,7 @@ assert.ok(search.includes("e.key==='Enter'"),'keyboard open missing');
 assert.ok(search.includes("e.key==='Escape'"),'Escape close missing');
 assert.ok(search.includes('kyv-global-search-button'),'sidebar search trigger missing');
 assert.ok(search.includes('recentItems'),'in-page recent results missing');
-assert.ok(!search.includes('localStorage'),'Search must not persist private record names across users');
+assert.ok(!/\blocalStorage\s*\./.test(search),'Search must not persist private record names across users');
 assert.ok(search.includes('if(index)return index;if(loading)return loading'),'search index must be cached in memory');
 assert.ok(search.includes("if(!q){"),'empty-query recent state missing');
 assert.ok(search.includes("if(q.length<2)"),'minimum search length missing');

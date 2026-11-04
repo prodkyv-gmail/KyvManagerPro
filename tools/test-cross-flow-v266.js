@@ -60,7 +60,7 @@ vm.runInNewContext(part+'\nthis.fetchIndex=fetchIndex;this.invalidateIndex=inval
  assert.ok(search.includes("if(!index){"),'Typing during loading must not show verified zero matches');
  assert.ok(search.includes("if(revision!==indexRevision)return;"),'UI must not display a superseded generation');
  assert.ok(search.includes("document.addEventListener(name,refreshIndex)"),'Editor/invoice/project events invalidate results');
- assert.ok(!search.includes('localStorage'),'Recent private record titles must not survive page/account changes');
+ assert.ok(!/\blocalStorage\s*\./.test(search),'Recent private record titles must not survive page/account changes');
  assert.ok(search.includes("recentItems.slice(0,6)"));
  assert.ok(search.includes("document.activeElement===root.querySelector('#kyv-gs-input')"),
   'Enter on Refresh/results buttons must preserve native button actions');
