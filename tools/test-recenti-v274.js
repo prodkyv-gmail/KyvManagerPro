@@ -29,6 +29,6 @@ const page=read('progetti.html'),guide=read('guida.html'),help=read('kyv-help.js
 assert.ok(page.includes('i 40 progetti più recenti'),'UI must explain cohort selection');
 assert.ok(guide.includes('Aggiornamento v2.74 · Recenti e ordinamento'));
 assert.ok(help.includes('v2.74 · Perché Recenti non cambia quando ordino?'));
-assert.doesNotMatch(read('kyv-project-list-v250.js'),/\\.(?:insert|update|upsert|delete)\\(/);
+assert.doesNotMatch(read('kyv-project-list-v250.js'),/\.(?:insert|update|upsert|delete)\(/);
 assert.equal(read('VERSION').trim(),'2.74');
 console.log('OK: v2.74 Recenti membership stable across sort, full-search scope and updated help');
