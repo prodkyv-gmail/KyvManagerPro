@@ -5,7 +5,9 @@ const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
 if(page==='login.html')return;
 
 let db=null,index=null,loading=null,active=0,results=[],searchFocusReturn=null,previousOverflow=null;
-const RECENTS_KEY='kyv-global-search-recents-v1';
+let indexRevision=0;
+// Recenti soltanto nella memoria della pagina: mai titoli privati in localStorage fra account.
+let recentItems=[];
 const text=v=>String(v??'').trim();
 const H=v=>window.KYV?.safeHtml?KYV.safeHtml(v??''):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=v=>text(v).toLocaleLowerCase('it').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
@@ -54,6 +56,7 @@ async function readCompleteSource(makeQuery,fields,label,sortColumn){
 async function fetchIndex(){
  if(index)return index;if(loading)return loading;
  const c=client();if(!c)throw new Error('Client database non disponibile');
+ const revision=indexRevision;
  const pending=(async()=>{
   const [projects,invoices,sends,docs,versions,siae,imaie]=await Promise.all([
    readCompleteSource(()=>c.from('PROGETTI'),'ID,TITOLO,ARTISTA,AUTORI,STATO,SVILUPPO,Label,MANAGEMENT,Nome_Vero_Artista,Codice_ISRC','Progetti','ID'),
@@ -65,31 +68,35 @@ async function fetchIndex(){
    readCompleteSource(()=>c.from('ESTRATTO_IMAIE'),'id,TITOLO_OPERA,CATALOGO,PRODUTTORE,ETICHETTA,INTERPRETE,CATEGORIA,COD_OPERA','IMAIE','id')
   ]);
   const complete=buildIndex({projects,invoices,sends,docs,versions,siae,imaie});
+  // Una lettura iniziata prima di un salvataggio/refresh non può sostituire l'indice nuovo.
+  if(revision!==indexRevision)return null;
   index=complete;
-  return index;
+  return complete;
  })();
  loading=pending;
  try{return await pending;}finally{if(loading===pending)loading=null;}
 }
 
-function recents(){
- try{return JSON.parse(localStorage.getItem(RECENTS_KEY)||'[]').filter(x=>x&&x.href).slice(0,6);}catch(_){return[];}
-}
+function invalidateIndex(){indexRevision+=1;index=null;loading=null;}
+function recents(){return recentItems.slice(0,6);}
 function remember(item){
- try{const all=recents().filter(x=>x.href!==item.href||x.title!==item.title);all.unshift({type:item.type,title:item.title,subtitle:item.subtitle,href:item.href,icon:item.icon});localStorage.setItem(RECENTS_KEY,JSON.stringify(all.slice(0,6)));}catch(_){}
+ recentItems=recentItems.filter(x=>x.href!==item.href||x.title!==item.title);
+ recentItems.unshift({type:item.type,title:item.title,subtitle:item.subtitle,href:item.href,icon:item.icon});
+ recentItems=recentItems.slice(0,6);
 }
 function ensureStyle(){
  if(document.getElementById('kyv-global-search-style'))return;
  const s=document.createElement('style');s.id='kyv-global-search-style';s.textContent=`
-#kyv-global-search{position:fixed;inset:0;z-index:9999;background:rgba(2,6,23,.72);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:9vh 1rem 1rem}#kyv-global-search.open{display:flex}.kyv-gs-dialog{width:min(760px,100%);background:#0f111a;border:1px solid #30364a;border-radius:1rem;box-shadow:0 28px 90px rgba(0,0,0,.55);overflow:hidden}.kyv-gs-head{display:flex;align-items:center;gap:.65rem;padding:.8rem;border-bottom:1px solid #232838}.kyv-gs-head i{color:#a5b4fc}.kyv-gs-input{flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:16px;padding:.35rem}.kyv-gs-key{font-size:.58rem;color:#94a3b8;border:1px solid #343b50;border-radius:.4rem;padding:.22rem .38rem}.kyv-gs-body{max-height:min(62vh,620px);overflow:auto;padding:.45rem}.kyv-gs-group{padding:.45rem .45rem .2rem;color:#64748b;font-size:.55rem;text-transform:uppercase;letter-spacing:.11em;font-weight:900}.kyv-gs-result{width:100%;display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:.65rem;align-items:center;text-align:left;border:1px solid transparent;background:transparent;color:#fff;border-radius:.72rem;padding:.58rem .62rem;cursor:pointer}.kyv-gs-result:hover,.kyv-gs-result.active{background:rgba(99,102,241,.10);border-color:rgba(99,102,241,.22)}.kyv-gs-icon{width:32px;height:32px;border-radius:.6rem;background:rgba(99,102,241,.09);display:flex;align-items:center;justify-content:center;color:#c7d2fe}.kyv-gs-main{min-width:0}.kyv-gs-main strong{display:block;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kyv-gs-main span{display:block;font-size:.6rem;color:#94a3b8;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kyv-gs-type{font-size:.55rem;color:#94a3b8;border:1px solid rgba(148,163,184,.15);padding:.2rem .38rem;border-radius:999px}.kyv-gs-empty{padding:1.2rem;text-align:center;color:#94a3b8;font-size:.7rem}.kyv-gs-foot{display:flex;justify-content:space-between;gap:.7rem;padding:.55rem .75rem;border-top:1px solid #232838;color:#64748b;font-size:.55rem}.kyv-global-search-button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.55rem .7rem;border:1px solid rgba(148,163,184,.14);border-radius:.7rem;background:rgba(255,255,255,.025);color:#cbd5e1;font-size:.68rem;font-weight:800}.kyv-global-search-button:hover{background:rgba(99,102,241,.08);color:#fff}.kyv-gs-result:focus-visible,#kyv-gs-input:focus-visible,#kyv-gs-retry:focus-visible{outline:3px solid #b9b4ff;outline-offset:-3px}.kyv-gs-retry{display:inline-flex;margin:12px auto 2px;padding:11px 18px;border:1px solid #8584dd;border-radius:10px;background:#232d4a;color:#f6f6ff;min-height:44px;font-weight:800}.kyv-gs-coverage{font-size:12px;color:#cad6eb;margin:6px 12px;line-height:1.45}.kyv-gs-dialog{max-height:92dvh}
+#kyv-global-search{position:fixed;inset:0;z-index:9999;background:rgba(2,6,23,.72);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:9vh 1rem 1rem}#kyv-global-search.open{display:flex}.kyv-gs-dialog{width:min(760px,100%);background:#0f111a;border:1px solid #30364a;border-radius:1rem;box-shadow:0 28px 90px rgba(0,0,0,.55);overflow:hidden}.kyv-gs-head{display:flex;align-items:center;gap:.65rem;padding:.8rem;border-bottom:1px solid #232838}.kyv-gs-head i{color:#a5b4fc}.kyv-gs-input{flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:16px;padding:.35rem}.kyv-gs-key{font-size:.58rem;color:#94a3b8;border:1px solid #343b50;border-radius:.4rem;padding:.22rem .38rem}.kyv-gs-body{max-height:min(62vh,620px);overflow:auto;padding:.45rem}.kyv-gs-group{padding:.45rem .45rem .2rem;color:#64748b;font-size:.55rem;text-transform:uppercase;letter-spacing:.11em;font-weight:900}.kyv-gs-result{width:100%;display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:.65rem;align-items:center;text-align:left;border:1px solid transparent;background:transparent;color:#fff;border-radius:.72rem;padding:.58rem .62rem;cursor:pointer}.kyv-gs-result:hover,.kyv-gs-result.active{background:rgba(99,102,241,.10);border-color:rgba(99,102,241,.22)}.kyv-gs-icon{width:32px;height:32px;border-radius:.6rem;background:rgba(99,102,241,.09);display:flex;align-items:center;justify-content:center;color:#c7d2fe}.kyv-gs-main{min-width:0}.kyv-gs-main strong{display:block;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kyv-gs-main span{display:block;font-size:.6rem;color:#94a3b8;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kyv-gs-type{font-size:.55rem;color:#94a3b8;border:1px solid rgba(148,163,184,.15);padding:.2rem .38rem;border-radius:999px}.kyv-gs-empty{padding:1.2rem;text-align:center;color:#94a3b8;font-size:.7rem}.kyv-gs-foot{display:flex;justify-content:space-between;gap:.7rem;padding:.55rem .75rem;border-top:1px solid #232838;color:#64748b;font-size:.55rem}.kyv-global-search-button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.55rem .7rem;border:1px solid rgba(148,163,184,.14);border-radius:.7rem;background:rgba(255,255,255,.025);color:#cbd5e1;font-size:.68rem;font-weight:800}.kyv-global-search-button:hover{background:rgba(99,102,241,.08);color:#fff}.kyv-gs-result:focus-visible,#kyv-gs-input:focus-visible,#kyv-gs-retry:focus-visible{outline:3px solid #b9b4ff;outline-offset:-3px}.kyv-gs-refresh{padding:.32rem .55rem;border:1px solid #49516b;border-radius:.5rem;background:#20263a;color:#e0e7ff;cursor:pointer;min-height:38px;font-size:.66rem;font-weight:800}.kyv-gs-refresh:focus-visible{outline:3px solid #b9b4ff;outline-offset:2px}.kyv-gs-retry{display:inline-flex;margin:12px auto 2px;padding:11px 18px;border:1px solid #8584dd;border-radius:10px;background:#232d4a;color:#f6f6ff;min-height:44px;font-weight:800}.kyv-gs-coverage{font-size:12px;color:#cad6eb;margin:6px 12px;line-height:1.45}.kyv-gs-dialog{max-height:92dvh}
 @media(max-width:640px){#kyv-global-search{padding-top:3vh}.kyv-gs-dialog{border-radius:.8rem}.kyv-gs-body{max-height:72vh}.kyv-gs-type{display:none}.kyv-gs-foot span:last-child{display:none}}
 `;document.head.appendChild(s);
 }
 function ensureModal(){
  let root=document.getElementById('kyv-global-search');if(root)return root;
- root=document.createElement('div');root.id='kyv-global-search';root.innerHTML=`<div class="kyv-gs-dialog" role="dialog" aria-modal="true" aria-label="Ricerca globale"><div class="kyv-gs-head"><i data-lucide="search" class="w-5 h-5"></i><input id="kyv-gs-input" class="kyv-gs-input" autocomplete="off" spellcheck="false" aria-label="Cerca in tutti gli archivi KYV" placeholder="Cerca artista, progetto, fattura, invio, documento, opera…"><span class="kyv-gs-key">Esc</span></div><div id="kyv-gs-body" class="kyv-gs-body" role="status" aria-live="polite"></div><div class="kyv-gs-foot"><span>↑↓ naviga · Enter apri</span><span>Indice caricato solo all’apertura</span></div></div>`;document.body.appendChild(root);
+ root=document.createElement('div');root.id='kyv-global-search';root.innerHTML=`<div class="kyv-gs-dialog" role="dialog" aria-modal="true" aria-label="Ricerca globale"><div class="kyv-gs-head"><i data-lucide="search" class="w-5 h-5"></i><input id="kyv-gs-input" class="kyv-gs-input" autocomplete="off" spellcheck="false" aria-label="Cerca in tutti gli archivi KYV" placeholder="Cerca artista, progetto, fattura, invio, documento, opera…"><button type="button" id="kyv-gs-refresh" class="kyv-gs-refresh" aria-label="Aggiorna indice di ricerca">Aggiorna</button><span class="kyv-gs-key">Esc</span></div><div id="kyv-gs-body" class="kyv-gs-body" role="status" aria-live="polite"></div><div class="kyv-gs-foot"><span>↑↓ naviga · Enter apri</span><span>Indice caricato solo all’apertura</span></div></div>`;document.body.appendChild(root);
  root.addEventListener('mousedown',e=>{if(e.target===root)close();});
  root.querySelector('#kyv-gs-input').addEventListener('input',e=>run(e.target.value));
+ root.querySelector('#kyv-gs-refresh').addEventListener('click',refreshIndex);
  if(window.lucide)lucide.createIcons({root});return root;
 }
 function display(items,label){
@@ -111,7 +118,14 @@ function run(query){
  const q=norm(query);active=0;
  if(!q){const rs=recents();display(rs,rs.length?'Recenti':'Inizia a scrivere');if(!rs.length)document.getElementById('kyv-gs-body').innerHTML='<div class="kyv-gs-empty">Scrivi almeno 2 caratteri per cercare in KYV Manager.</div>';return;}
  if(q.length<2){display([]);document.getElementById('kyv-gs-body').innerHTML='<div class="kyv-gs-empty">Scrivi almeno 2 caratteri.</div>';return;}
- const found=(index||[]).map(r=>({r,s:Math.max(score(r.title,q)*1.25,score(r.subtitle,q)*1.1,score(r.searchText,q))})).filter(x=>x.s>=0);
+ if(!index){
+  // Digitare durante una lettura o dopo un errore non deve produrre un falso «0 risultati verificati».
+  results=[];
+  const body=document.getElementById('kyv-gs-body');
+  if(body&&!document.getElementById('kyv-gs-retry'))body.innerHTML='<div class="kyv-gs-empty">Verifica degli archivi in corso…</div>';
+  return;
+ }
+ const found=index.map(r=>({r,s:Math.max(score(r.title,q)*1.25,score(r.subtitle,q)*1.1,score(r.searchText,q))})).filter(x=>x.s>=0);
  const types=['Progetto','Versione','Invio','Documento','Fattura','SIAE','IMAIE'];
  const ranked=found.sort((a,b)=>b.s-a.s||a.r.type.localeCompare(b.r.type,'it')||a.r.title.localeCompare(b.r.title,'it'))
   .slice(0,30).sort((a,b)=>types.indexOf(a.r.type)-types.indexOf(b.r.type)||b.s-a.s).map(x=>x.r);
@@ -129,17 +143,23 @@ function showSearchError(error){
  body.querySelector('#kyv-gs-retry')?.addEventListener('click',loadSearchIndex);
 }
 async function loadSearchIndex(){
+ const revision=indexRevision;
  const root=document.getElementById('kyv-global-search');
  if(!root?.classList.contains('open'))return;
  const body=document.getElementById('kyv-gs-body');
  body.innerHTML='<div class="kyv-gs-empty">Lettura e verifica degli archivi…</div>';
  try{
   await fetchIndex();
+  if(revision!==indexRevision)return;
   if(root.classList.contains('open'))run(root.querySelector('#kyv-gs-input').value);
  }catch(error){
   console.error('[KYV Global Search]',error);
-  if(root.classList.contains('open'))showSearchError(error);
+  if(revision===indexRevision&&root.classList.contains('open'))showSearchError(error);
  }
+}
+function refreshIndex(){
+ invalidateIndex();
+ if(document.getElementById('kyv-global-search')?.classList.contains('open'))return loadSearchIndex();
 }
 async function open(){
  ensureStyle();const root=ensureModal();
@@ -177,7 +197,7 @@ function keydown(e){
  }
  if(e.key==='ArrowDown'){e.preventDefault();active=Math.min(Math.max(0,results.length-1),active+1);display(results);document.querySelector('.kyv-gs-result.active')?.scrollIntoView({block:'nearest'});return;}
  if(e.key==='ArrowUp'){e.preventDefault();active=Math.max(0,active-1);display(results);document.querySelector('.kyv-gs-result.active')?.scrollIntoView({block:'nearest'});return;}
- if(e.key==='Enter'&&results.length){e.preventDefault();openResult(active);}
+ if(e.key==='Enter'&&results.length&&document.activeElement===root.querySelector('#kyv-gs-input')){e.preventDefault();openResult(active);}
 }
 
 function mountSidebarButton(){
@@ -190,8 +210,12 @@ function boot(){
  // Menu.js and Producer Mode announce mounts. No timer-based polling.
  document.addEventListener('kyv:sidebar-ready',mountSidebarButton);
  document.addEventListener('kyv:producer-nav-ready',mountSidebarButton);
+ // Aggiornamento solo su eventi espliciti di modifica, mai polling o scansione in background.
+ ['kyv:record-saved','kyv:invoice-updated','kyv:project-updated'].forEach(name=>{
+  document.addEventListener(name,refreshIndex);
+ });
  mountSidebarButton();
 }
-window.KYV_GLOBAL_SEARCH={open,close,mountSidebarButton,refresh:()=>{index=null;loading=null;}};
+window.KYV_GLOBAL_SEARCH={open,close,mountSidebarButton,refresh:refreshIndex};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

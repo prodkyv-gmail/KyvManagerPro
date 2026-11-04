@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-65-search-archive-20261104';
+const CACHE_NAME = 'kyv-studio-v2-66-cross-flow-20261104';
 const APP_SHELL = [
     './',
     './index.html',
