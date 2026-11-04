@@ -14,7 +14,7 @@ assert.equal(F.safeUrl('javascript:alert(1)'),null);
 const local=F.record({provider:'local',account:'Mac personale',externalKey:'9'.repeat(64),
  name:'DEMO_v02.aiff',path:'sessioni/2026',url:'https://somewhere.invalid'});
 assert.equal(local.link_file,null,'Local files never transmit their content/link');
-assert.throws(()=>F.record({provider:'onedrive',externalKey:'x',name:'a.wav'}),'Direct Graph not implemented');
+assert.equal(F.record({provider:'onedrive',account:'OneDrive test',externalKey:'x',name:'a.wav'}).provider,'onedrive','v2.58 supports gated OneDrive metadata');
 assert.throws(()=>F.record({provider:'drive',externalKey:'x',name:'a.exe'}));
 const projects=[
  {ID:11,TITOLO:'Nuova Luce',ARTISTA:'Emma'},
@@ -54,7 +54,7 @@ assert.ok(ui.includes("confirm('Confermi il collegamento"),'Never link inferred 
 assert.doesNotMatch(ui,/\b(?:db|client)\.from\([^\n]{0,180}\)\s*\.\s*(?:delete|remove|upload)\s*\(/,'Never delete or upload catalogue records');
 assert.doesNotMatch(ui,/\b(?:db|client)\.storage[^\n]*\.(?:remove|upload)\s*\(/,'Never mutate audio storage');
 assert.ok(page.includes('id="finder-folder"')&&page.includes('webkitdirectory'));
-assert.ok(page.includes('OneDrive online')&&page.includes('non ancora attivo'));
+assert.ok(page.includes('OneDrive online')&&page.includes('configurazione'));
 assert.ok(page.includes('id="finder-preview"')&&page.includes('id="finder-link-form"'));
 assert.ok(page.includes('src="kyv-drive-bridge.js"'));
 assert.ok(read('scheda_progetto.html').includes('KYV_AUDIO_LINKED_V245.showProject(p.ID)'));
