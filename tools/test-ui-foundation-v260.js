@@ -86,10 +86,10 @@ assert.ok(!finder.includes('<a href="integrazioni.html">Tutte le app</a>'));
 assert.ok(!read('kyv-theme.css').includes('.from(\'PROGETTI\')'),
  'Theme must not contain database or workflow mutations');
 const pkg=JSON.parse(read('package.json')),sw=read('sw.js');
-assert.equal(pkg.version,'2.63.0');
-assert.equal(read('VERSION').trim(),'2.63');
-assert.ok(read('config.js').includes("APP_VERSION: '2.63'"));
-assert.ok(sw.includes('kyv-studio-v2-63-economy-analyst-20261104'));
+assert.equal(pkg.version,'2.64.0');
+assert.equal(read('VERSION').trim(),'2.64');
+assert.ok(read('config.js').includes("APP_VERSION: '2.64'"));
+assert.ok(sw.includes('kyv-studio-v2-64-mobile-a11y-20261104'));
 assert.ok(pkg.scripts.check.includes('check:ui-foundation-v260'));
 assert.equal(pkg.scripts['check:ui-foundation-v260'],'node tools/test-ui-foundation-v260.js');
 assert.ok(read('guida.html').includes('v2.60'));
