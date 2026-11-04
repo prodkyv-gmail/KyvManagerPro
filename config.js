@@ -1,7 +1,7 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
-    APP_VERSION: '2.76',
+    APP_VERSION: '2.77',
     // Registrare qui l'Application (client) ID della propria app Microsoft Entra (SPA).
     // Solo Files.Read, redirect https://<dominio>/kyv_audio_finder.html; lasciare vuoto finché non configurata.
     MICROSOFT_CLIENT_ID: '',

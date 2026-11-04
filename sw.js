@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-76-operational-ux-20261104';
+const CACHE_NAME = 'kyv-studio-v2-77-editor-views-20261104';
 const APP_SHELL = [
     './',
     './index.html',

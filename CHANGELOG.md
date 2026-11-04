@@ -7,6 +7,13 @@
 
 # Changelog
 
+### v2.77 · 2026-11-04
+- Studio Editor: cache di sola visualizzazione per risultati filtrati e ordinati, riuso su Mostra altre 120 righe e restringimento incrementale durante la ricerca; invalidazione su nuova lettura, errore o salvataggio inline.
+- Il caricamento della stessa tabella preserva la ricerca, mentre passare a una tabella diversa continua ad azzerarla. I caricamenti restano completi e verificati; nessuna nuova query o scrittura.
+- Pannello Colonne unico arricchito di Trova colonna, Solo colonne visibili e conteggi; checkbox sempre accessibili con ricerca attiva e ripristino del focus dopo Esc.
+- Stili mobile per il pannello colonna senza moltiplicare barre o popup, CSV sempre completo, regola almeno una colonna visibile invariata.
+- Aggiornate guida completa, ? contestuale, manuali, policy, test v2.77, asset PWA, VERSION e cache.
+
 ### v2.76 · 2026-11-04
 - Unificati touch target, focus e semantica dei controlli nelle barre operative esistenti di Sessioni, Economia e Studio Editor, senza introdurre nuove barre o popup.
 - Progetti mobile: risolto override tardivo nella testata di kyv-layout-polish.js che invalidava il layout compatto v2.75.
