@@ -37,9 +37,9 @@ const link={dataset:{},children:[],href:'fatture.html?collegaProgetto=41',
   querySelector(q){return q==='[data-kyv-invoice-state]'?this.children.find(x=>x.dataset?.kyvInvoiceState==='1')||null:null;},
   setAttribute(k,v){this[k]=v;}};
 let duplicateAppend=0;
-const nav={querySelector:q=>q==='[data-kyv-workflow="invoice"]'?link:null,
+const simulatedNav={querySelector:q=>q==='[data-kyv-workflow="invoice"]'?link:null,
   appendChild(){duplicateAppend++;}};
-const doc={getElementById:id=>id==='kyv-workflow-nav'?nav:null,
+const doc={getElementById:id=>id==='kyv-workflow-nav'?simulatedNav:null,
   createElement:tag=>({tagName:tag.toUpperCase(),dataset:{},textContent:'',className:''})};
 const sandbox={document:doc,summary:rows=>rows.length
   ?{kind:'open',short:'Da incassare',detail:'F-5 · €100 · da incassare'}
