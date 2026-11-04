@@ -67,8 +67,8 @@ assert.ok(ui.includes('J.selectionPlan(preview,[...scanChecked],previewIndices()
 assert.ok(ui.includes('if(!confirm('),'Explicit user approval required');
 assert.ok(ui.includes("preview=C.markMany(preview,selected,decision)"),'Confirm only selections');
 assert.ok(ui.includes("C.plan(I.safeRows(preview),owner)"),'Indexing remains a second explicit action');
-assert.ok(ui.includes('preview.some(x=>x._explicit)')&&ui.includes('scanChecked.clear()'),
- 'Changing scans must not carry over pending approvals');
+assert.ok(ui.includes('function guardScanChanges()')&&ui.includes('preview.some(f=>f._explicit)')&&ui.includes('scanChecked.clear()'),
+ 'Changing scans must confirm pending approvals before new source reads, then clear only review selection');
 assert.ok(!read('kyv-audio-review-batch-v254.js').includes('.from('),'Grouping engine must not talk to database');
 assert.ok(sw.includes("'./kyv-audio-review-batch-v254.js'"));
 assert.equal(JSON.parse(read('package.json')).version,'2.80.0');
