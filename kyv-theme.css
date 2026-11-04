@@ -741,3 +741,191 @@ main a.hover\:bg-kyv-border:hover { background: rgba(255,255,255,.085) !importan
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* ---------------------------------------------------------
+   v2.60 · KYV shared visual foundation
+   Opt-in through body.kyv-v260: no new runtime/observers.
+   Existing forms, app models and data flow remain intact.
+   --------------------------------------------------------- */
+:root {
+  --kyv-ui-radius: 16px;
+  --kyv-ui-radius-small: 11px;
+  --kyv-ui-control-height: 44px;
+  --kyv-ui-content-width: 1480px;
+  --kyv-ui-focus: #b9b4ff;
+  --kyv-ui-panel: #151b28;
+  --kyv-ui-panel-alt: #1b2434;
+  --kyv-ui-border: #354259;
+  --kyv-ui-secondary-text: #bdc7d8;
+  --kyv-ui-selection: rgba(139,131,255,.16);
+}
+
+/* Consistent rhythm and hierarchy: scoped to opt-in app pages. */
+body.kyv-v260 :is(.desk-content,.finder-main,.analyst-main,.kyv-page-surface) {
+  width: min(100%, var(--kyv-ui-content-width));
+  margin-inline: auto;
+}
+body.kyv-v260 :is(.desk-header,.finder-head) {
+  background: linear-gradient(130deg,#171f2e 0%,#111723 100%);
+  border-bottom: 1px solid var(--kyv-ui-border);
+  padding: clamp(16px,2vw,24px) clamp(18px,3vw,34px);
+  box-shadow: 0 10px 26px rgba(0,0,0,.12);
+}
+body.kyv-v260 :is(.desk-header,.finder-head) h1 {
+  color: #f7f9ff;
+  font-size: clamp(22px,2.2vw,30px);
+  font-weight: 850;
+  letter-spacing: -.035em;
+  line-height: 1.15;
+}
+body.kyv-v260 :is(.desk-content,.finder-main) {
+  padding-inline: clamp(15px,2.4vw,32px);
+}
+body.kyv-v260 :is(.desk-panel,.desk-stat,.finder-card,.hub-project,.hub-graph,.explorer,.finder-preview) {
+  background: linear-gradient(145deg,var(--kyv-ui-panel),#131927);
+  border: 1px solid var(--kyv-ui-border);
+  border-radius: var(--kyv-ui-radius);
+  box-shadow: 0 10px 25px rgba(0,0,0,.12);
+  min-width: 0;
+}
+body.kyv-v260 :is(.desk-panel,.finder-card,.explorer,.hub-graph,.finder-preview) {
+  padding: clamp(14px,1.8vw,22px);
+}
+body.kyv-v260 :is(.desk-panel,.finder-card,.explorer,.hub-graph) :is(h2,h3) {
+  letter-spacing: -.02em;
+  line-height: 1.27;
+}
+body.kyv-v260 :is(.desk-method,.finder-note,.finder-card small,.explorer-desc,.hub-project small) {
+  color: var(--kyv-ui-secondary-text);
+  line-height: 1.55;
+}
+body.kyv-v260 :is(.desk-stats,.finder-sources,.hub-rows) {
+  gap: clamp(10px,1.2vw,17px);
+}
+body.kyv-v260 :is(.desk-stat,.hub-project,.finder-file,.explorer-item) {
+  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+@media (hover: hover) {
+  body.kyv-v260 :is(.hub-project,.finder-card,.explorer-item):hover {
+    border-color: #697796;
+    box-shadow: 0 12px 35px rgba(0,0,0,.21);
+  }
+}
+body.kyv-v260 :is(.desk-tabs,.finder-links,.desk-quicklinks) {
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+body.kyv-v260 :is(.desk-tabs button,.desk-quicklinks a,.finder-links a) {
+  min-height: var(--kyv-ui-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--kyv-ui-border);
+  border-radius: var(--kyv-ui-radius-small);
+  background: #1a2333;
+  color: #e3e8ff;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+}
+body.kyv-v260 .desk-tabs button[aria-selected="true"] {
+  border-color: #a9a3ff;
+  color: #fff;
+  background: #413c8f;
+  box-shadow: inset 0 -2px 0 #b3adff;
+}
+body.kyv-v260 :is(.desk-form,.hub-filters,.finder-controls,.explorer-filters) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea),
+body.kyv-v260 :is(.finder-card,.desk-tools) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
+  min-height: var(--kyv-ui-control-height);
+  border: 1px solid #64738f;
+  border-radius: var(--kyv-ui-radius-small);
+  background: #0d1627;
+  color: #f8faff;
+  font-size: 15px;
+}
+body.kyv-v260 :is(.desk-form,.hub-filters,.finder-controls,.explorer-filters,.finder-card,.desk-tools)
+  :is(input,select,textarea)::placeholder { color: #94a3b8; }
+body.kyv-v260 :is(.desk-form,.hub-filters,.finder-controls,.explorer-filters) label {
+  color: #d3dceb;
+  font-size: 13px;
+}
+body.kyv-v260 :is(.desk-actions,.finder-intake-actions,.hub-detail-links) {
+  gap: 9px;
+}
+body.kyv-v260 :is(.desk-actions,.finder-intake-actions,.hub-rows,.finder-card) button {
+  min-height: var(--kyv-ui-control-height);
+  border-radius: var(--kyv-ui-radius-small);
+}
+body.kyv-v260 :is(.desk-entry,.review-row,.finder-intake-row,.finder-group-file) {
+  border-color: var(--kyv-ui-border);
+}
+body.kyv-v260 .hub-graph { background: #131c2d; }
+body.kyv-v260 .hub-chart-bar { background: #354158; }
+body.kyv-v260 .hub-chart-fill { background: linear-gradient(90deg,#8c85fa,#5aafca); }
+body.kyv-v260 .hub-project h3 { font-size: 17px; line-height: 1.3; }
+body.kyv-v260 .hub-marker {
+  background: rgba(139,131,255,.1);
+  border-color: rgba(170,164,255,.30);
+  padding: 5px 9px;
+}
+body.kyv-v260 .hub-marker.warn {
+  background: rgba(245,185,95,.09);
+  border-color: rgba(245,185,95,.48);
+  color: #ffe2a2;
+}
+body.kyv-v260 .hub-modal {
+  border-color: #6b7195;
+  background: #141b29;
+  border-radius: 18px;
+  width: min(840px,calc(100% - 24px));
+  box-shadow: 0 32px 80px rgba(0,0,0,.6);
+}
+body.kyv-v260 .hub-modal::backdrop { background: rgba(3,7,18,.86); }
+body.kyv-v260 :is(.hub-modal,.finder-group-detail) :is(p,li) { overflow-wrap:anywhere; }
+body.kyv-v260 :is(.desk-status,.finder-status) {
+  background: #1d2b40;
+  color: #dae5f5;
+  border-color: #455772;
+  border-radius: var(--kyv-ui-radius-small);
+}
+body.kyv-v260 :is(.desk-status.error,.finder-status.error) {
+  background: #572532;
+  color: #ffdde2;
+  border-color: #cd7180;
+}
+body.kyv-v260 :is(button,a,input,select,textarea,summary):focus-visible {
+  outline: 3px solid var(--kyv-ui-focus);
+  outline-offset: 3px;
+}
+body.kyv-v260 :is(.finder-secondary-details,.kyv-easy-details) > summary {
+  min-height: 44px;
+  display:flex;
+  align-items:center;
+  border-radius: var(--kyv-ui-radius-small);
+}
+body.kyv-v260 :is(.finder-secondary-details,.kyv-easy-details)[open] > summary {
+  color: #f6f7ff;
+}
+body.kyv-v260 [hidden] { display:none !important; }
+
+/* One touch-target scale on narrow screens. Preserve document forms and tables. */
+@media (max-width: 767px) {
+  body.kyv-v260 :is(.desk-content,.finder-main) {padding: 14px 14px calc(110px + env(safe-area-inset-bottom,0px));}
+  body.kyv-v260 :is(.desk-header,.finder-head) {padding: 16px;}
+  body.kyv-v260 :is(.desk-quicklinks,.finder-links) {gap: 7px;}
+  body.kyv-v260 :is(.desk-quicklinks a,.finder-links a) {flex: 1 1 auto;min-height: 44px;}
+  body.kyv-v260 .hub-modal {
+    width: min(100vw - 14px,840px);
+    max-height: calc(100dvh - 20px);
+    padding: 15px;
+  }
+  body.kyv-v260 :is(.desk-panel,.finder-card,.explorer) {padding: 15px;}
+  body.kyv-v260 .hub-project {padding: 16px;}
+}
+@media (prefers-reduced-motion: reduce) {
+  body.kyv-v260 :is(.desk-stat,.hub-project,.finder-card,.explorer-item) {transition:none;}
+}
