@@ -101,9 +101,9 @@ for(const token of [
 assert.ok(theme.includes('body.kyv-v260.kyv-easy-mode #kyv-v2-next,\nbody.kyv-v260.kyv-easy-mode .kyv-project-progressive {\n  display: none !important;'),
  'Redundant easy-mode shortcuts must be hidden, without destroying complete-mode content');
 const sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-assert.equal(pkg.version,'2.75.0');
-assert.equal(read('VERSION').trim(),'2.75');
-assert.ok(sw.includes('kyv-studio-v2-75-mobile-projects-20261104'));
+assert.equal(pkg.version,'2.76.0');
+assert.equal(read('VERSION').trim(),'2.76');
+assert.ok(sw.includes('kyv-studio-v2-76-operational-ux-20261104'));
 assert.ok(pkg.scripts.check.includes('check:project-ux-v261'));
 assert.equal(pkg.scripts['check:project-ux-v261'],'node tools/test-project-ux-v261.js');
 assert.ok(read('guida.html').includes('v2.61'));
