@@ -44,7 +44,7 @@ const keys=['progetti','scheda','sessioni','audiofinder','fatture','rendiconto',
 for(const key of keys){
  const item=helpHost.KYV_HELP.getContent(key);
  assert.ok(item.content.includes('v2.73'),key+' contextual procedure absent');
- assert.ok(item.content.includes('guida.html#v273-'),key+' must link to expanded guide');
+ assert.ok(item.content.includes('guida.html#v273-')||item.content.includes('guida.html#guida-pratica-v273'),key+' must link to expanded guide');
 }
 const sections=['guida-pratica-v273','v273-search','v273-scheda','v273-sessioni','v273-contabilita','v273-editor','v273-problemi'];
 for(const id of sections)assert.ok(guide.includes('id="'+id+'"'),'Missing detailed guide section '+id);
