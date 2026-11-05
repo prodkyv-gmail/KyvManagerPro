@@ -1,3 +1,17 @@
+## v2.81 — Economia e KYV Analyst: riconciliazioni documentali in sola lettura (5 novembre 2026)
+
+La **v2.81** integra in KYV Analyst un unico pannello richiudibile **Controllo di coerenza economica**: usa le stesse 11 fonti già lette con paginazione e conteggio verificato, senza nuove query, scritture o accessi a servizi esterni.
+
+**Fatturato e incassi:** il fatturato gestionale deriva da **PrezzoUnitario** per voce fattura, mai dal totale documento XML ripetuto. Sono segnalate ripartizioni con somme non coincidenti, quote verso ID fattura/progetto mancanti, valori unitari non disponibili, movimenti di incasso che superano la voce e pagamenti privi di data o con fattura non trovata. Gli storni sono esclusi dagli incassi attivi. Una vecchia fattura `PAGATA=SI` senza movimento è distinta da un bonifico con data; non si deducono date bancarie.
+
+**SIAE / Nuovo IMAIE:** come liquidazioni nette ricevute sono usate esclusivamente righe `KYV_LIQUIDAZIONI_DIRITTI` con `DataAccredito` verificata e ente SIAE / NUOVO IMAIE. Le liquidazioni prive di data sono mostrate come dati da verificare e non sommate alle ricevute né alle quote ricevute ancora da attribuire. Le righe dell'**ESTRATTO SIAE** grezzo non sono bonifici. Le attribuzioni stornate, con ID progetto/liquidazione assenti o superiori al netto sono evidenziate, senza auto-correzione. La vista operativa di Analyst e la risposta sulle royalties ora mostrano le quote ricevute da attribuire sulla base delle sole liquidazioni datate. Il motore storico v2.40 non è stato modificato.
+
+**Fee e redditività:** FEE=0 è un risultato possibile di una sessione creativa, non un insoluto. FEE positiva senza fattura è un controllo dell'accordo, non un credito certo. Senza costi verificati e attribuiti a un brano non si calcola un utile netto per progetto. Le verifiche non rappresentano diagnosi fiscali automatiche.
+
+**Come usarlo:** apri `kyv_analyst.html` e il pannello v2.81, oppure fai la domanda “Quali riconciliazioni economiche devo verificare?”. Usa i collegamenti Verifica verso Fatture o Liquidazioni; modifica le informazioni soltanto nella schermata originale, quindi premi Rileggi e aggiorna i dati. Guida completa `guida.html#v281-economy`, aiuto ?, collaudo manuale `docs/V281_ECONOMY_AUDIT_QA.md`.
+
+**Compatibilità e sicurezza:** nessuna variazione a Supabase, schema, dati storici, autorizzazioni, SIAE polarity, fatture o collegamenti; nessuna seconda dashboard o nuovo menu. Suite preesistenti più `check:economy-audit-v281` nel CI GitHub.
+
 ## v2.80 — Audio Finder: scansione locale/cloud guidata e protezione delle decisioni (4 novembre 2026)
 
 **Novità concrete:** in Audio Finder → Aggiungi audio, un riepilogo delle sorgenti indica soltanto le funzionalità/configurazioni visibili da browser: File/Cartelle (selettore, non crawler), crittografia HTTPS, account Drive configurati, Dropbox archivio/Chooser/OAuth e OneDrive OAuth/indice. La configurazione non implica autenticazione o accesso verificato. Non è stato introdotto alcun nuovo connettore né un permesso più ampio.
