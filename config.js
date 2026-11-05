@@ -195,6 +195,11 @@ window.KYV_CONFIG = KYV_CONFIG;
     }
 
     if(page==='fatture.html'){
+        const verifiedRead=document.createElement('script');
+        verifiedRead.src='kyv-read-guard-v282.js';
+        verifiedRead.async=false;
+        verifiedRead.dataset.kyvReadGuardV282='1';
+        document.head.appendChild(verifiedRead);
         const economy=document.createElement('script');
         economy.src='kyv-economy-v6.js';
         economy.async=false;
