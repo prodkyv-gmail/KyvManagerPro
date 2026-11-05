@@ -108,10 +108,10 @@ assert.ok(read('kyv-siae-amount.js').includes('return n===null?null:(n===0?0:-n)
 assert.ok(read('guida.html').includes('id="v281-economy"'));
 assert.ok(read('kyv-help.js').includes('v2.81 · Coerenza economica e diritti'));
 assert.ok(read('docs/V281_ECONOMY_AUDIT_QA.md').includes('Controllo KYV Analyst'));
-assert.equal(read('VERSION').trim(),'2.81');
-assert.equal(require('../package.json').version,'2.81.0');
-assert.ok(read('config.js').includes("APP_VERSION: '2.81'"));
+assert.equal(read('VERSION').trim(),require('./release-contract').version());
+assert.equal(require('../package.json').version,(require('./release-contract').version()+'.0'));
+assert.ok(read('config.js').includes("APP_VERSION: '"+require('./release-contract').version()+"'"));
 assert.ok(sw.includes("'./kyv-economy-audit-v281.js'"));
-assert.ok(sw.includes('kyv-studio-v2-81-economy-audit-20261105'));
+assert.ok(sw.includes(require('./release-contract').cacheName()));
 assert.ok(require('../package.json').scripts.check.includes('check:economy-audit-v281'));
 console.log('OK v2.81: invoice unit sums, payments, reversals, dated SIAE/IMAIE credits, fee zero and read-only analyst');

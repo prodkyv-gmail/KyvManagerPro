@@ -1,3 +1,13 @@
+## v2.82 — Stabilizzazione letture e test release (5 novembre 2026)
+
+**Economia:** nella pagina Fatture, il cruscotto `kyv-economy-v6.js` non utilizza più quattro `.limit(1000/2000/5000)` che potevano produrre totali incompleti. Riutilizza `KYV_READ_GUARD_V282.readComplete` per PROGETTI, FATTURE, Spese Extra e FATTURE_RIPARTIZIONI, ordinati per le rispettive chiavi ID univoche e con `count:'exact'`. In attesa dei dati vengono nascosti i totali precedenti; errori di rete, conteggi mancanti, record duplicati o oltre il limite di sicurezza interrompono i calcoli, mostrando il messaggio anziché numeri parziali. Le richieste concorrenti usano un contatore di generazione: una risposta vecchia non può sovrascrivere quella nuova.
+
+**KYV Analyst:** le 11 fonti già esistenti usano lo stesso lettore; KYV_SESSIONI, KYV_SESSIONI_PROGETTI e KYV_PIAZZAMENTI, prima ordinati per data non univoca, ora vengono paginati per ID. Il pulsante Rileggi e aggiorna i dati viene disabilitato durante la lettura e riattivato al termine; il messaggio indica archivi completi/11 e record letti. Non vengono mostrati report da dati parziali. Il lettore riprova **solo le letture** su errori transitori di rete (max 2 retry con attese brevi), mai su errori di autorizzazione, schema o validazione.
+
+**Limiti:** fino a 30.000 righe esatte per fonte; se superato, errore esplicito. Il conteggio è richiesto in modo esatto e ogni ID viene visto una sola volta; niente dati stantii o doppi conteggi in caso di pagine mutate. Nessuna modifica a formule, segni SIAE, fee, fatture, quote, costi, storici, permessi o schema. Nessun nuovo MutationObserver, menu o pannello grafico.
+
+**Test:** nuovo controllo `check:read-guard-v282` con simulazioni di più pagine, errori temporanei, permessi negati, ID mancanti/duplicati e conteggio non verificabile. Release contract dinamico centralizzato per evitare di riscrivere decine di test storici a ogni cache/numero di versione. Guide complete e ? aggiornate; checklist manuale `docs/V282_STABILIZATION_QA.md`. Il CI GitHub non verifica da solo la PWA pubblicata su Vercel.
+
 ## v2.81 — Economia e KYV Analyst: riconciliazioni documentali in sola lettura (5 novembre 2026)
 
 La **v2.81** integra in KYV Analyst un unico pannello richiudibile **Controllo di coerenza economica**: usa le stesse 11 fonti già lette con paginazione e conteggio verificato, senza nuove query, scritture o accessi a servizi esterni.

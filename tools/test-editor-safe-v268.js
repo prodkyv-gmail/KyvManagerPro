@@ -66,9 +66,9 @@ for(const filename of ['kyv-editor-project-fields.js','kyv-editor-invoice-fields
 assert.ok(fs.readFileSync('kyv-editor-relations.js','utf8').includes('select.disabled=input.disabled'),'Read-only reference selectors remain disabled');
 assert.ok(html.includes('window.KYV_EDITOR_ACTIVE_MODAL_TABLE = null'),'Closing modal resets its target context');
 assert.ok(sw.includes("'./kyv-editor-changes-v268.js'"));
-assert.ok(sw.includes('kyv-studio-v2-81-economy-audit-20261105'));
-assert.equal(fs.readFileSync('VERSION','utf8').trim(),'2.81');
-assert.equal(require('../package.json').version,'2.81.0');
+assert.ok(sw.includes(require('./release-contract').cacheName()));
+assert.equal(fs.readFileSync('VERSION','utf8').trim(),require('./release-contract').version());
+assert.equal(require('../package.json').version,(require('./release-contract').version()+'.0'));
 assert.ok(require('../package.json').scripts.check.includes('check:editor-safe-v268'));
 assert.ok(fs.readFileSync('guida.html','utf8').includes('v2.68'));
 assert.ok(fs.readFileSync('kyv-help.js','utf8').includes('v2.68'));

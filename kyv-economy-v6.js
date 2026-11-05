@@ -3,7 +3,7 @@
 'use strict';
 if((location.pathname.split('/').pop()||'').toLowerCase()!=='fatture.html')return;
 
-let db=null,lastData=null;
+let db=null,lastData=null,loadGeneration=0;
 const text=v=>String(v??'').trim();
 const H=v=>window.KYV?.safeHtml?KYV.safeHtml(v??''):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>{if(window.KYV?.parseNumber)return KYV.parseNumber(v)||0;const n=Number(String(v??'').replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0;};
@@ -85,15 +85,26 @@ function render(year='all'){
  if(window.lucide)lucide.createIcons({root});
 }
 async function load(){
- const c=client();if(!c)return;
- const [p,f,s,a]=await Promise.all([
-  c.from('PROGETTI').select('ID,TITOLO,ARTISTA,FEE,STATO,SVILUPPO,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione').limit(1000),
-  c.from('FATTURE').select('ID_FT,Numero,Numero_Originale,Data,Denominazione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento,XML_SHA256').limit(2000),
-  c.from('Spese Extra').select('ID_SPESE,Data,Descrizione,Categoria,Importo,ID_PROGETTO').limit(2000),
-  c.from('FATTURE_RIPARTIZIONI').select('id,id_ft,id_progetto,prezzo_unitario').limit(5000)
- ]);
- if(p.error||f.error||s.error||a.error){console.warn('[KYV Economy v6] lettura incompleta',{projects:p.error,invoices:f.error,costs:s.error,allocations:a.error});const root=mount();if(root)root.textContent='Analisi non disponibile: una fonte non è leggibile. Ricarica dopo la verifica.';return;}
- lastData={projects:p.data||[],invoices:f.data||[],costs:s.data||[],invoiceSplits:a.data||[]};render('all');
+ const token=++loadGeneration,root=mount();
+ if(root)root.textContent='Verifica completa degli archivi economici in corso…';
+ try{
+  const c=client(),read=window.KYV_READ_GUARD_V282?.readComplete;
+  if(!c||!read)throw Error('Client autenticato o lettura verificata non disponibile');
+  // Fully read every source by unique ID: fixed LIMIT could silently distort totals.
+  const [projects,invoices,costs,invoiceSplits]=await Promise.all([
+   read(c,'PROGETTI','ID,TITOLO,ARTISTA,FEE,STATO,SVILUPPO,IDFT,Data_Sessione,Data_Consegna_Master,Data_Pubblicazione','ID'),
+   read(c,'FATTURE','ID_FT,Numero,Numero_Originale,Data,Denominazione,ImportoTotaleDocumento,PrezzoUnitario,PrezzoTotale,ImportoPagamento,PAGATA,ID_PROGETTO,DataScadenzaPagamento,XML_SHA256','ID_FT'),
+   read(c,'Spese Extra','ID_SPESE,Data,Descrizione,Categoria,Importo,ID_PROGETTO','ID_SPESE'),
+   read(c,'FATTURE_RIPARTIZIONI','id,id_ft,id_progetto,prezzo_unitario','id')
+  ]);
+  if(token!==loadGeneration)return; // Stale requests never replace newer refreshes.
+  lastData={projects,invoices,costs,invoiceSplits};render('all');
+ }catch(error){
+  if(token!==loadGeneration)return;
+  lastData=null; // Never leave stale financial totals visible as current.
+  console.warn('[KYV Economy v2.82] Archivio incompleto',error);
+  if(root)root.textContent='Totali economici non disponibili: '+(error?.message||'lettura non completata')+'. Ricarica la pagina o verifica la fonte in KYV Analyst.';
+ }
 }
 function boot(){ensureStyles();let n=0;const t=setInterval(()=>{n++;if(mount()){clearInterval(t);load();}else if(n>=25)clearInterval(t);},120);setTimeout(()=>clearInterval(t),3500);}
 window.KYV_ECONOMY_V6={refresh:load};

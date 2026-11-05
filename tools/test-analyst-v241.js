@@ -57,9 +57,10 @@ assert.equal(e.answer(a,'Come va la luna?').title,'Domanda non riconosciuta dall
 assert.throws(()=>e.build(source,'bad date'));
 const page=read('kyv_analyst.html'),ui=read('kyv-analyst-ui-v241.js'),sw=read('sw.js');
 for(const x of ['KYV Analyst','kyv-analyst-engine-v241.js','kyv-analyst-ui-v241.js','analyst-status']) assert.ok(page.includes(x));
-for(const x of ['FATTURE_INCASSI_STORNI','KYV_ATTRIBUZIONI_DIRITTI_STORNI','Prossimo_Followup',"count:'exact'"])assert.ok(ui.includes(x));
+for(const x of ['FATTURE_INCASSI_STORNI','KYV_ATTRIBUZIONI_DIRITTI_STORNI','Prossimo_Followup'])assert.ok(ui.includes(x));
+assert.ok(read('kyv-read-guard-v282.js').includes("count:'exact'"),'Exact count now provided by shared loader');
 assert.doesNotMatch(ui,/\.insert\(|\.update\(|\.upsert\(|\.delete\(|fetch\(['"]https:|api\.openai|api\.anthropic|localStorage/,'Analyst must remain read-only and local');
-assert.ok(sw.includes('kyv-studio-v2-81-economy-audit-20261105'));
+assert.ok(sw.includes(require('./release-contract').cacheName()),'PWA cache matches the current release');
 for(const x of ["'./kyv_analyst.html'","'./kyv-analyst-engine-v241.js'","'./kyv-analyst-ui-v241.js'"])assert.ok(sw.includes(x));
 assert.ok(read('kyv_intelligence.html').includes('kyv_analyst.html'));
 assert.ok(read('kyv_ritorni_progetti.html').includes('kyv_analyst.html'));

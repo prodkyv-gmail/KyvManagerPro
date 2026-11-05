@@ -1,7 +1,7 @@
 // config.js - Cabina di regia per tutte le chiavi pubbliche del progetto
 
 const KYV_CONFIG = {
-    APP_VERSION: '2.81',
+    APP_VERSION: '2.82',
     // Registrare qui l'Application (client) ID della propria app Microsoft Entra (SPA).
     // Solo Files.Read, redirect https://<dominio>/kyv_audio_finder.html; lasciare vuoto finché non configurata.
     MICROSOFT_CLIENT_ID: '',
@@ -195,6 +195,11 @@ window.KYV_CONFIG = KYV_CONFIG;
     }
 
     if(page==='fatture.html'){
+        const verifiedRead=document.createElement('script');
+        verifiedRead.src='kyv-read-guard-v282.js';
+        verifiedRead.async=false;
+        verifiedRead.dataset.kyvReadGuardV282='1';
+        document.head.appendChild(verifiedRead);
         const economy=document.createElement('script');
         economy.src='kyv-economy-v6.js';
         economy.async=false;

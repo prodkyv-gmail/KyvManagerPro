@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-81-economy-audit-20261105';
+const CACHE_NAME = 'kyv-studio-v2-82-verified-read-20261105';
 const APP_SHELL = [
     './',
     './index.html',
@@ -77,6 +77,7 @@ const APP_SHELL = [
     './kyv-project-timeline-v10.js',
     './kyv-pipeline-v4.js',
     './kyv-today-home-v5.js',
+    './kyv-read-guard-v282.js',
     './kyv-economy-v6.js',
     './kyv-rights-v7.js',
     './kyv-global-search-v8.js',

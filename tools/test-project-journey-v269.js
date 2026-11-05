@@ -49,10 +49,10 @@ assert.doesNotMatch(read('kyv-flow-routes-v269.js'),/\.(?:insert|update|upsert|d
 assert.ok(read('sw.js').includes("'./kyv-flow-routes-v269.js'"));
 assert.ok(read('sw.js').includes("'./sessioni.html'"),'Sessioni shell is available offline when cached');
 assert.ok(read('sw.js').includes("'./kyv-editor-read-v267.js'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-81-economy-audit-20261105'));
-assert.ok(read('config.js').includes("APP_VERSION: '2.81'"));
-assert.equal(read('VERSION').trim(),'2.81');
-assert.equal(require('../package.json').version,'2.81.0');
+assert.ok(read('sw.js').includes(require('./release-contract').cacheName()));
+assert.ok(read('config.js').includes("APP_VERSION: '"+require('./release-contract').version()+"'"));
+assert.equal(read('VERSION').trim(),require('./release-contract').version());
+assert.equal(require('../package.json').version,(require('./release-contract').version()+'.0'));
 assert.ok(require('../package.json').scripts.check.includes('check:project-journey-v269'));
 assert.ok(read('guida.html').includes('v2.69'));
 assert.ok(read('kyv-help.js').includes('v2.69'));

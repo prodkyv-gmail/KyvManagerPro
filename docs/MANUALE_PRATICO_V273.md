@@ -1,3 +1,13 @@
+## Aggiornamento v2.82 · Lettura completa e sicurezza dei totali
+
+1. Apri Economia → Controllo economico: la sezione mostra un messaggio di caricamento finché le quattro fonti non sono state lette per intero. Un valore zero viene mostrato soltanto se l'archivio è stato verificato; non appare una somma parziale.
+2. Apri KYV Analyst e premi **Rileggi e aggiorna i dati**: il pulsante viene bloccato durante la richiesta e il testo mostra il progresso delle 11 fonti, evitando richieste ripetute.
+3. Ordinamento per ID univoco evita duplicazioni di sessioni o piazzamenti che condividono la stessa data. Se il database risponde con dati mancanti, ID ripetuti o senza un conteggio esatto, il calcolo si blocca con una descrizione dell'errore.
+4. Le letture su errori transitori come 503 possono essere ripetute fino a due volte. Per un errore di permessi o schema il controllo fallisce subito; dopo averlo risolto puoi ricaricare la pagina.
+5. Il limite prudenziale è 30.000 record per archivio; oltre il limite l'app chiede verifica anziché inventare un totale incompleto.
+6. PWA, VERSION e cache vengono testati con riferimenti centralizzati, così i controlli storici restano validi quando si pubblica una nuova versione. La verifica della nuova PWA deve essere eseguita manualmente.
+7. Formule di fatture, incassi, fee, SIAE e IMAIE non cambiano; i dati storici rimangono invariati.
+
 ## Aggiornamento v2.81 · KYV Analyst e controllo di coerenza economica
 
 1. Apri **KYV Analyst** dopo il caricamento autenticato. Sotto Verifiche principali apri **Controllo di coerenza economica · v2.81**, inizialmente chiuso per non appesantire la pagina.
