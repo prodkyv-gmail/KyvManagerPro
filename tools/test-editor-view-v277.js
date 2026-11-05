@@ -55,10 +55,10 @@ assert.ok(html.includes("document.getElementById('editor-columns-toggle')?.focus
 assert.match(css,/#editor-column-panel #editor-column-list label\[hidden\]\{display:none!important\}/);
 assert.match(css,/@media\(max-width:767px\)/);
 assert.doesNotMatch(src,/\.from\(|MutationObserver|localStorage|fetch\(/,'View helper must have no DB, observer or storage access');
-assert.equal(read('VERSION').trim(),'2.81');
-assert.equal(require('../package.json').version,'2.81.0');
-assert.ok(read('config.js').includes("APP_VERSION: '2.81'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-81-economy-audit-20261105'));
+assert.equal(read('VERSION').trim(),require('./release-contract').version());
+assert.equal(require('../package.json').version,(require('./release-contract').version()+'.0'));
+assert.ok(read('config.js').includes("APP_VERSION: '"+require('./release-contract').version()+"'"));
+assert.ok(read('sw.js').includes(require('./release-contract').cacheName()));
 assert.ok(read('sw.js').includes("'./kyv-editor-view-v277.js'"));
 assert.ok(read('guida.html').includes('id="v277-editor"'));
 const h={};vm.runInNewContext(read('kyv-help.js'),{window:h});

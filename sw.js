@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-81-economy-audit-20261105';
+const CACHE_NAME = 'kyv-studio-v2-82-verified-read-20261105';
 const APP_SHELL = [
     './',
     './index.html',

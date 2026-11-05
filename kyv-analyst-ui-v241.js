@@ -17,20 +17,19 @@ const promptExamples=[
 ];
 const euro=x=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(x)||0);
 const now=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Rome'});
-let report=null,working=false,creativeReport=null,economyAudit=null;
-async function allRows(c,table,fields,order){
- const batch=500,max=10000;
- const first=await c.from(table).select(fields,{count:'exact'}).order(order,{ascending:false}).range(0,batch-1);
- if(first.error)throw Error('Lettura '+table+': '+first.error.message);
- if(first.count===null||first.count>max)throw Error(table+': risultato troppo grande o non verificabile');
- const data=[...(first.data||[])];
- while(data.length<first.count){
-  const next=await c.from(table).select(fields).order(order,{ascending:false}).range(data.length,Math.min(first.count-1,data.length+batch-1));
-  if(next.error||!next.data?.length)throw Error(table+': lettura incompleta');
-  data.push(...next.data);
- }
- if(data.length!==first.count)throw Error(table+': numero di record incompleto');
- return data;
+let report=null,working=false,creativeReport=null,economyAudit=null,readProgress=null;
+async function allRows(c,table,fields,idKey){
+ const reader=window.KYV_READ_GUARD_V282?.readComplete;
+ if(!reader)throw Error('Lettura verificata v2.82 non disponibile');
+ return reader(c,table,fields,idKey,{
+  onProgress:({loaded,total})=>{
+   if(!working||!readProgress)return;
+   readProgress.set(table,{loaded,total});
+   const complete=[...readProgress.values()].filter(x=>x.loaded===x.total).length;
+   const records=[...readProgress.values()].reduce((sum,x)=>sum+x.loaded,0);
+   $('analyst-status').textContent='Verifica archivi: '+complete+'/11 completati · '+records+' record letti. Nessun risultato parziale.';
+  }
+ });
 }
 function economyAuditAnswer(){
  const a=economyAudit;
@@ -173,7 +172,8 @@ function renderSuggestions(){
  $('analyst-footnote').textContent='Lettura completa: '+stats.projects+' progetti · '+stats.invoiceLines+' voci fattura · '+report.source.rights.length+' liquidazioni. Nessun dato è stato modificato.';
 }
 async function refresh(){
- if(working)return;working=true;$('analyst-status').textContent='Lettura e verifica degli archivi…';$('analyst-status').className='status';
+ if(working)return;working=true;readProgress=new Map();$('analyst-status').textContent='Lettura e verifica degli archivi…';$('analyst-status').className='status';
+ const reload=$('analyst-reload');reload.disabled=true;reload.textContent='Lettura in corso…';
  try{
   const c=window.KYV?.createSupabaseClient?.();
   if(!c)throw Error('Client autenticato non disponibile');
@@ -185,9 +185,9 @@ async function refresh(){
    allRows(c,'KYV_LIQUIDAZIONI_DIRITTI','ID_LIQUIDAZIONE,Ente,ImportoNetto,DataAccredito','ID_LIQUIDAZIONE'),
    allRows(c,'KYV_ATTRIBUZIONI_DIRITTI','ID_ATTRIBUZIONE,ID_LIQUIDAZIONE,ID_PROGETTO,Importo','ID_ATTRIBUZIONE'),
    allRows(c,'KYV_ATTRIBUZIONI_DIRITTI_STORNI','ID_STORNO,ID_ATTRIBUZIONE','ID_STORNO'),
-   allRows(c,'KYV_SESSIONI','id,data_sessione,durata_minuti,esito,archiviata','data_sessione'),
-   allRows(c,'KYV_SESSIONI_PROGETTI','id,id_sessione,id_progetto,annullato','created_at'),
-   allRows(c,'KYV_PIAZZAMENTI','id,id_progetto,destinatario,stato,prossimo_followup,archiviata','created_at'),
+   allRows(c,'KYV_SESSIONI','id,data_sessione,durata_minuti,esito,archiviata','id'),
+   allRows(c,'KYV_SESSIONI_PROGETTI','id,id_sessione,id_progetto,annullato','id'),
+   allRows(c,'KYV_PIAZZAMENTI','id,id_progetto,destinatario,stato,prossimo_followup,archiviata','id'),
    allRows(c,'FATTURE_RIPARTIZIONI','id,id_ft,id_progetto,prezzo_unitario','id')
   ]);
   const payload={projects,invoices,payments,paymentReversals,rights,allocations,allocationReversals,invoiceSplits};
@@ -202,7 +202,7 @@ async function refresh(){
   report=null;creativeReport=null;economyAudit=null;$('analyst-content').hidden=true;
   $('analyst-status').className='status error';
   $('analyst-status').textContent='Dati non completi o non disponibili. Nessuna conclusione mostrata: '+e.message;
- }finally{working=false;}
+ }finally{working=false;readProgress=null;reload.disabled=false;reload.textContent='Rileggi e aggiorna i dati';}
 }
 function init(){
  const release=$('kyv-analyst-app-version');if(release)release.textContent='v'+(window.KYV_CONFIG?.APP_VERSION||'');

@@ -80,9 +80,9 @@ vm.runInNewContext(part+'\nthis.fetchIndex=fetchIndex;this.invalidateIndex=inval
  assert.ok(audio.includes("if(!confirm('Confermi di voler '+actionLabel+"));
  assert.doesNotMatch(search,/\.(?:insert|update|upsert|delete)\(/);
  const pkg=JSON.parse(read('package.json'));
- assert.equal(pkg.version,'2.81.0');
- assert.equal(read('VERSION').trim(),'2.81');
- assert.ok(read('sw.js').includes('kyv-studio-v2-81-economy-audit-20261105'));
+ assert.equal(pkg.version,(require('./release-contract').version()+'.0'));
+ assert.equal(read('VERSION').trim(),require('./release-contract').version());
+ assert.ok(read('sw.js').includes(require('./release-contract').cacheName()));
  assert.ok(pkg.scripts.check.includes('check:cross-flow-v266'));
  assert.ok(read('guida.html').includes('v2.66'));
  assert.ok(read('kyv-help.js').includes('v2.66'));

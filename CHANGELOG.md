@@ -7,6 +7,13 @@
 
 # Changelog
 
+### v2.82 · 2026-11-05
+- Stabilizzazione: modulo `kyv-read-guard-v282.js` per letture paginabili con conteggio esatto, ordine per ID univoco, controllo duplicati/riga mancante, limite verificabile e due retry solo su errori transitori.
+- Il cruscotto Economia non usa più `.limit(1000/2000/5000)` che potevano generare somme silenziosamente parziali; fonte incompleta ⇒ nessun totale mostrato. Risposte di refresh obsolete ignorate.
+- KYV Analyst usa lo stesso caricatore per 11 fonti, ID invece di date non univoche per sessioni/piazzamenti, progresso di lettura e pulsante Rileggi protetto durante il lavoro.
+- Contratto di release dinamico tra VERSION, package, config e cache PWA per ridurre aggiornamenti ricorrenti ai test storici.
+- Guide dettagliate, ?, checklist, asset offline e regressioni aggiornati. Nessuna modifica a database, storici, autorizzazioni o formule economiche.
+
 ### v2.81 · 2026-11-05
 - KYV Analyst: pannello richiudibile di controllo coerenza economica in sola lettura, senza nuovi grafici o duplicazioni di analisi.
 - Verifiche di ripartizioni multi-progetto, PrezzoUnitario (non totali XML), incassi eccedenti, pagamenti senza data, fatture legacy, storni e ID mancanti.

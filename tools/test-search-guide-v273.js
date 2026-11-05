@@ -53,9 +53,9 @@ assert.ok(guide.indexOf('id="guida-pratica-v273"')<guide.indexOf('id="novita-v24
 for(const phrase of ['#41','Azzera filtri','40 progetti','Conferma collegamento','Fatture non disponibili','Studio Editor','Ctrl+K','Cmd+K'])assert.ok(guide.includes(phrase),'Missing explanation: '+phrase);
 assert.ok(read('docs/MANUALE_PRATICO_V273.md').length>5500,'Practical manual not sufficiently detailed');
 assert.ok(read('MANUALE_OPERATIVO.md').includes('Manuale pratico dettagliato v2.73'),'Primary manual must include full instructions');
-assert.ok(config.includes("APP_VERSION: '2.81'"));
-assert.equal(read('VERSION').trim(),'2.81');
-assert.equal(pkg.version,'2.81.0');
-assert.ok(sw.includes('kyv-studio-v2-81-economy-audit-20261105'));
+assert.ok(config.includes("APP_VERSION: '"+require('./release-contract').version()+"'"));
+assert.equal(read('VERSION').trim(),require('./release-contract').version());
+assert.equal(pkg.version,(require('./release-contract').version()+'.0'));
+assert.ok(sw.includes(require('./release-contract').cacheName()));
 assert.ok(pkg.scripts.check.includes('check:search-guide-v273'));
 console.log('OK: v2.73 search ID, clear filter visibility, guide chapter and detailed contextual help');

@@ -65,10 +65,10 @@ assert.ok(ui.includes("db.from('KYV_AUDIO_ASSOCIAZIONI').insert"),'Preexisting s
 assert.ok(ui.includes("confirm('Confermi il collegamento"),'Project link still requires human confirmation');
 assert.ok(ui.includes('R.planLinks(selections,personalCatalogue(),projects,links,owner)'));
 assert.doesNotMatch(read('kyv-audio-scan-v280.js'),/fetch\(|localStorage|(?:db|supabase)\.from\(|MutationObserver|createFromItem/);
-assert.equal(read('VERSION').trim(),'2.81');
-assert.equal(require('../package.json').version,'2.81.0');
-assert.ok(read('config.js').includes("APP_VERSION: '2.81'"));
-assert.ok(read('sw.js').includes('kyv-studio-v2-81-economy-audit-20261105'));
+assert.equal(read('VERSION').trim(),require('./release-contract').version());
+assert.equal(require('../package.json').version,(require('./release-contract').version()+'.0'));
+assert.ok(read('config.js').includes("APP_VERSION: '"+require('./release-contract').version()+"'"));
+assert.ok(read('sw.js').includes(require('./release-contract').cacheName()));
 assert.ok(read('sw.js').includes("'./kyv-audio-scan-v280.js'"));
 assert.ok(read('guida.html').includes('id="v280-audio-scan"'));
 assert.ok(read('kyv-help.js').includes('v2.80 · Scansione guidata e copertura reale'));
