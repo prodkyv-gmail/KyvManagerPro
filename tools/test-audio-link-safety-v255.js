@@ -38,8 +38,8 @@ assert.ok(ui.includes('groupSelected.clear();groupProject=\'\';'),
   'Clearing a hidden group must clear selected versions and project');
 assert.ok(ui.includes('Artista non dichiarato: verifica ogni file'),
   'Unattributed group requires a visible warning');
-assert.ok(sw.includes('kyv-studio-v2-80-guided-audio-scan-20261104'),'PWA cache rotated');
+assert.ok(sw.includes('kyv-studio-v2-81-economy-audit-20261105'),'PWA cache rotated');
 assert.ok(guide.includes('v2.55'),'Guide updated with linking behavior');
-assert.equal(JSON.parse(read('package.json')).version,'2.80.0');
-assert.equal(read('VERSION').trim(),'2.80');
+assert.equal(JSON.parse(read('package.json')).version,'2.81.0');
+assert.equal(read('VERSION').trim(),'2.81');
 console.log('OK: v2.55 unknown-artist separation, no duplicate selections, filtered group cannot link silently');
