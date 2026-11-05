@@ -46,8 +46,9 @@
   }
   for(const f of invoices){
    const invoiceId=t(f.ID_FT),all=movements.get(invoiceId)||[];
-   const line=invoiceLine.cents(f),rawTotal=all.reduce((s,p)=>s+positive(p.Importo),0);
-   if(rawTotal>line+1){
+   const lineInfo=invoiceLine.info(f),line=invoiceLine.cents(f),rawTotal=all.reduce((s,p)=>s+positive(p.Importo),0);
+   // Do not infer an overpayment when the invoice has no valid unit amount to compare against.
+   if(lineInfo.valid&&rawTotal>line+1){
     overpayments++;
     notices.push(issue('payment-excess','Incassi oltre la voce #'+invoiceId,'Somma dei movimenti attivi '+euro(rawTotal).toFixed(2)+' € rispetto all’importo unitario '+euro(line).toFixed(2)+' €. Verifica eventuali duplicazioni o acconti.','fatture.html',1));
    }
