@@ -22,10 +22,10 @@ assert.ok(sheet.includes("const hasPrimaryNext=Boolean(document.querySelector('#
 assert.ok(sheet.includes("box.style.display=hasPrimaryNext?'none':''"),'Fallback returns if hub is absent');
 assert.doesNotMatch(routes,/\.(insert|update|upsert|delete)\(/,'Journey helper must not write data');
 assert.ok(sw.includes("'./kyv-flow-routes-v269.js'"),'PWA caches route helper');
-assert.ok(sw.includes('kyv-studio-v2-80-guided-audio-scan-20261104'),'PWA version bumped');
-assert.ok(config.includes("APP_VERSION: '2.80'"));
-assert.equal(read('VERSION').trim(),'2.80');
-assert.equal(require('../package.json').version,'2.80.0');
+assert.ok(sw.includes('kyv-studio-v2-81-economy-audit-20261105'),'PWA version bumped');
+assert.ok(config.includes("APP_VERSION: '2.81'"));
+assert.equal(read('VERSION').trim(),'2.81');
+assert.equal(require('../package.json').version,'2.81.0');
 assert.ok(require('../package.json').scripts.check.includes('check:ui-consolidation-v270'));
 assert.ok(guide.includes('v2.70')&&help.includes('v2.70'),'Help and guide synchronized');
 // Small DOM-free runtime simulation of the real invoice status renderer: no duplicate link.

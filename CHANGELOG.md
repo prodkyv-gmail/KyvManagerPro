@@ -7,6 +7,14 @@
 
 # Changelog
 
+### v2.81 · 2026-11-05
+- KYV Analyst: pannello richiudibile di controllo coerenza economica in sola lettura, senza nuovi grafici o duplicazioni di analisi.
+- Verifiche di ripartizioni multi-progetto, PrezzoUnitario (non totali XML), incassi eccedenti, pagamenti senza data, fatture legacy, storni e ID mancanti.
+- Diritti SIAE e Nuovo IMAIE separati, ricevuti conteggiati soltanto se DataAccredito è documentata; liquidazioni senza data e estratti grezzi esclusi dalle somme ricevute.
+- Quote attribuite non oltre il netto accreditato. Diritto da attribuire dell'interfaccia Analyst e risposta royalties coerenti con la presenza di accrediti datati.
+- Distinzione fra FEE=0, fee positive non fatturate e utile netto non calcolabile senza costi; nessuna modifica dati, DB, permessi o motore storico.
+- Aggiornati guida dettagliata, aiuto contestuale, manuali, test, versione e cache PWA.
+
 ### v2.80 · 2026-11-04
 - Audio Finder: riepilogo onesto di selettori disponibili e provider configurati; nessun accesso cloud o automatico implicito.
 - Preflight della selezione locale (massimo 5.000 file, audio riconosciuti e non audio ignorati), indicatore di avanzamento di preparazione metadati e riselezione dello stesso file/cartella dopo annullamento.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-80-guided-audio-scan-20261104';
+const CACHE_NAME = 'kyv-studio-v2-81-economy-audit-20261105';
 const APP_SHELL = [
     './',
     './index.html',
@@ -41,6 +41,7 @@ const APP_SHELL = [
     './kyv-music-hub-v259.js',
     './kyv-creative-desk-ui-v244.js',
     './kyv-analyst-engine-v241.js',
+    './kyv-economy-audit-v281.js',
     './kyv-creative-funnel-v242.js',
     './kyv-analyst-ui-v241.js',
     './kyv-project-returns-v240.js',

@@ -86,10 +86,10 @@ assert.ok(!finder.includes('<a href="integrazioni.html">Tutte le app</a>'));
 assert.ok(!read('kyv-theme.css').includes('.from(\'PROGETTI\')'),
  'Theme must not contain database or workflow mutations');
 const pkg=JSON.parse(read('package.json')),sw=read('sw.js');
-assert.equal(pkg.version,'2.80.0');
-assert.equal(read('VERSION').trim(),'2.80');
-assert.ok(read('config.js').includes("APP_VERSION: '2.80'"));
-assert.ok(sw.includes('kyv-studio-v2-80-guided-audio-scan-20261104'));
+assert.equal(pkg.version,'2.81.0');
+assert.equal(read('VERSION').trim(),'2.81');
+assert.ok(read('config.js').includes("APP_VERSION: '2.81'"));
+assert.ok(sw.includes('kyv-studio-v2-81-economy-audit-20261105'));
 assert.ok(pkg.scripts.check.includes('check:ui-foundation-v260'));
 assert.equal(pkg.scripts['check:ui-foundation-v260'],'node tools/test-ui-foundation-v260.js');
 assert.ok(read('guida.html').includes('v2.60'));

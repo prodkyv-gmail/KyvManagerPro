@@ -63,8 +63,8 @@ assert.equal(filterRoot.KYV_PROJECT_V250.filterRows(projectRows,{mode:'RECENTI'}
 assert.equal(filterRoot.KYV_PROJECT_V250.filterRows(projectRows,{mode:'RECENTI',query:'#61'}).length,1,'An exact ID query must bypass the Recenti cap');
 assert.equal(filterRoot.KYV_PROJECT_V250.filterRows(projectRows,{mode:'TUTTI'}).length,61,'The full archive view must remain complete');
 assert.ok(read('sw.js').includes("'./kyv-audio-consent-v248.js'"));
-assert.equal(JSON.parse(read('package.json')).version,'2.80.0');
-assert.equal(read('VERSION').trim() ,'2.80');
+assert.equal(JSON.parse(read('package.json')).version,'2.81.0');
+assert.equal(read('VERSION').trim() ,'2.81');
 assert.ok(read('kyv-help.js').includes('v2.48'));
 assert.ok(read('guida.html').includes('v2.48'));
 console.log('OK: approved-only personal audio, persistent reference exclusions, explicit project creation and mobile picker');

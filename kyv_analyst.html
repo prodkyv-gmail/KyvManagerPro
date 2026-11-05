@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#10131b"><title>KYV Analyst v2.42 · KYV Intelligence</title>
+<meta name="theme-color" content="#10131b"><title>KYV Analyst · KYV Intelligence</title>
 <link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-responsive.css">
 <style>
 body{background:#0f111a;color:#f8fafc;font:15px Inter,system-ui,Arial,sans-serif;margin:0}
@@ -28,6 +28,25 @@ li strong,li span{display:block}li span{font-size:13px;color:#cbd5e1;margin-top:
 li a{flex-shrink:0;font-size:13px}.note{font-size:12px;color:#94a3b8}
 #answer-notes li{font-size:13px;color:#cbd5e1;list-style:disc;list-style-position:inside;padding:5px 0}
 #answer-panel{scroll-margin-top:20px}.empty{color:#94a3b8}
+#analyst-economic-audit{margin:15px 0;padding:0;overflow:hidden}
+#analyst-economic-audit>summary{list-style:revert;display:list-item;padding:16px 19px;cursor:pointer;font-size:15px;font-weight:800;color:#f1f5ff}
+#analyst-economic-audit>summary:focus-visible{outline:3px solid #a5b4fc;outline-offset:-2px}
+#analyst-economic-audit>summary small{display:block;margin-top:5px;font-size:12px;font-weight:500;color:#cbd5e1}
+#analyst-economic-audit[open]>summary{border-bottom:1px solid #334155}
+.kyv-v281-audit-body{padding:15px 19px 19px}
+.kyv-v281-audit-body p{font-size:13px}
+#analyst-audit-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin:13px 0}
+#analyst-audit-stats>div{border-radius:10px;border:1px solid #46516a;padding:13px;background:#111c2e;min-width:0}
+#analyst-audit-stats small,#analyst-audit-stats span{display:block;font-size:12px;color:#c7d2e6;line-height:1.55}
+#analyst-audit-stats strong{display:block;font-size:20px;line-height:1.35;color:#f1f5ff;margin:6px 0;overflow-wrap:anywhere}
+#analyst-audit-list li{padding:12px 0;display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+#analyst-audit-list li>div{min-width:0}
+#analyst-audit-list li a{flex-shrink:0;font-size:12px}
+#analyst-audit-list li strong{color:#e4e7fa;font-size:13px}
+#analyst-audit-list li span{font-size:12px;color:#cbd5e1}
+#analyst-audit-caveats{border-top:1px solid #374151;margin-top:12px;padding-top:10px}
+#analyst-audit-caveats li{padding:6px 0;font-size:12px;color:#cbd5e1;line-height:1.55}
+@media(max-width:600px){#analyst-economic-audit>summary{padding:14px}.kyv-v281-audit-body{padding:13px}#analyst-audit-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#analyst-audit-stats strong{font-size:17px}#analyst-audit-list li{flex-wrap:wrap}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script>
@@ -36,6 +55,7 @@ li a{flex-shrink:0;font-size:13px}.note{font-size:12px;color:#94a3b8}
 <script src="kyv-creative-funnel-v242.js"></script>
 <script src="kyv-creative-desk-v244.js"></script>
 <script src="kyv-analyst-engine-v241.js"></script>
+<script src="kyv-economy-audit-v281.js"></script>
 <script src="kyv-analyst-ui-v241.js" defer></script>
 </head>
 <body class="kyv-v260">
@@ -50,6 +70,17 @@ li a{flex-shrink:0;font-size:13px}.note{font-size:12px;color:#94a3b8}
 <section id="analyst-content" hidden>
 <h2>Verifiche principali</h2>
 <div id="analyst-metrics" class="grid" aria-label="Indicatori calcolati"></div>
+<details id="analyst-economic-audit" class="card" aria-label="Verifica di coerenza economica">
+<summary>Controllo di coerenza economica · v2.81 <small id="analyst-audit-summary" role="status">Fatture, incassi, ripartizioni, SIAE e IMAIE · espandi per verificare</small></summary>
+<div class="kyv-v281-audit-body">
+<p>Riconciliazione in sola lettura degli archivi già caricati. I valori sono distinti: <b>fatturato unitario</b>, <b>incassi con data registrata</b>, <b>liquidazioni nette accreditate</b> e <b>fee da verificare</b>. Non sono un saldo bancario né un calcolo di utile netto.</p>
+<div id="analyst-audit-stats" aria-label="Valori economici documentati e separati"></div>
+<h2 style="font-size:15px;margin-top:18px">Dati e scostamenti da verificare</h2>
+<ul id="analyst-audit-list" aria-label="Segnalazioni di controllo economico"></ul>
+<p id="analyst-audit-limit" class="note"></p>
+<ul id="analyst-audit-caveats" aria-label="Limiti del controllo"></ul>
+</div>
+</details>
 <details id="analyst-creative-details" class="kyv-v263-disclosure"><summary>Approfondimento creativo <small>Sessioni, piazzamenti e fee zero · spiegazioni e limiti</small></summary>
 <h2>Sessioni e piazzamenti documentati <small class="note">v2.44</small></h2>
 <p>Le nuove sessioni e proposte sono registrate separatamente dai brani storici. Il tempo investito viene conteggiato soltanto se hai inserito la durata; nessun tasso di conversione viene dedotto automaticamente.</p>

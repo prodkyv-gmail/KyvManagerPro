@@ -1,3 +1,13 @@
+## Aggiornamento v2.81 · KYV Analyst e controllo di coerenza economica
+
+1. Apri **KYV Analyst** dopo il caricamento autenticato. Sotto Verifiche principali apri **Controllo di coerenza economica · v2.81**, inizialmente chiuso per non appesantire la pagina.
+2. Consulta fatturato per **PrezzoUnitario**, incassi con data (entro l'importo unitario), fatture storiche PAGATA=SI senza movimento, liquidazioni nette con data SIAE e Nuovo IMAIE.
+3. Le segnalazioni evidenziano ripartizioni non coincidenti, movimenti eccedenti, date mancanti, ID non presenti e quote diritti problematiche. Premi **Verifica** per correggere solo sulla schermata originale.
+4. Un importo in ESTRATTO SIAE grezzo o in una liquidazione senza DataAccredito **non** equivale a un bonifico ricevuto. Le attribuzioni stornate non sono considerate attive.
+5. Una fee zero non è un credito insoluto; una fee positiva senza fattura va verificata nei documenti, non è automaticamente un credito. Non si calcola profitto netto senza costi per brano documentati.
+6. Prova **Quali riconciliazioni economiche devo verificare?** oppure **Quali royalties devo ancora attribuire?**. Dopo eventuali correzioni premi **Rileggi e aggiorna i dati**.
+7. Nessuna modifica a dati storici, schema, fatture, diritti o polarità SIAE; il nuovo pannello è read-only e non sostituisce la verifica fiscale/bancaria.
+
 ## Aggiornamento v2.80 · Audio Finder e selezione controllata
 
 1. Apri **Audio Finder → Aggiungi audio da PC, smartphone o cloud**. Nella nuova sezione Sorgenti disponibili puoi leggere le funzioni del browser e gli account/connettori configurati; non è una verifica dei permessi né una scansione globale.
