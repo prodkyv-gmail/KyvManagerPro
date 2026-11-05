@@ -26,6 +26,6 @@ assert.ok(!app.includes(".delete(")&&!app.includes(".update("));
 assert.ok(page.includes("NUOVO IMAIE")&&page.includes("SIAE"));
 assert.ok(dash.includes("KYV_LIQUIDAZIONI_DIRITTI")&&dash.includes("rightsCash"));
 assert.ok(dash.includes("kyv_liquidazioni.html"));
-assert.ok(sw.includes("kyv-studio-v2-81-economy-audit-20261105"));
+assert.ok(sw.includes(require('./release-contract').cacheName()));
 assert.ok(sw.includes("'./kyv_liquidazioni.html'"));
 console.log('OK: rights bank transfers separately tracked, provisional SIAE not duplicated');
