@@ -12,10 +12,11 @@ for(const file of ['kyv-read-guard-v282.js','kyv-economy-audit-v281.js','kyv_ana
 assert.ok(read('config.js').includes("APP_VERSION: '"+v.version+"'"));
 assert.equal(JSON.parse(read('package.json')).version,v.version+'.0');
 assert.equal(read('VERSION').trim(),v.version);
+const priorCache='kyv-studio-'+'v2-81-economy-audit-20261105';
 const paths=fs.readdirSync('tools').filter(x=>x.startsWith('test-')&&x.endsWith('.js'));
 for(const file of paths){
  const source=read('tools/'+file);
- assert.ok(!source.includes("'kyv-studio-v2-81-economy-audit-20261105'"),file+': stale current-cache assertion; use release-contract');
+ assert.ok(!source.includes("'"+priorCache+"'"),file+': stale current-cache assertion; use release-contract');
 }
 const scripts=require('../package.json').scripts;
 assert.ok(scripts.check.includes('check:read-guard-v282'));
