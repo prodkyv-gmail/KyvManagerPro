@@ -60,7 +60,7 @@ for(const x of ['KYV Analyst','kyv-analyst-engine-v241.js','kyv-analyst-ui-v241.
 for(const x of ['FATTURE_INCASSI_STORNI','KYV_ATTRIBUZIONI_DIRITTI_STORNI','Prossimo_Followup'])assert.ok(ui.includes(x));
 assert.ok(read('kyv-read-guard-v282.js').includes("count:'exact'"),'Exact count now provided by shared loader');
 assert.doesNotMatch(ui,/\.insert\(|\.update\(|\.upsert\(|\.delete\(|fetch\(['"]https:|api\.openai|api\.anthropic|localStorage/,'Analyst must remain read-only and local');
-assert.ok(sw.includes('kyv-studio-v2-81-economy-audit-20261105'));
+assert.ok(sw.includes(require('./release-contract').cacheName()),'PWA cache matches the current release');
 for(const x of ["'./kyv_analyst.html'","'./kyv-analyst-engine-v241.js'","'./kyv-analyst-ui-v241.js'"])assert.ok(sw.includes(x));
 assert.ok(read('kyv_intelligence.html').includes('kyv_analyst.html'));
 assert.ok(read('kyv_ritorni_progetti.html').includes('kyv_analyst.html'));
