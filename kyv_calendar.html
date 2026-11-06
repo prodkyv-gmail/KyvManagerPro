@@ -190,6 +190,7 @@
             url: window.KYV_CONFIG?.GOOGLE_SCRIPT_URL || ''
         };
 
+        let listEventsCache = [];
         const DOM = {
             btnSync: document.getElementById('btn-sync'),
             syncIcon: document.getElementById('sync-icon'),
@@ -226,6 +227,7 @@
             let response = null;
             let success = false;
             let truncated = false;
+            let error = '';
             try {
                 response = await calendarRequest('getEvents', {
                     startDate: requested.startDate, endDate: requested.endDate
@@ -235,13 +237,25 @@
                 truncated = success && (response.truncated === true || response.events.length >= 120);
                 if(success) response = { ...response, events: response.events.slice(0,120) };
             } catch(err) {
-                console.warn('[KYV Calendar] Lettura periodo non verificata:', err.message || String(err));
+                error = String(err.message || err || 'Connessione Apps Script non riuscita').slice(0,180);
+                console.warn('[KYV Calendar] Lettura periodo non verificata:', error);
             }
             window.dispatchEvent(new CustomEvent('kyv:calendar-period-result', {
-                detail: { requested, requestId, response, success, truncated }
+                detail: { requested, requestId, response, success, truncated, error }
             }));
         });
 
+
+        // Elenco accessibile con tastiera: il dettaglio è gestito dal dialog comune alle altre viste.
+        DOM.eventsList.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-kyv-calendar-index]');
+            if(!button || !DOM.eventsList.contains(button)) return;
+            const index = Number(button.dataset.kyvCalendarIndex);
+            if(!Number.isSafeInteger(index) || index < 0 || index >= listEventsCache.length) return;
+            window.dispatchEvent(new CustomEvent('kyv:calendar-open-event', {
+                detail: { event: listEventsCache[index], opener: button }
+            }));
+        });
 
         DOM.btnSync.addEventListener('click', async () => {
             DOM.btnSync.disabled = true;
@@ -251,18 +265,29 @@
             if(window.lucide) lucide.createIcons({root: DOM.eventsList});
 
             try {
-                const data = await calendarRequest('getEvents');
+                // Una finestra di 45 giorni include anche gli ultimi 30 giorni.
+                // Per lo storico più remoto si naviga Giorno/Settimana/Mese/Anno.
+                const today = new Date();
+                const from = new Date(today.getFullYear(),today.getMonth(),today.getDate()-30);
+                const to = new Date(today.getFullYear(),today.getMonth(),today.getDate()+15);
+                const dayString = date => date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
+                const wanted = { startDate: dayString(from), endDate: dayString(to) };
+                const data = await calendarRequest('getEvents', wanted);
                 if(data.error) throw new Error(data.error);
+                if(data.range?.startDate !== wanted.startDate || data.range?.endDate !== wanted.endDate) {
+                    throw new Error('Lo script Google attivo non conferma l’intervallo storico. Pubblica la nuova versione Apps Script nel deployment esistente.');
+                }
 
                 DOM.lastSync.innerHTML = `<span class="text-emerald-400">●</span> ${new Date().toLocaleTimeString('it-IT')}`;
 
                 const events = Array.isArray(data.events) ? data.events.slice(0, 120) : [];
-                window.dispatchEvent(new CustomEvent('kyv:calendar-events', { detail: { events, success: true, truncated: Array.isArray(data.events) && data.events.length >= 120 } }));
+                listEventsCache = events;
+                window.dispatchEvent(new CustomEvent('kyv:calendar-events', { detail: { events, success: true, truncated: !!data.truncated || (Array.isArray(data.events) && data.events.length >= 120) } }));
                 if(events.length === 0) {
                     DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-kyv-text opacity-70 text-center p-6"><i data-lucide="calendar-check-2" class="w-16 h-16 mb-4 opacity-50"></i><p class="text-lg font-medium">Nessun appuntamento in agenda.</p></div>`;
                 } else {
                     let html = '';
-                    events.forEach(ev => {
+                    events.forEach((ev, index) => {
                         const dt = new Date(ev.date);
                         if(Number.isNaN(dt.getTime())) return;
                         const dayName = H(dt.toLocaleDateString('it-IT', { weekday: 'short' }));
@@ -270,22 +295,24 @@
                         const time = H(dt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
 
                         html += `
-                            <div class="bg-kyv-bg border border-kyv-border rounded-xl p-3 sm:p-4 flex items-center hover:border-blue-500/40 hover:bg-[#11141f] transition-all group min-w-0">
-                                <div class="bg-kyv-card border border-kyv-border/50 rounded-lg p-2 text-center mr-3 sm:mr-4 w-14 sm:w-16 shrink-0 group-hover:bg-blue-900/10 transition-colors">
-                                    <div class="text-[9px] text-blue-400 font-bold uppercase tracking-wider">${dayName}</div>
-                                    <div class="text-xl font-black text-white leading-none my-0.5">${dt.getDate()}</div>
-                                    <div class="text-[9px] text-kyv-text uppercase font-semibold">${monthName}</div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-white text-sm mb-1 break-words group-hover:text-blue-300 transition-colors">${H(ev.title || 'Senza titolo')}</h3>
-                                    <p class="text-[10px] text-kyv-text flex items-center font-mono uppercase tracking-wider"><i data-lucide="clock" class="w-3 h-3 mr-1.5 opacity-70 shrink-0"></i> Ore ${time}</p>
-                                </div>
-                            </div>`;
+                            <button type="button" data-kyv-calendar-index="${index}" aria-label="Apri dettagli evento: ${H(ev.title || 'Senza titolo')}" class="w-full text-left bg-kyv-bg border border-kyv-border rounded-xl p-3 sm:p-4 flex items-center hover:border-blue-500/40 hover:bg-[#11141f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 transition-all group min-w-0">
+                                <span class="block bg-kyv-card border border-kyv-border/50 rounded-lg p-2 text-center mr-3 sm:mr-4 w-14 sm:w-16 shrink-0 group-hover:bg-blue-900/10 transition-colors">
+                                    <span class="block text-[9px] text-blue-400 font-bold uppercase tracking-wider">${dayName}</span>
+                                    <span class="block text-xl font-black text-white leading-none my-0.5">${dt.getDate()}</span>
+                                    <span class="block text-[9px] text-kyv-text uppercase font-semibold">${monthName}</span>
+                                </span>
+                                <span class="block flex-1 min-w-0">
+                                    <span class="font-bold text-white text-sm mb-1 break-words group-hover:text-blue-300 transition-colors">${H(ev.title || 'Senza titolo')}</span>
+                                    <span class="text-[10px] text-kyv-text flex items-center font-mono uppercase tracking-wider"><i data-lucide="clock" class="w-3 h-3 mr-1.5 opacity-70 shrink-0"></i> Ore ${time}</span>
+                                </span>
+                            </button>`;
                     });
-                    DOM.eventsList.innerHTML = html;
+                    const partial = !!data.truncated || (Array.isArray(data.events) && data.events.length >= 120);
+                    DOM.eventsList.innerHTML = '<p class="text-xs text-kyv-text pb-1">Eventi dal ' + H(wanted.startDate) + ' al ' + H(wanted.endDate) + ' (data finale esclusa). Seleziona un evento per aprire i dettagli.' + (partial ? ' Attenzione: elenco parziale (massimo 120 eventi); consulta periodi più brevi nelle viste calendario.' : '') + '</p>' + html;
                 }
                 if(window.lucide) lucide.createIcons({root: DOM.eventsList});
             } catch(err) {
+                listEventsCache = [];
                 window.dispatchEvent(new CustomEvent('kyv:calendar-events', { detail: { events: [], success: false } }));
                 const message = err.message || 'Errore di connessione.';
                 showToast(message, true);
