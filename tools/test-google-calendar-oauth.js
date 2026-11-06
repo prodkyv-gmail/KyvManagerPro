@@ -96,4 +96,15 @@ assert.equal(c.checkPostOrigin(originRequest({})),false,'no source proof must be
 assert.equal(c.checkPostOrigin({headers:{host:'attacker.vercel.app',origin:c.ORIGIN,'sec-fetch-site':'same-origin'}}),false);
 assert.equal(c.checkPostOrigin(originRequest({origin:'null'})),false);
 
+// Callback must never expose one-time code or tokens and must diagnose denied Calendar scope.
+assert.match(callback,/missing_calendar_scope/);
+assert.match(callback,/missing_refresh_token/);
+assert.match(callback,/token_exchange/);
+assert.match(callback,/google_calendar=/);
+assert.match(callback,/split\(\/\\s\+\/\)/);
+assert.match(client,/data\.reason === 'invalid_cookie_key'/);
+assert.match(client,/missing_calendar_scope/);
+assert.match(client,/Google Auth Platform/);
+assert.doesNotMatch(callback,/c\.json\(res,502,\{ok:false,error:.*err\.message/);
+
 console.log('OAuth Calendar: encryption, range, routes, auth and fallback OK');
