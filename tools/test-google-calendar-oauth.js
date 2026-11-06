@@ -63,4 +63,23 @@ assert.match(current,/data\.reason === 'invalid_cookie_key'/);
 assert.match(current,/64 caratteri esadecimali/);
 assert.doesNotMatch(status,/clientSecret|process\.env\.KYV_GOOGLE_OAUTH_CLIENT_SECRET/);
 
+// Regression: ordinary email must pass; malformed values and whitespace must fail.
+const oauthEnvKeys=['KYV_GOOGLE_OAUTH_CLIENT_ID','KYV_GOOGLE_OAUTH_CLIENT_SECRET','KYV_GOOGLE_OAUTH_COOKIE_KEY','KYV_GOOGLE_CALENDAR_EMAIL'];
+const savedOauthEnv=Object.fromEntries(oauthEnvKeys.map(key=>[key,process.env[key]]));
+try {
+  process.env.KYV_GOOGLE_OAUTH_CLIENT_ID='test-client';
+  process.env.KYV_GOOGLE_OAUTH_CLIENT_SECRET='test-secret';
+  process.env.KYV_GOOGLE_OAUTH_COOKIE_KEY='a'.repeat(64);
+  process.env.KYV_GOOGLE_CALENDAR_EMAIL='prodkyv@gmail.com';
+  assert.deepEqual(c.configurationStatus(),{configured:true},'valid email must not be rejected');
+  for(const invalid of ['prodkyv@gmail com','prodkyv@gmail\\com',' prodkyv@gmail.com','prodkyv@gmail.com ','prodkyv@@gmail.com','prodkyv@gmailcom']){
+    process.env.KYV_GOOGLE_CALENDAR_EMAIL=invalid;
+    assert.equal(c.configurationStatus().reason,'invalid_calendar_email', 'malformed email must be rejected');
+  }
+} finally {
+  for(const key of oauthEnvKeys){
+    if(savedOauthEnv[key]===undefined)delete process.env[key];else process.env[key]=savedOauthEnv[key];
+  }
+}
+
 console.log('OAuth Calendar: encryption, range, routes, auth and fallback OK');
