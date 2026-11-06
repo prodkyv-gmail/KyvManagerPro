@@ -3,7 +3,7 @@
   'use strict';
   if(!root.document || !/kyv_calendar\.html$/i.test(root.location.pathname)) return;
   const api='/api/google-calendar/';
-  const state={connected:false,configured:false};
+  const state={connected:false,configured:false,diagnostic:''};
   root.KYV_GOOGLE_CALENDAR_API=state;
   function node(tag,cls,text){
     const n=document.createElement(tag);
@@ -41,7 +41,7 @@
       connect.hidden=!state.configured||state.connected;
       disconnect.hidden=!state.connected;
       message.textContent=!state.configured
-        ? 'OAuth non ancora configurato su Vercel. Apps Script resta attivo.'
+        ? (state.diagnostic || 'OAuth non ancora configurato su Vercel. Apps Script resta attivo.')
         : state.connected
           ? 'Google Calendar API collegata su questo dispositivo. Usa Carica periodo in Settimana o Mese.'
           : 'Google Calendar API pronta: puoi collegare il tuo account.';
@@ -79,7 +79,15 @@
       }
     });
     request('status').then(data=>{
-      state.configured=!!data.configured;state.connected=!!data.connected;update();
+      state.configured=!!data.configured;state.connected=!!data.connected;
+      state.diagnostic = data.reason === 'invalid_cookie_key'
+        ? 'Chiave OAuth non valida: KYV_GOOGLE_OAUTH_COOKIE_KEY deve contenere 64 caratteri esadecimali, senza virgolette o spazi. Apps Script resta attivo.'
+        : data.reason === 'missing_variables'
+          ? 'Mancano variabili OAuth su Vercel Production: ' + (Array.isArray(data.missing) ? data.missing.join(', ') : 'controlla la configurazione') + '. Apps Script resta attivo.'
+          : data.reason === 'invalid_calendar_email'
+            ? 'Email Calendar non valida: verifica KYV_GOOGLE_CALENDAR_EMAIL. Apps Script resta attivo.'
+            : '';
+      update();
     }).catch(e=>{message.textContent='Stato OAuth non verificabile: '+e.message;});
     if(new URLSearchParams(root.location.search).has('google_calendar')){
       root.history.replaceState({},'',root.location.pathname);
