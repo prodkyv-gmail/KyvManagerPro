@@ -170,7 +170,7 @@ assert.deepEqual(h.periodBounds(new Date(2026,10,6),'day'),{startDate:'2026-11-0
 assert.deepEqual(h.periodBounds(new Date(2026,10,6),'year'),{startDate:'2026-01-01',endDate:'2027-01-01'});
 assert.deepEqual(h.VIEWS,['day','week','month','year','list']);
 assert.match(src,/state.yearPending/);
-assert.match(src,/remaining:12/);
+assert.match(src,/remaining:months.length/);
 assert.match(page,/id="ev-end-time"/);
 assert.match(page,/id="ev-description"/);
 assert.match(page,/endTime,\s*description,\s*location/);
@@ -201,9 +201,26 @@ vm2.createContext(ctx);
 vm2.runInContext(full,ctx);
 const history=ctx.doGet({parameter:{action:'getEvents',startDate:'2020-01-01',endDate:'2020-02-01'}});
 assert.equal(history.success,true);
-assert.equal(history.events.length,1);
-assert.equal(range[0].getFullYear(),2020);
+assert.equal(history.events.length,0,'nessun evento storico deve essere letto');
+assert.equal(history.historyDisabled,true);
 assert.equal(history.range.startDate,'2020-01-01');
+assert.equal(range,null,'un periodo completamente passato non deve interrogare Google Calendar');
+const futureYear=new Date().getFullYear()+2;
+const future=ctx.doGet({parameter:{action:'getEvents',startDate:futureYear+'-05-01',endDate:futureYear+'-05-15'}});
+assert.equal(future.historyDisabled,false);
+assert.equal(future.events.length,1);
+assert.equal(range[0].getFullYear(),futureYear);
+const partialStart=new Date();
+partialStart.setHours(0,0,0,0);
+partialStart.setDate(partialStart.getDate()-2);
+const partialEnd=new Date();
+partialEnd.setHours(0,0,0,0);
+partialEnd.setDate(partialEnd.getDate()+2);
+function key(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+const mixed=ctx.doGet({parameter:{action:'getEvents',startDate:key(partialStart),endDate:key(partialEnd)}});
+assert.equal(mixed.historyDisabled,true,'i periodi che attraversano oggi omettono lo storico');
+assert.equal(mixed.range.startDate,key(partialStart),'il range conferma la richiesta originale');
+assert.ok(range[0]>=new Date(new Date().setHours(0,0,0,0)),'la query effettiva inizia da oggi');
 assert.equal(ctx.doGet({parameter:{action:'getEvents',startDate:'2026-02-30',endDate:'2026-03-02'}}).error.includes('inesistente'),true);
 const made=ctx.doGet({parameter:{action:'createEvent',title:'Sessione',date:'2026-11-06',time:'09:00',endTime:'11:30',description:'Note'}});
 assert.equal(made.success,true);
@@ -220,8 +237,9 @@ assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:
  assert.match(src,/if\(state\.view!=='list'\)loadVisiblePeriod\(\)/);
  assert.match(src,/if\(state\.view!=='list'\)root\.setTimeout\(function\(\)\{loadVisiblePeriod\(\);\},0\)/);
  assert.match(src,/pending\.running<3/,'anno non deve inviare 12 richieste insieme');
- assert.match(src,/Aggiorna il deployment Apps Script/);
- assert.match(page,/today\.getDate\(\)-30/);
+ assert.match(src,/Pubblica il codice Apps Script aggiornato/);
+ assert.match(page,/today\.getDate\(\)\)/);
+ assert.doesNotMatch(page,/today\.getDate\(\)-30/);
  assert.match(page,/today\.getDate\(\)\+15/);
  assert.match(page,/data\.range\?\.startDate !== wanted\.startDate/);
  assert.match(page,/data-kyv-calendar-index/);
@@ -247,5 +265,12 @@ assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:
  assert.match(src,/eventButton\(ev,true\)/);
  assert.match(src,/kyv:calendar-open-event/);
  assert.match(src,/kyv-cal-day-jump/);
+
+
+// v288: gli eventi passati non sono più richiesti dal calendario Apps Script.
+assert.match(src,/Storico Google Calendar disattivato/);
+assert.match(src,/new Date\(requested\.endDate\+'T00:00:00'\)<=today/);
+assert.match(src,/pending\.historyDisabled/);
+assert.match(page,/Storico è disattivato|storico è disattivato/i);
 
 console.log('Viste calendario: OK');

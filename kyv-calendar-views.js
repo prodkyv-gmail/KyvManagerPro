@@ -321,17 +321,29 @@
       if (state.view === 'list') return;
       var requested = periodBounds(state.anchor, state.view);
       var requestId = ++state.requestId;
+      var today=startOfDay(new Date());
       state.periodEvents = null;
       state.periodStatus = 'Caricamento del periodo in corso…';
       state.yearPending = null;
+      // History is deliberately disabled, so never request an entirely past period.
+      if(new Date(requested.endDate+'T00:00:00')<=today){
+        state.periodEvents=[];
+        state.periodStatus='Storico Google Calendar disattivato: sono visibili soltanto gli eventi di oggi e futuri.';
+        render();
+        return;
+      }
       render();
       if(state.view === 'year'){
-        // Request at most 3 months simultaneously to avoid saturating Apps Script.
-        var year=state.anchor.getFullYear();
-        var pending={id:requestId,remaining:12,nextMonth:0,running:0,events:[],partial:false};
+        // Skip past months entirely; request no more than 3 active months concurrently.
+        var year=state.anchor.getFullYear(),months=[];
+        for(var m=0;m<12;m++)if(new Date(year,m+1,1)>today)months.push(m);
+        var pending={id:requestId,remaining:months.length,months:months,nextIndex:0,
+          running:0,events:[],partial:false,historyDisabled:months.length<12};
         pending.launch=function(){
-          while(state.yearPending===pending && pending.running<3 && pending.nextMonth<12){
-            var month=pending.nextMonth++,start=new Date(year,month,1),end=new Date(year,month+1,1);
+          while(state.yearPending===pending && pending.running<3 &&
+                pending.nextIndex<pending.months.length){
+            var month=pending.months[pending.nextIndex++],
+              start=new Date(year,month,1),end=new Date(year,month+1,1);
             var range={startDate:dayKey(start),endDate:dayKey(end)};
             pending.running++;
             root.dispatchEvent(new CustomEvent('kyv:calendar-period-request',{
@@ -357,14 +369,17 @@
         if(d.success && confirmedRange(d.response,d.requested)){
           pending.events.push.apply(pending.events,normalizeEvents(d.response.events));
           if(d.truncated)pending.partial=true;
+          if(d.response.historyDisabled)pending.historyDisabled=true;
         }else pending.partial=true;
         pending.remaining--;
         pending.running--;
         if(pending.remaining===0 && state.yearPending===pending){
           state.periodEvents=pending.events.sort(function(a,b){return a.date-b.date;});
           state.periodStatus=pending.partial
-            ? 'Anno caricato parzialmente: uno o più mesi non sono completi. Ripeti il caricamento.'
-            : 'Tutti i 12 mesi confermati da Google Calendar.';
+            ? 'Periodo disponibile caricato parzialmente: uno o più mesi non sono completi.'
+            : pending.historyDisabled
+              ? 'Storico disattivato: visualizzati soltanto i mesi disponibili da oggi in avanti.'
+              : 'Tutti i 12 mesi confermati da Google Calendar.';
           state.yearPending=null;
         }else if(state.yearPending===pending){
           pending.launch();
@@ -376,12 +391,14 @@
       if (d.success && confirmedRange(d.response, d.requested)) {
         state.periodEvents = normalizeEvents(d.response.events);
         state.periodStatus = d.truncated
-          ? 'Periodo confermato, ma risultato limitato a 120 eventi: potrebbero mancarne altri.'
-          : 'Periodo confermato dal servizio Google Calendar.';
+          ? 'Periodo disponibile limitato a 120 eventi: potrebbero mancarne altri.'
+          : d.response.historyDisabled
+            ? 'Storico disattivato: sono visualizzati soltanto gli eventi di oggi e futuri.'
+            : 'Periodo confermato dal servizio Google Calendar.';
       } else {
         state.periodEvents = null;
         state.periodStatus = d.success
-          ? 'Lo script Google in uso non conferma le date richieste. Aggiorna il deployment Apps Script per consultare gli eventi storici.'
+          ? 'Lo script Google non conferma il periodo richiesto. Pubblica il codice Apps Script aggiornato nel deployment esistente.'
           : 'Non è stato possibile caricare il periodo: '+String(d.error||'controlla la connessione Apps Script').slice(0,180);
       }
       render();
@@ -511,7 +528,7 @@
       if(state.view!=='list')loadPeriod.click();
     });
     render();
-    // Fetch the visible period on opening, including past days; never load all years at once.
+    // Fetch only the currently available period; historical events remain disabled.
     if(state.view!=='list')root.setTimeout(function(){loadVisiblePeriod();},0);
     return true;
   }
