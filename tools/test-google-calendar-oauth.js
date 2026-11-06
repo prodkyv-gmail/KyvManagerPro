@@ -93,6 +93,12 @@ assert.equal(c.checkPostOrigin(originRequest({referer:c.ORIGIN+'/kyv_calendar.ht
 assert.equal(c.checkPostOrigin(originRequest({origin:c.ORIGIN,'sec-fetch-site':'same-site'})),false,'subdomain is not same origin');
 assert.equal(c.checkPostOrigin(originRequest({referer:c.ORIGIN+'/kyv_calendar.html'})),true,'legacy browser valid Referer');
 assert.equal(c.checkPostOrigin(originRequest({})),false,'no source proof must be rejected');
+assert.equal(c.checkPostOrigin(originRequest({'sec-fetch-site':'same-origin'})),true,'same-origin Fetch Metadata is sufficient when Origin and Referer are stripped');
+assert.equal(c.checkPostOrigin(originRequest({'sec-fetch-site':'same-origin',origin:'null'})),false,'null Origin always rejected');
+assert.equal(c.checkPostOrigin(originRequest({'sec-fetch-site':'same-origin',referer:'not-a-url'})),false,'malformed Referer rejected');
+assert.equal(c.checkPostOrigin(originRequest({'sec-fetch-site':'cross-site'})),false,'cross-site Fetch Metadata cannot bypass missing origin');
+assert.equal(c.checkPostOrigin(originRequest({'sec-fetch-site':'same-site'})),false,'same-site sibling domains cannot connect');
+
 assert.equal(c.checkPostOrigin({headers:{host:'attacker.vercel.app',origin:c.ORIGIN,'sec-fetch-site':'same-origin'}}),false);
 assert.equal(c.checkPostOrigin(originRequest({origin:'null'})),false);
 
