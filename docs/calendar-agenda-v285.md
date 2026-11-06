@@ -48,3 +48,10 @@ Il file completo da incollare è `integrations/google-apps-script/kyv-calendar-d
 - L'Elenco legge oggi e i 14 giorni successivi, non più i 30 giorni precedenti.
 - Creazione eventi, descrizione, orari, luogo e ricerca MP3 Drive restano invariati.
 - **Pubblicazione manuale obbligatoria:** il codice nel repository non aggiorna il progetto Google Apps Script. Copiare `integrations/google-apps-script/kyv-calendar-drive-v2.gs` nel progetto esistente, salvare, quindi Distribuisci → Gestisci deployment → Modifica → Nuova versione → Distribuisci (mantenere lo stesso URL `/exec`).
+
+## Aggiornamento v289 — risposta Apps Script legacy senza `range`
+- L'Agenda non segnala più `Non connesso` quando la risposta `getEvents` è un elenco di eventi valido ma manca `range`, come nello script pubblicato prima dell'aggiornamento.
+- L'Elenco mostra gli appuntamenti disponibili tra oggi e 14 giorni dopo, senza leggere lo storico e senza affermare che l'intervallo sia completo.
+- Giorno/Settimana/Mese filtrano per le date selezionate i dati legacy restituiti, con avviso di copertura **non verificata**. La vista Anno interrompe richieste mensili ridondanti appena rileva lo script legacy.
+- Se Apps Script restituisce un `range` esplicito diverso dalla richiesta, continua a essere considerato un errore; gli errori HTTP, autenticazione e JSON non vengono nascosti.
+- Per leggere periodi futuri oltre i prossimi 14 giorni o recuperare descrizioni/orari finali in modo affidabile, occorre **comunque** pubblicare la versione attuale di `integrations/google-apps-script/kyv-calendar-drive-v2.gs` nel deployment Web App già esistente. Il repository GitHub non può aggiornarlo automaticamente.
