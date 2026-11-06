@@ -71,6 +71,19 @@ assert.equal(h.dayKey(h.shiftAnchor(new Date(2026, 11, 15), 'month', 1)), '2027-
 assert.equal(h.dayKey(h.shiftAnchor(new Date(2026, 0, 31), 'month', -1)), '2025-12-01');
 assert.equal(h.dayKey(h.shiftAnchor(new Date(2026, 0, 31), 'month', 1)), '2026-02-01', 'il mese successivo a gennaio non deve saltare a marzo');
 
+// Richiesta intervalli: la risposta senza conferma esplicita non deve essere trattata come completa.
+const weekRange = h.periodBounds(new Date(2026,10,6), 'week');
+assert.deepEqual(weekRange, {startDate:'2026-11-02', endDate:'2026-11-09'});
+const monthRange = h.periodBounds(new Date(2026,11,1), 'month');
+assert.deepEqual(monthRange, {startDate:'2026-12-01', endDate:'2027-01-01'});
+assert.equal(h.confirmedRange({events:[]},weekRange),false,'il backend legacy non prova la copertura del periodo');
+assert.equal(h.confirmedRange({range:{...weekRange},events:[]},weekRange),true);
+assert.equal(h.confirmedRange({range:{startDate:'2026-11-01',endDate:'2026-11-09'},events:[]},weekRange),false);
+assert.match(page, /calendarRequest\('getEvents', \{\s*startDate: requested\.startDate, endDate: requested\.endDate/, 'la richiesta periodo passa dal proxy esistente');
+assert.match(src, /d\.requestId !== state\.requestId/, 'risposte obsolete non devono cambiare il periodo visibile');
+assert.match(src, /Carica periodo/, 'il caricamento del periodo deve essere su richiesta');
+assert.match(src, /dati parziali/, 'il calendario deve dichiarare la copertura non verificata');
+
 // Etichette
 assert.match(h.rangeLabel(new Date(2026, 10, 1), 'month'), /^Novembre 2026$/);
 assert.match(h.rangeLabel(new Date(2026, 10, 6), 'week'), /2.*–.*8.*nov.*2026/);
