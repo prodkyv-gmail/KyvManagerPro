@@ -265,10 +265,9 @@
             if(window.lucide) lucide.createIcons({root: DOM.eventsList});
 
             try {
-                // Una finestra di 45 giorni include anche gli ultimi 30 giorni.
-                // Per lo storico più remoto si naviga Giorno/Settimana/Mese/Anno.
+                // Solo da oggi in avanti: nessuna lettura dello storico.
                 const today = new Date();
-                const from = new Date(today.getFullYear(),today.getMonth(),today.getDate()-30);
+                const from = new Date(today.getFullYear(),today.getMonth(),today.getDate());
                 const to = new Date(today.getFullYear(),today.getMonth(),today.getDate()+15);
                 const dayString = date => date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
                 const wanted = { startDate: dayString(from), endDate: dayString(to) };
@@ -308,7 +307,7 @@
                             </button>`;
                     });
                     const partial = !!data.truncated || (Array.isArray(data.events) && data.events.length >= 120);
-                    DOM.eventsList.innerHTML = '<p class="text-xs text-kyv-text pb-1">Eventi dal ' + H(wanted.startDate) + ' al ' + H(wanted.endDate) + ' (data finale esclusa). Seleziona un evento per aprire i dettagli.' + (partial ? ' Attenzione: elenco parziale (massimo 120 eventi); consulta periodi più brevi nelle viste calendario.' : '') + '</p>' + html;
+                    DOM.eventsList.innerHTML = '<p class="text-xs text-kyv-text pb-1">Eventi di oggi e dei prossimi 14 giorni. Lo storico è disattivato. Seleziona un evento per aprire i dettagli.' + (partial ? ' Attenzione: elenco parziale (massimo 120 eventi); consulta periodi più brevi nelle viste calendario.' : '') + '</p>' + html;
                 }
                 if(window.lucide) lucide.createIcons({root: DOM.eventsList});
             } catch(err) {
