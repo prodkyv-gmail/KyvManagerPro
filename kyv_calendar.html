@@ -58,7 +58,12 @@
 
         /* Agenda responsive: niente pannelli compressi o contenuti spostati fuori area. */
         .kyv-calendar-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:1.5rem; min-width:0; }
-        .kyv-calendar-sidebar, .kyv-calendar-main, .kyv-calendar-card { min-width:0; width:100%; }
+        .kyv-calendar-sidebar, .kyv-calendar-main, .kyv-calendar-card { min-width:0; width:100%; max-width:100%; }
+        .kyv-calendar-layout > * { min-width:0; }
+        .kyv-calendar-main { container-type:inline-size; container-name:kyv-calendar; }
+        .kyv-calendar-main #events-list, .kyv-calendar-main #kyv-cal-grid { min-width:0; max-width:100%; overflow-x:hidden; }
+        .kyv-calendar-main .kyv-cal-bar, .kyv-calendar-main .kyv-cal-week, .kyv-calendar-main .kyv-cal-month { min-width:0; max-width:100%; }
+
         .kyv-calendar-card { overflow:visible; }
         #form-new-event, #form-new-event > *, #form-new-event input, #form-new-event button { min-width:0; max-width:100%; }
         #events-list { min-width:0; }

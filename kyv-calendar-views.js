@@ -147,7 +147,12 @@
       '.kyv-cal-count{display:none;font-size:11.5px;font-weight:800;color:#c9c5ff}',
       '@media(max-width:700px){.kyv-cal-week{grid-template-columns:1fr}.kyv-cal-daycol{min-height:0}',
       '.kyv-cal-cell{min-height:3.6rem;align-items:center}.kyv-cal-cell .kyv-cal-ev,.kyv-cal-cell .kyv-cal-more{display:none}.kyv-cal-count{display:block}',
-      '.kyv-cal-label{min-width:0;flex:1}}'
+      '.kyv-cal-label{min-width:0;flex:1}}',
+      // Le media query del viewport non bastano: il menu laterale riduce la larghezza REALE del calendario.
+      // Queste regole seguono la larghezza del pannello, senza osservatori JS o scroll orizzontale della pagina.
+      '@container kyv-calendar (max-width:980px){.kyv-cal-week{grid-template-columns:repeat(2,minmax(0,1fr))}.kyv-cal-daycol{min-height:7rem}.kyv-cal-bar{align-items:stretch}.kyv-cal-nav{flex-wrap:wrap;justify-content:flex-start}.kyv-cal-label{min-width:8rem;flex:1}}',
+      '@container kyv-calendar (max-width:650px){.kyv-cal-week{grid-template-columns:1fr}.kyv-cal-daycol{min-height:0}.kyv-cal-grid{padding:.65rem}.kyv-cal-month{gap:.2rem}.kyv-cal-cell{min-height:3.3rem;padding:.25rem .12rem;align-items:center}.kyv-cal-wd{font-size:10px}.kyv-cal-daynum{font-size:15px}.kyv-cal-cell .kyv-cal-ev,.kyv-cal-cell .kyv-cal-more{display:none}.kyv-cal-count{display:block}.kyv-cal-bar{padding:.7rem}.kyv-cal-group{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.kyv-cal-group .kyv-cal-btn{padding:.5rem .25rem}.kyv-cal-nav{width:100%}.kyv-cal-btn{min-height:40px}.kyv-cal-label{min-width:0;flex:1 1 7rem}.kyv-cal-note{overflow-wrap:anywhere}}',
+      '@container kyv-calendar (max-width:380px){.kyv-cal-cell{min-height:2.9rem}.kyv-cal-daynum{font-size:13px}.kyv-cal-nav{gap:.2rem}.kyv-cal-btn{padding:.4rem .45rem}.kyv-cal-label{flex-basis:100%;order:-1;text-align:left}}'
     ].join('');
     doc.head.appendChild(s);
   }
