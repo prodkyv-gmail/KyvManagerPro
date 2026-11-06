@@ -1,5 +1,5 @@
 'use strict';
-const c=require('./_shared');
+const c=require('../../lib/kyv-google-calendar-oauth-server');
 module.exports=async(req,res)=>{
   if(req.method!=='GET')return c.json(res,405,{ok:false,error:'Metodo non consentito'});
   const cfg=c.config();
