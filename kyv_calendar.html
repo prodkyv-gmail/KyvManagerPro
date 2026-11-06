@@ -296,7 +296,7 @@
                     : `<span class="text-emerald-400">●</span> ${new Date().toLocaleTimeString('it-IT')}`;
                 listEventsCache = events;
                 window.dispatchEvent(new CustomEvent('kyv:calendar-events', {
-                    detail: {events, success:true, truncated:partial}
+                    detail: { events, success: true, truncated: partial }
                 }));
                 if(events.length === 0) {
                     DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-kyv-text opacity-70 text-center p-6"><i data-lucide="calendar-check-2" class="w-16 h-16 mb-4 opacity-50"></i><p class="text-lg font-medium">${legacyMode ? 'Nessun appuntamento tra quelli disponibili.' : 'Nessun appuntamento in agenda.'}</p>${legacyMode ? '<p class="text-xs mt-2">Connessione Apps Script funzionante, ma la versione pubblicata non conferma il periodo: vista limitata ai dati restituiti.</p>' : ''}</div>`;
