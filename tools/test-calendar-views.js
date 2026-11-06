@@ -237,11 +237,11 @@ assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:
  assert.match(src,/if\(state\.view!=='list'\)loadVisiblePeriod\(\)/);
  assert.match(src,/if\(state\.view!=='list'\)root\.setTimeout\(function\(\)\{loadVisiblePeriod\(\);\},0\)/);
  assert.match(src,/pending\.running<3/,'anno non deve inviare 12 richieste insieme');
- assert.match(src,/Pubblica il codice Apps Script aggiornato/);
+ assert.match(src,/Apps Script collegato in modalità compatibilità/);
  assert.match(page,/today\.getDate\(\)\)/);
  assert.doesNotMatch(page,/today\.getDate\(\)-30/);
  assert.match(page,/today\.getDate\(\)\+15/);
- assert.match(page,/data\.range\?\.startDate !== wanted\.startDate/);
+ assert.match(page,/data\.range\?\.startDate === wanted\.startDate/);
  assert.match(page,/data-kyv-calendar-index/);
  assert.match(page,/kyv:calendar-open-event/);
  assert.match(page,/listEventsCache = \[\]/);
@@ -272,5 +272,28 @@ assert.match(src,/Storico Google Calendar disattivato/);
 assert.match(src,/new Date\(requested\.endDate\+'T00:00:00'\)<=today/);
 assert.match(src,/pending\.historyDisabled/);
 assert.match(page,/Storico è disattivato|storico è disattivato/i);
+
+
+// v289 - legacy Apps Script: events without range must not trigger a false red "not connected".
+assert.match(page,/const legacyMode = !confirmedRange/);
+assert.match(page,/if\(data\.range && !confirmedRange\)/,'mismatched explicit range still rejected');
+assert.match(page,/Eventi disponibili · intervallo non verificato/);
+assert.doesNotMatch(page,/Lo script Google attivo non conferma l’intervallo storico/);
+assert.match(page,/listEventsCache = events/);
+assert.match(src,/eventsInRange\(d\.response\.events,d\.requested\)/);
+assert.match(src,/pending\.legacy=true/);
+assert.match(src,/pending\.nextIndex=pending\.months\.length/);
+assert.match(src,/modalità compatibilità/);
+const period={startDate:'2026-11-06',endDate:'2026-11-09'};
+const selected=h.eventsInRange([
+ {title:'Yesterday',date:'2026-11-05T11:00:00'},
+ {title:'Today',date:'2026-11-06T11:00:00'},
+ {title:'Tomorrow',date:'2026-11-07T12:00:00'},
+ {title:'End-exclusive',date:'2026-11-09T11:00:00'},
+ {title:'All-day',date:'2026-11-08'}
+],period);
+assert.deepEqual(selected.map(x=>x.title),['Today','Tomorrow','All-day']);
+assert.deepEqual(h.eventsInRange([],period),[]);
+assert.deepEqual(h.eventsInRange([{date:'2026-11-08'}],null),[]);
 
 console.log('Viste calendario: OK');
