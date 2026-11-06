@@ -40,3 +40,11 @@ Il file completo da incollare è `integrations/google-apps-script/kyv-calendar-d
 - Il popup usa `textContent` per tutti i campi provenienti da Google, senza renderizzare HTML dell'evento.
 - Se il deployment Apps Script risponde senza `range` coerente, l'interfaccia **non dichiara completo il periodo** e invita ad aggiornare il deployment di Google Apps Script.
 - Non sono stati introdotti OAuth Google, tabelle Supabase o scritture ai dati storici.
+
+## Aggiornamento v288 — Storico Google Calendar disattivato
+- `getEvents` restituisce solo eventi da oggi in avanti; gli eventi passati non vengono letti. Non cancella appuntamenti su Google Calendar.
+- Per compatibilità con Giorno/Settimana/Mese/Anno, una richiesta che include date precedenti conserva il `range` richiesto e aggiunge `historyDisabled:true`; il server interroga Google soltanto da oggi in avanti. Se tutto il periodo è nel passato, `events:[]` senza accesso al calendario.
+- L'Agenda segnala espressamente che lo storico non è disponibile; i periodi interamente passati non generano chiamate Apps Script.
+- L'Elenco legge oggi e i 14 giorni successivi, non più i 30 giorni precedenti.
+- Creazione eventi, descrizione, orari, luogo e ricerca MP3 Drive restano invariati.
+- **Pubblicazione manuale obbligatoria:** il codice nel repository non aggiorna il progetto Google Apps Script. Copiare `integrations/google-apps-script/kyv-calendar-drive-v2.gs` nel progetto esistente, salvare, quindi Distribuisci → Gestisci deployment → Modifica → Nuova versione → Distribuisci (mantenere lo stesso URL `/exec`).
