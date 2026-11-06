@@ -200,6 +200,32 @@
 
         document.getElementById('calendar-account').textContent = calendarAccount.email;
 
+        // Lettura manuale del periodo: nessuna scrittura e nessuna supposizione
+        // sull'intervallo restituito dal vecchio Apps Script.
+        window.addEventListener('kyv:calendar-period-request', async (event) => {
+            const detail = event && event.detail;
+            if(!detail || !detail.requested) return;
+            const { requested, requestId } = detail;
+            let response = null;
+            let success = false;
+            let truncated = false;
+            try {
+                response = await calendarRequest('getEvents', {
+                    startDate: requested.startDate, endDate: requested.endDate
+                });
+                if(response.error) throw new Error(response.error);
+                success = Array.isArray(response.events);
+                truncated = success && response.events.length >= 120;
+                if(success) response = { ...response, events: response.events.slice(0,120) };
+            } catch(err) {
+                console.warn('[KYV Calendar] Lettura periodo non verificata:', err.message || String(err));
+            }
+            window.dispatchEvent(new CustomEvent('kyv:calendar-period-result', {
+                detail: { requested, requestId, response, success, truncated }
+            }));
+        });
+
+
         DOM.btnSync.addEventListener('click', async () => {
             DOM.btnSync.disabled = true;
             DOM.syncIcon.classList.add('animate-spin');
