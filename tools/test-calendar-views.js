@@ -22,6 +22,14 @@ assert.match(src, /cachedEvents = calendarLoaded \? normalizeEvents\(detail\.eve
 assert.match(src, /Vista parziale:/, 'la vista deve segnalare eventi limitati');
 assert.match(src, /Un periodo vuoto non garantisce/, 'non indicare falsa assenza di appuntamenti');
 
+// Il calendario deve adattarsi allo spazio della scheda, non solo al viewport:
+assert.match(page, /container-type:inline-size; container-name:kyv-calendar/, 'la vista deve dichiarare il proprio contenitore responsive');
+assert.match(src, /@container kyv-calendar \\(max-width:980px\\)/, 'layout medio del pannello');
+assert.match(src, /@container kyv-calendar \\(max-width:650px\\)/, 'layout compatto del pannello');
+assert.match(src, /@container kyv-calendar \\(max-width:380px\\)/, 'layout molto stretto del pannello');
+assert.match(src, /\\.kyv-cal-month\\{gap:\\.2rem\\}/, 'mese compatto senza scrollbar orizzontale');
+assert.match(page, /overflow-x:hidden/, 'contenuto calendario non deve oltrepassare la scheda');
+
 // Logica pura (caricata in Node: nessun window, nessun DOM)
 global.localStorage = undefined;
 require(path.join(root, 'kyv-calendar-views.js'));
