@@ -234,7 +234,7 @@
         detailRow('Orario','Tutto il giorno');
       }else{
         detailRow('Inizio',ev.date.toLocaleString('it-IT',{dateStyle:'full',timeStyle:'short'}));
-        if(ev.endDate)detailRow('Fine',ev.endDate.toLocaleString('it-IT',{dateStyle:'full',timeStyle:'short'}));
+        detailRow('Fine',ev.endDate?ev.endDate.toLocaleString('it-IT',{dateStyle:'full',timeStyle:'short'}):'Orario finale non disponibile');
       }
       if(ev.allDay && ev.endDate && ev.endDate-ev.date>DAY_MS){
         detailRow('Ultimo giorno',addDays(ev.endDate,-1).toLocaleDateString('it-IT',dateFormat));
@@ -380,7 +380,9 @@
           : 'Periodo confermato dal servizio Google Calendar.';
       } else {
         state.periodEvents = null;
-        state.periodStatus = 'Periodo non verificato: il servizio non ha confermato le date richieste. Gli eventi mostrati sotto restano quelli dell’ultimo aggiornamento generale.';
+        state.periodStatus = d.success
+          ? 'Lo script Google in uso non conferma le date richieste. Aggiorna il deployment Apps Script per consultare gli eventi storici.'
+          : 'Non è stato possibile caricare il periodo: '+String(d.error||'controlla la connessione Apps Script').slice(0,180);
       }
       render();
     });
@@ -406,7 +408,7 @@
     function renderDay() {
       var key=dayKey(state.anchor),byDay=groupByDay(state.periodEvents||(state.periodStatus?[]:state.events));
       var evs=byDay[key]||[],wrap=el(doc,'div','kyv-cal-week');
-      var col=el(doc,'div','kyv-cal-daycol is-today');
+      var col=el(doc,'div','kyv-cal-daycol'+(key===dayKey(new Date())?' is-today':''));
       col.appendChild(el(doc,'h3','kyv-cal-daynum',state.anchor.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})));
       if(!evs.length)col.appendChild(el(doc,'span','kyv-cal-empty',state.periodEvents?'Nessun evento in questo giorno':'Carica il giorno per verificare tutti gli eventi'));
       evs.forEach(function(ev){col.appendChild(eventButton(ev,false));});
@@ -423,7 +425,7 @@
           btn.appendChild(el(doc,'strong','',new Date(year,month,1).toLocaleDateString('it-IT',{month:'long'})));
           btn.appendChild(el(doc,'span','',selected.length+' '+(selected.length===1?'evento':'eventi')+
             (state.periodEvents?'':' (dati parziali)')));
-          btn.addEventListener('click',function(){changePeriod(new Date(year,month,1));setView('month');});
+          btn.addEventListener('click',function(){state.anchor=new Date(year,month,1);setView('month');});
           wrap.appendChild(btn);
         })(m);
       }
