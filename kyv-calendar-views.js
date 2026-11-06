@@ -170,6 +170,8 @@
       '.kyv-cal-wd{font-size:11.5px;text-transform:uppercase;font-weight:800;text-align:center;color:var(--kyv-muted,#969eae);padding:.2rem 0}',
       '.kyv-cal-cell{padding:.4rem;min-height:5.6rem;text-align:left;cursor:pointer;color:inherit;font:inherit;display:flex;flex-direction:column;gap:.25rem}',
       '.kyv-cal-cell:hover{border-color:var(--kyv-primary,#8b83ff)}',
+      '.kyv-cal-cell .kyv-cal-event-button{min-height:26px;font-size:11.5px}',
+      '.kyv-cal-cell .kyv-cal-day-jump:focus-visible{outline:2px solid #a7a0ff}',
       '.kyv-cal-cell.is-out{opacity:.42}',
       '.kyv-cal-cell .kyv-cal-ev{padding:.2rem .35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
       '.kyv-cal-more{font-size:11.5px;color:var(--kyv-muted,#969eae)}',
@@ -309,7 +311,10 @@
     next.addEventListener('click', function () { changePeriod(shiftAnchor(state.anchor, state.view, 1)); });
     today.addEventListener('click', function () { changePeriod(startOfDay(new Date())); });
 
-    function openWeekOf(date) { changePeriod(date); setView('week'); }
+    function openWeekOf(date) {
+      if(state.view==='week')changePeriod(startOfDay(date));
+      else {state.anchor=startOfDay(date);setView('week');}
+    }
 
     loadPeriod.addEventListener('click', function () {
       if (state.view === 'list') return;
@@ -379,12 +384,7 @@
         col.appendChild(head);
         var evs = byDay[key] || [];
         if (!evs.length) col.appendChild(el(doc, 'span', 'kyv-cal-empty', state.periodEvents ? 'Nessun evento nel periodo confermato' : 'Nessun evento tra quelli caricati'));
-        evs.forEach(function (ev) {
-          var item = el(doc, 'div', 'kyv-cal-ev');
-          item.appendChild(el(doc, 'b', '', timeLabel(ev)));
-          item.appendChild(doc.createTextNode(ev.title));
-          col.appendChild(item);
-        });
+        evs.forEach(function (ev) { col.appendChild(eventButton(ev,false)); });
         wrap.appendChild(col);
       }
       grid.appendChild(wrap);
@@ -396,12 +396,7 @@
       var col=el(doc,'div','kyv-cal-daycol is-today');
       col.appendChild(el(doc,'h3','kyv-cal-daynum',state.anchor.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})));
       if(!evs.length)col.appendChild(el(doc,'span','kyv-cal-empty',state.periodEvents?'Nessun evento in questo giorno':'Carica il giorno per verificare tutti gli eventi'));
-      evs.forEach(function(ev){
-        var item=el(doc,'div','kyv-cal-ev');
-        item.appendChild(el(doc,'b','',timeLabel(ev)));
-        item.appendChild(doc.createTextNode(ev.title));
-        col.appendChild(item);
-      });
+      evs.forEach(function(ev){col.appendChild(eventButton(ev,false));});
       wrap.appendChild(col);grid.appendChild(wrap);
     }
     function renderYear() {
@@ -429,18 +424,20 @@
       monthMatrix(state.anchor).forEach(function (row) {
         row.forEach(function (cell) {
           var evs = byDay[cell.key] || [];
-          var c = el(doc, 'button', 'kyv-cal-cell' + (cell.inMonth ? '' : ' is-out') + (cell.key === todayKey ? ' is-today' : ''));
-          c.type = 'button';
-          c.setAttribute('aria-label', cell.date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }) + ', ' + evs.length + (evs.length === 1 ? ' evento visualizzato' : ' eventi visualizzati') + (state.periodEvents ? ', periodo confermato' : ', dati parziali'));
-          c.appendChild(el(doc, 'span', 'kyv-cal-daynum', String(cell.date.getDate())));
-          evs.slice(0, 2).forEach(function (ev) {
-            var item = el(doc, 'span', 'kyv-cal-ev', (ev.allDay ? '' : ev.date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + ' ') + ev.title);
-            item.title = ev.title;
-            c.appendChild(item);
-          });
-          if (evs.length > 2) c.appendChild(el(doc, 'span', 'kyv-cal-more', '+' + (evs.length - 2) + ' altri'));
+          var c = el(doc, 'div', 'kyv-cal-cell' + (cell.inMonth ? '' : ' is-out') + (cell.key === todayKey ? ' is-today' : ''));
+          var jump=el(doc,'button','kyv-cal-day-jump kyv-cal-daynum',String(cell.date.getDate()));
+          jump.type='button';
+          jump.setAttribute('aria-label',cell.date.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})+', '+evs.length+(evs.length===1?' evento':' eventi')+', apri settimana');
+          jump.addEventListener('click',function(){openWeekOf(cell.date);});
+          c.appendChild(jump);
+          evs.slice(0, 2).forEach(function (ev) { c.appendChild(eventButton(ev,true)); });
+          if (evs.length > 2) {
+            var more=el(doc,'button','kyv-cal-more kyv-cal-day-jump','+'+(evs.length-2)+' altri');
+            more.type='button';more.addEventListener('click',function(){openWeekOf(cell.date);});
+            c.appendChild(more);
+          }
           if (evs.length) c.appendChild(el(doc, 'span', 'kyv-cal-count', String(evs.length)));
-          c.addEventListener('click', function () { openWeekOf(cell.date); });
+          c.addEventListener('click',function(e){if(e.target===c)openWeekOf(cell.date);});
           wrap.appendChild(c);
         });
       });
