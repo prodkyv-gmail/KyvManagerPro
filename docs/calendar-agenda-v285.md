@@ -6,7 +6,7 @@
 - Navigazione libera nel passato e nel futuro. **Carica periodo** invia richieste per le date visualizzate.
 - La vista Anno invia dodici richieste mensili, evitando la soglia di 45 giorni del servizio; i risultati parziali vengono segnalati.
 - Nuovo evento: titolo, data, ora di inizio, ora di fine, descrizione e luogo facoltativi.
-- Modalità OAuth ufficiale rimane opzionale e in sola lettura; Apps Script rimane per la creazione.
+- La lettura e la creazione degli eventi passano esclusivamente tramite Google Apps Script. Il vecchio collegamento Google Calendar API OAuth 2.0 è stato rimosso dall'app.
 
 ## Pubblicazione Apps Script (intervento manuale necessario)
 Il file completo da incollare è `integrations/google-apps-script/kyv-calendar-drive-v2.gs`.
