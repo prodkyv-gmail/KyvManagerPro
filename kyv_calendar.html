@@ -131,8 +131,20 @@
                                     <input type="date" id="ev-date" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme: dark;">
                                 </div>
                                 <div class="min-w-0">
-                                    <label class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Ora (Inizio)</label>
+                                    <label class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Ora inizio</label>
                                     <input type="time" id="ev-time" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme: dark;">
+                                </div>
+                                <div class="min-w-0">
+                                    <label for="ev-end-time" class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Ora fine</label>
+                                    <input type="time" id="ev-end-time" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme: dark;">
+                                </div>
+                                <div class="min-w-0">
+                                    <label for="ev-description" class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Descrizione (facoltativa)</label>
+                                    <textarea id="ev-description" maxlength="5000" rows="3" placeholder="Dettagli della sessione, partecipanti, note..." class="kyv-input bg-[#0f111a] text-sm"></textarea>
+                                </div>
+                                <div class="min-w-0">
+                                    <label for="ev-location" class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Luogo (facoltativo)</label>
+                                    <input type="text" id="ev-location" maxlength="500" placeholder="Studio / indirizzo" class="kyv-input bg-[#0f111a] text-sm">
                                 </div>
                             </div>
                             <button type="submit" id="btn-create" class="w-full min-w-0 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-500 mt-2">
@@ -293,8 +305,14 @@
             const title = document.getElementById('ev-title').value;
             const date = document.getElementById('ev-date').value;
             const time = document.getElementById('ev-time').value;
-
-            const confirmed = window.confirm(`Confermi la creazione su ${calendarAccount.email}?\n\n${title}\n${date} alle ${time}`);
+            const endTime = document.getElementById('ev-end-time').value;
+            const description = document.getElementById('ev-description').value.trim();
+            const location = document.getElementById('ev-location').value.trim();
+            if(!endTime || endTime <= time){
+                showToast('L’ora di fine deve essere successiva all’ora di inizio.', true);
+                return;
+            }
+            const confirmed = window.confirm(`Confermi la creazione su ${calendarAccount.email}?\n\n${title}\n${date} dalle ${time} alle ${endTime}${location ? '\nLuogo: ' + location : ''}`);
             if(!confirmed) return;
 
             DOM.btnCreate.disabled = true;
@@ -307,12 +325,16 @@
                     title,
                     date,
                     time,
+                    endTime,
+                    description,
+                    location,
                     clientRequestId: `calendar-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
                 });
 
                 if(data.error) throw new Error(data.error);
                 showToast('Evento inserito in Google Calendar!');
                 DOM.formNew.reset();
+                window.dispatchEvent(new CustomEvent('kyv:calendar-created'));
                 setTimeout(() => DOM.btnSync.click(), 500);
             } catch(err) {
                 showToast(err.message || 'Errore durante la creazione.', true);
@@ -326,6 +348,11 @@
 
         // Nessuna sincronizzazione automatica: evita freeze e rende l'apertura dell'Agenda immediata.
         document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const localDate = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            document.getElementById('ev-date').value = localDate;
+            document.getElementById('ev-time').value = '11:00';
+            document.getElementById('ev-end-time').value = '13:00';
             if(window.lucide) lucide.createIcons();
         });
     </script>

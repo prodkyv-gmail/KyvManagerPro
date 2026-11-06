@@ -5,7 +5,7 @@
   'use strict';
 
   var STORAGE_KEY = 'kyv_calendar_view_v1';
-  var VIEWS = ['list', 'week', 'month'];
+  var VIEWS = ['day', 'week', 'month', 'year', 'list'];
   var DAY_MS = 86400000;
   var cachedEvents = [];
   var calendarLoaded = false;
@@ -63,14 +63,16 @@
   }
 
   function shiftAnchor(anchor, view, dir) {
+    if (view === 'day') return addDays(anchor, dir);
     if (view === 'week') return addDays(anchor, 7 * dir);
+    if (view === 'year') return new Date(anchor.getFullYear() + dir, 0, 1);
     return new Date(anchor.getFullYear(), anchor.getMonth() + dir, 1);
   }
 
   // Il servizio dovrà confermare esplicitamente questi estremi (fine esclusiva).
   function periodBounds(anchor, view) {
-    var start = view === 'week' ? weekStart(anchor) : new Date(anchor.getFullYear(), anchor.getMonth(), 1);
-    var end = view === 'week' ? addDays(start, 7) : new Date(start.getFullYear(), start.getMonth() + 1, 1);
+    var start = view === 'day' ? startOfDay(anchor) : view === 'week' ? weekStart(anchor) : new Date(anchor.getFullYear(), view === 'year' ? 0 : anchor.getMonth(), 1);
+    var end = view === 'day' ? addDays(start, 1) : view === 'week' ? addDays(start, 7) : new Date(start.getFullYear(), start.getMonth() + (view === 'year' ? 12 : 1), 1);
     return { startDate: dayKey(start), endDate: dayKey(end) };
   }
 
@@ -80,6 +82,8 @@
   }
 
   function rangeLabel(anchor, view) {
+    if (view === 'day') return anchor.toLocaleDateString('it-IT', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    if (view === 'year') return String(anchor.getFullYear());
     if (view === 'month') {
       var m = anchor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
       return m.charAt(0).toUpperCase() + m.slice(1);
@@ -110,7 +114,7 @@
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
   function readView() {
     try { var v = root.localStorage && root.localStorage.getItem(STORAGE_KEY); if (VIEWS.indexOf(v) >= 0) return v; } catch (e) { /* storage non disponibile */ }
-    return 'list';
+    return 'day';
   }
   function saveView(v) { try { if (root.localStorage) root.localStorage.setItem(STORAGE_KEY, v); } catch (e) { /* ignora */ } }
 
@@ -138,6 +142,10 @@
       '.kyv-cal-ev b{display:block;font-size:11.5px;color:#c9c5ff;font-weight:700}',
       '.kyv-cal-empty{font-size:12px;color:var(--kyv-muted,#969eae);opacity:.6}',
       '.kyv-cal-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.35rem}',
+      '.kyv-cal-year{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:.75rem}',
+      '.kyv-cal-year-month{background:var(--kyv-surface,#171b25);border:1px solid var(--kyv-border,rgba(255,255,255,.1));color:var(--kyv-text,#fff);border-radius:.8rem;padding:1rem;text-align:left;min-height:7rem;cursor:pointer}',
+      '.kyv-cal-year-month strong{display:block;margin-bottom:.5rem;font-size:15px}.kyv-cal-year-month span{font-size:13px;color:var(--kyv-muted,#a4adbd)}',
+      '.kyv-cal-year-month:hover{border-color:var(--kyv-primary,#8b83ff)}',
       '.kyv-cal-wd{font-size:11.5px;text-transform:uppercase;font-weight:800;text-align:center;color:var(--kyv-muted,#969eae);padding:.2rem 0}',
       '.kyv-cal-cell{padding:.4rem;min-height:5.6rem;text-align:left;cursor:pointer;color:inherit;font:inherit;display:flex;flex-direction:column;gap:.25rem}',
       '.kyv-cal-cell:hover{border-color:var(--kyv-primary,#8b83ff)}',
@@ -164,14 +172,14 @@
     main.dataset.kyvViews = '1';
     injectStyle(doc);
 
-    var state = { view: readView(), anchor: startOfDay(new Date()), events: cachedEvents, loaded: calendarLoaded, truncated: calendarTruncated, periodStatus: '', periodEvents: null, requestId: 0 };
+    var state = { view: readView(), anchor: startOfDay(new Date()), events: cachedEvents, loaded: calendarLoaded, truncated: calendarTruncated, periodStatus: '', periodEvents: null, requestId: 0, yearPending:null };
 
     var bar = el(doc, 'div', 'kyv-cal-bar');
     var group = el(doc, 'div', 'kyv-cal-group');
     group.setAttribute('role', 'group');
     group.setAttribute('aria-label', 'Vista agenda');
     var buttons = {};
-    [['list', 'Elenco'], ['week', 'Settimana'], ['month', 'Mese']].forEach(function (pair) {
+    [['day', 'Giorno'], ['week', 'Settimana'], ['month', 'Mese'], ['year', 'Anno'], ['list', 'Elenco']].forEach(function (pair) {
       var b = el(doc, 'button', 'kyv-cal-btn', pair[1]);
       b.type = 'button';
       b.dataset.view = pair[0];
@@ -203,6 +211,7 @@
       state.anchor = anchor;
       state.periodEvents = null;
       state.periodStatus = '';
+      state.yearPending = null;
       state.requestId++;
       render();
     }
@@ -219,13 +228,44 @@
       var requestId = ++state.requestId;
       state.periodEvents = null;
       state.periodStatus = 'Caricamento del periodo in corso…';
+      state.yearPending = null;
       render();
-      root.dispatchEvent(new CustomEvent('kyv:calendar-period-request', { detail: { requested: requested, requestId: requestId } }));
+      if(state.view === 'year'){
+        var year=state.anchor.getFullYear();
+        state.yearPending={id:requestId,remaining:12,events:[],partial:false};
+        for(var month=0;month<12;month++){
+          var start=new Date(year,month,1),end=new Date(year,month+1,1);
+          var range={startDate:dayKey(start),endDate:dayKey(end)};
+          root.dispatchEvent(new CustomEvent('kyv:calendar-period-request', {
+            detail:{requested:range,requestId:String(requestId)+':'+month}
+          }));
+        }
+      }else{
+        root.dispatchEvent(new CustomEvent('kyv:calendar-period-request', { detail: { requested: requested, requestId: requestId } }));
+      }
     });
 
     root.addEventListener('kyv:calendar-period-result', function (event) {
       var d = event && event.detail;
-      if (!d || d.requestId !== state.requestId) return;
+      if(!d)return;
+      if(state.yearPending && typeof d.requestId === 'string' && d.requestId.indexOf(String(state.yearPending.id)+':')===0){
+        var pending=state.yearPending;
+        if(d.success && confirmedRange(d.response,d.requested)){
+          pending.events.push.apply(pending.events,normalizeEvents(d.response.events));
+          if(d.truncated)pending.partial=true;
+        }else pending.partial=true;
+        pending.remaining--;
+        if(pending.remaining===0 && state.yearPending===pending){
+          state.periodEvents=pending.events.sort(function(a,b){return a.date-b.date;});
+          state.periodStatus=pending.partial
+            ? 'Anno caricato parzialmente: uno o più mesi non sono completi. Ripeti il caricamento.'
+            : 'Tutti i 12 mesi confermati da Google Calendar.';
+          state.yearPending=null;
+        }
+        render();
+        return;
+      }
+      if (d.requestId !== state.requestId) return;
       if (d.success && confirmedRange(d.response, d.requested)) {
         state.periodEvents = normalizeEvents(d.response.events);
         state.periodStatus = d.truncated
@@ -257,6 +297,38 @@
           col.appendChild(item);
         });
         wrap.appendChild(col);
+      }
+      grid.appendChild(wrap);
+    }
+
+    function renderDay() {
+      var key=dayKey(state.anchor),byDay=groupByDay(state.periodEvents||state.events);
+      var evs=byDay[key]||[],wrap=el(doc,'div','kyv-cal-week');
+      var col=el(doc,'div','kyv-cal-daycol is-today');
+      col.appendChild(el(doc,'h3','kyv-cal-daynum',state.anchor.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})));
+      if(!evs.length)col.appendChild(el(doc,'span','kyv-cal-empty',state.periodEvents?'Nessun evento in questo giorno':'Carica il giorno per verificare tutti gli eventi'));
+      evs.forEach(function(ev){
+        var item=el(doc,'div','kyv-cal-ev');
+        item.appendChild(el(doc,'b','',timeLabel(ev)));
+        item.appendChild(doc.createTextNode(ev.title));
+        col.appendChild(item);
+      });
+      wrap.appendChild(col);grid.appendChild(wrap);
+    }
+    function renderYear() {
+      var evs=state.periodEvents||state.events;
+      var year=state.anchor.getFullYear(),wrap=el(doc,'div','kyv-cal-year');
+      for(var m=0;m<12;m++){
+        (function(month){
+          var selected=evs.filter(function(ev){return ev.date.getFullYear()===year&&ev.date.getMonth()===month;});
+          var btn=el(doc,'button','kyv-cal-year-month');
+          btn.type='button';
+          btn.appendChild(el(doc,'strong','',new Date(year,month,1).toLocaleDateString('it-IT',{month:'long'})));
+          btn.appendChild(el(doc,'span','',selected.length+' '+(selected.length===1?'evento':'eventi')+
+            (state.periodEvents?'':' (dati parziali)')));
+          btn.addEventListener('click',function(){changePeriod(new Date(year,month,1));setView('month');});
+          wrap.appendChild(btn);
+        })(m);
       }
       grid.appendChild(wrap);
     }
@@ -306,12 +378,12 @@
             ? 'Vista parziale: Google Calendar ha restituito almeno 120 eventi. I periodi non visibili potrebbero contenere appuntamenti.'
             : 'Vista basata sugli eventi ricevuti dall’ultimo aggiornamento. Un periodo vuoto non garantisce che non esistano appuntamenti su Google Calendar.'));
       }
-      if (state.view === 'week') renderWeek(); else renderMonth();
+      if (state.view === 'day') renderDay(); else if (state.view === 'week') renderWeek(); else if(state.view==='year')renderYear(); else renderMonth();
     }
 
     function setView(v) {
       if (VIEWS.indexOf(v) < 0) return;
-      if (state.view !== v) { state.periodEvents = null; state.periodStatus = ''; state.requestId++; }
+      if (state.view !== v) { state.periodEvents = null; state.periodStatus = ''; state.yearPending=null; state.requestId++; }
       state.view = v;
       saveView(v);
       render();
@@ -324,10 +396,16 @@
       state.periodEvents = null;
       state.periodStatus = '';
       state.requestId++;
+      state.yearPending=null;
       if (state.view !== 'list') render();
     });
 
+    root.addEventListener('kyv:calendar-created',function(){
+      if(state.view!=='list')loadPeriod.click();
+    });
     render();
+    // Start on the current day and load it without requesting unrelated historical years.
+    if(state.view==='day')setTimeout(function(){loadPeriod.click();},0);
     return true;
   }
 
