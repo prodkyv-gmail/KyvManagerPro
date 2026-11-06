@@ -7,6 +7,15 @@
 
 # Changelog
 
+### Dopo v2.82 · 2026-11-06 (senza cambio di versione)
+- Interfaccia: testi piccoli più leggibili (9/10/11 px portati a 11/11,5/12 px) e grigio secondario più chiaro in `kyv-theme.css`; stato "nessuna fattura" meno invadente nella tabella uscite.
+- Oggi: la riga di priorità dei progetti mostra la fase e il follow-up fissato (o "Nessun follow-up fissato") invece di un testo generico.
+- Agenda: il pulsante "Sincronizza Ora" diventa "Aggiorna agenda" in pagina, script, manuale operativo e guida.
+- Agenda: nuove viste Settimana e Mese (`kyv-calendar-views.js`) accanto all'elenco, con frecce avanti e indietro e tasto "Oggi". L'elenco resta la vista predefinita e la scelta viene ricordata. Usa gli eventi già letti da "Aggiorna agenda" (evento `kyv:calendar-events`), senza nuove chiamate; titoli scritti solo come testo. Nuovo controllo `check:calendar-views` (83 controlli totali).
+- Limite noto: la griglia mostra solo gli eventi restituiti da `getEvents` (massimo 120). Lo script Apps Script del Calendario non è nel repository, quindi i mesi passati o lontani possono risultare vuoti finché lo script non accetta un intervallo di date.
+- Intenzioni rimandate: togliere i chip "Percorso" (un test li richiede) e rendere automatico l'aggiornamento dell'Agenda. Da verificare: regole RLS sulle tabelle reali di Supabase, versione per telefono delle altre pagine, prova delle viste calendario con i dati veri. Dettaglio nell'issue #88.
+- Nessuna modifica a database, storici, autorizzazioni o formule economiche.
+
 ### v2.82 · 2026-11-05
 - Stabilizzazione: modulo `kyv-read-guard-v282.js` per letture paginabili con conteggio esatto, ordine per ID univoco, controllo duplicati/riga mancante, limite verificabile e due retry solo su errori transitori.
 - Il cruscotto Economia non usa più `.limit(1000/2000/5000)` che potevano generare somme silenziosamente parziali; fonte incompleta ⇒ nessun totale mostrato. Risposte di refresh obsolete ignorate.
