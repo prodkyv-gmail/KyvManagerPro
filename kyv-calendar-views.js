@@ -370,16 +370,31 @@
           pending.events.push.apply(pending.events,normalizeEvents(d.response.events));
           if(d.truncated)pending.partial=true;
           if(d.response.historyDisabled)pending.historyDisabled=true;
+        }else if(d.success && d.response && Array.isArray(d.response.events) && !d.response.range){
+          // Compatibility with old Apps Script: only an unverified near-term snapshot.
+          // Keep events in the requested month, and do not claim full-year coverage.
+          pending.partial=true;
+          pending.legacy=true;
+          pending.events.push.apply(pending.events,normalizeEvents(d.response.events).filter(function(ev){
+            return ev.key>=d.requested.startDate && ev.key<d.requested.endDate;
+          }));
+          // A legacy endpoint ignores range; avoid 12 redundant calls.
+          if(pending.nextIndex<pending.months.length){
+            pending.remaining-=pending.months.length-pending.nextIndex;
+            pending.nextIndex=pending.months.length;
+          }
         }else pending.partial=true;
         pending.remaining--;
         pending.running--;
         if(pending.remaining===0 && state.yearPending===pending){
           state.periodEvents=pending.events.sort(function(a,b){return a.date-b.date;});
-          state.periodStatus=pending.partial
-            ? 'Periodo disponibile caricato parzialmente: uno o più mesi non sono completi.'
-            : pending.historyDisabled
-              ? 'Storico disattivato: visualizzati soltanto i mesi disponibili da oggi in avanti.'
-              : 'Tutti i 12 mesi confermati da Google Calendar.';
+          state.periodStatus=pending.legacy
+            ? 'Apps Script collegato in modalità compatibilità: calendario annuale parziale. Per leggere date lontane occorre pubblicare la versione aggiornata dello script.'
+            : pending.partial
+              ? 'Periodo disponibile caricato parzialmente: uno o più mesi non sono completi.'
+              : pending.historyDisabled
+                ? 'Storico disattivato: visualizzati soltanto i mesi disponibili da oggi in avanti.'
+                : 'Tutti i 12 mesi confermati da Google Calendar.';
           state.yearPending=null;
         }else if(state.yearPending===pending){
           pending.launch();
@@ -395,10 +410,17 @@
           : d.response.historyDisabled
             ? 'Storico disattivato: sono visualizzati soltanto gli eventi di oggi e futuri.'
             : 'Periodo confermato dal servizio Google Calendar.';
+      } else if(d.success && d.response && Array.isArray(d.response.events) && !d.response.range){
+        // Legacy Apps Script may return events even though it ignores startDate/endDate.
+        // Show only matching dates, and explicitly mark the coverage as unverified.
+        state.periodEvents=normalizeEvents(d.response.events).filter(function(ev){
+          return ev.key>=d.requested.startDate && ev.key<d.requested.endDate;
+        });
+        state.periodStatus='Apps Script collegato in modalità compatibilità: mostrati soltanto gli eventi disponibili, senza conferma del periodo. Per consultare date lontane aggiorna il deployment Google.';
       } else {
         state.periodEvents = null;
         state.periodStatus = d.success
-          ? 'Lo script Google non conferma il periodo richiesto. Pubblica il codice Apps Script aggiornato nel deployment esistente.'
+          ? 'Lo script Google ha restituito un intervallo diverso. Verifica la versione del deployment Apps Script.'
           : 'Non è stato possibile caricare il periodo: '+String(d.error||'controlla la connessione Apps Script').slice(0,180);
       }
       render();
