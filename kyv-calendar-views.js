@@ -8,6 +8,8 @@
   var VIEWS = ['list', 'week', 'month'];
   var DAY_MS = 86400000;
   var cachedEvents = [];
+  var calendarLoaded = false;
+  var calendarTruncated = false;
 
   function pad(n) { return String(n).padStart(2, '0'); }
   function dayKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -145,7 +147,7 @@
     main.dataset.kyvViews = '1';
     injectStyle(doc);
 
-    var state = { view: readView(), anchor: startOfDay(new Date()), events: cachedEvents };
+    var state = { view: readView(), anchor: startOfDay(new Date()), events: cachedEvents, loaded: calendarLoaded, truncated: calendarTruncated };
 
     var bar = el(doc, 'div', 'kyv-cal-bar');
     var group = el(doc, 'div', 'kyv-cal-group');
@@ -240,7 +242,14 @@
       clear(grid);
       if (isList) return;
       label.textContent = rangeLabel(state.anchor, state.view);
-      if (!state.events.length) grid.appendChild(el(doc, 'p', 'kyv-cal-note', 'Nessun evento caricato: premi “Aggiorna agenda” per leggere Google Calendar.'));
+      if (!state.loaded) {
+        grid.appendChild(el(doc, 'p', 'kyv-cal-note', 'Agenda non aggiornata: premi “Aggiorna agenda” per leggere Google Calendar.'));
+      } else {
+        grid.appendChild(el(doc, 'p', 'kyv-cal-note',
+          state.truncated
+            ? 'Vista parziale: Google Calendar ha restituito almeno 120 eventi. I periodi non visibili potrebbero contenere appuntamenti.'
+            : 'Vista basata sugli eventi ricevuti dall’ultimo aggiornamento. Un periodo vuoto non garantisce che non esistano appuntamenti su Google Calendar.'));
+      }
       if (state.view === 'week') renderWeek(); else renderMonth();
     }
 
@@ -253,6 +262,8 @@
 
     root.addEventListener('kyv:calendar-events', function (e) {
       state.events = cachedEvents;
+      state.loaded = calendarLoaded;
+      state.truncated = calendarTruncated;
       if (state.view !== 'list') render();
     });
 
@@ -262,7 +273,11 @@
 
   if (typeof root.addEventListener === 'function') {
     root.addEventListener('kyv:calendar-events', function (e) {
-      cachedEvents = normalizeEvents(e && e.detail && e.detail.events);
+      var detail = e && e.detail;
+      // Un aggiornamento fallito invalida la fotografia precedente; non mostrare dati obsoleti.
+      calendarLoaded = !!(detail && detail.success);
+      calendarTruncated = calendarLoaded && !!detail.truncated;
+      cachedEvents = calendarLoaded ? normalizeEvents(detail.events) : [];
     });
   }
 
