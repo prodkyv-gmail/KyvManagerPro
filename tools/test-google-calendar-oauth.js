@@ -50,4 +50,17 @@ assert.match(page,/KYV_GOOGLE_CALENDAR_API\?\.connected/);
 assert.match(page,/kyv-google-calendar-oauth\.js/);
 assert.doesNotMatch(client,/CLIENT_SECRET|refresh_token|service_role/);
 assert(!fs.existsSync(path.join(root,'api/google-calendar/_shared.js')));
+
+// Status diagnostics: expose only names/codes after authentication, never secrets.
+const status=read('api/google-calendar/status.js');
+const server=read('lib/kyv-google-calendar-oauth-server.js');
+assert.match(status,/configurationStatus\(\)/);
+assert.ok(status.indexOf('authenticate(req)')<status.indexOf('configurationStatus()'));
+assert.match(server,/reason:'invalid_cookie_key'/);
+assert.match(server,/reason:'missing_variables'/);
+const current=read('kyv-google-calendar-oauth.js');
+assert.match(current,/data\.reason === 'invalid_cookie_key'/);
+assert.match(current,/64 caratteri esadecimali/);
+assert.doesNotMatch(status,/clientSecret|process\.env\.KYV_GOOGLE_OAUTH_CLIENT_SECRET/);
+
 console.log('OAuth Calendar: encryption, range, routes, auth and fallback OK');
