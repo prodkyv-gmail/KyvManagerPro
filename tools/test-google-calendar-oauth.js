@@ -82,4 +82,18 @@ try {
   }
 }
 
+// Same-origin CSRF guard: strict Origin and safe fallback when reverse proxies strip it.
+const canonicalHost=new URL(c.ORIGIN).host;
+const originRequest=headers=>({headers:{host:canonicalHost,...headers}});
+assert.equal(c.checkPostOrigin(originRequest({origin:c.ORIGIN,'sec-fetch-site':'same-origin'})),true);
+assert.equal(c.checkPostOrigin(originRequest({referer:c.ORIGIN+'/kyv_calendar.html','sec-fetch-site':'same-origin'})),true);
+assert.equal(c.checkPostOrigin(originRequest({origin:'https://evil.example',referer:c.ORIGIN+'/kyv_calendar.html','sec-fetch-site':'same-origin'})),false,'Origin overrides Referer');
+assert.equal(c.checkPostOrigin(originRequest({referer:'https://evil.example/','sec-fetch-site':'same-origin'})),false);
+assert.equal(c.checkPostOrigin(originRequest({referer:c.ORIGIN+'/kyv_calendar.html','sec-fetch-site':'cross-site'})),false);
+assert.equal(c.checkPostOrigin(originRequest({origin:c.ORIGIN,'sec-fetch-site':'same-site'})),false,'subdomain is not same origin');
+assert.equal(c.checkPostOrigin(originRequest({referer:c.ORIGIN+'/kyv_calendar.html'})),true,'legacy browser valid Referer');
+assert.equal(c.checkPostOrigin(originRequest({})),false,'no source proof must be rejected');
+assert.equal(c.checkPostOrigin({headers:{host:'attacker.vercel.app',origin:c.ORIGIN,'sec-fetch-site':'same-origin'}}),false);
+assert.equal(c.checkPostOrigin(originRequest({origin:'null'})),false);
+
 console.log('OAuth Calendar: encryption, range, routes, auth and fallback OK');
