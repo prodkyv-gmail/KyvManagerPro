@@ -65,6 +65,13 @@
     return out.sort(function (a, b) { return a.date - b.date; });
   }
 
+  function eventsInRange(list, requested) {
+    if(!requested || !requested.startDate || !requested.endDate) return [];
+    return normalizeEvents(list).filter(function(ev){
+      return ev.key>=requested.startDate && ev.key<requested.endDate;
+    });
+  }
+
   function groupByDay(events) {
     var map = {};
     events.forEach(function (ev) { (map[ev.key] = map[ev.key] || []).push(ev); });
@@ -109,7 +116,7 @@
 
   var helpers = {
     weekStart: weekStart, monthMatrix: monthMatrix, parseEventDate: parseEventDate,
-    normalizeEvents: normalizeEvents, groupByDay: groupByDay, shiftAnchor: shiftAnchor,
+    normalizeEvents: normalizeEvents, eventsInRange: eventsInRange, groupByDay: groupByDay, shiftAnchor: shiftAnchor,
     rangeLabel: rangeLabel, dayKey: dayKey, periodBounds: periodBounds, confirmedRange: confirmedRange, VIEWS: VIEWS
   };
 
@@ -375,9 +382,7 @@
           // Keep events in the requested month, and do not claim full-year coverage.
           pending.partial=true;
           pending.legacy=true;
-          pending.events.push.apply(pending.events,normalizeEvents(d.response.events).filter(function(ev){
-            return ev.key>=d.requested.startDate && ev.key<d.requested.endDate;
-          }));
+          pending.events.push.apply(pending.events,eventsInRange(d.response.events,d.requested));
           // A legacy endpoint ignores range; avoid 12 redundant calls.
           if(pending.nextIndex<pending.months.length){
             pending.remaining-=pending.months.length-pending.nextIndex;
@@ -413,9 +418,7 @@
       } else if(d.success && d.response && Array.isArray(d.response.events) && !d.response.range){
         // Legacy Apps Script may return events even though it ignores startDate/endDate.
         // Show only matching dates, and explicitly mark the coverage as unverified.
-        state.periodEvents=normalizeEvents(d.response.events).filter(function(ev){
-          return ev.key>=d.requested.startDate && ev.key<d.requested.endDate;
-        });
+        state.periodEvents=eventsInRange(d.response.events,d.requested);
         state.periodStatus='Apps Script collegato in modalità compatibilità: mostrati soltanto gli eventi disponibili, senza conferma del periodo. Per consultare date lontane aggiorna il deployment Google.';
       } else {
         state.periodEvents = null;
