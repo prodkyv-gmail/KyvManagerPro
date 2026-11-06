@@ -207,10 +207,23 @@
             return dropboxLoaderPromise;
         }
 
-        window.openDropboxChooser = async function(){
-            try { await ensureDropboxChooser(); }
-            catch(error) {
-                KYV.showToast(`${error.message} Puoi comunque incollare il link Dropbox nel campo sotto.`, 'error');
+        // Precarica il solo SDK Dropbox; nessuna lettura di file viene avviata.
+        // Dropbox.choose deve essere chiamato direttamente dal clic (non dopo await).
+        if(document.readyState==='loading'){
+            document.addEventListener('DOMContentLoaded',()=>ensureDropboxChooser().catch(()=>{}),{once:true});
+        }else{
+            ensureDropboxChooser().catch(()=>{});
+        }
+        window.openDropboxChooser = function(){
+            if(!window.Dropbox?.choose){
+                KYV.showToast('Dropbox Chooser si sta caricando. Premi nuovamente «Pesca file da Dropbox» quando è pronto.', 'warning');
+                ensureDropboxChooser()
+                    .then(()=>KYV.showToast('Dropbox pronto: premi «Pesca file da Dropbox».', 'success'))
+                    .catch(error=>KYV.showToast(`${error.message} Puoi comunque incollare il link Dropbox nel campo sotto.`, 'error'));
+                return;
+            }
+            if(typeof Dropbox.isBrowserSupported==='function'&&!Dropbox.isBrowserSupported()){
+                KYV.showToast('Questo browser non supporta Dropbox Chooser. Apri l’app in Chrome, Edge o Firefox.', 'warning');
                 return;
             }
             Dropbox.choose({
