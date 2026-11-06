@@ -2,7 +2,8 @@
  * KYVManagerPro Calendar + Drive, version 2.
  * Sostituisce il SOLO doGet esistente nel progetto Apps Script già collegato.
  * Mantiene: getEvents senza date (legacy), createEvent con time, getDriveFiles.
- * Nuovo: getEvents(startDate,endDate), createEvent(endTime,description,location).
+ * getEvents(startDate,endDate): solo eventi di oggi e futuri, storico disattivato.
+ * createEvent(endTime,description,location): nessuna modifica.
  * Zona oraria progetto Apps Script: Europe/Rome.
  * NOTA: distribuire una NUOVA VERSIONE dell'attuale Web App, non una nuova URL.
  */
@@ -32,18 +33,33 @@ function kyvDateTime_(date,time) {
 function kyvGetEvents_(params) {
   var cal=CalendarApp.getDefaultCalendar();
   if(!cal)throw Error('Calendario predefinito non disponibile.');
-  var start,end;
+
+  // Storico DISATTIVATO: Google Calendar viene interrogato soltanto
+  // da oggi in poi. I periodi richiesti restano invariati nella
+  // risposta per compatibilita con le viste Giorno/Settimana/Mese/Anno.
+  var today=new Date();
+  today.setHours(0,0,0,0);
+  var requestedStart,requestedEnd;
   if(params.startDate||params.endDate){
     if(!params.startDate||!params.endDate)throw Error('Servono startDate ed endDate.');
-    start=kyvDate_(params.startDate);end=kyvDate_(params.endDate);
-    var days=(end.getTime()-start.getTime())/86400000;
+    requestedStart=kyvDate_(params.startDate);
+    requestedEnd=kyvDate_(params.endDate);
+    // Date.UTC evita i falsi intervalli non interi al cambio di ora legale.
+    var days=(Date.UTC(requestedEnd.getFullYear(),requestedEnd.getMonth(),requestedEnd.getDate())
+      -Date.UTC(requestedStart.getFullYear(),requestedStart.getMonth(),requestedStart.getDate()))/86400000;
     if(days<1||days>45)throw Error('Intervallo consentito: da 1 a 45 giorni.');
   }else{
-    start=new Date();end=new Date(start.getTime());end.setDate(end.getDate()+14);
+    requestedStart=new Date(today.getTime());
+    requestedEnd=new Date(today.getFullYear(),today.getMonth(),today.getDate()+14);
   }
-  var max=501;
-  var all=cal.getEvents(start,end,{max:max});
+  var historyDisabled=requestedStart.getTime()<today.getTime();
+  var effectiveStart=historyDisabled?today:requestedStart;
   var zone=Session.getScriptTimeZone();
+  var all=[];
+  var max=501;
+  if(requestedEnd.getTime()>effectiveStart.getTime()){
+    all=cal.getEvents(effectiveStart,requestedEnd,{max:max});
+  }
   var events=all.slice(0,max-1).map(function(ev){
     var begin=ev.getStartTime(),finish=ev.getEndTime(),allDay=ev.isAllDayEvent();
     return {
@@ -54,9 +70,9 @@ function kyvGetEvents_(params) {
     };
   });
   return {success:true,events:events,range:{
-    startDate:Utilities.formatDate(start,zone,'yyyy-MM-dd'),
-    endDate:Utilities.formatDate(end,zone,'yyyy-MM-dd')
-  },truncated:all.length>=max};
+    startDate:Utilities.formatDate(requestedStart,zone,'yyyy-MM-dd'),
+    endDate:Utilities.formatDate(requestedEnd,zone,'yyyy-MM-dd')
+  },historyDisabled:historyDisabled,truncated:all.length>=max};
 }
 function kyvCreateEvent_(params) {
   var title=String(params.title||'Nuova Sessione Studio').trim();
