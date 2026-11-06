@@ -305,6 +305,16 @@ body{background:#0f111a;color:#f8fafc} html{scroll-behavior:smooth} .guide-secti
 </section>
 
 <section id="guida-audiofinder" class="guide-section manual-card p-5 md:p-7">
+<div class="manual-card-soft p-5 mt-4" role="note">
+<h3 class="sub-title mb-3">Dropbox in Audio Finder: collegamento, Chooser e diagnosi</h3>
+<p class="text-kyv-text leading-relaxed">Dropbox offre tre funzioni distinte: <b>Leggi archivio audio Dropbox</b> consulta soltanto il registro già salvato su KYV; <b>Scegli audio direttamente da Dropbox</b> apre una finestra del Chooser ufficiale per selezionare personalmente i file; <b>Autorizza Dropbox</b> usa OAuth PKCE per consultare i metadati di una cartella autorizzata. Il filtro «Dropbox» nell'Esploratore mostra solo i file già indicizzati e approvati.</p>
+<ol class="list-decimal ml-5 text-kyv-text space-y-2 leading-relaxed">
+<li><b>Se il Chooser non si apre:</b> ricarica la pagina, consenti le finestre popup di KYVManagerPro e premi di nuovo Scegli audio. Se il browser segnala un dominio non autorizzato, apri Dropbox App Console e registra <code>kyvmanagerpro-kyvmanagerpro-db.vercel.app</code> fra i <b>Chooser/Saver/Embedder domains</b> (senza <code>https://</code> né percorso). Il dominio usato per i deployment di anteprima può essere diverso.</li>
+<li><b>Se «Autorizza Dropbox» non completa il collegamento:</b> nelle impostazioni OAuth della stessa app Dropbox aggiungi esattamente <code>https://kyvmanagerpro-kyvmanagerpro-db.vercel.app/kyv_audio_finder.html</code> fra le redirect URI, abilita client pubblici/PKCE se richiesto e verifica il permesso <code>files.metadata.read</code>. Le redirect URI OAuth sono distinte dai domini Chooser.</li>
+<li><b>Se l'archivio è vuoto:</b> il pulsante Leggi archivio non è una scansione di Dropbox online. Aggiungi i file dall'Archivio Dropbox o dal Chooser e conferma la classificazione prima di cercarli nell'Esploratore.</li>
+</ol>
+<p class="text-kyv-text mt-3">Il Chooser viene precaricato senza accedere ai tuoi file: la finestra si apre soltanto dopo il tuo clic. L'app non crea progetti o collegamenti automaticamente e non salva i token OAuth in Supabase.</p>
+</div>
 <div id="v280-audio-scan" class="manual-card-soft p-5 mt-4" role="note">
 <h3 class="sub-title mb-3">v2.80 — Audio Finder: selezione guidata, copertura reale e protezione del lavoro non salvato</h3>
 <p class="text-kyv-text leading-relaxed">Il motore principale di Audio Finder è confermato: non esegue scansioni invisibili, non carica file audio sul database e non crea o collega progetti senza la tua scelta. La v2.80 migliora il controllo di ogni scansione <b>su richiesta</b>.</p>

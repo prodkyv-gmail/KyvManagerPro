@@ -56,7 +56,11 @@ assert.ok(ui.includes("new TextEncoder().encode(relative+'|'+f.size+'|'+f.lastMo
 assert.ok(ui.includes('event.target.value=\'\';'),'Allow same file reselect after a canceled scan');
 assert.ok(ui.includes('if(!checkedUnsaved&&!guardScanChanges())return false;'),'No silent replacement of pending review');
 for(const fn of ['chooseDropbox','drive','dropbox','local','beginCloud']){
- const fragment=ui.slice(ui.indexOf('async function '+fn+'('),ui.indexOf('async function '+fn+'(')+950);
+ // Dropbox's popup must be called synchronously in response to a user click.
+ const signature=(fn==='chooseDropbox'?'function ':'async function ')+fn+'(';
+ const start=ui.indexOf(signature);
+ assert.ok(start>=0,fn+' must be implemented');
+ const fragment=ui.slice(start,start+950);
  assert.ok(fragment.includes('guardScanChanges()'),fn+' must guard pending decisions before I/O or OAuth');
 }
 assert.ok(ui.includes("if(!guardScanChanges())return;"),'Cloud sources can be canceled without wiping decisions');
