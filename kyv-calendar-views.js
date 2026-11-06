@@ -498,7 +498,11 @@
       state.periodStatus = '';
       state.requestId++;
       state.yearPending=null;
-      if (state.view !== 'list') render();
+      if (state.view !== 'list') {
+        render();
+        // A general list refresh must not invalidate the currently selected range.
+        loadVisiblePeriod();
+      }
     });
 
     root.addEventListener('kyv:calendar-created',function(){
