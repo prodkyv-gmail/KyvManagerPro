@@ -203,7 +203,7 @@
                     script.setAttribute('data-app-key', appKey);
                     document.head.appendChild(script);
                 }
-            }).catch(error => { dropboxLoaderPromise = null; throw error; });
+            }).catch(error => { dropboxLoaderPromise = null; document.getElementById('dropboxjs')?.remove(); throw error; });
             return dropboxLoaderPromise;
         }
 
