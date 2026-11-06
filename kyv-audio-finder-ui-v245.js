@@ -595,9 +595,19 @@ function ensureChooser(){
  }).catch(e=>{chooserLoad=null;document.getElementById('dropboxjs')?.remove();throw e;});
  return chooserLoad;
 }
-async function chooseDropbox(){
+function chooseDropbox(){
  if(!guardScanChanges())return;
- const chooser=await ensureChooser();
+ // Dropbox requires its popup to originate directly from this user click.
+ // Do not await network loading here, or browser popup blockers can prevent it.
+ const chooser=window.Dropbox;
+ if(!chooser?.choose){
+  info('Il selettore Dropbox si sta caricando. Premi di nuovo «Scegli audio direttamente da Dropbox» quando sarà pronto.');
+  ensureChooser().then(()=>info('Dropbox Chooser pronto. Premi «Scegli audio direttamente da Dropbox» per aprirlo.'))
+   .catch(e=>info('Dropbox Chooser non disponibile: '+(e?.message||e),true));
+  return;
+ }
+ if(typeof chooser.isBrowserSupported==='function'&&!chooser.isBrowserSupported())
+  throw Error('Il browser corrente non supporta Dropbox Chooser. Apri la pagina in Chrome, Edge o Firefox e consenti i popup.');
  chooser.choose({
   success:files=>run(async()=>{
    const chosen=(files||[]).map(W.chooserItem).filter(Boolean);
@@ -957,6 +967,9 @@ function boot(){
  $('drive-account').innerHTML='<option value="all">Tutti i Drive configurati</option>'+
   accounts.map(a=>'<option value="'+H(a.id)+'"'+(a.url?'':' disabled')+'>'+H(a.label||a.id)+'</option>').join('');
  renderSourceReadiness(accounts);
+ // Caricamento preventivo del SOLO SDK Chooser, senza cercare o aprire file.
+ // Questo consente al clic successivo di aprire direttamente il popup Dropbox.
+ if(T(window.KYV_CONFIG?.DROPBOX_APP_KEY))ensureChooser().catch(()=>{});
  resumeCloud();
  refresh();
 }
