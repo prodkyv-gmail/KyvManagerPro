@@ -284,7 +284,7 @@
                 }
                 const legacyMode = !confirmedRange;
                 const events = data.events.filter(ev => {
-                    const parsed = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(ev?.date||''))
+                    const parsed = /^\d{4}-\d{2}-\d{2}$/.test(String(ev?.date||''))
                         ? new Date(Number(ev.date.slice(0,4)),Number(ev.date.slice(5,7))-1,Number(ev.date.slice(8,10)))
                         : new Date(ev?.date);
                     return !Number.isNaN(parsed.getTime()) &&
