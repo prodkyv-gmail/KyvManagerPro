@@ -143,4 +143,56 @@ assert.throws(() => sandbox.kyvGetEventsPeriod_({startDate:'2026-11-01',endDate:
 assert.throws(() => sandbox.kyvGetEventsPeriod_({startDate:'2026-11-02',endDate:'2026-11-09'},null), /non disponibile/);
 assert.match(page, /response.truncated === true/, 'la pagina deve rispettare il flag truncated del backend');
 
+
+// V285: gli estremi del giorno, dell'anno e la navigazione storica.
+assert.equal(h.dayKey(h.shiftAnchor(new Date(2026,10,6),'day',-1)),'2026-11-05');
+assert.equal(h.dayKey(h.shiftAnchor(new Date(2026,10,6),'year',-1)),'2025-01-01');
+assert.deepEqual(h.periodBounds(new Date(2026,10,6),'day'),{startDate:'2026-11-06',endDate:'2026-11-07'});
+assert.deepEqual(h.periodBounds(new Date(2026,10,6),'year'),{startDate:'2026-01-01',endDate:'2027-01-01'});
+assert.deepEqual(h.VIEWS,['day','week','month','year','list']);
+assert.match(src,/state.yearPending/);
+assert.match(src,/remaining:12/);
+assert.match(page,/id="ev-end-time"/);
+assert.match(page,/id="ev-description"/);
+assert.match(page,/endTime,\s*description,\s*location/);
+
+// Lo script completo mantiene Drive e la creazione preesistente, con orari configurabili.
+const full=read('integrations/google-apps-script/kyv-calendar-drive-v2.gs');
+assert.match(full,/function doGet\(e\)/);
+assert.match(full,/function kyvDriveFiles_\(params\)/);
+assert.match(full,/DriveApp\.continueFileIterator/);
+assert.match(full,/CalendarApp\.getDefaultCalendar/);
+assert.match(full,/params.endTime/);
+const vm2=require('node:vm');
+let created=null,range=null;
+const fake={
+ getEvents:(from,to)=>{range=[from,to];return [{
+   getId:()=> 'e1',getTitle:()=> 'Prova',getStartTime:()=>new Date('2020-01-06T11:00:00Z'),
+   getEndTime:()=>new Date('2020-01-06T12:00:00Z'),isAllDayEvent:()=>false,
+   getDescription:()=>'',getLocation:()=>''}];},
+ createEvent:(title,from,to,opts)=>{created={title,from,to,opts};return {getId:()=> 'new',getStartTime:()=>from,getEndTime:()=>to};}
+};
+const ctx={
+ Date,Error,String,Number,Math,Array,JSON,CalendarApp:{getDefaultCalendar:()=>fake},
+ Session:{getScriptTimeZone:()=> 'Europe/Rome'},
+ Utilities:{formatDate:(date)=>[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')},
+ ContentService:{MimeType:{JSON:'JSON'},createTextOutput:x=>({setMimeType:()=>JSON.parse(x)})}
+};
+vm2.createContext(ctx);
+vm2.runInContext(full,ctx);
+const history=ctx.doGet({parameter:{action:'getEvents',startDate:'2020-01-01',endDate:'2020-02-01'}});
+assert.equal(history.success,true);
+assert.equal(history.events.length,1);
+assert.equal(range[0].getFullYear(),2020);
+assert.equal(history.range.startDate,'2020-01-01');
+assert.equal(ctx.doGet({parameter:{action:'getEvents',startDate:'2026-02-30',endDate:'2026-03-02'}}).error.includes('inesistente'),true);
+const made=ctx.doGet({parameter:{action:'createEvent',title:'Sessione',date:'2026-11-06',time:'09:00',endTime:'11:30',description:'Note'}});
+assert.equal(made.success,true);
+assert.equal(created.opts.description,'Note');
+assert.equal((created.to-created.from)/60000,150);
+const old=ctx.doGet({parameter:{action:'createEvent',title:'Legacy',date:'2026-11-06',time:'09:00'}});
+assert.equal(old.success,true);
+assert.equal((created.to-created.from)/60000,120);
+assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:00',endTime:'11:00'}}).error);
+
 console.log('Viste calendario: OK');
