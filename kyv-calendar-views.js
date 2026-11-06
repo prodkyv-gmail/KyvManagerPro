@@ -244,7 +244,7 @@
         head.appendChild(el(doc, 'span', 'kyv-cal-daynum', String(d.getDate())));
         col.appendChild(head);
         var evs = byDay[key] || [];
-        if (!evs.length) col.appendChild(el(doc, 'span', 'kyv-cal-empty', 'Nessun evento'));
+        if (!evs.length) col.appendChild(el(doc, 'span', 'kyv-cal-empty', state.periodEvents ? 'Nessun evento nel periodo confermato' : 'Nessun evento tra quelli caricati'));
         evs.forEach(function (ev) {
           var item = el(doc, 'div', 'kyv-cal-ev');
           item.appendChild(el(doc, 'b', '', timeLabel(ev)));
@@ -265,7 +265,7 @@
           var evs = byDay[cell.key] || [];
           var c = el(doc, 'button', 'kyv-cal-cell' + (cell.inMonth ? '' : ' is-out') + (cell.key === todayKey ? ' is-today' : ''));
           c.type = 'button';
-          c.setAttribute('aria-label', cell.date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }) + ', ' + evs.length + (evs.length === 1 ? ' evento' : ' eventi'));
+          c.setAttribute('aria-label', cell.date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }) + ', ' + evs.length + (evs.length === 1 ? ' evento visualizzato' : ' eventi visualizzati') + (state.periodEvents ? ', periodo confermato' : ', dati parziali'));
           c.appendChild(el(doc, 'span', 'kyv-cal-daynum', String(cell.date.getDate())));
           evs.slice(0, 2).forEach(function (ev) {
             var item = el(doc, 'span', 'kyv-cal-ev', (ev.allDay ? '' : ev.date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + ' ') + ev.title);
