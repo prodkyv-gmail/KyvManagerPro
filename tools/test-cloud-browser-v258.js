@@ -139,6 +139,39 @@ async function main(){
  assert.ok(sql.includes('KYV_AUDIO_DECISIONI')&&sql.includes('KYV_AUDIO_INDICE'));
  assert.ok(configJs.includes('ONEDRIVE_INDEX_ENABLED: false'));
  assert.ok(sw.includes("'./kyv-cloud-browser-v258.js'"));
+
+ // Dropbox Chooser: the SDK must be allowed by CSP and the popup must open
+ // immediately from the user's click (not after a network await).
+ const csp=JSON.parse(read('vercel.json')).headers.flatMap(h=>h.headers)
+   .find(h=>h.key==='Content-Security-Policy')?.value||'';
+ assert.match(csp,/script-src[^;]*https:\/\/www\.dropbox\.com/,'Official Dropbox SDK needs explicit script-src');
+ assert.match(ui,/https:\/\/www\.dropbox\.com\/static\/api\/2\/dropins\.js/);
+ assert.match(ui,/function chooseDropbox\(\)/);
+ assert.doesNotMatch(ui,/async function chooseDropbox\(\)|await ensureChooser\(\)/,
+   'Never lose popup user activation while loading Dropbox SDK');
+ assert.match(ui,/ensureChooser\(\)\.catch\(\(\)=>\{\}\)/,
+   'Load SDK before the user clicks without scanning their files');
+ assert.match(ui,/chooser\.isBrowserSupported/);
+ assert.match(ui,/chooser\.choose\(\{/);
+ assert.match(ui,/addEventListener\('click',\(\)=>run\(chooseDropbox\)\)/);
+ const start=ui.indexOf('function chooseDropbox(){');
+ const end=ui.indexOf('async function local(files){',start);
+ assert.ok(start>=0&&end>start,'Chooser implementation must be present');
+ const chooserSource=ui.slice(start,end);
+ let calls=0;
+ const chooserContext={
+   window:{Dropbox:{choose:()=>{calls++},isBrowserSupported:()=>true}},
+   guardScanChanges:()=>true
+ };
+ vm.runInNewContext(chooserSource,chooserContext);
+ chooserContext.chooseDropbox();
+ assert.equal(calls,1,'Dropbox popup must open synchronously from a click');
+ const archive=read('kyv_dropbox.html');
+ assert.match(archive,/window\.openDropboxChooser = function\(\)/);
+ assert.doesNotMatch(archive,/await ensureDropboxChooser\(\)/);
+ assert.match(archive,/Dropbox\.choose\(\{/);
+ assert.match(html,/Chooser\/Saver\/Embedder domains/);
+
  assert.equal(JSON.parse(read('package.json')).version,(require('./release-contract').version()+'.0'));
  assert.equal(read('VERSION').trim(),require('./release-contract').version());
  assert.ok(read('guida.html').includes('v2.58'));
