@@ -31,3 +31,12 @@ Il file completo da incollare è `integrations/google-apps-script/kyv-calendar-d
 - L'attuale Web App usa `doGet` anche per scrivere eventi: se il deployment Apps Script è accessibile pubblicamente, il suo URL potrebbe consentire chiamate dirette. Prima dell'uso in produzione è opportuno proteggere la scrittura con un segreto server-side o migrare la creazione eventi a un endpoint Vercel autenticato. Il solo controllo sessione nel proxy Vercel non protegge l'accesso diretto a `/exec`.
 - I dati storici restano su Google Calendar. L'app non li importa in Supabase.
 - La vista Anno usa 12 richieste: potrebbe risentire di limiti Apps Script o del proxy, e segnala ogni caricamento parziale. Non deve indicare come confermato un anno incompleto.
+
+## Aggiornamento Agenda v287 — Storico e dettaglio eventi
+- Giorno, Settimana e Mese caricano automaticamente ogni periodo selezionato, anche negli anni passati; il tasto `Carica periodo` rimane per ripetere la lettura.
+- La vista Anno carica i 12 mesi in massimo 3 richieste contemporanee, senza richiedere un anno completo in una sola chiamata.
+- In Elenco, `Aggiorna agenda` legge i **30 giorni precedenti e i 14 giorni successivi**, usando `startDate` e `endDate`. Per date più lontane usare Giorno/Settimana/Mese/Anno.
+- Gli eventi sono selezionabili con click, tocco o tastiera; il popup mostra titolo, giorno, inizio e fine, descrizione e luogo (quando presenti nel payload).
+- Il popup usa `textContent` per tutti i campi provenienti da Google, senza renderizzare HTML dell'evento.
+- Se il deployment Apps Script risponde senza `range` coerente, l'interfaccia **non dichiara completo il periodo** e invita ad aggiornare il deployment di Google Apps Script.
+- Non sono stati introdotti OAuth Google, tabelle Supabase o scritture ai dati storici.
