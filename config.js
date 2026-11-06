@@ -291,6 +291,11 @@ window.KYV_CONFIG = KYV_CONFIG;
         phase5.async=false;
         document.head.appendChild(phase5);
 
+        const calendarViews=document.createElement('script');
+        calendarViews.src='kyv-calendar-views.js';
+        calendarViews.async=false;
+        document.head.appendChild(calendarViews);
+
         const pitch=document.createElement('script');
         pitch.src='kyv-pitch-followup.js';
         pitch.async=false;
