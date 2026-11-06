@@ -223,7 +223,6 @@
             const detail = event && event.detail;
             if(!detail || !detail.requested) return;
             const { requested, requestId } = detail;
-            if(window.KYV_GOOGLE_CALENDAR_API?.connected) return; // Lettura API ufficiale; nessuna doppia richiesta Apps Script.
             let response = null;
             let success = false;
             let truncated = false;
@@ -356,6 +355,5 @@
             if(window.lucide) lucide.createIcons();
         });
     </script>
-    <script src="kyv-google-calendar-oauth.js" defer></script>
 </body>
 </html>
