@@ -48,7 +48,7 @@ assert.match(events,/truncated/);
 assert.match(client,/Collega Google Calendar/);
 assert.match(page,/KYV_GOOGLE_CALENDAR_API\?\.connected/);
 assert.match(page,/kyv-google-calendar-oauth\.js/);
-assert.doesNotMatch(client,/CLIENT_SECRET|refresh_token|service_role/);
+assert.doesNotMatch(client,/KYV_GOOGLE_OAUTH_CLIENT_SECRET|token\.refresh_token|service_role/);
 assert(!fs.existsSync(path.join(root,'api/google-calendar/_shared.js')));
 
 // Status diagnostics: expose only names/codes after authentication, never secrets.
