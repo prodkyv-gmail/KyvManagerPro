@@ -88,4 +88,51 @@ assert.match(src, /dati parziali/, 'il calendario deve dichiarare la copertura n
 assert.match(h.rangeLabel(new Date(2026, 10, 1), 'month'), /^Novembre 2026$/);
 assert.match(h.rangeLabel(new Date(2026, 10, 6), 'week'), /2.*–.*8.*nov.*2026/);
 
+// Integrazione Apps Script indipendente dal vecchio doGet: testata con calendario simulato.
+const vm = require('node:vm');
+const adapter = read('integrations/google-apps-script/calendar-range-adapter.gs');
+const sandbox = {
+  Date,
+  Error,
+  String,
+  Number,
+  Math,
+  Array,
+  Session: { getScriptTimeZone: () => 'Europe/Rome' },
+  Utilities: { formatDate: (d, zone, fmt) => {
+    assert.equal(zone, 'Europe/Rome');
+    assert.equal(fmt, 'yyyy-MM-dd');
+    return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+  } }
+};
+vm.createContext(sandbox);
+vm.runInContext(adapter, sandbox);
+const allDayEvent = { isAllDayEvent: () => true, getAllDayStartDate: () => new Date(2026,10,6), getTitle: () => 'Giornata', getStartTime: () => new Date(2026,10,6) };
+const timedEvent = { isAllDayEvent: () => false, getStartTime: () => new Date('2026-11-06T09:00:00Z'), getTitle: () => 'Sessione' };
+let selectedRange;
+const fakeCalendar = { getEvents: (start, end) => {
+  selectedRange = [start, end];
+  return [allDayEvent, timedEvent];
+} };
+const actual = sandbox.kyvGetEventsPeriod_({startDate:'2026-11-02',endDate:'2026-11-09'},fakeCalendar);
+assert.equal(actual.range.startDate,'2026-11-02');
+assert.equal(actual.range.endDate,'2026-11-09');
+assert.equal(actual.events.length,2);
+assert.equal(actual.events[0].date,'2026-11-06');
+assert.equal(actual.events[1].date,'2026-11-06T09:00:00.000Z');
+assert.equal(actual.truncated,false);
+assert.equal(selectedRange[0].getDate(),2);
+assert.equal(selectedRange[1].getDate(),9);
+const many = { getEvents: () => Array.from({length:121}, () => timedEvent) };
+const limited = sandbox.kyvGetEventsPeriod_({startDate:'2026-11-02',endDate:'2026-11-09'},many);
+assert.equal(limited.events.length,120);
+assert.equal(limited.truncated,true);
+for(const date of ['2026-02-30','2026-13-01','nondates']){
+  assert.throws(() => sandbox.kyvParseCalendarDay_(date), /data non valida|giorno inesistente/);
+}
+assert.throws(() => sandbox.kyvGetEventsPeriod_({startDate:'2026-11-09',endDate:'2026-11-02'},fakeCalendar), /1 a 45/);
+assert.throws(() => sandbox.kyvGetEventsPeriod_({startDate:'2026-11-01',endDate:'2027-01-01'},fakeCalendar), /1 a 45/);
+assert.throws(() => sandbox.kyvGetEventsPeriod_({startDate:'2026-11-02',endDate:'2026-11-09'},null), /non disponibile/);
+assert.match(page, /response.truncated === true/, 'la pagina deve rispettare il flag truncated del backend');
+
 console.log('Viste calendario: OK');
