@@ -215,7 +215,7 @@
                 });
                 if(response.error) throw new Error(response.error);
                 success = Array.isArray(response.events);
-                truncated = success && response.events.length >= 120;
+                truncated = success && (response.truncated === true || response.events.length >= 120);
                 if(success) response = { ...response, events: response.events.slice(0,120) };
             } catch(err) {
                 console.warn('[KYV Calendar] Lettura periodo non verificata:', err.message || String(err));
