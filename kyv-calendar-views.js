@@ -67,6 +67,18 @@
     return new Date(anchor.getFullYear(), anchor.getMonth() + dir, 1);
   }
 
+  // Il servizio dovrà confermare esplicitamente questi estremi (fine esclusiva).
+  function periodBounds(anchor, view) {
+    var start = view === 'week' ? weekStart(anchor) : new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    var end = view === 'week' ? addDays(start, 7) : new Date(start.getFullYear(), start.getMonth() + 1, 1);
+    return { startDate: dayKey(start), endDate: dayKey(end) };
+  }
+
+  function confirmedRange(response, requested) {
+    var range = response && response.range;
+    return !!(range && range.startDate === requested.startDate && range.endDate === requested.endDate);
+  }
+
   function rangeLabel(anchor, view) {
     if (view === 'month') {
       var m = anchor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
@@ -85,7 +97,7 @@
   var helpers = {
     weekStart: weekStart, monthMatrix: monthMatrix, parseEventDate: parseEventDate,
     normalizeEvents: normalizeEvents, groupByDay: groupByDay, shiftAnchor: shiftAnchor,
-    rangeLabel: rangeLabel, dayKey: dayKey, VIEWS: VIEWS
+    rangeLabel: rangeLabel, dayKey: dayKey, periodBounds: periodBounds, confirmedRange: confirmedRange, VIEWS: VIEWS
   };
 
   // ---------- Interfaccia (solo nel browser) ----------
@@ -147,7 +159,7 @@
     main.dataset.kyvViews = '1';
     injectStyle(doc);
 
-    var state = { view: readView(), anchor: startOfDay(new Date()), events: cachedEvents, loaded: calendarLoaded, truncated: calendarTruncated };
+    var state = { view: readView(), anchor: startOfDay(new Date()), events: cachedEvents, loaded: calendarLoaded, truncated: calendarTruncated, periodStatus: '', periodEvents: null, requestId: 0 };
 
     var bar = el(doc, 'div', 'kyv-cal-bar');
     var group = el(doc, 'div', 'kyv-cal-group');
@@ -166,9 +178,12 @@
     var prev = el(doc, 'button', 'kyv-cal-btn', '‹'); prev.type = 'button'; prev.setAttribute('aria-label', 'Periodo precedente');
     var today = el(doc, 'button', 'kyv-cal-btn', 'Oggi'); today.type = 'button';
     var next = el(doc, 'button', 'kyv-cal-btn', '›'); next.type = 'button'; next.setAttribute('aria-label', 'Periodo successivo');
+    var loadPeriod = el(doc, 'button', 'kyv-cal-btn', 'Carica periodo');
+    loadPeriod.type = 'button';
+    loadPeriod.setAttribute('aria-label', 'Richiedi gli appuntamenti del periodo visibile');
     var label = el(doc, 'span', 'kyv-cal-label');
     label.setAttribute('aria-live', 'polite');
-    [prev, label, next, today].forEach(function (n) { nav.appendChild(n); });
+    [prev, label, next, today, loadPeriod].forEach(function (n) { nav.appendChild(n); });
     bar.appendChild(group);
     bar.appendChild(nav);
 
@@ -179,14 +194,47 @@
     if (header) header.after(bar); else main.insertBefore(bar, main.firstChild);
     list.after(grid);
 
-    prev.addEventListener('click', function () { state.anchor = shiftAnchor(state.anchor, state.view, -1); render(); });
-    next.addEventListener('click', function () { state.anchor = shiftAnchor(state.anchor, state.view, 1); render(); });
-    today.addEventListener('click', function () { state.anchor = startOfDay(new Date()); render(); });
+    function changePeriod(anchor) {
+      state.anchor = anchor;
+      state.periodEvents = null;
+      state.periodStatus = '';
+      state.requestId++;
+      render();
+    }
 
-    function openWeekOf(date) { state.anchor = date; setView('week'); }
+    prev.addEventListener('click', function () { changePeriod(shiftAnchor(state.anchor, state.view, -1)); });
+    next.addEventListener('click', function () { changePeriod(shiftAnchor(state.anchor, state.view, 1)); });
+    today.addEventListener('click', function () { changePeriod(startOfDay(new Date())); });
+
+    function openWeekOf(date) { changePeriod(date); setView('week'); }
+
+    loadPeriod.addEventListener('click', function () {
+      if (state.view === 'list') return;
+      var requested = periodBounds(state.anchor, state.view);
+      var requestId = ++state.requestId;
+      state.periodEvents = null;
+      state.periodStatus = 'Caricamento del periodo in corso…';
+      render();
+      root.dispatchEvent(new CustomEvent('kyv:calendar-period-request', { detail: { requested: requested, requestId: requestId } }));
+    });
+
+    root.addEventListener('kyv:calendar-period-result', function (event) {
+      var d = event && event.detail;
+      if (!d || d.requestId !== state.requestId) return;
+      if (d.success && confirmedRange(d.response, d.requested)) {
+        state.periodEvents = normalizeEvents(d.response.events);
+        state.periodStatus = d.truncated
+          ? 'Periodo confermato, ma risultato limitato a 120 eventi: potrebbero mancarne altri.'
+          : 'Periodo confermato dal servizio Google Calendar.';
+      } else {
+        state.periodEvents = null;
+        state.periodStatus = 'Periodo non verificato: il servizio non ha confermato le date richieste. Gli eventi mostrati sotto restano quelli dell’ultimo aggiornamento generale.';
+      }
+      render();
+    });
 
     function renderWeek() {
-      var byDay = groupByDay(state.events), start = weekStart(state.anchor), todayKey = dayKey(new Date());
+      var byDay = groupByDay(state.periodEvents || state.events), start = weekStart(state.anchor), todayKey = dayKey(new Date());
       var wrap = el(doc, 'div', 'kyv-cal-week');
       for (var i = 0; i < 7; i++) {
         var d = addDays(start, i), key = dayKey(d);
@@ -209,7 +257,7 @@
     }
 
     function renderMonth() {
-      var byDay = groupByDay(state.events), todayKey = dayKey(new Date());
+      var byDay = groupByDay(state.periodEvents || state.events), todayKey = dayKey(new Date());
       var wrap = el(doc, 'div', 'kyv-cal-month');
       ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].forEach(function (n) { wrap.appendChild(el(doc, 'div', 'kyv-cal-wd', n)); });
       monthMatrix(state.anchor).forEach(function (row) {
@@ -242,7 +290,10 @@
       clear(grid);
       if (isList) return;
       label.textContent = rangeLabel(state.anchor, state.view);
-      if (!state.loaded) {
+      loadPeriod.disabled = state.periodStatus === 'Caricamento del periodo in corso…';
+      if (state.periodStatus) {
+        grid.appendChild(el(doc, 'p', 'kyv-cal-note', state.periodStatus));
+      } else if (!state.loaded) {
         grid.appendChild(el(doc, 'p', 'kyv-cal-note', 'Agenda non aggiornata: premi “Aggiorna agenda” per leggere Google Calendar.'));
       } else {
         grid.appendChild(el(doc, 'p', 'kyv-cal-note',
@@ -255,6 +306,7 @@
 
     function setView(v) {
       if (VIEWS.indexOf(v) < 0) return;
+      if (state.view !== v) { state.periodEvents = null; state.periodStatus = ''; state.requestId++; }
       state.view = v;
       saveView(v);
       render();
@@ -264,6 +316,9 @@
       state.events = cachedEvents;
       state.loaded = calendarLoaded;
       state.truncated = calendarTruncated;
+      state.periodEvents = null;
+      state.periodStatus = '';
+      state.requestId++;
       if (state.view !== 'list') render();
     });
 
