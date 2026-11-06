@@ -1,5 +1,5 @@
 'use strict';
-const c=require('./_shared');
+const c=require('../../lib/kyv-google-calendar-oauth-server');
 module.exports=async(req,res)=>{
   res.setHeader('Referrer-Policy','no-referrer');
   res.setHeader('Cache-Control','no-store');
