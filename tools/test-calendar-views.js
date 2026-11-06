@@ -214,4 +214,38 @@ assert.equal(old.success,true);
 assert.equal((created.to-created.from)/60000,120);
 assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:00',endTime:'11:00'}}).error);
 
+
+ // v287: regressioni storico: selezione di un giorno passato carica automaticamente il periodo.
+ assert.match(src,/function loadVisiblePeriod\(\)/);
+ assert.match(src,/if\(state\.view!=='list'\)loadVisiblePeriod\(\)/);
+ assert.match(src,/if\(state\.view!=='list'\)root\.setTimeout\(function\(\)\{loadVisiblePeriod\(\);\},0\)/);
+ assert.match(src,/pending\.running<3/,'anno non deve inviare 12 richieste insieme');
+ assert.match(src,/Aggiorna il deployment Apps Script/);
+ assert.match(page,/today\.getDate\(\)-30/);
+ assert.match(page,/today\.getDate\(\)\+15/);
+ assert.match(page,/data\.range\?\.startDate !== wanted\.startDate/);
+ assert.match(page,/data-kyv-calendar-index/);
+ assert.match(page,/kyv:calendar-open-event/);
+ assert.match(page,/listEventsCache = \[\]/);
+
+ // La descrizione, il luogo e l'orario finale devono arrivare al popup senza innerHTML.
+ const detailed=h.normalizeEvents([{
+   id:'test-id',title:'Prova dettagli',date:'2026-11-06T09:00:00Z',
+   endDate:'2026-11-06T11:30:00Z',description:'Testo con <b>markup</b>',
+   location:'Studio Milano'
+ }])[0];
+ assert.equal(detailed.id,'test-id');
+ assert.equal(detailed.description,'Testo con <b>markup</b>');
+ assert.equal(detailed.location,'Studio Milano');
+ assert.equal(detailed.endDate.toISOString(),'2026-11-06T11:30:00.000Z');
+ assert.match(src,/el\(doc,'dialog'/);
+ assert.match(src,/details\.showModal\(\)/);
+ assert.match(src,/detailTitle\.textContent=ev\.title/);
+ assert.match(src,/detailRow\('Descrizione',ev\.description/);
+ assert.match(src,/detailRow\('Luogo',ev\.location/);
+ assert.match(src,/eventButton\(ev,false\)/);
+ assert.match(src,/eventButton\(ev,true\)/);
+ assert.match(src,/kyv:calendar-open-event/);
+ assert.match(src,/kyv-cal-day-jump/);
+
 console.log('Viste calendario: OK');
