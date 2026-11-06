@@ -14,6 +14,14 @@ assert.ok(config.indexOf('kyv-agenda-phase5.js') < config.indexOf('kyv-calendar-
 assert.match(page, /dispatchEvent\(new CustomEvent\('kyv:calendar-events'/, 'la pagina deve passare gli eventi alle viste');
 assert.doesNotMatch(src, /\.(innerHTML|outerHTML)\s*=|insertAdjacentHTML/, 'i titoli arrivano da Google Calendar: vietato innerHTML nelle viste');
 
+// Contratto sincronizzazione: successo distinto dall'errore, niente eventi vecchi dopo il fallimento.
+assert.match(page, /success: true, truncated:/, 'la sincronizzazione riuscita deve dichiarare copertura e successo');
+assert.match(page, /events: \[\], success: false/, 'la sincronizzazione fallita deve invalidare la cache');
+assert.match(src, /calendarLoaded = !!\(detail && detail\.success\)/, 'la vista deve distinguere dati aggiornati e non aggiornati');
+assert.match(src, /cachedEvents = calendarLoaded \? normalizeEvents\(detail\.events\) : \[\]/, 'i dati precedenti devono essere cancellati dopo un errore');
+assert.match(src, /Vista parziale:/, 'la vista deve segnalare eventi limitati');
+assert.match(src, /Un periodo vuoto non garantisce/, 'non indicare falsa assenza di appuntamenti');
+
 // Logica pura (caricata in Node: nessun window, nessun DOM)
 global.localStorage = undefined;
 require(path.join(root, 'kyv-calendar-views.js'));
