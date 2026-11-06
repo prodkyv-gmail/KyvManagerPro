@@ -14,6 +14,25 @@ assert.ok(config.indexOf('kyv-agenda-phase5.js') < config.indexOf('kyv-calendar-
 assert.match(page, /dispatchEvent\(new CustomEvent\('kyv:calendar-events'/, 'la pagina deve passare gli eventi alle viste');
 assert.doesNotMatch(src, /\.(innerHTML|outerHTML)\s*=|insertAdjacentHTML/, 'i titoli arrivano da Google Calendar: vietato innerHTML nelle viste');
 
+// Rimozione OAuth: la UI non deve caricare il connettore né sopprimere Apps Script.
+assert.doesNotMatch(page, /kyv-google-calendar-oauth\.js|KYV_GOOGLE_CALENDAR_API|Google Calendar API \(OAuth 2\.0\)/);
+assert.match(page, /Connessione Google Apps Script/);
+assert.match(page, /calendarRequest\('getEvents'/);
+assert.match(page, /calendarRequest\('createEvent'/);
+assert.match(page, /window\.KYV_DRIVE\.fetchJson/);
+for(const deleted of [
+  'kyv-google-calendar-oauth.js',
+  'lib/kyv-google-calendar-oauth-server.js',
+  'api/google-calendar/start.js',
+  'api/google-calendar/callback.js',
+  'api/google-calendar/status.js',
+  'api/google-calendar/events.js',
+  'api/google-calendar/disconnect.js',
+  'tools/test-google-calendar-oauth.js'
+]) assert.equal(fs.existsSync(path.join(root,deleted)),false,'OAuth remove: '+deleted);
+const packageText=read('package.json');
+assert.doesNotMatch(packageText,/check:google-oauth|test-google-calendar-oauth\.js/);
+
 // Contratto sincronizzazione: successo distinto dall'errore, niente eventi vecchi dopo il fallimento.
 assert.match(page, /success: true, truncated:/, 'la sincronizzazione riuscita deve dichiarare copertura e successo');
 assert.match(page, /events: \[\], success: false/, 'la sincronizzazione fallita deve invalidare la cache');
