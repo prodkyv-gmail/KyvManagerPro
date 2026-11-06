@@ -305,6 +305,7 @@
       state.yearPending = null;
       state.requestId++;
       render();
+      if(state.view!=='list')loadVisiblePeriod();
     }
 
     prev.addEventListener('click', function () { changePeriod(shiftAnchor(state.anchor, state.view, -1)); });
@@ -316,7 +317,7 @@
       else {state.anchor=startOfDay(date);setView('week');}
     }
 
-    loadPeriod.addEventListener('click', function () {
+    function loadVisiblePeriod() {
       if (state.view === 'list') return;
       var requested = periodBounds(state.anchor, state.view);
       var requestId = ++state.requestId;
@@ -325,19 +326,28 @@
       state.yearPending = null;
       render();
       if(state.view === 'year'){
+        // Request at most 3 months simultaneously to avoid saturating Apps Script.
         var year=state.anchor.getFullYear();
-        state.yearPending={id:requestId,remaining:12,events:[],partial:false};
-        for(var month=0;month<12;month++){
-          var start=new Date(year,month,1),end=new Date(year,month+1,1);
-          var range={startDate:dayKey(start),endDate:dayKey(end)};
-          root.dispatchEvent(new CustomEvent('kyv:calendar-period-request', {
-            detail:{requested:range,requestId:String(requestId)+':'+month}
-          }));
-        }
+        var pending={id:requestId,remaining:12,nextMonth:0,running:0,events:[],partial:false};
+        pending.launch=function(){
+          while(state.yearPending===pending && pending.running<3 && pending.nextMonth<12){
+            var month=pending.nextMonth++,start=new Date(year,month,1),end=new Date(year,month+1,1);
+            var range={startDate:dayKey(start),endDate:dayKey(end)};
+            pending.running++;
+            root.dispatchEvent(new CustomEvent('kyv:calendar-period-request',{
+              detail:{requested:range,requestId:String(requestId)+':'+month}
+            }));
+          }
+        };
+        state.yearPending=pending;
+        pending.launch();
       }else{
-        root.dispatchEvent(new CustomEvent('kyv:calendar-period-request', { detail: { requested: requested, requestId: requestId } }));
+        root.dispatchEvent(new CustomEvent('kyv:calendar-period-request',{
+          detail:{requested:requested,requestId:requestId}
+        }));
       }
-    });
+    }
+    loadPeriod.addEventListener('click',loadVisiblePeriod);
 
     root.addEventListener('kyv:calendar-period-result', function (event) {
       var d = event && event.detail;
@@ -349,12 +359,15 @@
           if(d.truncated)pending.partial=true;
         }else pending.partial=true;
         pending.remaining--;
+        pending.running--;
         if(pending.remaining===0 && state.yearPending===pending){
           state.periodEvents=pending.events.sort(function(a,b){return a.date-b.date;});
           state.periodStatus=pending.partial
             ? 'Anno caricato parzialmente: uno o più mesi non sono completi. Ripeti il caricamento.'
             : 'Tutti i 12 mesi confermati da Google Calendar.';
           state.yearPending=null;
+        }else if(state.yearPending===pending){
+          pending.launch();
         }
         render();
         return;
@@ -373,7 +386,7 @@
     });
 
     function renderWeek() {
-      var byDay = groupByDay(state.periodEvents || state.events), start = weekStart(state.anchor), todayKey = dayKey(new Date());
+      var byDay = groupByDay(state.periodEvents || (state.periodStatus ? [] : state.events)), start = weekStart(state.anchor), todayKey = dayKey(new Date());
       var wrap = el(doc, 'div', 'kyv-cal-week');
       for (var i = 0; i < 7; i++) {
         var d = addDays(start, i), key = dayKey(d);
@@ -391,7 +404,7 @@
     }
 
     function renderDay() {
-      var key=dayKey(state.anchor),byDay=groupByDay(state.periodEvents||state.events);
+      var key=dayKey(state.anchor),byDay=groupByDay(state.periodEvents||(state.periodStatus?[]:state.events));
       var evs=byDay[key]||[],wrap=el(doc,'div','kyv-cal-week');
       var col=el(doc,'div','kyv-cal-daycol is-today');
       col.appendChild(el(doc,'h3','kyv-cal-daynum',state.anchor.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})));
@@ -400,7 +413,7 @@
       wrap.appendChild(col);grid.appendChild(wrap);
     }
     function renderYear() {
-      var evs=state.periodEvents||state.events;
+      var evs=state.periodEvents||(state.periodStatus?[]:state.events);
       var year=state.anchor.getFullYear(),wrap=el(doc,'div','kyv-cal-year');
       for(var m=0;m<12;m++){
         (function(month){
@@ -418,7 +431,7 @@
     }
 
     function renderMonth() {
-      var byDay = groupByDay(state.periodEvents || state.events), todayKey = dayKey(new Date());
+      var byDay = groupByDay(state.periodEvents || (state.periodStatus ? [] : state.events)), todayKey = dayKey(new Date());
       var wrap = el(doc, 'div', 'kyv-cal-month');
       ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].forEach(function (n) { wrap.appendChild(el(doc, 'div', 'kyv-cal-wd', n)); });
       monthMatrix(state.anchor).forEach(function (row) {
@@ -469,10 +482,12 @@
 
     function setView(v) {
       if (VIEWS.indexOf(v) < 0) return;
-      if (state.view !== v) { state.periodEvents = null; state.periodStatus = ''; state.yearPending=null; state.requestId++; }
-      state.view = v;
+      var changed=state.view!==v;
+      if(changed){state.periodEvents=null;state.periodStatus='';state.yearPending=null;state.requestId++;}
+      state.view=v;
       saveView(v);
       render();
+      if(v!=='list' && (changed || !state.periodEvents))loadVisiblePeriod();
     }
 
     root.addEventListener('kyv:calendar-events', function (e) {
@@ -490,8 +505,8 @@
       if(state.view!=='list')loadPeriod.click();
     });
     render();
-    // Start on the current day and load it without requesting unrelated historical years.
-    if(state.view==='day')setTimeout(function(){loadPeriod.click();},0);
+    // Fetch the visible period on opening, including past days; never load all years at once.
+    if(state.view!=='list')root.setTimeout(function(){loadVisiblePeriod();},0);
     return true;
   }
 
