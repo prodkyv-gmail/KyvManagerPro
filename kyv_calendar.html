@@ -214,7 +214,7 @@
                 DOM.lastSync.innerHTML = `<span class="text-emerald-400">●</span> ${new Date().toLocaleTimeString('it-IT')}`;
 
                 const events = Array.isArray(data.events) ? data.events.slice(0, 120) : [];
-                window.dispatchEvent(new CustomEvent('kyv:calendar-events', { detail: { events } }));
+                window.dispatchEvent(new CustomEvent('kyv:calendar-events', { detail: { events, success: true, truncated: Array.isArray(data.events) && data.events.length >= 120 } }));
                 if(events.length === 0) {
                     DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-kyv-text opacity-70 text-center p-6"><i data-lucide="calendar-check-2" class="w-16 h-16 mb-4 opacity-50"></i><p class="text-lg font-medium">Nessun appuntamento in agenda.</p></div>`;
                 } else {
@@ -243,6 +243,7 @@
                 }
                 if(window.lucide) lucide.createIcons({root: DOM.eventsList});
             } catch(err) {
+                window.dispatchEvent(new CustomEvent('kyv:calendar-events', { detail: { events: [], success: false } }));
                 const message = err.message || 'Errore di connessione.';
                 showToast(message, true);
                 DOM.lastSync.innerHTML = '<span class="text-rose-400">●</span> Non connesso';
