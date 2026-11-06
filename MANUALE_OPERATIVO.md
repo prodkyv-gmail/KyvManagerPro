@@ -1049,7 +1049,7 @@ Quando devi cercare file, creare sessioni su calendario, passare da una integraz
 
 ### Bottoni e azioni
 - **Apri Modulo**: Apre il modulo scelto dal launcher.
-- **Sincronizza Ora**: Aggiorna calendario/eventi.
+- **Aggiorna agenda**: Aggiorna calendario/eventi.
 - **Crea su Calendar**: Crea un evento Google Calendar.
 - **Avvia Ricerca**: Cerca file su Drive.
 - **Indietro / Avanti**: Naviga tra risultati Drive.
@@ -1228,7 +1228,7 @@ Questa sezione serve quando non ricordi cosa fa un pulsante.
 ### Drive / Calendar / App Launcher — `integrazioni.html / kyv_drive.html / kyv_calendar.html`
 
 - **Apri Modulo**: Apre il modulo scelto dal launcher.
-- **Sincronizza Ora**: Aggiorna calendario/eventi.
+- **Aggiorna agenda**: Aggiorna calendario/eventi.
 - **Crea su Calendar**: Crea un evento Google Calendar.
 - **Avvia Ricerca**: Cerca file su Drive.
 - **Indietro / Avanti**: Naviga tra risultati Drive.

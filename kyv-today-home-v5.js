@@ -54,7 +54,7 @@ function build(projects,invoices,sends){
    if(release!==null&&release>=0&&release<=30)out.push(item({kind:'release',score:105-release/10,title:release===0?'Release oggi':'Release tra '+release+'g',detail:projectLabel(p),meta:fmtDate(p.Data_Pubblicazione),href:'scheda_progetto.html?id='+encodeURIComponent(p.ID),icon:'rocket'}));
 
    const sviluppo=text(p.SVILUPPO);
-   if(sviluppo&&!/^(finita|completata|uscita|pubblicata|chiusa)$/i.test(sviluppo))out.push(item({kind:'project',score:78,title:sviluppo,detail:projectLabel(p),meta:'Prossima azione progetto',href:'scheda_progetto.html?id='+encodeURIComponent(p.ID),icon:'move-right'}));
+   if(sviluppo&&!/^(finita|completata|uscita|pubblicata|chiusa)$/i.test(sviluppo))out.push(item({kind:'project',score:78,title:'Fase: '+sviluppo,detail:projectLabel(p),meta:(follow!==null&&follow>0?'Follow-up '+fmtDate(p.Prossimo_Followup):'Nessun follow-up fissato'),href:'scheda_progetto.html?id='+encodeURIComponent(p.ID),icon:'move-right'}));
  });
  (invoices||[]).filter(f=>!isPaid(f.PAGATA)).forEach(f=>{
    const p=byProject.get(String(f.ID_PROGETTO));

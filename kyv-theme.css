@@ -1486,3 +1486,19 @@ body.kyv-v260 #kyv-dashboard-status-collapse > summary {
  body.kyv-v260 #kyv-dashboard-ops-collapses .activity-filter {transition:none;}
  body.kyv-v260 #kyv-mobile-bottom-nav a{transition:none;}
 }
+
+/* Leggibilità: soglie minime per i testi più piccoli e grigi meno spenti.
+   Tailwind genera classi come text-[10px] a runtime: qui le alziamo senza toccare ogni pagina. */
+.text-\[9px\] { font-size: 11px !important; }
+.text-\[10px\] { font-size: 11.5px !important; }
+.text-\[11px\] { font-size: 12px !important; }
+.text-slate-500 { color: #8b97ab !important; }
+.kyv-today5-meta { font-size: 12px !important; }
+
+/* Elenco progetti: "+ Fattura" è un invito all'azione, non un allarme.
+   Contorno tratteggiato e neutro, così il giallo resta per ciò che è davvero da controllare. */
+#tbody-uscite .kyv-invoice-main.kyv-invoice-none {
+  color: #a9b4c7;
+  background: transparent;
+  border: 1px dashed rgba(148,163,184,.32);
+}

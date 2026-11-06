@@ -104,7 +104,7 @@
                                 <input type="password" id="script-url" class="kyv-input text-xs font-mono text-blue-300 pl-9 opacity-50 select-none cursor-not-allowed" readonly value="********************************************************" title="Connessione protetta gestita da config.js">
                             </div>
                             <button id="btn-sync" class="w-full min-w-0 py-2.5 bg-kyv-border hover:bg-blue-600 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center border border-kyv-border hover:border-blue-500">
-                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-2 shrink-0" id="sync-icon"></i> <span id="sync-text">Sincronizza Ora</span>
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-2 shrink-0" id="sync-icon"></i> <span id="sync-text">Aggiorna agenda</span>
                             </button>
                         </div>
                     </div>
@@ -149,7 +149,7 @@
                         <div class="flex flex-col items-center justify-center h-full min-h-[280px] text-kyv-text opacity-70 text-center p-6">
                             <i data-lucide="calendar-days" class="w-12 h-12 mb-3 text-blue-500"></i>
                             <p class="text-sm font-bold text-white">Agenda pronta</p>
-                            <p class="text-xs mt-2">Premi “Sincronizza Ora” per caricare gli appuntamenti di Google Calendar.</p>
+                            <p class="text-xs mt-2">Premi “Aggiorna agenda” per caricare gli appuntamenti di Google Calendar.</p>
                         </div>
                     </div>
                 </div>
@@ -250,7 +250,7 @@
             } finally {
                 DOM.btnSync.disabled = false;
                 DOM.syncIcon.classList.remove('animate-spin');
-                DOM.syncText.innerText = 'Sincronizza Ora';
+                DOM.syncText.innerText = 'Aggiorna agenda';
             }
         });
 

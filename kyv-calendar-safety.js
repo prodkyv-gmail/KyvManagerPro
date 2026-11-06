@@ -50,7 +50,7 @@
     }
 
     if (list && /Sincronizzazione in corso/i.test(list.textContent || '')) {
-      list.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-kyv-text opacity-70 text-center p-8"><p class="text-sm font-bold text-white">Agenda pronta</p><p class="text-xs mt-2">Premi “Sincronizza Ora” per caricare gli appuntamenti di Google Calendar.</p></div>';
+      list.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-kyv-text opacity-70 text-center p-8"><p class="text-sm font-bold text-white">Agenda pronta</p><p class="text-xs mt-2">Premi “Aggiorna agenda” per caricare gli appuntamenti di Google Calendar.</p></div>';
     }
     if (lastSync && /In attesa/i.test(lastSync.textContent || '')) lastSync.textContent = 'Pronto';
 
