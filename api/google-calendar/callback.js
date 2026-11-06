@@ -39,7 +39,7 @@ module.exports=async(req,res)=>{
   if(!token || !token.access_token) return finish('token_exchange');
   // If a user omits Calendar access on the Google consent screen, fail explicitly.
   // The callback scope is a useful hint; the authoritative check uses token.scope.
-  const granted=String(token.scope||'').split(/\\s+/).filter(Boolean);
+  const granted=String(token.scope||'').split(/\s+/).filter(Boolean);
   if(!granted.includes('https://www.googleapis.com/auth/calendar.events.readonly')){
     return finish('missing_calendar_scope');
   }
