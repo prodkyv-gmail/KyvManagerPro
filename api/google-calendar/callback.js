@@ -18,24 +18,42 @@ module.exports=async(req,res)=>{
   if(req.query?.error)return res.writeHead(303,{Location:'/kyv_calendar.html?google_calendar=denied'}).end();
   const code=String(req.query?.code||'');
   if(!code||code.length>4096)return c.json(res,400,{ok:false,error:'Codice Google non valido'});
-  try{
-    const token=await c.exchange({
+  // Never display Google authorization codes or tokens in the response or redirects.
+  function finish(status){
+    const allowed=new Set(['connected','missing_calendar_scope','missing_refresh_token','wrong_account','google_identity','token_exchange','unexpected_error']);
+    const code=allowed.has(status)?status:'unexpected_error';
+    return res.writeHead(303,{
+      Location:'/kyv_calendar.html?google_calendar='+encodeURIComponent(code),
+      'Referrer-Policy':'no-referrer',
+      'Cache-Control':'no-store'
+    }).end();
+  }
+  let token;
+  try {
+    token=await c.exchange({
       client_id:cfg.clientId,client_secret:cfg.clientSecret,
       code,grant_type:'authorization_code',
       redirect_uri:c.ORIGIN+'/api/google-calendar/callback'
     });
-    if(!token.refresh_token||!token.access_token)throw Error('Google non ha restituito un refresh token');
+  } catch (_) { return finish('token_exchange'); }
+  if(!token || !token.access_token) return finish('token_exchange');
+  // If a user omits Calendar access on the Google consent screen, fail explicitly.
+  // The callback scope is a useful hint; the authoritative check uses token.scope.
+  const granted=String(token.scope||'').split(/\s+/).filter(Boolean);
+  if(!granted.includes('https://www.googleapis.com/auth/calendar.events.readonly')){
+    return finish('missing_calendar_scope');
+  }
+  if(!token.refresh_token)return finish('missing_refresh_token');
+  try {
     const profile=await fetch('https://openidconnect.googleapis.com/v1/userinfo',{
       headers:{Authorization:'Bearer '+token.access_token},signal:AbortSignal.timeout(15000)
     });
-    if(!profile.ok)throw Error('Identità Google non verificabile');
+    if(!profile.ok)return finish('google_identity');
     const identity=await profile.json();
-    if(!identity.email_verified||String(identity.email||'').toLowerCase()!==cfg.expectedEmail)throw Error('Account Google differente da quello autorizzato');
-    if(!String(token.scope||'').split(' ').includes('https://www.googleapis.com/auth/calendar.events.readonly'))throw Error('Permesso Calendar non concesso');
+    if(!identity.email_verified||String(identity.email||'').toLowerCase()!==cfg.expectedEmail){
+      return finish('wrong_account');
+    }
     c.setToken(res,cfg,{refreshToken:token.refresh_token,userId:previous.userId,email:identity.email});
-    res.writeHead(303,{Location:'/kyv_calendar.html?google_calendar=connected'}).end();
-  }catch(_){
-    // Never log authorization codes, tokens or identity data.
-    return c.json(res,502,{ok:false,error:'Autorizzazione Google non completata. Verifica account e configurazione OAuth; Apps Script è ancora disponibile.'});
-  }
+    return finish('connected');
+  } catch (_) { return finish('google_identity'); }
 };

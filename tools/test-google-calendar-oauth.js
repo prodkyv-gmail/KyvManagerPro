@@ -48,7 +48,7 @@ assert.match(events,/truncated/);
 assert.match(client,/Collega Google Calendar/);
 assert.match(page,/KYV_GOOGLE_CALENDAR_API\?\.connected/);
 assert.match(page,/kyv-google-calendar-oauth\.js/);
-assert.doesNotMatch(client,/CLIENT_SECRET|refresh_token|service_role/);
+assert.doesNotMatch(client,/KYV_GOOGLE_OAUTH_CLIENT_SECRET|token\.refresh_token|service_role/);
 assert(!fs.existsSync(path.join(root,'api/google-calendar/_shared.js')));
 
 // Status diagnostics: expose only names/codes after authentication, never secrets.
@@ -95,5 +95,16 @@ assert.equal(c.checkPostOrigin(originRequest({referer:c.ORIGIN+'/kyv_calendar.ht
 assert.equal(c.checkPostOrigin(originRequest({})),false,'no source proof must be rejected');
 assert.equal(c.checkPostOrigin({headers:{host:'attacker.vercel.app',origin:c.ORIGIN,'sec-fetch-site':'same-origin'}}),false);
 assert.equal(c.checkPostOrigin(originRequest({origin:'null'})),false);
+
+// Callback must never expose one-time code or tokens and must diagnose denied Calendar scope.
+assert.match(callback,/missing_calendar_scope/);
+assert.match(callback,/missing_refresh_token/);
+assert.match(callback,/token_exchange/);
+assert.match(callback,/google_calendar=/);
+assert.match(callback,/split\(\/\\s\+\/\)/);
+assert.match(client,/data\.reason === 'invalid_cookie_key'/);
+assert.match(client,/missing_calendar_scope/);
+assert.match(client,/Google Auth Platform/);
+assert.doesNotMatch(callback,/c\.json\(res,502,\{ok:false,error:.*err\.message/);
 
 console.log('OAuth Calendar: encryption, range, routes, auth and fallback OK');
