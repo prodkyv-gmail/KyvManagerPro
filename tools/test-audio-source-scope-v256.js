@@ -38,7 +38,8 @@ assert.ok(ui.includes("groupSelected.clear();groupProject='';renderGroups()"),'S
 assert.ok(ui.includes("if($('finder-group-source').value!==source||groupKey!==g.key)"),'Changing filter during fetch prevents write');
 assert.ok(ui.includes('Progetto scelto: '),'Confirmation must identify chosen project');
 assert.ok(ui.includes("selectedNames.slice(0,6)"),'Confirmation must show selected files');
-assert.ok(page.includes('v2.56'));
+// La sigla di versione non compare più nei titoli (Audio Finder guidato): si verifica che la sezione esista.
+assert.ok(page.includes('id="finder-version-groups"')&&page.includes('<h2>Brani e versioni</h2>'));
 assert.ok(sw.includes(require('./release-contract').cacheName()));
 assert.ok(read('guida.html').includes('v2.56'));
 assert.ok(read('kyv-help.js').includes('v2.56'));

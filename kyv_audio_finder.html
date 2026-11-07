@@ -143,6 +143,28 @@
 .audit-entry-actions button,.audit-entry-actions a{font-size:12px;padding:8px 10px;border:1px solid #8294ac;border-radius:9px;color:#fff;background:#273348;text-decoration:none}
 .audit-entry-copy{padding:6px 0;border-top:1px solid #344055}
 @media(max-width:650px){.audit-center{padding:12px}.audit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Percorso guidato: 1 Aggiungi · 2 Conferma · 3 I miei brani · strumenti avanzati in fondo */
+.finder-main{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+main > .finder-head{margin:0!important}
+.finder-intro{background:#151923;border:1px solid #334155;border-radius:14px;padding:16px;margin:0 0 6px}
+.finder-intro h2{font-size:18px;font-weight:850;margin:0 0 6px}.finder-intro p{margin:0}
+body.kyv-v260 .finder-journey a{flex-direction:column;gap:2px;text-align:center}
+.finder-journey a b{font-size:13px;color:#fff}.finder-journey a small{font-size:11px;font-weight:600;color:#b8c4dd}
+.finder-step-title{font-size:20px;font-weight:900;margin:26px 0 4px;scroll-margin-top:12px}
+.finder-step-help{font-size:13px;margin:0 0 10px}
+.finder-tools-title{margin-top:34px;padding-top:18px;border-top:1px dashed #475569;color:#cbd5e1}
+.finder-dropbox-help{margin-top:8px}.finder-dropbox-help summary{cursor:pointer;min-height:36px;display:flex;align-items:center;font-size:12px;font-weight:700;color:#c7d2fe}
+@media(max-width:767px){body.kyv-v260 .finder-journey{grid-template-columns:1fr}}
+@media(max-width:650px){
+.finder-head{padding:12px 14px}.finder-main{padding-left:14px;padding-right:14px}
+.finder-main input:not([type=checkbox]):not([type=radio]):not([type=file]),.finder-main select,body.kyv-v260 #finder-explorer .explorer-filters :is(input,select){font-size:16px}
+.finder-main button,.finder-main .explorer-small-btn,.explorer-item-actions a,.audit-entry-actions a{min-height:44px}
+.explorer-item-actions a,.audit-entry-actions a{display:inline-flex;align-items:center}
+.finder-step-title{font-size:18px}
+.finder-card>a,.explorer-tools a,.finder-step-help a{display:inline-flex;align-items:center;min-height:44px;margin-right:10px}
+.finder-main summary{min-height:44px}
+}
 </style></head>
 <body class="kyv-v260 flex h-screen overflow-hidden">
 <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
@@ -153,97 +175,45 @@
 </header>
 <div class="overflow-y-auto flex-1">
 <div class="finder-main">
-<p>Scansiona solo quando vuoi i file audio nelle sorgenti autorizzate, poi salva i metadati nel catalogo. <strong>Non vengono caricati gli audio su Supabase</strong> e nessun progetto viene collegato automaticamente per somiglianza del nome.</p>
+<section class="finder-intro" aria-label="Cosa fa Audio Finder">
+<h2>Cosa fa Audio Finder</h2>
+<p>Raccoglie in un unico catalogo i <strong>tuoi</strong> file audio (demo, mix, master) sparsi tra telefono, computer, Google Drive, Dropbox e OneDrive. Sei tu a scegliere cosa aggiungere e a confermare ogni file. <strong>Gli audio non vengono caricati su Supabase</strong> e nessun progetto viene collegato da solo.</p>
 <nav class="finder-journey" aria-label="Percorso Audio Finder">
-<a href="#finder-explorer">1 · I miei brani</a>
-<a href="#finder-sources-details" data-finder-jump="finder-sources-details">2 · Aggiungi audio</a>
-<a href="#finder-audit-details" data-finder-jump="finder-audit-details">3 · Controllo archivio</a>
-<a href="#finder-version-groups-details" data-finder-jump="finder-version-groups-details">4 · Versioni</a>
+<a href="#finder-sources-details" data-finder-jump="finder-sources-details"><b>1 · Aggiungi</b><small>scegli i file da telefono, PC o cloud</small></a>
+<a href="#finder-step-confirm"><b>2 · Conferma</b><small>decidi quali file sono tuoi</small></a>
+<a href="#finder-explorer"><b>3 · I miei brani</b><small>cerca e ascolta il catalogo</small></a>
 </nav>
-<details id="finder-audit-details" class="kyv-v260-disclosure finder-workflow-details">
-<summary>Controllo dell'archivio audio <small>Completezza, file non collegati e duplicati · sola lettura</small></summary>
-<section id="finder-audit" class="audit-center" aria-label="Controllo archivio audio">
-<div class="explorer-tools">
- <div><h2>Controllo archivio audio · v2.57</h2>
- <p class="explorer-desc">Riepilogo <strong>in sola lettura</strong> dei tuoi audio già approvati, dei progetti e della scansione corrente. Non esegue ricerche cloud in automatico e non crea collegamenti o progetti.</p></div>
- <a href="guida.html#guida-audiofinder">Come leggere i risultati</a>
-</div>
-<p id="audit-coverage" class="audit-coverage" role="status">In attesa della lettura autenticata…</p>
-<div id="audit-kpis" class="audit-kpis" aria-label="Indicatori dell'archivio audio"></div>
-<div class="explorer-filters audit-filters">
- <input type="search" id="audit-query" aria-label="Cerca nel controllo archivio" placeholder="Cerca titolo, artista, file, account, cartella…">
- <select id="audit-type" aria-label="Tipo verifica">
-  <option value="all">Tutte le verifiche</option><option value="pending">Da classificare · scansione corrente</option>
-  <option value="unlinked">Miei audio senza progetto</option><option value="duplicates">SHA-256 identici</option>
-  <option value="projects">Progetti senza audio personale nel catalogo</option>
- </select>
- <select id="audit-source" aria-label="Fonte nel controllo archivio">
-  <option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option>
-  <option value="drive">Google Drive</option><option value="dropbox">Dropbox</option>
- <option value="onedrive">OneDrive</option></select>
-</div>
-<p class="finder-note">Le statistiche sono globali e si riferiscono ai dati caricati, non a tutti i tuoi dispositivi o cloud. I filtri agiscono sull'elenco; scegli «Tutte le sorgenti» per vedere i progetti senza audio nel catalogo. Le copie SHA-256 possono comprendere più fonti. Nessuna voce è automaticamente un problema.</p>
-<p id="audit-status" class="explorer-status" role="status"></p>
-<div id="audit-items" class="audit-items"></div>
-<button type="button" id="audit-more" hidden>Mostra altre verifiche</button>
 </section>
-</details>
-<section class="explorer" aria-label="Esploratore unico dei miei brani" id="finder-explorer">
-<div class="explorer-tools"><div><h2>Esplora i miei brani · v2.51</h2><p class="explorer-desc">Cerca insieme i soli file già approvati come tuoi tra Mac, PC, smartphone, Drive e archivio Dropbox.</p></div><a href="#finder-sources-details" data-finder-jump="finder-sources-details">Aggiungi da una sorgente</a></div>
-<div class="explorer-filters">
-<input id="explorer-query" type="search" aria-label="Cerca su tutte le sorgenti" placeholder="Titolo, nome file, cartella, account…">
-<select id="explorer-source" aria-label="Fonte"><option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option><option value="onedrive">OneDrive</option></select>
-<select id="explorer-account" aria-label="Archivio/account"><option value="">Tutti gli archivi</option></select>
-<select id="explorer-linked" aria-label="Collegamenti"><option value="all">Tutti i miei file</option><option value="linked">Collegati</option><option value="unlinked">Da collegare</option></select>
-<select id="explorer-sort" aria-label="Ordina"><option value="name">Nome A–Z</option><option value="recent">Modifica recente</option><option value="size">Dimensione</option></select>
-</div>
-<p class="explorer-status" role="status" id="explorer-status">Lettura del catalogo personale…</p>
-<div class="explorer-player" id="explorer-player-wrap" hidden>
-<div class="explorer-tools"><strong id="explorer-player-title">Anteprima audio locale</strong><button type="button" class="explorer-small-btn" id="explorer-stop">Chiudi anteprima</button></div>
-<audio id="explorer-player" controls preload="none"></audio>
-<p class="explorer-desc">Riproduzione temporanea dal file scelto su questo dispositivo, senza caricamento sul server. La pagina può perdere accesso quando viene chiusa.</p>
-</div>
-<div class="explorer-items" id="explorer-items"></div>
-<button id="explorer-more" type="button" class="explorer-small-btn" hidden>Mostra altri file</button>
-<p class="explorer-desc">Le reference e i file «da verificare» non appaiono qui. Per ascoltare un audio locale, selezionalo nuovamente dalle sorgenti: la pagina non può aprire autonomamente i file del tuo disco. I link cloud possono richiedere accesso al provider.</p>
-</section>
-<details class="kyv-v260-disclosure" id="finder-batch-details">
-<summary>Scansione combinata di Drive e Dropbox <small>Funzione avanzata · avvio solo manuale</small></summary>
-<section class="batch-scan" aria-label="Scansione guidata sorgenti collegate">
-<h2>Analizza sorgenti cloud insieme · v2.53</h2>
-<p class="explorer-desc">Con un solo comando esamina i Drive già configurati e l'archivio Dropbox KYV già registrato. Le due fonti sono indipendenti: se una non risponde, vedi un avviso e puoi revisionare i file trovati nell'altra. Non apre da solo il tuo telefono o il tuo computer.</p>
-<div class="batch-scan-options">
-<label><input type="checkbox" id="batch-drive" checked> Google Drive configurati</label>
-<label><input type="checkbox" id="batch-dropbox" checked> Archivio Dropbox registrato</label>
-</div>
-<button id="batch-scan" type="button" data-finder-action>Analizza sorgenti selezionate</button>
-<p id="batch-status" class="batch-status" role="status">Nessuna scansione eseguita. Avvio soltanto manuale.</p>
-<p id="batch-warnings" class="batch-warning" role="status"></p>
-<p class="explorer-desc">Dropbox Chooser permette di aggiungere altri file, ma non esplora tutto il tuo account. Scansioni parziali non implicano file cancellati. I risultati vengono inviati soltanto alla coda di verifica: nessun salvataggio o progetto automatico.</p>
-</section>
-</details>
 <button data-finder-action id="finder-reload" type="button">Rileggi indice</button>
 <div id="finder-status" class="finder-status" role="status">Preparazione…</div>
-<details id="finder-sources-details" class="kyv-v260-disclosure finder-workflow-details">
+<h2 class="finder-step-title" id="finder-step-add">1 · Aggiungi audio</h2>
+<p class="finder-step-help">Scegli da dove prendere i file. Su smartphone usa «Questo dispositivo».</p>
+<details id="finder-sources-details" class="kyv-v260-disclosure finder-workflow-details" open>
 <summary>Aggiungi audio da PC, smartphone o cloud <small>Solo dopo la tua scelta · nessuna scansione nascosta</small></summary>
 <div class="finder-v280-readiness" aria-label="Disponibilità sorgenti rilevata nel dispositivo">
-<h2>Sorgenti disponibili su questo dispositivo · v2.80</h2>
+<h2>Cosa è disponibile su questo dispositivo</h2>
 <p>Stato indicativo delle funzioni configurate, non un controllo di accesso ai tuoi cloud. Nessuna ricerca parte automaticamente.</p>
 <ul id="finder-source-readiness" role="status" aria-live="polite"><li>Controllo dei selettori locali e delle configurazioni…</li></ul>
 </div>
 <section class="finder-sources" id="finder-sources" aria-label="Sorgenti">
-<div class="finder-card"><h2>Google Drive</h2>
-<label for="drive-account">Account</label><select id="drive-account"><option value="all">Tutti i Drive</option></select>
-<button type="button" data-finder-action id="finder-drive" style="margin-top:10px">Cerca audio su Drive</button>
-<small>Usa il connettore Drive attuale. La ricerca può essere limitata dal numero di pagine.</small>
+<div class="finder-card"><h2>Questo dispositivo (PC, Android, iPhone)</h2>
+<label for="local-label">Nome identificativo dell'archivio</label><input id="local-label" maxlength="180" value="Dispositivo personale">
+<label for="finder-files" style="display:block;margin-top:10px">Scegli i file audio (PC, Android, oppure app File su iPhone)</label>
+<input id="finder-files" data-finder-action class="finder-input-file" type="file" accept="audio/*,.wav,.mp3,.m4a,.aiff,.aif,.flac,.aac,.ogg,.opus" multiple>
+<label for="finder-folder" style="display:block;margin-top:10px">Oppure una cartella intera (solo computer, browser compatibile)</label>
+<input id="finder-folder" data-finder-action class="finder-input-file" type="file" accept=".wav,.mp3,.aiff,.aif,.flac,.m4a,.aac,.ogg,.opus" webkitdirectory multiple>
+<small>L’app legge solo cartelle o file che selezioni. Su iPhone usa il selettore File: non è un crawler permanente. Funziona anche su cartelle OneDrive sincronizzate.</small>
+<p id="finder-local-progress" class="finder-v280-progress" role="status" aria-live="polite">Nessuna selezione locale in corso.</p>
 </div>
 <div class="finder-card"><h2>Dropbox</h2>
 <button type="button" data-finder-action id="finder-dropbox">Leggi archivio audio Dropbox</button>
+<small>Mostra gli audio Dropbox già registrati in KYV. Non cerca file nuovi.</small>
 <button type="button" id="finder-dropbox-choose" data-finder-action style="margin-top:8px">Scegli audio direttamente da Dropbox</button>
-<p class="finder-note">Il filtro «Dropbox» nell'Esplora brani mostra solo file già approvati. Per aggiungerne altri usa «Scegli audio». Se il selettore non si apre, consenti i popup e verifica che il dominio dell'app sia autorizzato in <strong>Dropbox App Console → Chooser/Saver/Embedder domains</strong> (è distinto dalle redirect URI OAuth).</p>
+<small>Si apre la finestra di Dropbox: scegli tu i file da aggiungere. Non esplora tutto l’account.</small>
+<details class="finder-dropbox-help"><summary>Il selettore non si apre?</summary><p class="finder-note">Il filtro «Dropbox» nell'Esplora brani mostra solo file già approvati. Per aggiungerne altri usa «Scegli audio». Se il selettore non si apre, consenti i popup e verifica che il dominio dell'app sia autorizzato in <strong>Dropbox App Console → Chooser/Saver/Embedder domains</strong> (è distinto dalle redirect URI OAuth).</p></details>
 <details class="kyv-v260-disclosure" id="finder-dropbox-oauth"><summary>Dropbox online · autorizzazione OAuth <small>Opzionale · richiede permessi del provider</small></summary>
 <div class="finder-sync-note" style="margin-top:12px">
-<strong>Dropbox online · v2.58 (OAuth PKCE)</strong>
+<strong>Dropbox online (OAuth)</strong>
 <p class="finder-note">Collegamento temporaneo di sola lettura. La tua app Dropbox deve avere la redirect URI registrata e il permesso <code>files.metadata.read</code>. Se non configurati, continua a usare archivio e Chooser.</p>
 <p id="cloud-dropbox-status" class="finder-note" role="status">Non collegato</p>
 <div class="finder-intake-actions"><button type="button" id="finder-dropbox-connect" data-finder-action>Autorizza Dropbox</button>
@@ -256,16 +226,12 @@
 </details>
 <a href="kyv_dropbox.html">Apri Archivio Dropbox</a>
 </div>
-<div class="finder-card"><h2>Cartella Mac / PC</h2>
-<label for="local-label">Nome identificativo dell'archivio</label><input id="local-label" maxlength="180" value="Dispositivo personale">
-<label for="finder-folder" style="display:block;margin-top:10px">Seleziona una cartella (browser compatibile)</label>
-<input id="finder-folder" data-finder-action class="finder-input-file" type="file" accept=".wav,.mp3,.aiff,.aif,.flac,.m4a,.aac,.ogg,.opus" webkitdirectory multiple>
-<label for="finder-files" style="display:block;margin-top:10px">Oppure scegli audio su PC, Android o tramite File su iPhone</label>
-<input id="finder-files" data-finder-action class="finder-input-file" type="file" accept="audio/*,.wav,.mp3,.m4a,.aiff,.aif,.flac,.aac,.ogg,.opus" multiple>
-<small>L’app legge solo cartelle o file che selezioni. Su iPhone usa il selettore File: non è un crawler permanente. Funziona anche su cartelle OneDrive sincronizzate.</small>
-<p id="finder-local-progress" class="finder-v280-progress" role="status" aria-live="polite">Nessuna selezione locale in corso.</p>
+<div class="finder-card"><h2>Google Drive</h2>
+<label for="drive-account">Account</label><select id="drive-account"><option value="all">Tutti i Drive</option></select>
+<button type="button" data-finder-action id="finder-drive" style="margin-top:10px">Cerca audio su Drive</button>
+<small>Usa il connettore Drive attuale. La ricerca può essere limitata dal numero di pagine.</small>
 </div>
-<div class="finder-card"><h2>OneDrive online · v2.58</h2>
+<div class="finder-card"><h2>OneDrive online</h2>
 <p>Ricerca manuale Microsoft Graph con autorizzazione OAuth PKCE e permesso minimo <code>Files.Read</code>, <strong>disponibile dopo la configurazione</strong> di Microsoft Entra e del database. Nessun audio viene scaricato o caricato nel catalogo automaticamente.</p>
 <p id="cloud-onedrive-status" class="finder-note" role="status">Non configurato</p>
 <div class="finder-intake-actions"><button type="button" id="finder-onedrive-connect" data-finder-action>Autorizza OneDrive</button>
@@ -277,9 +243,11 @@
 </div>
 </section>
 </details>
+<h2 class="finder-step-title" id="finder-step-confirm">2 · Conferma i tuoi file</h2>
+<p class="finder-step-help">Dopo il passo 1 i file scelti compaiono qui sotto: per ciascuno indichi se è tuo, una reference o da verificare. Solo i file che confermi come tuoi entrano nel catalogo.</p>
 <section id="finder-preview" class="finder-preview" hidden>
 <div id="finder-scan-coverage" class="finder-v280-coverage" role="status" aria-live="polite" hidden></div>
-<h2>Revisione guidata dei brani · v2.54</h2><p id="finder-preview-note"></p>
+<h2>Revisione guidata dei brani</h2><p id="finder-preview-note"></p>
 <p id="finder-sync-summary" class="finder-sync-note" role="status"></p>
 <p class="finder-note">I file già esaminati vengono riconosciuti tramite identità sorgente. I metadati diversi sono proposti per aggiornamento; quelli senza informazioni sufficienti restano «revisione non verificabile». Nessun aggiornamento, eliminazione o collegamento è automatico.</p>
 <div class="explorer-filters"><input id="finder-preview-query" type="search" placeholder="Filtra i risultati prima di classificare" aria-label="Cerca nella selezione temporanea">
@@ -311,10 +279,76 @@
 <div class="finder-intake-actions"><button id="finder-save" data-finder-action type="button">Salva le classificazioni e gli aggiornamenti confermati</button></div>
 <button id="finder-cancel" type="button">Scarta anteprima</button>
 </section>
+<section class="explorer" aria-label="Esploratore unico dei miei brani" id="finder-explorer">
+<div class="explorer-tools"><div><h2>3 · Esplora i miei brani</h2><p class="explorer-desc">Cerca insieme i soli file già approvati come tuoi tra Mac, PC, smartphone, Drive e archivio Dropbox.</p></div><a href="#finder-sources-details" data-finder-jump="finder-sources-details">Aggiungi da una sorgente</a></div>
+<div class="explorer-filters">
+<input id="explorer-query" type="search" aria-label="Cerca su tutte le sorgenti" placeholder="Titolo, nome file, cartella, account…">
+<select id="explorer-source" aria-label="Fonte"><option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option><option value="drive">Google Drive</option><option value="dropbox">Dropbox</option><option value="onedrive">OneDrive</option></select>
+<select id="explorer-account" aria-label="Archivio/account"><option value="">Tutti gli archivi</option></select>
+<select id="explorer-linked" aria-label="Collegamenti"><option value="all">Tutti i miei file</option><option value="linked">Collegati</option><option value="unlinked">Da collegare</option></select>
+<select id="explorer-sort" aria-label="Ordina"><option value="name">Nome A–Z</option><option value="recent">Modifica recente</option><option value="size">Dimensione</option></select>
+</div>
+<p class="explorer-status" role="status" id="explorer-status">Lettura del catalogo personale…</p>
+<div class="explorer-player" id="explorer-player-wrap" hidden>
+<div class="explorer-tools"><strong id="explorer-player-title">Anteprima audio locale</strong><button type="button" class="explorer-small-btn" id="explorer-stop">Chiudi anteprima</button></div>
+<audio id="explorer-player" controls preload="none"></audio>
+<p class="explorer-desc">Riproduzione temporanea dal file scelto su questo dispositivo, senza caricamento sul server. La pagina può perdere accesso quando viene chiusa.</p>
+</div>
+<div class="explorer-items" id="explorer-items"></div>
+<button id="explorer-more" type="button" class="explorer-small-btn" hidden>Mostra altri file</button>
+<p class="explorer-desc">Le reference e i file «da verificare» non appaiono qui. Per ascoltare un audio locale, selezionalo nuovamente dalle sorgenti: la pagina non può aprire autonomamente i file del tuo disco. I link cloud possono richiedere accesso al provider.</p>
+</section>
+<h2 class="finder-step-title finder-tools-title" id="finder-tools">Strumenti avanzati</h2>
+<p class="finder-step-help">Non servono per il primo uso: controlli, scansioni combinate, proposte di collegamento ai progetti e gruppi di versioni.
+ <a href="#finder-audit-details" data-finder-jump="finder-audit-details">Controllo archivio</a> ·
+ <a href="#finder-version-groups-details" data-finder-jump="finder-version-groups-details">Versioni</a></p>
+<details id="finder-audit-details" class="kyv-v260-disclosure finder-workflow-details">
+<summary>Controllo dell'archivio audio <small>Completezza, file non collegati e duplicati · sola lettura</small></summary>
+<section id="finder-audit" class="audit-center" aria-label="Controllo archivio audio">
+<div class="explorer-tools">
+ <div><h2>Controllo archivio audio</h2>
+ <p class="explorer-desc">Riepilogo <strong>in sola lettura</strong> dei tuoi audio già approvati, dei progetti e della scansione corrente. Non esegue ricerche cloud in automatico e non crea collegamenti o progetti.</p></div>
+ <a href="guida.html#guida-audiofinder">Come leggere i risultati</a>
+</div>
+<p id="audit-coverage" class="audit-coverage" role="status">In attesa della lettura autenticata…</p>
+<div id="audit-kpis" class="audit-kpis" aria-label="Indicatori dell'archivio audio"></div>
+<div class="explorer-filters audit-filters">
+ <input type="search" id="audit-query" aria-label="Cerca nel controllo archivio" placeholder="Cerca titolo, artista, file, account, cartella…">
+ <select id="audit-type" aria-label="Tipo verifica">
+  <option value="all">Tutte le verifiche</option><option value="pending">Da classificare · scansione corrente</option>
+  <option value="unlinked">Miei audio senza progetto</option><option value="duplicates">SHA-256 identici</option>
+  <option value="projects">Progetti senza audio personale nel catalogo</option>
+ </select>
+ <select id="audit-source" aria-label="Fonte nel controllo archivio">
+  <option value="">Tutte le sorgenti</option><option value="local">PC e smartphone</option>
+  <option value="drive">Google Drive</option><option value="dropbox">Dropbox</option>
+ <option value="onedrive">OneDrive</option></select>
+</div>
+<p class="finder-note">Le statistiche sono globali e si riferiscono ai dati caricati, non a tutti i tuoi dispositivi o cloud. I filtri agiscono sull'elenco; scegli «Tutte le sorgenti» per vedere i progetti senza audio nel catalogo. Le copie SHA-256 possono comprendere più fonti. Nessuna voce è automaticamente un problema.</p>
+<p id="audit-status" class="explorer-status" role="status"></p>
+<div id="audit-items" class="audit-items"></div>
+<button type="button" id="audit-more" hidden>Mostra altre verifiche</button>
+</section>
+</details>
+<details class="kyv-v260-disclosure" id="finder-batch-details">
+<summary>Scansione combinata di Drive e Dropbox <small>Funzione avanzata · avvio solo manuale</small></summary>
+<section class="batch-scan" aria-label="Scansione guidata sorgenti collegate">
+<h2>Analizza sorgenti cloud insieme</h2>
+<p class="explorer-desc">Con un solo comando esamina i Drive già configurati e l'archivio Dropbox KYV già registrato. Le due fonti sono indipendenti: se una non risponde, vedi un avviso e puoi revisionare i file trovati nell'altra. Non apre da solo il tuo telefono o il tuo computer.</p>
+<div class="batch-scan-options">
+<label><input type="checkbox" id="batch-drive" checked> Google Drive configurati</label>
+<label><input type="checkbox" id="batch-dropbox" checked> Archivio Dropbox registrato</label>
+</div>
+<button id="batch-scan" type="button" data-finder-action>Analizza sorgenti selezionate</button>
+<p id="batch-status" class="batch-status" role="status">Nessuna scansione eseguita. Avvio soltanto manuale.</p>
+<p id="batch-warnings" class="batch-warning" role="status"></p>
+<p class="explorer-desc">Dropbox Chooser permette di aggiungere altri file, ma non esplora tutto il tuo account. Scansioni parziali non implicano file cancellati. I risultati vengono inviati soltanto alla coda di verifica: nessun salvataggio o progetto automatico.</p>
+</section>
+</details>
 <details id="finder-review-details" class="kyv-v260-disclosure finder-workflow-details">
 <summary>Proposte di collegamento da revisionare <small>Opzionale · richiede conferma manuale</small></summary>
 <section class="finder-card" style="margin:12px" aria-label="Coda di revisione audio">
-<h2>Coda proposte · v2.46</h2>
+<h2>Coda proposte</h2>
 <p>Trova i possibili brani nei file già indicizzati. <strong>Nessuna associazione viene creata automaticamente.</strong> I titoli ambigui richiedono una scelta esplicita.</p>
 <button id="review-generate" type="button" data-finder-action>Genera proposte da revisionare</button>
 <section id="review-panel" hidden><p id="review-status" role="status"></p><div id="review-list"></div>
@@ -326,7 +360,7 @@
 <details id="finder-version-groups-details" class="kyv-v260-disclosure finder-workflow-details">
 <summary>Brani e versioni raggruppati <small>Demo, mix e master suggeriti per nome · nessun link automatico</small></summary>
 <section class="finder-card" id="finder-version-groups" aria-label="Gruppi di versioni proposte">
-<h2>Brani e versioni · v2.56</h2>
+<h2>Brani e versioni</h2>
 <p>I file che hai approvato come tuoi vengono raggruppati per nomi simili, per vedere demo, mix, master e altre versioni insieme. <strong>È solo una proposta, non una conferma che appartengano allo stesso brano.</strong> I file senza artista dichiarato restano separati da quelli attribuiti a un artista; cambiare filtro nasconde e deseleziona il gruppo precedente. Se scegli una sorgente, il dettaglio mostra e permette di selezionare <strong>solo i file di quella sorgente</strong>; scegli «Tutte le sorgenti» per rivedere e collegare versioni di archivi diversi. Cambiando sorgente, le selezioni precedenti e il progetto scelto vengono azzerati. La conferma finale mostra il progetto e i nomi dei file. Non vengono creati nuovi progetti o collegamenti automaticamente.</p>
 <div class="finder-group-controls">
 <input type="search" id="finder-group-query" placeholder="Cerca brano o versione in tutte le sorgenti" aria-label="Cerca gruppi audio">
