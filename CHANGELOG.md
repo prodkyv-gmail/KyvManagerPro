@@ -7,6 +7,10 @@
 
 # Changelog
 
+### Dopo v2.82 · 2026-11-08 (senza cambio di versione)
+- Supabase: nuovo cron giornaliero Vercel (`/api/keepalive`, ogni giorno alle 05:17 UTC) che legge una riga da `PROGETTI` per evitare la pausa del progetto gratuito dopo 7 giorni di inattività. Non restituisce dati e non scrive nulla. Se la variabile `CRON_SECRET` è impostata su Vercel, la funzione la richiede. Controllo `check:supabase-keepalive`.
+- Nessuna modifica a database, tabelle, regole RLS o formule economiche.
+
 ### Dopo v2.82 · 2026-11-06 (senza cambio di versione)
 - Interfaccia: testi piccoli più leggibili (9/10/11 px portati a 11/11,5/12 px) e grigio secondario più chiaro in `kyv-theme.css`; stato "nessuna fattura" meno invadente nella tabella uscite.
 - Oggi: la riga di priorità dei progetti mostra la fase e il follow-up fissato (o "Nessun follow-up fissato") invece di un testo generico.
