@@ -7,6 +7,10 @@
 
 # Changelog
 
+### Dopo v2.82 · 2026-11-09 · Studio Editor: menu fattura nella colonna giusta
+- Studio Editor › Progetti: il menu «fattura collegata» (IDFT) veniva disegnato nella colonna accanto (Strumenti_Suonati_Kyv) quando alcune colonne erano nascoste («Colonne 33/40»), perché la posizione era calcolata su tutte le colonne dei dati e non su quelle mostrate. Ora la posizione si legge dall'intestazione; se la colonna IDFT è nascosta non compare nessun menu altrove.
+- Nessun dato era stato alterato (verificato sul database: nessun valore di fattura scritto in Strumenti_Suonati_Kyv); era solo la visualizzazione.
+
 ### Dopo v2.82 · 2026-11-09 · Scheda progetto snella
 - Scheda progetto: nuovo modulo `kyv-scheda-lean.js` che riordina i blocchi già esistenti: intestazione del brano → prossima azione e riepilogo → fattura/pagamento → pulsanti «Apri» → schede di dettaglio. Sul progetto di prova la pagina scende da circa 5160 a circa 2560 pixel.
 - «Note e audio», «Versioni e uscita» (versioni, invii, release desk) e «Storia del progetto» si aprono in un popup (Esc o «Chiudi» per tornare, il focus torna al pulsante). Nessun contenuto eliminato: i blocchi restano nella pagina, nascosti finché non li apri.

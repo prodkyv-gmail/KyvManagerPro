@@ -91,6 +91,17 @@ async function loadInvoices(force=false){
   return state.invoicesPromise;
 }
 
+/* Colonne davvero mostrate: la tabella può nasconderne alcune («Colonne 33/40»), quindi la posizione
+   nella riga di dati NON coincide con la posizione della cella. Si legge l'intestazione, non l'indice dei dati. */
+function shownKeys(dataArray){
+  const head=document.getElementById('editor-thead');
+  const fromHead=head?Array.from(head.querySelectorAll('th[data-sort]')).map(th=>th.dataset.sort):[];
+  return fromHead.length?fromHead:Object.keys((dataArray&&dataArray[0])||{});
+}
+function relationColumnsFor(keys){
+  return keys.map((key,index)=>({key,index,spec:relationSpec(key)})).filter(entry=>entry.spec);
+}
+
 function relationSpec(key){
   if(key==='ID_PROGETTO'||key==='Progetto_Collegato')return {
     kind:'project',
@@ -182,8 +193,7 @@ function fillSelect(select,spec,items,currentValue){
 
 async function decorateInlineRelations(dataArray,table,token){
   if(!Array.isArray(dataArray)||!dataArray.length)return;
-  const keys=Object.keys(dataArray[0]||{});
-  const relationColumns=keys.map((key,index)=>({key,index,spec:relationSpec(key)})).filter(entry=>entry.spec);
+  const relationColumns=relationColumnsFor(shownKeys(dataArray));
   if(!relationColumns.length)return;
 
   const uniqueLoads=[...new Set(relationColumns.map(entry=>entry.spec.kind))];
@@ -206,6 +216,8 @@ async function decorateInlineRelations(dataArray,table,token){
     relationColumns.forEach(({key,index,spec})=>{
       const cell=tr.children[index];
       if(!cell)return;
+      // Rete di sicurezza: una cella modificabile di un'altra colonna non va mai sostituita.
+      if(cell.dataset&&cell.dataset.col&&cell.dataset.col!==key)return;
       const currentValue=row[key];
       const items=spec.kind==='project'?(state.projects||[]):(state.invoices||[]);
       cell.removeAttribute('contenteditable');
@@ -317,6 +329,8 @@ function wrapFunctions(){
   state.wrapped=true;
   return true;
 }
+
+window.KYV_EDITOR_RELATIONS=Object.freeze({relationColumnsFor});
 
 function boot(){
   ensureStyle();
