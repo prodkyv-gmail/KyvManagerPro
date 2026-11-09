@@ -65,7 +65,7 @@ const H=v=>String(v??'');
 const KYV={isPaid:v=>String(v).toUpperCase()==='SI'};
 const fmtEuro={format:x=>'EUR '+Number(x).toFixed(2)};
 const sandbox={window,document:{getElementById:el},correlazioneFattureGlobal:rows,
- correlazioneProjMapGlobal:{},fmtEuro,H,KYV,parseKyvNumber:Number,Date};
+ correlazioneProjMapGlobal:{},correlazioneIdftMapGlobal:{},fmtEuro,H,KYV,parseKyvNumber:Number,Date};
 vm.runInNewContext('window.applyCorrelazioneFilters = function(){'+functionMatch[1]+'\n};',sandbox);
 window.applyCorrelazioneFilters();
 assert.equal(el('tot-pagate').innerText,'EUR 140.00','Fully received invoices only');
@@ -78,6 +78,12 @@ assert.doesNotMatch(el('tbody-ft-pag').innerHTML,/data-kyv-edit-id="2"/);
 assert.match(el('tbody-ft-nopag').innerHTML,/data-kyv-edit-id="2"/);
 assert.match(el('tbody-ft-nopag').innerHTML,/Incassata parzialmente/);
 assert.match(el('tbody-ft-pag').innerHTML,/data bancaria non documentata/);
+// v2.85: fattura citata (IDFT) da più progetti e senza quote → «Condivisa da N progetti» con pulsante Ripartisci.
+rows[1].ID_PROGETTO=7;sandbox.correlazioneProjMapGlobal={7:'Progetto Alfa'};sandbox.correlazioneIdftMapGlobal={'2':['Progetto Beta']};
+window.applyCorrelazioneFilters();
+assert.match(el('tbody-ft-nopag').innerHTML,/Condivisa da 2 progetti/);
+assert.match(el('tbody-ft-nopag').innerHTML,/data-split-invoice="2"/);
+rows[1].ID_PROGETTO=null;sandbox.correlazioneProjMapGlobal={};sandbox.correlazioneIdftMapGlobal={};
 el('correlazione-search').value='Cliente Beta';
 window.applyCorrelazioneFilters();
 assert.equal(el('tot-pagate').innerText,'EUR 0.00');

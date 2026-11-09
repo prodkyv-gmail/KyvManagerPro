@@ -248,7 +248,7 @@
         function parseKyvNumber(val) { return (window.KYV_HELPERS ? KYV_HELPERS.parseKyvNumber(val) : KYV.parseNumber(val)); }
         const H = (value) => KYV.safeHtml(value ?? '');
 
-        let correlazioneFattureGlobal = [], correlazioneProjMapGlobal = {};
+        let correlazioneFattureGlobal = [], correlazioneProjMapGlobal = {}, correlazioneIdftMapGlobal = {};
         function renderManualInvoiceHelp(){
             const projectId = new URLSearchParams(location.search).get('collegaProgetto');
             const help = document.getElementById('kyv-manual-invoice-link');
@@ -266,13 +266,13 @@
             const errorNode = document.getElementById('kyv-invoice-load-error');
             errorNode?.classList.add('hidden');
             try {
-                const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO, DataScadenzaPagamento, XML_SHA256').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO')]);
+                const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO, DataScadenzaPagamento, XML_SHA256').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO, IDFT')]);
                 if(fatRes.error || projRes.error) throw (fatRes.error || projRes.error);
-                correlazioneProjMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; });
+                correlazioneProjMapGlobal = {}; correlazioneIdftMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; const ft = String(p.IDFT ?? '').trim(); if(ft) (correlazioneIdftMapGlobal[ft] = correlazioneIdftMapGlobal[ft] || []).push(p.TITOLO || ('Progetto #' + p.ID)); });
                 correlazioneFattureGlobal = fatRes.data || []; await window.KYV_INVOICE_SPLIT_V247?.refresh?.(); window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
             } catch(e) {
                 correlazioneFattureGlobal = [];
-                correlazioneProjMapGlobal = {};
+                correlazioneProjMapGlobal = {}; correlazioneIdftMapGlobal = {};
                 document.getElementById('kyv-invoice-filter-status').textContent = 'Registro fatture non disponibile · Ricarica per riprovare. Ricerca mantenuta; non interpretare i totali come zero.';
                 console.error('[KYV Fatture] Caricamento non riuscito', e);
                 if(errorNode){
@@ -292,7 +292,12 @@
             let hNopag = [], hPag = [], sumDaIncassare = 0, sumPagate = 0, sumIncassatoTutti = 0, sumAccontiAperti = 0;
             correlazioneFattureGlobal.forEach(f => {
                 const multi = window.KYV_INVOICE_SPLIT_V247?.names(f.ID_FT);
-                let linkedProj = multi?.length ? multi.map(x=>x.title).join(' · ') : (f.ID_PROGETTO ? correlazioneProjMapGlobal[f.ID_PROGETTO] : null);
+                // Collegamenti storici (PROGETTI.IDFT): finché non esistono quote, la fattura è «condivisa» e va ripartita.
+                const idftTitles = multi?.length ? [] : (correlazioneIdftMapGlobal[String(f.ID_FT)] || []);
+                const ownerTitle = f.ID_PROGETTO ? correlazioneProjMapGlobal[f.ID_PROGETTO] : null;
+                const sharedTitles = [...new Set([ownerTitle, ...idftTitles].filter(Boolean))];
+                const needsSplit = !multi?.length && sharedTitles.length > 1;
+                let linkedProj = multi?.length ? multi.map(x=>x.title).join(' · ') : (sharedTitles.length ? sharedTitles.join(' · ') : null);
                 let combinedStr = `${f.Numero} ${f.Numero_Originale||''} ${f.Denominazione} ${f.Descrizione} ${linkedProj}`.toLowerCase();
                 if (searchTxt && !combinedStr.includes(searchTxt)) return;
                 const stat = window.KYV_COLLECTIONS_V236?.paymentState(f);
@@ -306,7 +311,7 @@
                     : (isPagata && (!stat || stat.legacyPaid)
                         ? '<span class="block text-xs text-emerald-200 mt-1">Incassata (storico): data bancaria non documentata</span>'
                         : (stat?.overdue ? '<span class="block text-xs text-red-300 mt-1">Scaduta '+H(stat.date)+'</span>' : ''));
-                let projBadge = linkedProj ? `<span class="mt-2 inline-flex px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-200 border border-indigo-500/20"><i data-lucide="folder" class="w-3 h-3 mr-1"></i>${H(linkedProj)}</span>` : '<span class="mt-2 text-[10px] text-amber-200">Progetto non collegato</span>';
+                let projBadge = linkedProj ? `<span class="mt-2 inline-flex px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-200 border border-indigo-500/20"><i data-lucide="folder" class="w-3 h-3 mr-1"></i>${H(linkedProj)}</span>` + (needsSplit ? `<span class="mt-2 block text-[10px] text-amber-200">Condivisa da ${sharedTitles.length} progetti · quote da ripartire <button type="button" class="underline text-indigo-200 font-bold ml-1" data-split-invoice="${H(f.ID_FT)}">Ripartisci</button></span>` : '') : '<span class="mt-2 text-[10px] text-amber-200">Progetto non collegato</span>';
                 let tr = `<tr class="kyv-editable-row hover:bg-kyv-border/30 transition-colors border-b border-kyv-border/30 cursor-pointer group" data-kyv-edit-table="FATTURE" data-kyv-edit-id="${H(f.ID_FT)}" title="Apri e modifica la fattura">
                     <td data-label="Numero / Data" class="px-6 py-3 font-medium group-hover:text-indigo-300 transition-colors"><i data-lucide="pencil" class="w-3 h-3 inline mr-2 opacity-60"></i>N° ${H(f.Numero_Originale || f.Numero || '-')}<br><span class="text-xs opacity-60 ml-5">${H(d)}</span></td>
                     <td data-label="Denominazione" class="px-6 py-3 truncate max-w-[200px]">${H(f.Denominazione || '-')}</td>
