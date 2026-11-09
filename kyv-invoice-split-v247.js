@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id),t=v=>String(v??'').trim();
 const H=v=>t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const parse=v=>{const n=root.KYV_INVOICE_LINE?.parse(v);if(n!==null&&n!==undefined)return n;const raw=t(v);if(!raw)return null;const value=Number(raw.replace(',','.'));return Number.isFinite(value)?value:null;};
 const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n||0);
-let client=null,onSaved=null,projects=[],invoices=[],allocations=[],invoice=null,rows=[],prefill='',draft={},busy=false,token=0;
+let client=null,onSaved=null,projects=[],invoices=[],allocations=[],invoice=null,rows=[],prefill='',draft={},busy=false,token=0,residualOk=false;
 const row=()=>({projectId:'',amount:'',fee:'',description:''});
 const money=v=>Math.round((parse(v)||0)*100)/100;
 const amount=f=>money(f?.PrezzoUnitario);
@@ -42,8 +42,9 @@ function panel(){
   if(act==='fee'){const p=projects.find(x=>t(x.ID)===t(rows[i]?.projectId));const fee=parse(p?.FEE);if(fee===null||fee<0)return error('Fee del progetto non disponibile');rows[i].fee=String(fee);rows[i].amount=String(fee);render();}
   if(act==='save')save();
  });
- el.addEventListener('input',ev=>{const key=ev.target.dataset.field,i=Number(ev.target.dataset.i);if(key&&rows[i])rows[i][key]=ev.target.value;if(ev.target.id?.startsWith('split-')&&ev.target.tagName==='INPUT')draft[ev.target.id.slice(6)]=ev.target.value;totals();});
+ el.addEventListener('input',ev=>{residualOk=false;const key=ev.target.dataset.field,i=Number(ev.target.dataset.i);if(key&&rows[i])rows[i][key]=ev.target.value;if(ev.target.id?.startsWith('split-')&&ev.target.tagName==='INPUT')draft[ev.target.id.slice(6)]=ev.target.value;totals();});
  el.addEventListener('change',ev=>{
+  residualOk=false;
   if(ev.target.id==='split-existing'){open(ev.target.value||null,prefill);return;}
   const key=ev.target.dataset.field,i=Number(ev.target.dataset.i);if(key&&rows[i])rows[i][key]=ev.target.value;if(ev.target.id?.startsWith('split-')&&ev.target.tagName==='INPUT')draft[ev.target.id.slice(6)]=ev.target.value;totals();
  });
@@ -62,6 +63,7 @@ function projectOptions(selected){
  return '<option value="">Seleziona progetto</option>'+projects.map(p=>'<option value="'+H(p.ID)+'"'+(t(p.ID)===t(selected)?' selected':'')+'>'+H(label(p.ID)+' (#'+p.ID+')')+'</option>').join('');
 }
 function render(){
+ residualOk=false;
  const d=doc(),existing=!!invoice;
  const options=!existing&&prefill?'<label>Oppure scegli fattura già registrata<select id="split-existing"><option value="">Crea nuova fattura</option>'+invoices.map(f=>'<option value="'+H(f.ID_FT)+'">'+H((f.Numero_Originale||f.Numero||f.ID_FT)+' · '+f.Denominazione)+'</option>').join('')+'</select></label>':'';
  const details=existing?'<div class="split-doc"><div><b>Fattura</b><p>'+H(d.numero)+' · '+H(d.data)+'</p></div><div><b>Cliente</b><p>'+H(d.cliente)+'</p></div><div><b>PrezzoUnitario gestionale</b><p>'+H(euro(d.prezzo_unitario))+'</p><small>Totale fiscale: '+H(d.totale_fiscale||'—')+'</small></div></div>':
@@ -83,7 +85,7 @@ function totals(){
 async function refresh(){
  if(!client)throw Error('Sessione non disponibile');
  const [ps,fs,as]=await Promise.all([
- client.from('PROGETTI').select('ID,TITOLO,ARTISTA,FEE').order('ID',{ascending:false}).limit(1500),
+ client.from('PROGETTI').select('ID,TITOLO,ARTISTA,FEE,IDFT').order('ID',{ascending:false}).limit(1500),
  client.from('FATTURE').select('ID_FT,Numero,Numero_Originale,Data,Denominazione,Descrizione,PrezzoUnitario,ImportoTotaleDocumento,ID_PROGETTO').order('ID_FT',{ascending:false}).limit(2500),
  client.from('FATTURE_RIPARTIZIONI').select('id,id_ft,id_progetto,prezzo_unitario,fee_riferimento,descrizione').order('id',{ascending:false}).limit(5000)
  ]);
@@ -99,7 +101,11 @@ async function open(id=null,project=''){
   invoice=id?invoices.find(f=>t(f.ID_FT)===t(id)):null;
   if(id&&!invoice)throw Error('Fattura non trovata o non autorizzata');
   const old=invoice?splits(invoice.ID_FT):[];
+  // Fattura senza quote ma citata dal vecchio campo IDFT da più progetti: si parte da quei progetti (importi da decidere).
+  const cited=invoice&&!old.length?projects.filter(p=>t(p.IDFT)===t(invoice.ID_FT)).map(p=>t(p.ID)):[];
+  const citedIds=[...new Set([t(invoice?.ID_PROGETTO),...cited].filter(Boolean))];
   rows=old.length?old.map(a=>({projectId:t(a.id_progetto),amount:t(a.prezzo_unitario),fee:t(a.fee_riferimento),description:t(a.descrizione)})):
+   citedIds.length>1?citedIds.map(pid=>({...row(),projectId:pid,fee:t(parse(projects.find(p=>t(p.ID)===pid)?.FEE)??'')})):
    [{...row(),projectId:invoice?t(invoice.ID_PROGETTO):prefill,amount:invoice&&invoice.ID_PROGETTO?t(amount(invoice)):''}];
   // When opened from a project and linked to an existing invoice, add its own empty fee line.
   if(invoice&&prefill&&!rows.some(r=>t(r.projectId)===prefill))rows.push({...row(),projectId:prefill});
@@ -113,8 +119,8 @@ async function save(){
   if(limit===null||limit<0)throw Error('PrezzoUnitario non valido');
   if(!invoice&&(!d.numero||!d.cliente||! /^\d{4}-\d{2}-\d{2}$/.test(d.data)))throw Error('Numero, data e cliente obbligatori');
   const plan=validate(rows,limit);
-  if(plan.remaining>0&&!confirm('Restano '+euro(plan.remaining)+' non attribuiti. Salvare comunque?'))return;
-  if(!confirm('Confermi '+plan.items.length+' righe su un solo documento fiscale?'))return;
+  // Nessuna finestra di conferma del browser: l'avviso resta nel popup e basta un secondo clic su «Salva».
+  if(plan.remaining>0&&!residualOk){residualOk=true;error('Restano '+euro(plan.remaining)+' non attribuiti ai progetti. Clicca di nuovo «Salva fattura e ripartizioni» per salvare comunque.');return;}
   busy=true;$('split-error').textContent='';
   const res=await client.rpc('kyv_v247_save_invoice',{p_invoice_id:invoice?.ID_FT??null,p_invoice:invoice?null:d,p_rows:plan.items});
   if(res.error)throw Error(res.error.message);
@@ -122,7 +128,7 @@ async function save(){
   const id=res.data;busy=false;close();
   if(onSaved)await onSaved(id);
   root.dispatchEvent(new Event('kyv:invoice-updated'));
-  alert('Fattura #'+id+' salvata con '+plan.items.length+' righe. Verifica le quote nei progetti.');
+  root.KYV_TOAST?.show?.('Fattura #'+id+' salvata con '+plan.items.length+' quote.','success');
  }catch(e){error('Salvataggio non completato: '+e.message);}
  finally{busy=false;}
 }
@@ -134,8 +140,8 @@ function boot(options){
   const button=e.target.closest('[data-split-invoice]');if(!button)return;
   e.stopPropagation();e.preventDefault();open(button.dataset.splitInvoice);
  },true);
- const project=new URLSearchParams(location.search).get('ripartizione_progetto');
- if(project)open(null,project);
+ const params=new URLSearchParams(location.search),project=params.get('ripartizione_progetto'),invoiceParam=params.get('ripartizione_fattura');
+ if(invoiceParam)open(invoiceParam);else if(project)open(null,project);
 }
 root.KYV_INVOICE_SPLIT_V247=Object.freeze({boot,open,refresh,splits,forProject,names,validate});
 })(typeof window!=='undefined'?window:globalThis);

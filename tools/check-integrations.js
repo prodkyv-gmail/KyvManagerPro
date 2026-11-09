@@ -60,8 +60,8 @@ assert(audioProjects.includes('insertProjectSafely') && audioProjects.includes('
 assert(config.includes("invoices.src='kyv-project-invoices.js'"), 'Le fatture progetto devono essere caricate nelle viste producer collegate');
 assert(projectInvoices.includes("from('FATTURE').select") && projectInvoices.includes(".eq('ID_PROGETTO',projectId)"), 'Le fatture progetto devono usare ID_PROGETTO come collegamento principale');
 assert(projectInvoices.includes("select('ID,IDFT')"), 'Il fallback legacy deve usare soltanto IDFT → FATTURE.ID_FT');
-assert(projectInvoices.includes('if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect]);'), 'Le ripartizioni devono prevalere sulle vecchie relazioni dirette');
-assert(projectInvoices.includes('if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct]);'), 'Le ripartizioni devono avere precedenza nella lista progetti');
+assert(projectInvoices.includes('if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect,...idftShared]);'), 'Le ripartizioni devono prevalere sulle vecchie relazioni dirette');
+assert(projectInvoices.includes('if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct,...idftShared]);'), 'Le ripartizioni devono avere precedenza nella lista progetti');
 assert(projectSheetPage.includes('const fatture=fattureByProject.length?fattureByProject:'), 'La Scheda non deve unire relazioni ID in conflitto');
 assert(!projectInvoices.includes(".eq('Numero',project.FT)"), 'Il numero fattura FT non deve mai essere usato per collegare un progetto');
 assert(projectInvoices.includes("tab=amministrazione") && projectInvoices.includes("newInvoice=1"), 'Le viste collegate devono aprire direttamente Amministrazione e la creazione fattura contestuale');

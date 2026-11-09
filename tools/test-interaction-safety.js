@@ -45,8 +45,8 @@ assert.match(invoices, /return null;/, 'Un errore di lettura fatture deve essere
 assert.match(invoices, /Fatture non disponibili/, 'L’interfaccia deve mostrare esplicitamente gli errori di lettura fatture');
 assert.match(invoices, /Collegamento al progetto non impostato/, 'La creazione fattura deve fallire chiusa se ID_PROGETTO non viene precompilato');
 assert.match(invoices, /kyv:invoice-updated/, 'Il salvataggio fattura deve notificare gli altri moduli senza chiamate circolari');
-assert.ok(invoices.includes('if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect]);'), 'In caso di conflitto prevale FATTURE.ID_PROGETTO e IDFT viene usato solo senza collegamento diretto');
-assert.ok(invoices.includes('if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct]);'), 'La lista Progetti deve usare ID_PROGETTO prima del fallback IDFT e ignorare link ad altri progetti');
+assert.ok(invoices.includes('if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect,...idftShared]);'), 'In caso di conflitto prevale FATTURE.ID_PROGETTO e IDFT viene usato solo senza collegamento diretto');
+assert.ok(invoices.includes('if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct,...idftShared]);'), 'La lista Progetti deve usare ID_PROGETTO prima del fallback IDFT e ignorare link ad altri progetti');
 assert.doesNotMatch(invoices,/legacy\.FT|eq\('Numero',project\.FT\)/,'FT/Numero non deve essere usato come relazione fattura/progetto');
 assert.ok(invoices.includes("projectInput.disabled=true"), 'Durante una nuova fattura contestuale ID_PROGETTO deve restare bloccato');
 assert.ok(invoices.includes('listCoverageLimited'), 'I limiti di lettura non devono diventare falsi “nessuna fattura”');

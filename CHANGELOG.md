@@ -7,6 +7,15 @@
 
 # Changelog
 
+### Dopo v2.82 · 2026-11-09 · Fatture su più progetti (quote e descrizioni)
+- Scheda progetto: le quote di una fattura multi-progetto ora compaiono anche nei progetti che non sono il «titolare» della fattura (prima `matchFatture` le scartava) e mostrano la descrizione scritta per quel progetto, non solo quella generale del documento.
+- Fattura citata dal vecchio campo `IDFT` ma intestata a un altro progetto, senza quote: non è più nascosta. Scheda, riepilogo e lista Progetti la mostrano come «Quota da ripartire», con il link «Ripartisci». Nessun importo viene inventato.
+- Riepilogo progetto: nuovo pulsante «Fattura su più progetti» accanto a «Registra fattura» (apre Fatture con il progetto già selezionato).
+- Fatture: badge «Condivisa da N progetti · quote da ripartire» con pulsante «Ripartisci»; il popup parte dai progetti che citano la fattura (fee come riferimento, importi da decidere) e si apre anche da `?ripartizione_fattura=ID`.
+- Popup di ripartizione: niente più `confirm()`/`alert()` del browser; il residuo non attribuito è un avviso nel popup (secondo clic per salvare comunque) e l'esito è un messaggio.
+- Economia (Fatture): i progetti che citano via `IDFT` una fattura di un altro progetto non risultano più «Fee da fatturare» (la fattura resta contata una sola volta nel fatturato).
+- Nessuna migrazione e nessuna modifica ai dati: le 9 fatture condivise (25 progetti) vanno ripartite a mano dal popup, vedi `docs/v285-fatture-condivise.md`.
+
 ### Dopo v2.82 · 2026-11-09 · Scheda progetto snella
 - Scheda progetto: nuovo modulo `kyv-scheda-lean.js` che riordina i blocchi già esistenti: intestazione del brano → prossima azione e riepilogo → fattura/pagamento → pulsanti «Apri» → schede di dettaglio. Sul progetto di prova la pagina scende da circa 5160 a circa 2560 pixel.
 - «Note e audio», «Versioni e uscita» (versioni, invii, release desk) e «Storia del progetto» si aprono in un popup (Esc o «Chiudi» per tornare, il focus torna al pulsante). Nessun contenuto eliminato: i blocchi restano nella pagina, nascosti finché non li apri.

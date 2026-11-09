@@ -38,6 +38,14 @@ function compute(projects,invoices,costs,year,invoiceSplits=[]){
   if(splitIds.has(text(f.ID_FT)))continue;
   if(text(f.ID_PROGETTO)){const id=text(f.ID_PROGETTO);billed.set(id,(billed.get(id)||0)+invoiceAmount(f));}
  }
+ // Progetti che citano (IDFT) una fattura intestata a un altro progetto e senza quote: risultano fatturati per la loro fee,
+ // altrimenti la stessa fattura verrebbe contata una volta sola e gli altri progetti resterebbero «da fatturare».
+ const invoiceById=new Map(invoices.map(f=>[text(f.ID_FT),f]));
+ for(const p of projects){
+  const f=invoiceById.get(text(p.IDFT));if(!f||splitIds.has(text(f.ID_FT)))continue;
+  const owner=text(f.ID_PROGETTO);if(!owner||owner===text(p.ID))continue;
+  const id=text(p.ID);billed.set(id,(billed.get(id)||0)+feeAmount(p));
+ }
  const candidates=projects.filter(p=>feeAmount(p)>0&&projectYearMatch(p,year))
   .map(p=>({...p,feePending:Math.max(0,Math.round((feeAmount(p)-(billed.get(text(p.ID))||0))*100)/100)}))
   .filter(p=>p.feePending>0);
@@ -107,6 +115,6 @@ async function load(){
  }
 }
 function boot(){ensureStyles();let n=0;const t=setInterval(()=>{n++;if(mount()){clearInterval(t);load();}else if(n>=25)clearInterval(t);},120);setTimeout(()=>clearInterval(t),3500);}
-window.KYV_ECONOMY_V6={refresh:load};
+window.KYV_ECONOMY_V6={refresh:load,compute};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
