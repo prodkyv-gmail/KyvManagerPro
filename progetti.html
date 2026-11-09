@@ -186,6 +186,13 @@
         #new-project-quick{padding:18px 18px 0}
         #new-project-quick h3,.quick-or{margin:0 0 10px;font-size:12px;font-weight:850;color:#bfc8d9}
         .quick-or{padding:14px 18px 0;margin:0}
+        /* v2.84 · Archivia: nasconde senza cancellare. */
+        .filter[hidden]{display:none!important}
+        .quick-archive{margin-top:12px;padding:12px 13px;border:1px dashed #5b6a81;border-radius:12px;display:grid;gap:9px;font-size:12px;color:#cbd5e1;line-height:1.45}
+        .quick-archive .btn{min-height:44px;justify-self:start}
+        .quick-archive .row-btns{display:flex;gap:9px;flex-wrap:wrap}
+        .quick-archive .btn.warn{border-color:#fda4af;color:#fecdd3}
+        @media(max-width:600px){.quick-archive .btn{width:100%;justify-self:stretch}.quick-archive .row-btns .btn{flex:1 1 140px}}
         @media(prefers-reduced-motion:reduce){.row,.sidebar{transition:none}}
     </style>
     <link rel="stylesheet" href="kyv-workspace-ui-v279.css">
@@ -215,7 +222,7 @@
                 <div><div class="eyebrow">Lavoro creativo</div><h1 class="title">Progetti</h1><p class="subtitle">Trova il brano e apri la sua scheda. Nessun caricamento secondario rallenta questa vista.</p></div>
                 <div class="actions"><div class="search"><input id="uscite-search" type="search" autocomplete="off" placeholder="Titolo, artista, note o #ID…" aria-label="Cerca progetti nell'intero archivio" aria-describedby="project-filter-note"></div><button class="btn primary" type="button" onclick="openNewProjectChoices()">+ Nuovo</button><button class="btn icon" id="reload" type="button" title="Ricarica" aria-label="Ricarica">↻</button></div>
             </div>
-            <div class="filters" id="filters" role="group" aria-label="Viste principali dei progetti"><button class="filter active" data-filter="RECENTI" type="button" aria-pressed="true">Recenti</button><button class="filter" data-filter="DA_FARE" type="button" aria-pressed="false">Da fare</button><button class="filter" data-filter="ATTESA" type="button" aria-pressed="false">In attesa</button><button class="filter" data-filter="USCITI" type="button" aria-pressed="false">Usciti</button><button class="filter" data-filter="TUTTI" type="button" aria-pressed="false">Tutti</button></div>
+            <div class="filters" id="filters" role="group" aria-label="Viste principali dei progetti"><button class="filter active" data-filter="RECENTI" type="button" aria-pressed="true">Recenti</button><button class="filter" data-filter="DA_FARE" type="button" aria-pressed="false">Da fare</button><button class="filter" data-filter="ATTESA" type="button" aria-pressed="false">In attesa</button><button class="filter" data-filter="USCITI" type="button" aria-pressed="false">Usciti</button><button class="filter" data-filter="TUTTI" type="button" aria-pressed="false">Tutti</button><button class="filter" data-filter="ARCHIVIATI" type="button" aria-pressed="false" id="project-archived-chip" hidden>Archiviati</button></div>
             <div class="project-filter-status"><span class="count project-visible-count" id="project-count" aria-live="polite">Carico progetti…</span><p id="project-filter-note" class="filter-note" role="status" aria-live="polite">Recenti mostra i 40 progetti più recenti; l'ordinamento scelto cambia solo il loro ordine. Seleziona Tutti per l'intero archivio.</p><button class="btn" id="project-clear-filters" type="button" hidden aria-label="Azzera ricerca, filtri e ordinamento">Azzera filtri</button></div>
             <details id="project-advanced-details" class="proj-disclosure"><summary><span>Filtri e ordinamento</span><small id="project-advanced-count" aria-live="polite">Nessun filtro avanzato</small></summary>
             <div class="advanced-filters" role="group" aria-label="Filtri combinabili progetti">
@@ -254,7 +261,7 @@
     (function(){
         'use strict';
         const M=window.KYV_PROJECT_V250;
-        const state={db:null,rows:[],filter:'RECENTI',loading:false,artist:'',status:'',phase:'',sort:'activity',shown:50,chartField:'STATO',chartShown:8,compact:true,lastFocus:null,newProjectFocus:null};
+        const state={db:null,rows:[],hasArchive:false,filter:'RECENTI',loading:false,artist:'',status:'',phase:'',sort:'activity',shown:50,chartField:'STATO',chartShown:8,compact:true,lastFocus:null,newProjectFocus:null};
 
         const body=document.getElementById('tbody-uscite');
         const count=document.getElementById('project-count');
@@ -263,6 +270,8 @@
         const el=id=>document.getElementById(id);
 
         const text=v=>String(v??'').trim();
+        const isArchived=p=>Boolean(p.Archiviato_Il);
+        const live=()=>state.rows.filter(p=>!isArchived(p));
         const upper=v=>text(v).toUpperCase();
         const H=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         const done=p=>/USCITA|PUBBLICAT|COMPLETAT|FINITA|CHIUS/.test(`${upper(p.STATO)} ${upper(p.SVILUPPO)}`);
@@ -310,11 +319,13 @@
             else select.value='';
         };
         function visibleRows(){
-            return M.filterRows(state.rows,{mode:state.filter,query:search.value,artist:state.artist,status:state.status,phase:state.phase,sort:state.sort});
+            const archivedView=state.filter==='ARCHIVIATI';
+            const pool=archivedView?state.rows.filter(isArchived):live();
+            return M.filterRows(pool,{mode:archivedView?'TUTTI':state.filter,query:search.value,artist:state.artist,status:state.status,phase:state.phase,sort:state.sort});
         }
         function renderOverview(){
-            const dist=M.distribution(state.rows,state.chartField);
-            const coverage=M.coverage(state.rows);
+            const dist=M.distribution(live(),state.chartField);
+            const coverage=M.coverage(live());
             el('project-overview-meta').textContent=coverage.total+' progetti totali · '+coverage.status+' con stato compilato · '+
                 coverage.artist+' con artista · '+coverage.sessionDated+' con data sessione. Nessuna data stimata.';
             const max=Math.max(1,...dist.map(x=>x.count));
@@ -327,9 +338,10 @@
         }
         function render(){
             const rows=visibleRows();
-            count.textContent=rows.length+' '+(rows.length===1?'risultato':'risultati')+' · '+Math.min(rows.length,state.shown)+' visualizzati · '+state.rows.length+' in archivio';
+            count.textContent=rows.length+' '+(rows.length===1?'risultato':'risultati')+' · '+Math.min(rows.length,state.shown)+' visualizzati · '+live().length+' in archivio'+(state.hasArchive&&state.rows.length!==live().length?' · '+(state.rows.length-live().length)+' archiviati':'');
+            el('project-archived-chip').hidden=!state.hasArchive;
             // One always-visible summary and one reset control, even when advanced filters stay folded.
-            const viewLabels={RECENTI:'Recenti (40 per attività)',DA_FARE:'Da fare',ATTESA:'In attesa',USCITI:'Usciti',TUTTI:'Tutti'};
+            const viewLabels={RECENTI:'Recenti (40 per attività)',DA_FARE:'Da fare',ATTESA:'In attesa',USCITI:'Usciti',TUTTI:'Tutti',ARCHIVIATI:'Archiviati'};
             const hasFilters=Boolean(search.value.trim()||state.artist||state.status||state.phase||state.sort!=='activity'||state.filter!=='RECENTI');
             const filterSummary=[];
             if(state.filter!=='RECENTI')filterSummary.push('Vista: '+(viewLabels[state.filter]||state.filter));
@@ -350,7 +362,7 @@
             const toggle=el('project-view-toggle');toggle.textContent=state.compact?'Vista compatta':'Vista dettagliata';
             toggle.setAttribute('aria-pressed',String(state.compact));
             if(!rows.length)body.innerHTML='<tr><td colspan="5" class="empty">'+
-                (state.rows.length?'Nessun progetto corrispondente ai criteri. Cambia ricerca o usa «Azzera filtri».':'Nessun progetto presente nell’archivio.')+'</td></tr>';
+                (state.filter==='ARCHIVIATI'?'Nessun progetto archiviato.':state.rows.length?'Nessun progetto corrispondente ai criteri. Cambia ricerca o usa «Azzera filtri».'+(state.hasArchive&&state.rows.some(isArchived)?' I progetti archiviati si trovano in «Archiviati».':''):'Nessun progetto presente nell’archivio.')+'</td></tr>';
             else body.innerHTML=rows.slice(0,state.shown).map(p=>{
                 const status=text(p.STATO)||(!M.done(p)&&M.nextAction(p)?'In lavorazione':'Stato non indicato');
                 const action=M.nextAction(p)||(M.done(p)?'Progetto chiuso':'Da decidere');
@@ -406,6 +418,7 @@
                '<a href="kyv_audio_finder.html?project='+encodeURIComponent(p.ID)+'">Audio del progetto</a>'+
                '<a href="fatture.html?ripartizione_progetto='+encodeURIComponent(p.ID)+'">Collega fattura</a>'+
                '</nav></div></details>'+
+               archiveBlock(p)+
                '<p class="muted" style="margin-top:12px">Questa vista non cambia nulla: i dati si modificano solo con «Modifica» e «Salva».</p>';
             modal.classList.add('open');modal.hidden=false;
             el('project-quick-close').focus();
@@ -414,6 +427,38 @@
             const modal=el('project-quick-modal');modal.classList.remove('open');modal.hidden=true;
             const focus=state.lastFocus;
             state.lastFocus=null;if(focus?.isConnected)focus.focus();
+        }
+        // v2.84 — Archivia: imposta Archiviato_Il (nessuna cancellazione); Ripristina lo azzera.
+        function archiveBlock(p){
+            if(!state.hasArchive)return '<div class="quick-archive"><span>Archivia non è ancora attivo: serve l’aggiornamento del database (colonna <code>Archiviato_Il</code>).</span></div>';
+            if(isArchived(p))return '<div class="quick-archive" id="quick-archive-box"><span><strong>Archiviato</strong> il '+H(detailDate(p.Archiviato_Il))+'. Non compare nelle liste normali ma non è stato cancellato.</span>'+
+                '<button class="btn" type="button" data-archive-do="restore" data-archive-id="'+H(p.ID)+'">Ripristina</button></div>';
+            return '<div class="quick-archive" id="quick-archive-box"><button class="btn" type="button" data-archive-ask="'+H(p.ID)+'">Archivia progetto</button></div>';
+        }
+        function askArchive(id){
+            const p=state.rows.find(x=>String(x.ID)===String(id)),box=el('quick-archive-box');if(!p||!box)return;
+            box.innerHTML='<span>Archiviare «'+H(text(p.TITOLO)||'Senza titolo')+'»? Non viene cancellato nulla: lo ritrovi in «Archiviati» e puoi ripristinarlo.</span>'+
+              '<div class="row-btns"><button class="btn warn" type="button" data-archive-do="archive" data-archive-id="'+H(p.ID)+'">Sì, archivia</button><button class="btn" type="button" data-archive-cancel="'+H(p.ID)+'">Annulla</button></div>';
+            box.querySelector('[data-archive-do]').focus();
+        }
+        async function setArchived(id,archive,btn){
+            const p=state.rows.find(x=>String(x.ID)===String(id));if(!p)return;
+            btn.disabled=true;
+            try{
+                const {data,error}=await state.db.from('PROGETTI').update({Archiviato_Il:archive?new Date().toISOString():null}).eq('ID',p.ID).select('*').single();
+                if(error)throw error;
+                if(String(data?.ID)!==String(p.ID))throw new Error('Verifica identità progetto fallita.');
+                const i=state.rows.findIndex(x=>String(x.ID)===String(p.ID));if(i>=0)state.rows[i]=data;
+                render();openQuick(p.ID,state.lastFocus);
+                const note=document.createElement('p');note.className='pform-msg ok';note.setAttribute('role','status');
+                note.textContent=archive?'Archiviato. Lo trovi in «Archiviati» e lo puoi ripristinare da qui.':'Ripristinato: è di nuovo nelle liste normali.';
+                el('project-quick-body').prepend(note);
+            }catch(error){
+                console.error('[KYV Progetti archivia]',error);
+                const box=el('quick-archive-box');
+                if(box){const m=document.createElement('p');m.className='pform-msg error';m.setAttribute('role','alert');m.textContent='Operazione non riuscita: '+(error.message||'riprova')+'. Il progetto non è stato modificato.';box.append(m);}
+                btn.disabled=false;
+            }
         }
         // v2.83 — Modifica rapida: solo i campi di uso quotidiano; salva soltanto quelli cambiati.
         const EDIT_FIELDS=[['TITOLO','Titolo','text',true],['ARTISTA','Artista','text'],['STATO','Stato','text','list'],['SVILUPPO','Fase / prossima azione','area','list'],['Prossimo_Followup','Follow-up previsto','date'],['NOTE','Note','area']];
@@ -511,6 +556,7 @@
                 }
                 if(rows.length!==first.count||new Set(rows.map(x=>String(x.ID))).size!==rows.length)throw Error('Risultati incompleti o duplicati, riprova');
                 state.rows=rows;
+                state.hasArchive=rows.length>0&&Object.prototype.hasOwnProperty.call(rows[0],'Archiviato_Il');
                 selectValues('project-artist-filter',rows,'ARTISTA','Tutti gli artisti');
                 selectValues('project-status-filter',rows,'STATO','Tutti gli stati');
                 selectValues('project-phase-filter',rows,'SVILUPPO','Tutte le fasi');
@@ -540,7 +586,7 @@
                 setFilter('project-phase-filter','phase');
                 setFilter('project-sort','sort');
                 el('project-overview-field').addEventListener('change',e=>{state.chartField=e.target.value;state.chartShown=8;renderOverview()});
-                el('project-overview-more').addEventListener('click',()=>{const n=M.distribution(state.rows,state.chartField).length;state.chartShown=state.chartShown>=n?8:n;renderOverview()});
+                el('project-overview-more').addEventListener('click',()=>{const n=M.distribution(live(),state.chartField).length;state.chartShown=state.chartShown>=n?8:n;renderOverview()});
                 el('project-overview-bars').addEventListener('click',event=>{
                     const b=event.target.closest('[data-overview-key]');if(!b)return;
                     const key=b.dataset.overviewKey;
@@ -564,6 +610,9 @@
                 el('project-quick-body').addEventListener('click',event=>{
                     const edit=event.target.closest('[data-quick-edit]');if(edit){openEdit(edit.dataset.quickEdit);return;}
                     const cancel=event.target.closest('[data-edit-cancel]');if(cancel)openQuick(cancel.dataset.editCancel,state.lastFocus);
+                    const ask=event.target.closest('[data-archive-ask]');if(ask){askArchive(ask.dataset.archiveAsk);return;}
+                    const back=event.target.closest('[data-archive-cancel]');if(back){openQuick(back.dataset.archiveCancel,state.lastFocus);return;}
+                    const act=event.target.closest('[data-archive-do]');if(act)setArchived(act.dataset.archiveId,act.dataset.archiveDo==='archive',act);
                 });
                 el('project-quick-body').addEventListener('submit',event=>{
                     const form=event.target.closest('#project-edit-form');if(!form)return;

@@ -37,7 +37,7 @@ const rows=[
 ];
 const state={rows,lastFocus:null};
 const H=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const sandbox={state,document:{activeElement:null},M:{recentDate:()=>true},
+const sandbox={state,archiveBlock:()=>'',document:{activeElement:null},M:{recentDate:()=>true},
  text:v=>String(v??'').trim(),H,el:id=>nodes[id],
  activityLabel:()=>'Ieri',detailDate:x=>x||'Non indicata',encodeURIComponent};
 const open=vm.runInNewContext(markupScript.slice(start,end)+'\nopenQuick',sandbox);

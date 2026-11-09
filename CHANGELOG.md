@@ -7,6 +7,11 @@
 
 # Changelog
 
+### Dopo v2.82 · 2026-11-09 · Progetti: Archivia
+- Progetti: nel popup il nuovo blocco **Archivia progetto** (con conferma) nasconde il progetto dalle liste senza cancellarlo; la vista **Archiviati** lo mostra e **Ripristina** lo riporta fra i normali. I conteggi e il grafico considerano solo i progetti attivi.
+- Database: nuova colonna nullable `PROGETTI."Archiviato_Il"` (migrazione additiva in `docs/v284-progetti-archivio.sql`, da applicare e registrare). Finché la colonna non esiste la pagina funziona come prima e mostra «Archivia non è ancora attivo».
+- Le altre pagine (Oggi, Fatture, Report…) non conoscono ancora l'archivio: un progetto archiviato resta visibile lì finché non verranno adeguate.
+
 ### Dopo v2.82 · 2026-11-09 (senza cambio di versione) · Progetti come gestionale
 - Progetti: dal popup «Riepilogo» il nuovo pulsante **Modifica** apre un modulo con i 6 campi di uso quotidiano (titolo, artista, stato, fase/prossima azione, follow-up, note). Si salvano solo i campi cambiati, con verifica dell'ID; in caso di errore il modulo resta aperto.
 - Progetti: «+ Nuovo» ora parte da un modulo **titolo + artista** (stato IDEA, avviso se esiste già un progetto uguale) e apre subito il popup del nuovo progetto; le tre vie da audio restano sotto.

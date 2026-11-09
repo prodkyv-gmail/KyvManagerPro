@@ -53,7 +53,7 @@ assert.equal(C.artists(projects,10).rows.find(x=>x.artist==='EMMA').count,2);
 const page=read('progetti.html'),home=read('index.html'),ui=read('kyv-home-charts-ui-v250.js'),sw=read('sw.js');
 for(const id of ['project-quick-modal','project-artist-filter','project-status-filter','project-phase-filter','project-sort','project-overview-field','project-overview-bars','project-load-more','project-view-toggle'])assert.ok(page.includes(id),id);
 assert.ok(page.includes("count:'exact'")&&page.includes('.range('),'No hidden page-only search or silent 500 cap');
-assert.ok(page.includes("M.filterRows(state.rows"),'Search all loaded projects');
+assert.ok(page.includes("M.filterRows(pool"),'Search all loaded projects');
 assert.ok(page.includes("renderOverview();"),'Chart independent from list filters');
 assert.ok(page.includes("if(event.key==='Escape'"),'Popup keyboard close');
 assert.doesNotMatch(page,/\.from\(['"]PROGETTI['"]\)\.(?:upsert|delete)\(/,'Projects page never deletes or upserts (v2.83: quick edit/create popups write one project at a time)');

@@ -19,4 +19,13 @@ assert.ok(page.includes('data-quick-edit'),'Pulsante Modifica nel popup');
 assert.ok(!/from\('PROGETTI'\)\.(delete|upsert)\(/.test(page),'Nessuna cancellazione/upsert da Progetti');
 // Accessibilità minima dei campi
 assert.ok(page.includes('font-size:16px')&&page.includes('.pform input'),'Campi 16px: niente zoom su iPhone');
-console.log('OK: Progetti modifica rapida e nuovo progetto veloce (v2.83)');
+// v2.84 — Archivia: solo update di Archiviato_Il, mai cancellazione; migrazione additiva registrata nel repository.
+assert.ok(page.includes("update({Archiviato_Il:archive?new Date().toISOString():null}).eq('ID',p.ID).select('*').single()"),'Archivia = update di una colonna su un solo ID');
+assert.ok(page.includes("Object.prototype.hasOwnProperty.call(rows[0],'Archiviato_Il')"),'La pagina funziona anche prima della migrazione');
+assert.ok(page.includes("Non viene cancellato nulla"),'Conferma esplicita e rassicurante');
+assert.ok(page.includes('data-filter="ARCHIVIATI"')&&page.includes('id="project-archived-chip"'),'Vista Archiviati');
+assert.ok(page.includes("const pool=archivedView?state.rows.filter(isArchived):live();"),'Gli archiviati restano fuori dalle liste normali');
+const sql=fs.readFileSync('docs/v284-progetti-archivio.sql','utf8');
+assert.ok(/add column if not exists "Archiviato_Il" timestamptz null/.test(sql),'Migrazione additiva e nullable');
+assert.ok(!/drop table|delete from|truncate/i.test(sql.replace(/^--.*$/gm,'')),'La migrazione non cancella dati');
+console.log('OK: Progetti modifica rapida e nuovo progetto veloce (v2.83/v2.84 archivia)');

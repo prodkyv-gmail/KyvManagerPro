@@ -53,7 +53,7 @@ assert.ok(page.includes('src="kyv-audio-consent-v248.js"'));
 assert.ok(sql.includes('enable row level security')&&sql.includes('auth.uid()'));
 assert.ok(sql.includes('decision in (\'mio\',\'reference\',\'da_verificare\')'));
 assert.ok(!sql.includes('alter table public."PROGETTI"')&&!sql.includes('drop table'));
-assert.ok(read('progetti.html').includes('M.filterRows(state.rows'),'Progetti v2.50 must search complete loaded archive');
+assert.ok(read('progetti.html').includes('M.filterRows(pool'),'Progetti v2.50 must search complete loaded archive');
 const projectFilterSource=read('kyv-project-list-v250.js');
 assert.ok(projectFilterSource.includes("mode==='RECENTI'&&!q&&!requestedId&&!ra&&!rs&&!rp"),'Recenti limit must never restrict active search, exact ID lookup or additional filters');
 const filterRoot={};

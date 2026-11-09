@@ -52,8 +52,8 @@ assert.ok(safe.includes("el('project-advanced-details').open=true"),
  'Clicking the overview opens changed filters for inspection');
 assert.ok(safe.includes("activeAdvanced+' '"),'Active filters displayed in the header');
 assert.ok(safe.includes("visibleRows()"),'UI continues calling existing filter engine');
-assert.ok(safe.includes("M.distribution(state.rows,state.chartField)"),
- 'Chart retains global archive scope independently from table filters');
+assert.ok(safe.includes("M.distribution(live(),state.chartField)"),
+ 'Chart retains global scope (all active projects, v2.84: archived excluded) independently from table filters');
 for(const label of ['data-label="Progetto"','data-label="Stato"',
  'data-label="Prossima azione"','data-label="Ultima attività"','data-label="Azioni"'])
  assert.ok(safe.includes(label),'Mobile cards must describe data: '+label);

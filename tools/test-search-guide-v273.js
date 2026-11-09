@@ -37,7 +37,7 @@ assert.ok(html.includes("state.filter='RECENTI';state.shown=50;search.value=''")
 assert.ok(html.includes("btn.setAttribute('aria-pressed',String(btn.dataset.filter===state.filter))"),'Main filter button state stays accessible');
 assert.ok(html.includes('aria-describedby="project-filter-note"'),'Search input describes result filters');
 assert.ok(html.includes("count.textContent=rows.length+"),'Filtered result counts preserved');
-assert.ok(html.includes('M.filterRows(state.rows'),'Filter engine remains centralized');
+assert.ok(html.includes('M.filterRows(pool'),'Filter engine remains centralized');
 assert.doesNotMatch(src,/\.(?:insert|update|upsert|delete)\(/,'Filter library may not write data');
 const helpHost={};vm.runInNewContext(help,{window:helpHost});
 const keys=['progetti','scheda','sessioni','audiofinder','fatture','rendiconto','editor','dashboard','integrazioni','analyst'];
