@@ -22,7 +22,7 @@ assert.ok(!page.includes('onclick="location.reload()"'),'Reload must not erase a
 assert.ok(page.includes("state.db.from('PROGETTI').select('*',{count:'exact'})"),'Existing verified read remains');
 assert.ok(page.includes("M.filterRows(state.rows"),'No duplicate filter engine');
 assert.ok(page.includes('data-quick-id')&&page.includes('scheda_progetto.html?id='),'Both distinct project actions remain');
-assert.doesNotMatch(src,/\.from\(['"]PROGETTI['"]\)\.(?:insert|update|upsert|delete)\(/,'No project writes in mobile UI');
+assert.doesNotMatch(src,/\.from\(['"]PROGETTI['"]\)\.(?:upsert|delete)\(/,'No project delete/upsert in mobile UI (v2.83: quick edit/create popups only)');
 assert.ok(guide.includes('id="v275-mobile"')&&guide.includes('Riprova caricamento'),'Guide must include current mobile flow');
 const host={};vm.runInNewContext(help,{window:host});
 assert.ok(host.KYV_HELP.getContent('progetti').content.includes('v2.75 · Progetti sul telefono'),'Contextual guide synchronized');

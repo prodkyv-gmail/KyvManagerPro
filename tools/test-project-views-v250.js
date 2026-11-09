@@ -56,7 +56,7 @@ assert.ok(page.includes("count:'exact'")&&page.includes('.range('),'No hidden pa
 assert.ok(page.includes("M.filterRows(state.rows"),'Search all loaded projects');
 assert.ok(page.includes("renderOverview();"),'Chart independent from list filters');
 assert.ok(page.includes("if(event.key==='Escape'"),'Popup keyboard close');
-assert.doesNotMatch(page,/\.from\(['"]PROGETTI['"]\)\.(?:insert|update|upsert|delete)\(/,'Projects overview must remain read-only');
+assert.doesNotMatch(page,/\.from\(['"]PROGETTI['"]\)\.(?:upsert|delete)\(/,'Projects page never deletes or upserts (v2.83: quick edit/create popups write one project at a time)');
 const script=page.slice(page.lastIndexOf('<script>')+8,page.lastIndexOf('</script>'));
 assert.ok(script.length>5000);new vm.Script(script,{filename:'progetti:inline'});
 for(const t of ['kyv-home-charts-v250.js','kyv-home-charts-ui-v250.js','kyv-invoice-line-amount.js','KYV_HOME_CHARTS_UI_V250.update'])assert.ok(home.includes(t),t);

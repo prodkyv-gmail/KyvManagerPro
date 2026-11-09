@@ -171,6 +171,21 @@
           .actions .btn.icon{width:44px}
           .search input{padding:10px 9px}
         }
+        /* v2.83 · Gestionale: modifica e creazione rapide dentro i popup (nessuna pagina in più). */
+        .pform{display:grid;gap:12px}
+        .pform label{display:grid;gap:5px;font-size:11px;font-weight:850;color:#d5def0}
+        .pform label em{font-style:normal;color:#fda4af}
+        .pform input,.pform textarea{width:100%;min-height:44px;background:#0c1625;border:1px solid #5b6a81;border-radius:11px;color:#f8fafc;padding:10px 12px;font:inherit;font-size:16px}
+        .pform textarea{min-height:84px;resize:vertical}
+        .pform-actions{display:flex;gap:10px;flex-wrap:wrap}
+        .pform-actions .btn{flex:1 1 140px;min-height:44px}
+        .pform-msg{margin:0;font-size:12px;line-height:1.4}
+        .pform-msg.error{color:#fda4af}.pform-msg.ok{color:#a7f3d0}
+        .quick-actions .quick-edit{min-height:44px;border:1px solid #7878f8;background:#6366f1;color:#fff;border-radius:11px;padding:10px 14px;font-weight:850;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+        .quick-actions .quick-edit:hover{background:#7173f5}
+        #new-project-quick{padding:18px 18px 0}
+        #new-project-quick h3,.quick-or{margin:0 0 10px;font-size:12px;font-weight:850;color:#bfc8d9}
+        .quick-or{padding:14px 18px 0;margin:0}
         @media(prefers-reduced-motion:reduce){.row,.sidebar{transition:none}}
     </style>
     <link rel="stylesheet" href="kyv-workspace-ui-v279.css">
@@ -229,11 +244,11 @@
     </main>
 
     <div id="new-project-choice-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="new-project-choice-title" onclick="if(event.target===this)closeNewProjectChoices()">
-        <div class="modal-card"><div class="modal-head"><div><div class="eyebrow">Nuovo</div><h2 id="new-project-choice-title">Come vuoi iniziare?</h2></div><button type="button" class="close" onclick="closeNewProjectChoices()" aria-label="Chiudi">×</button></div><div class="choices"><a class="choice" href="acquisisci_audio.html"><strong>Cattura rapida</strong><span>Titolo o appunto adesso, dettagli dopo.</span></a><a class="choice" href="acquisisci_audio.html?source=drive"><strong>Da Google Drive</strong><span>Usa un singolo file scelto, senza scansioni massive.</span></a><a class="choice" href="acquisisci_audio.html?source=dropbox"><strong>Da Dropbox</strong><span>Collega un singolo link Dropbox al progetto.</span></a></div></div>
+        <div class="modal-card"><div class="modal-head"><div><div class="eyebrow">Nuovo</div><h2 id="new-project-choice-title">Nuovo progetto</h2></div><button type="button" class="close" onclick="closeNewProjectChoices()" aria-label="Chiudi">×</button></div><div id="new-project-quick"><form id="new-project-quick-form" class="pform" novalidate><label><span>Titolo <em>obbligatorio</em></span><input id="new-project-title" name="TITOLO" type="text" autocomplete="off" maxlength="200" required></label><label><span>Artista</span><input id="new-project-artist" name="ARTISTA" type="text" autocomplete="off" maxlength="200"></label><p class="pform-msg" id="new-project-msg" role="status" aria-live="polite"></p><div class="pform-actions"><button class="btn primary" id="new-project-save" type="submit">Crea progetto</button></div></form></div><p class="quick-or">Oppure parti da un audio</p><div class="choices"><a class="choice" href="acquisisci_audio.html"><strong>Cattura rapida</strong><span>Titolo o appunto adesso, dettagli dopo.</span></a><a class="choice" href="acquisisci_audio.html?source=drive"><strong>Da Google Drive</strong><span>Usa un singolo file scelto, senza scansioni massive.</span></a><a class="choice" href="acquisisci_audio.html?source=dropbox"><strong>Da Dropbox</strong><span>Collega un singolo link Dropbox al progetto.</span></a></div></div>
     </div>
 
     <div id="project-quick-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="quick-title" aria-describedby="quick-subtitle" hidden>
-        <div class="modal-card"><div class="modal-head"><div><div class="eyebrow">Vista rapida · sola lettura</div><h2 id="quick-title">Progetto</h2><p class="muted" id="quick-subtitle"></p></div><button id="project-quick-close" class="close" type="button" aria-label="Chiudi popup">×</button></div><div class="quick-body" id="project-quick-body"></div></div>
+        <div class="modal-card"><div class="modal-head"><div><div class="eyebrow">Progetto</div><h2 id="quick-title">Progetto</h2><p class="muted" id="quick-subtitle"></p></div><button id="project-quick-close" class="close" type="button" aria-label="Chiudi popup">×</button></div><div class="quick-body" id="project-quick-body"></div></div>
     </div>
     <script>
     (function(){
@@ -278,7 +293,7 @@
             state.newProjectFocus=document.activeElement;
             const modal=el('new-project-choice-modal');
             modal.classList.add('open');
-            modal.querySelector('.close')?.focus();
+            el('new-project-title')?.focus();
         };
         window.closeNewProjectChoices=function(){
             el('new-project-choice-modal').classList.remove('open');
@@ -373,7 +388,8 @@
                card('Fase / prossima azione',text(p.SVILUPPO)||'Non indicata')+
                card('Ultima attività datata',M.recentDate(p)?activityLabel(p):'Non indicata')+
                '</div>'+
-               '<nav class="quick-actions" aria-label="Azione principale del progetto">'+
+               '<nav class="quick-actions" aria-label="Azioni principali del progetto">'+
+               '<button class="quick-edit" type="button" data-quick-edit="'+H(p.ID)+'">Modifica</button>'+
                '<a class="quick-primary" href="scheda_progetto.html?id='+encodeURIComponent(p.ID)+'">Apri scheda completa</a>'+
                '</nav>'+
                '<details class="quick-more" id="project-quick-info"><summary>Scadenze e note</summary><div class="quick-more-body">'+
@@ -390,7 +406,7 @@
                '<a href="kyv_audio_finder.html?project='+encodeURIComponent(p.ID)+'">Audio del progetto</a>'+
                '<a href="fatture.html?ripartizione_progetto='+encodeURIComponent(p.ID)+'">Collega fattura</a>'+
                '</nav></div></details>'+
-               '<p class="muted" style="margin-top:12px">Vista rapida in sola lettura. Nessun dato modificato.</p>';
+               '<p class="muted" style="margin-top:12px">Questa vista non cambia nulla: i dati si modificano solo con «Modifica» e «Salva».</p>';
             modal.classList.add('open');modal.hidden=false;
             el('project-quick-close').focus();
         }
@@ -398,6 +414,80 @@
             const modal=el('project-quick-modal');modal.classList.remove('open');modal.hidden=true;
             const focus=state.lastFocus;
             state.lastFocus=null;if(focus?.isConnected)focus.focus();
+        }
+        // v2.83 — Modifica rapida: solo i campi di uso quotidiano; salva soltanto quelli cambiati.
+        const EDIT_FIELDS=[['TITOLO','Titolo','text',true],['ARTISTA','Artista','text'],['STATO','Stato','text','list'],['SVILUPPO','Fase / prossima azione','area','list'],['Prossimo_Followup','Follow-up previsto','date'],['NOTE','Note','area']];
+        const fieldValue=(p,key,type)=>{const v=p[key];if(v===null||v===undefined)return '';return type==='date'?String(v).slice(0,10):String(v);};
+        function openEdit(id){
+            const p=state.rows.find(x=>String(x.ID)===String(id));if(!p)return;
+            const list=key=>'<datalist id="edit-list-'+key+'">'+M.distinct(state.rows,key).slice(0,60).map(v=>'<option value="'+H(v)+'"></option>').join('')+'</datalist>';
+            el('quick-title').textContent='Modifica · '+(text(p.TITOLO)||'Senza titolo');
+            el('quick-subtitle').textContent='#'+p.ID+' · cambia solo ciò che serve, poi Salva';
+            el('project-quick-body').innerHTML='<form id="project-edit-form" class="pform" data-edit-id="'+H(p.ID)+'" novalidate>'+
+              EDIT_FIELDS.map(([key,label,type,flag])=>{
+                  const val=H(fieldValue(p,key,type)),common=' name="'+key+'" id="edit-'+key+'"'+(flag==='list'?' list="edit-list-'+key+'"':'');
+                  const field=type==='area'?'<textarea'+common+' rows="3">'+val+'</textarea>':'<input'+common+' type="'+type+'" value="'+val+'"'+(flag===true?' required maxlength="200"':'')+(type==='text'?' autocomplete="off"':'')+'>';
+                  return '<label><span>'+H(label)+(flag===true?' <em>obbligatorio</em>':'')+'</span>'+field+'</label>';
+              }).join('')+list('STATO')+list('SVILUPPO')+
+              '<p class="pform-msg" id="project-edit-msg" role="status" aria-live="polite"></p>'+
+              '<div class="pform-actions"><button class="btn primary" id="project-edit-save" type="submit">Salva</button>'+
+              '<button class="btn" type="button" data-edit-cancel="'+H(p.ID)+'">Annulla</button></div></form>';
+            el('edit-TITOLO').focus();
+        }
+        async function saveEdit(form){
+            const id=form.dataset.editId,p=state.rows.find(x=>String(x.ID)===String(id)),msg=el('project-edit-msg'),btn=el('project-edit-save');
+            if(!p){msg.className='pform-msg error';msg.textContent='Progetto non trovato: ricarica la pagina.';return;}
+            const payload={};
+            for(const [key,,type] of EDIT_FIELDS){
+                const next=(form.elements[key].value||'').trim()||null;
+                const before=fieldValue(p,key,type).trim()||null;
+                if(next!==before)payload[key]=next;
+            }
+            if('TITOLO' in payload&&!payload.TITOLO){msg.className='pform-msg error';msg.textContent='Il titolo non può essere vuoto.';el('edit-TITOLO').focus();return;}
+            if(!Object.keys(payload).length){msg.className='pform-msg';msg.textContent='Nessuna modifica da salvare.';return;}
+            btn.disabled=true;msg.className='pform-msg';msg.textContent='Salvo…';
+            try{
+                const {data,error}=await state.db.from('PROGETTI').update(payload).eq('ID',p.ID).select('*').single();
+                if(error)throw error;
+                if(String(data?.ID)!==String(p.ID))throw new Error('Verifica identità progetto fallita.');
+                const i=state.rows.findIndex(x=>String(x.ID)===String(p.ID));if(i>=0)state.rows[i]=data;
+                selectValues('project-artist-filter',state.rows,'ARTISTA','Tutti gli artisti');
+                selectValues('project-status-filter',state.rows,'STATO','Tutti gli stati');
+                selectValues('project-phase-filter',state.rows,'SVILUPPO','Tutte le fasi');
+                render();openQuick(p.ID,state.lastFocus);
+                const note=document.createElement('p');note.className='pform-msg ok';note.setAttribute('role','status');note.textContent='Salvato: '+Object.keys(payload).length+' campo/i aggiornato/i.';
+                el('project-quick-body').prepend(note);
+            }catch(error){
+                console.error('[KYV Progetti modifica]',error);
+                msg.className='pform-msg error';msg.textContent='Salvataggio non riuscito: '+(error.message||'controlla i dati e riprova')+'. Nulla è stato perso: il modulo resta aperto.';
+                btn.disabled=false;
+            }
+        }
+        // Nuovo progetto rapido: solo titolo (+ artista). Il resto si completa dal popup «Modifica».
+        let duplicateWarned='';
+        async function createQuick(form){
+            const title=(form.elements.TITOLO.value||'').trim(),artist=(form.elements.ARTISTA.value||'').trim(),msg=el('new-project-msg'),btn=el('new-project-save');
+            if(!title){msg.className='pform-msg error';msg.textContent='Scrivi almeno il titolo.';form.elements.TITOLO.focus();return;}
+            const twin=state.rows.find(x=>M.fold(x.TITOLO)===M.fold(title)&&M.fold(x.ARTISTA)===M.fold(artist));
+            const key=M.fold(title)+'|'+M.fold(artist);
+            if(twin&&duplicateWarned!==key){duplicateWarned=key;msg.className='pform-msg error';msg.textContent='Esiste già «'+text(twin.TITOLO)+'» (#'+twin.ID+'). Premi di nuovo «Crea progetto» solo se vuoi un secondo progetto uguale.';return;}
+            btn.disabled=true;msg.className='pform-msg';msg.textContent='Creo il progetto…';
+            try{
+                const {data,error}=await state.db.from('PROGETTI').insert([{TITOLO:title,ARTISTA:artist||null,STATO:'IDEA'}]).select('*').single();
+                if(error)throw error;
+                if(!data?.ID||state.rows.some(x=>String(x.ID)===String(data.ID)))throw new Error('Il database non ha restituito un nuovo ID valido. Ricarica la pagina prima di riprovare.');
+                state.rows.unshift(data);
+                selectValues('project-artist-filter',state.rows,'ARTISTA','Tutti gli artisti');
+                selectValues('project-status-filter',state.rows,'STATO','Tutti gli stati');
+                selectValues('project-phase-filter',state.rows,'SVILUPPO','Tutte le fasi');
+                form.reset();duplicateWarned='';msg.textContent='';
+                render();closeNewProjectChoices();openQuick(data.ID,null);
+                const note=document.createElement('p');note.className='pform-msg ok';note.setAttribute('role','status');note.textContent='Progetto creato. Premi «Modifica» per completare stato, fase e note.';
+                el('project-quick-body').prepend(note);
+            }catch(error){
+                console.error('[KYV Progetti nuovo]',error);
+                msg.className='pform-msg error';msg.textContent='Creazione non riuscita: '+(error.message||'riprova')+'. Non è stato creato nulla.';
+            }finally{btn.disabled=false;}
         }
         async function withTimeout(promise,ms){let timer;const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Tempo di caricamento superato')),ms);});try{return await Promise.race([promise,timeout]);}finally{clearTimeout(timer);}}
 
@@ -471,6 +561,16 @@
                 el('project-load-more').addEventListener('click',()=>{state.shown+=50;render()});
                 body.addEventListener('click',event=>{const retry=event.target.closest('[data-project-retry]');if(retry){loadProjects();return;}const b=event.target.closest('[data-quick-id]');if(b)openQuick(b.dataset.quickId,b)});
                 el('project-quick-close').addEventListener('click',closeQuick);
+                el('project-quick-body').addEventListener('click',event=>{
+                    const edit=event.target.closest('[data-quick-edit]');if(edit){openEdit(edit.dataset.quickEdit);return;}
+                    const cancel=event.target.closest('[data-edit-cancel]');if(cancel)openQuick(cancel.dataset.editCancel,state.lastFocus);
+                });
+                el('project-quick-body').addEventListener('submit',event=>{
+                    const form=event.target.closest('#project-edit-form');if(!form)return;
+                    event.preventDefault();saveEdit(form);
+                });
+                el('new-project-quick-form').addEventListener('submit',event=>{event.preventDefault();createQuick(event.currentTarget);});
+                el('new-project-quick-form').addEventListener('input',()=>{duplicateWarned='';});
                 el('project-quick-modal').addEventListener('click',event=>{if(event.target===el('project-quick-modal'))closeQuick()});
                 document.addEventListener('keydown',event=>{
                     const quick=el('project-quick-modal'),newModal=el('new-project-choice-modal');

@@ -7,6 +7,12 @@
 
 # Changelog
 
+### Dopo v2.82 · 2026-11-09 (senza cambio di versione) · Progetti come gestionale
+- Progetti: dal popup «Riepilogo» il nuovo pulsante **Modifica** apre un modulo con i 6 campi di uso quotidiano (titolo, artista, stato, fase/prossima azione, follow-up, note). Si salvano solo i campi cambiati, con verifica dell'ID; in caso di errore il modulo resta aperto.
+- Progetti: «+ Nuovo» ora parte da un modulo **titolo + artista** (stato IDEA, avviso se esiste già un progetto uguale) e apre subito il popup del nuovo progetto; le tre vie da audio restano sotto.
+- Nessuna cancellazione dalla lista (i progetti sono collegati ad audio, sessioni e fatture): la scelta sull'eliminazione/archiviazione è da decidere.
+- Nessuna modifica a database, tabelle, RLS o formule economiche. Nuovo controllo `check:projects-quick-edit`; i tre test «sola lettura» ora vietano solo cancellazione e upsert.
+
 ### Dopo v2.82 · 2026-11-08 (senza cambio di versione)
 - Supabase: nuovo cron giornaliero Vercel (`/api/keepalive`, ogni giorno alle 05:17 UTC) che legge una riga da `PROGETTI` per evitare la pausa del progetto gratuito dopo 7 giorni di inattività. Non restituisce dati e non scrive nulla. Se la variabile `CRON_SECRET` è impostata su Vercel, la funzione la richiede. Controllo `check:supabase-keepalive`.
 - Nessuna modifica a database, tabelle, regole RLS o formule economiche.

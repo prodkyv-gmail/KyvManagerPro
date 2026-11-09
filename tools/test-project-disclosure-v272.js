@@ -9,7 +9,7 @@ new vm.Script(easy,{filename:'kyv-easy-ux-v9.js'});
 assert.ok(projects.includes('.quick-more>summary'),'Secondary data uses native disclosure');
 assert.ok(projects.includes('id="project-quick-info"'),'Date/note disclosure exists');
 assert.ok(projects.includes('id="project-quick-destinations"'),'Project destinations disclosure exists');
-assert.ok(projects.includes("Vista rapida in sola lettura. Nessun dato modificato."),'No-write notice remains');
+assert.ok(projects.includes("Questa vista non cambia nulla: i dati si modificano solo con «Modifica» e «Salva»."),'No-write notice remains');
 assert.ok(projects.includes("state.lastFocus=trigger||document.activeElement"),'Focus capture preserved');
 assert.ok(projects.includes('if(focus?.isConnected)focus.focus()'),'Focus restore preserved');
 assert.ok(easy.includes("wrap.setAttribute('role','group')"),'Mode switch is grouped');
@@ -18,7 +18,7 @@ assert.ok(easy.includes("btn.setAttribute('aria-pressed',String(selected))"),'Mo
 assert.ok(!easy.includes('kyv-project-details-btn'),'Redundant details button removed');
 assert.ok(easy.includes('kyv-project-wizard-btn'),'Wizard remains in Easy');
 assert.ok(easy.includes("if(mode==='easy')setMode('complete')"),'Technical tab still opens full view');
-assert.doesNotMatch(projects,/\.from\(['"]PROGETTI['"]\)\.(?:insert|update|upsert|delete)\(/,'Safe project page must not write');
+assert.doesNotMatch(projects,/\.from\(['"]PROGETTI['"]\)\.(?:upsert|delete)\(/,'Safe project page never deletes or upserts (v2.83: only quick edit/create popups write; see check:projects-quick-edit)');
 const start=markupScript.indexOf('function openQuick(id,trigger){');
 const end=markupScript.indexOf('function closeQuick(){',start);
 assert.ok(start>=0&&end>start);

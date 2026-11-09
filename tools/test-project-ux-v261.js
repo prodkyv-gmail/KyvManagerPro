@@ -33,8 +33,10 @@ assert.ok(safe.includes("select('*',{count:'exact'})"),'Global paginated full-ar
 assert.ok(safe.includes("if(first.count===null||first.count>limit)throw Error("),
  'Incomplete source count must not be represented as complete');
 assert.ok(safe.includes("if(rows.length!==first.count||new Set(rows.map("));
-assert.ok(!safe.includes("db.from('PROGETTI').insert("));
-assert.ok(!safe.includes("db.from('PROGETTI').delete("));
+// v2.83: la pagina può creare (solo titolo/artista) e modificare (solo campi cambiati) dai popup; non cancella mai.
+assert.equal((safe.match(/from\('PROGETTI'\)\.insert\(/g)||[]).length,1,'Un solo punto di creazione rapida');
+assert.ok(!safe.includes("db.from('PROGETTI').delete("),'Progetti non cancella mai dalla lista');
+assert.ok(!safe.includes("from('PROGETTI').upsert("));
 for(const id of ['uscite-search','project-count','project-artist-filter','project-status-filter',
  'project-phase-filter','project-sort','project-clear-filters','project-view-toggle',
  'project-advanced-details','project-advanced-count','project-chart-details',
@@ -71,7 +73,7 @@ assert.ok(safe.includes('aria-label="Apri riepilogo rapido di '));
 assert.ok(safe.includes('href="scheda_progetto.html?id='));
 assert.ok(safe.includes('href="kyv_audio_finder.html?project='));
 assert.ok(safe.includes('href="fatture.html?ripartizione_progetto='));
-assert.ok(safe.includes("Vista rapida in sola lettura. Nessun dato modificato"));
+assert.ok(safe.includes("Questa vista non cambia nulla: i dati si modificano solo con «Modifica» e «Salva»"));
 assert.ok(!safe.includes('document.write('));
 for(const match of safe.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)){
  const src=match[1].trim();if(src)new vm.Script(src,{filename:'progetti.html:inline'});
