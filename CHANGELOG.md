@@ -7,6 +7,12 @@
 
 # Changelog
 
+### Dopo v2.82 · 2026-11-09 · Scheda progetto snella
+- Scheda progetto: nuovo modulo `kyv-scheda-lean.js` che riordina i blocchi già esistenti: intestazione del brano → prossima azione e riepilogo → fattura/pagamento → pulsanti «Apri» → schede di dettaglio. Sul progetto di prova la pagina scende da circa 5160 a circa 2560 pixel.
+- «Note e audio», «Versioni e uscita» (versioni, invii, release desk) e «Storia del progetto» si aprono in un popup (Esc o «Chiudi» per tornare, il focus torna al pulsante). Nessun contenuto eliminato: i blocchi restano nella pagina, nascosti finché non li apri.
+- Nascosti i quattro riquadri «Lavorazione/Pitch/Uscita/Controllo»: ripetono il riepilogo e le schede. Titolo grande «Scheda progetto» tolto: il titolo del brano è già in evidenza.
+- Il modulo non legge né scrive dati e non cambia database, RLS o formule. Per tornare indietro basta togliere il caricamento in `config.js`. Nuovo controllo `check:scheda-lean`.
+
 ### Dopo v2.82 · 2026-11-09 · Progetti: Archivia
 - Progetti: nel popup il nuovo blocco **Archivia progetto** (con conferma) nasconde il progetto dalle liste senza cancellarlo; la vista **Archiviati** lo mostra e **Ripristina** lo riporta fra i normali. I conteggi e il grafico considerano solo i progetti attivi.
 - Database: nuova colonna nullable `PROGETTI."Archiviato_Il"` (migrazione additiva in `docs/v284-progetti-archivio.sql`, da applicare e registrare). Finché la colonna non esiste la pagina funziona come prima e mostra «Archivia non è ancora attivo».

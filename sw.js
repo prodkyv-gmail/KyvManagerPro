@@ -83,6 +83,7 @@ const APP_SHELL = [
     './kyv-global-search-v8.js',
     './kyv-easy-ux-v9.js',
     './kyv-easy-secondary-v9.js',
+    './kyv-scheda-lean.js',
     './kyv-siae-import-guard.js',
     './kyv-project-edit-safety.js',
     './kyv-pitch-followup.js',

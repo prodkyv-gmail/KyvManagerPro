@@ -283,6 +283,13 @@ window.KYV_CONFIG = KYV_CONFIG;
         easyUxV9.async=false;
         easyUxV9.dataset.kyvEasyUxV9='1';
         document.head.appendChild(easyUxV9);
+
+        // v2.85: carica per ultimo; riordina i blocchi e sposta i più pesanti in popup (nessuna query/scrittura).
+        const schedaLean=document.createElement('script');
+        schedaLean.src='kyv-scheda-lean.js';
+        schedaLean.async=false;
+        schedaLean.dataset.kyvSchedaLean='1';
+        document.head.appendChild(schedaLean);
     }
 
     if(page==='kyv_calendar.html'){
