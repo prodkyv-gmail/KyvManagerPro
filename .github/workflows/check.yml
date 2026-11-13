@@ -1,12 +1,16 @@
 name: KYV checks
 on:
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 permissions:
   contents: read
 jobs:
   check:
+    # Salta le PR in bozza: i controlli partono solo quando la PR e' segnata come pronta.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
