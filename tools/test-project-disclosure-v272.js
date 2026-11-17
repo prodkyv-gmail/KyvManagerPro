@@ -39,14 +39,16 @@ const state={rows,lastFocus:null};
 const H=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sandbox={state,archiveBlock:()=>'',document:{activeElement:null},M:{recentDate:()=>true},
  text:v=>String(v??'').trim(),H,el:id=>nodes[id],
- activityLabel:()=>'Ieri',detailDate:x=>x||'Non indicata',encodeURIComponent};
+ activityLabel:()=>'Ieri',detailDate:x=>x||'Non indicata',encodeURIComponent,
+ editProjectHref:id=>'editor.html?table=PROGETTI&editId='+encodeURIComponent(String(id))};
 const open=vm.runInNewContext(markupScript.slice(start,end)+'\nopenQuick',sandbox);
 const trigger={};open(41,trigger);
 const first=nodes['project-quick-body'].innerHTML;
 assert.equal(nodes['quick-title'].textContent,'Demo & test');
 assert.equal(state.lastFocus,trigger);
 assert.equal(modal.hidden,false);assert.equal(focused,1);
-assert.equal((first.match(/<a /g)||[]).length,4,'All destinations survive, no duplicates');
+assert.equal((first.match(/<a /g)||[]).length,5,'All destinations and the canonical edit link survive, no duplicates');
+assert.ok(first.includes('href="editor.html?table=PROGETTI&editId=41"'),'Modify opens Studio Editor, not quick-edit duplicate');
 assert.ok(first.indexOf('Azione principale del progetto')<first.indexOf('id="project-quick-info"'));
 assert.ok(first.includes('class="quick-primary" href="scheda_progetto.html?id=41"'));
 assert.ok(first.includes('sessioni.html?projectId=41'));
