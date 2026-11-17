@@ -194,12 +194,13 @@
         // La scheda resta consultabile, ma ogni sorgente non verificabile viene segnalata.
         async function safeFilteredTable(table, configure, orderCol=null, limit=500, issues=null){
             try{
-                let q=supabaseClient.from(table).select('*');
+                let q=supabaseClient.from(table).select('*',{count:'exact'});
                 if(configure)q=configure(q);
                 if(orderCol)q=q.order(orderCol,{ascending:false});
-                const {data,error}=await q.limit(limit);
+                const {data,error,count}=await q.limit(limit);
                 if(error)throw error;
-                if(!Array.isArray(data))throw Error('Risposta di lettura non verificabile');
+                if(!Array.isArray(data)||!Number.isSafeInteger(count)||count!==data.length)
+                    throw Error('Risposta di lettura parziale o non verificabile');
                 return data;
             }catch(err){
                 console.warn('[KYV Scheda] Lettura relazione non riuscita:',table,err);
@@ -239,7 +240,7 @@
             const groups=await Promise.all(columns.flatMap(column=>terms.map(term=>safeFilteredTable(table,q=>q.ilike(column,`%${escapeLike(term)}%`),orderCol,150,issues))));
             return mergeRows(groups, '__kyv_missing_key__');
         }
-        async function fetchProjects(){ const { data, error } = await supabaseClient.from('PROGETTI').select('*').order('ID', {ascending:false}).limit(1000); if(error) throw error; return data||[]; }
+        async function fetchProjects(){ const { data, error, count } = await supabaseClient.from('PROGETTI').select('*',{count:'exact'}).order('ID', {ascending:false}).limit(1000); if(error) throw error; if(!Array.isArray(data)||!Number.isSafeInteger(count)||count!==data.length)throw Error('Progetti: elenco incompleto o non verificabile'); return data; }
         async function loadProjectData(p){
             const issues=[];
             const [audioByProject, versions, documenti, fattureByProject, speseByProject, consegne, siae, siaeVert, imaie] = await Promise.all([
@@ -294,7 +295,7 @@
             setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden');
             try{
                 const [projects,versionCount,legacyAudioCount,legacyDeliveryCount,inviiCount,documentiCount] = await Promise.all([fetchProjects(),safeCount('AUDIO_VERSIONI','ID_VERSIONE'),safeCount('DROPBOX_AUDIO_FILES','ID_FILE'),safeCount('CONSEGNE_MASTER','ID_CONSEGNA'),safeCount('INVII_AUDIO','ID_INVIO'),safeCount('DOCUMENTI_PROGETTO','ID_DOCUMENTO')]);
-                state.projects=projects; state.stats={audio:[versionCount,legacyAudioCount,legacyDeliveryCount].every(v=>v===null)?null:Math.max(...[versionCount,legacyAudioCount,legacyDeliveryCount].filter(v=>v!==null)),invii:inviiCount,documenti:documentiCount};
+                state.projects=projects; state.stats={audio:[versionCount,legacyAudioCount,legacyDeliveryCount].some(v=>v===null)?null:Math.max(versionCount,legacyAudioCount,legacyDeliveryCount),invii:inviiCount,documenti:documentiCount};
                 updateStats(); renderProjectResults();
                 const params = new URLSearchParams(location.search); const id = params.get('id'); const requestedTab = params.get('tab'); if(requestedTab) state.activeTab=normalizeProjectTab(requestedTab);
                 const first = id ? state.projects.find(p => String(p.ID) === String(id)) : null;
