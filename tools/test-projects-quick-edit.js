@@ -28,4 +28,20 @@ assert.ok(page.includes("const pool=archivedView?state.rows.filter(isArchived):l
 const sql=fs.readFileSync('docs/v284-progetti-archivio.sql','utf8');
 assert.ok(/add column if not exists "Archiviato_Il" timestamptz null/.test(sql),'Migrazione additiva e nullable');
 assert.ok(!/drop table|delete from|truncate/i.test(sql.replace(/^--.*$/gm,'')),'La migrazione non cancella dati');
+// La modifica completa non apre una seconda scheda: usa l'Editor originale con ID.
+const studioEditor=fs.readFileSync('editor.html','utf8');
+assert.ok(page.includes("const editProjectHref=id=>'editor.html?table=PROGETTI&editId='"),
+ 'Route di modifica completa per record richiesto');
+assert.ok(page.includes('location.href=editProjectHref(row.dataset.id);'),
+ 'Clic sulla riga apre Modifica (PROGETTI) di Studio Editor');
+assert.ok(page.includes("'<a class=\"quick-edit\" href=\"'+H(editProjectHref(p.ID))+'\">Modifica</a>'"),
+ 'Il riepilogo offre la stessa modifica canonica');
+assert.ok(page.includes('data-quick-id'),'Riepilogo rapido resta accessibile su richiesta');
+assert.ok(studioEditor.includes("params.get('table') !== 'PROGETTI'"),
+ 'Solo PROGETTI può usare il link diretto');
+assert.ok(studioEditor.includes(".select('*').eq('ID',rawId).maybeSingle()"),
+ 'Caricamento completo del record singolo per ID');
+assert.ok(studioEditor.includes("window.openDynamicModal(data.ID,'PROGETTI',data)"),
+ 'Studio Editor apre il suo modulo Modifica (PROGETTI) con dati reali');
+
 console.log('OK: Progetti modifica rapida e nuovo progetto veloce (v2.83/v2.84 archivia)');

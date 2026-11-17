@@ -48,19 +48,29 @@ async function fetchInvoices(pid){
     const splitIds=new Set((allShare.data||[]).map(a=>text(a.id_ft)));
     const explicit=(shared.data||[]).map(f=>({...f,PrezzoUnitario:String(shareById.get(text(f.ID_FT))),PrezzoTotale:String(shareById.get(text(f.ID_FT))),XML_SHA256:null,_v247_shared:true}));
     const legacyDirect=relevantDirect.filter(f=>!splitIds.has(text(f.ID_FT)));
-    if(explicit.length||legacyDirect.length)return unique([...explicit,...legacyDirect]);
+    // Leggi sempre anche il riferimento legacy PROGETTI.IDFT: può puntare a un'altra
+    // fattura rispetto a FATTURE.ID_PROGETTO (senza essere un duplicato).
     const project=await client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle();
     if(project.error)throw project.error;
-    if(!project.data||!text(project.data.IDFT))return [];
+    if(!project.data||!text(project.data.IDFT))return unique([...legacyDirect,...explicit]);
     const legacy=await client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5);
     if(legacy.error)throw legacy.error;
-    const own=(legacy.data||[]).filter(row=>!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===text(pid));
-    // Fattura citata da IDFT ma intestata a un altro progetto e senza quote: si mostra, con quota da ripartire.
-    const foreign=(legacy.data||[]).filter(row=>text(row.ID_PROGETTO)&&text(row.ID_PROGETTO)!==text(pid));
-    let quoted=new Set();
-    if(foreign.length){const q=await client().from('FATTURE_RIPARTIZIONI').select('id_ft').in('id_ft',foreign.map(row=>row.ID_FT)).limit(1000);if(q.error)throw q.error;quoted=new Set((q.data||[]).map(a=>text(a.id_ft)));}
-    const idftShared=foreign.filter(row=>!quoted.has(text(row.ID_FT))).map(row=>({...row,PrezzoUnitario:'0',PrezzoTotale:'0',ImportoPagamento:null,XML_SHA256:null,_idft_shared:true}));
-    return unique([...own,...idftShared]);
+    // Le quote esplicite prevalgono anche sul campo legacy: non attribuire
+    // l'intera fattura due volte se esiste una ripartizione su altri progetti.
+    const legacyIds=(legacy.data||[]).map(row=>row.ID_FT);
+    const allLegacyShares=legacyIds.length?await client().from('FATTURE_RIPARTIZIONI')
+      .select('id_ft').in('id_ft',legacyIds).limit(1000):{data:[],error:null};
+    if(allLegacyShares.error)throw allLegacyShares.error;
+    const allocatedIds=new Set([...splitIds,...(allLegacyShares.data||[]).map(row=>text(row.id_ft))]);
+    const own=(legacy.data||[]).filter(row=>
+      (!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===text(pid))&&!allocatedIds.has(text(row.ID_FT)));
+    // Fattura citata da IDFT ma intestata a un altro progetto e senza quote:
+    // mostralo come collegamento, a valore zero finché non viene ripartita.
+    const foreign=(legacy.data||[]).filter(row=>
+      text(row.ID_PROGETTO)&&text(row.ID_PROGETTO)!==text(pid)&&!allocatedIds.has(text(row.ID_FT)));
+    const idftShared=foreign.map(row=>({...row,PrezzoUnitario:'0',PrezzoTotale:'0',ImportoPagamento:null,XML_SHA256:null,_idft_shared:true}));
+    // ID_FT è la chiave univoca: le quote esplicite restano l'ultima fonte.
+    return unique([...own,...legacyDirect,...idftShared,...explicit]);
   }catch(error){console.warn('[KYV Finance Summary] Lettura fatture non riuscita',error);return null;}
 }
 

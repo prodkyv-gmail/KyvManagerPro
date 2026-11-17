@@ -132,12 +132,17 @@ async function loadProjectInvoices(projectId){
   const legacyDirect=direct.filter(x=>!allocatedIds.has(text(x.ID_FT)));
   const legacy=await fetchLegacyInvoices(projectId);
   // Fattura citata da IDFT ma intestata a un altro progetto e senza quote: visibile, con quota da ripartire.
+  const legacyIds=legacy.map(row=>row.ID_FT);
+  const legacyAllocations=legacyIds.length?await client.from('FATTURE_RIPARTIZIONI')
+    .select('id_ft').in('id_ft',legacyIds).limit(1000):{data:[],error:null};
+  if(legacyAllocations.error)throw legacyAllocations.error;
+  const allocatedAll=new Set([...allocatedIds,...(legacyAllocations.data||[]).map(row=>text(row.id_ft))]);
   const foreign=legacy.filter(row=>text(row.ID_PROGETTO)&&text(row.ID_PROGETTO)!==projectId);
-  let quoted=new Set();
-  if(foreign.length){const q=await client.from('FATTURE_RIPARTIZIONI').select('id_ft').in('id_ft',foreign.map(row=>row.ID_FT)).limit(1000);if(q.error)throw q.error;quoted=new Set((q.data||[]).map(x=>text(x.id_ft)));}
-  const idftShared=foreign.filter(row=>!quoted.has(text(row.ID_FT))).map(idftShare);
-  if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect,...idftShared]);
-  return uniqueInvoices([...legacy.filter(row=>!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===projectId),...idftShared]);
+  const idftShared=foreign.filter(row=>!allocatedAll.has(text(row.ID_FT))).map(idftShare);
+  const legacyOwn=legacy.filter(row=>
+    (!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===projectId)&&!allocatedAll.has(text(row.ID_FT)));
+  // Unisci TUTTE le fonti e usa ID_FT come chiave: le quote esplicite prevalgono.
+  return uniqueInvoices([...legacyOwn,...legacyDirect,...idftShared,...mapped]);
  }catch(error){console.warn('[KYV Invoices] Lettura fatture progetto non riuscita',error);return null;}
 }
 function projectShare(invoice,amount,description){
@@ -198,8 +203,9 @@ function listInvoicesForProject(projectId){
   const legacy=legacyProjects.find(row=>text(row.ID)===text(projectId));
   const byInvoiceId=legacy&&text(legacy.IDFT)?listInvoices.filter(row=>text(row.ID_FT)===text(legacy.IDFT)):[];
   const idftShared=byInvoiceId.filter(row=>!allocatedIds.has(text(row.ID_FT))&&text(row.ID_PROGETTO)&&text(row.ID_PROGETTO)!==text(projectId)).map(idftShare);
-  if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct,...idftShared]);
-  return uniqueInvoices([...byInvoiceId.filter(row=>!allocatedIds.has(text(row.ID_FT))&&(!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===text(projectId))),...idftShared]);
+  const legacyOwn=byInvoiceId.filter(row=>!allocatedIds.has(text(row.ID_FT))&&(!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===text(projectId)));
+  // Le colonne di riepilogo seguono la stessa unione della scheda progetto.
+  return uniqueInvoices([...legacyOwn,...direct,...idftShared,...mapped]);
 }
 function renderListCell(projectId){
   if(listInvoiceReadFailed)return '<span class="kyv-invoice-main kyv-invoice-error" title="Lettura fatture non riuscita">⚠ Stato non disponibile</span>';

@@ -18,7 +18,10 @@ function projectInvoices(p,invoices){
  const pid=text(p.ID),idft=text(p.IDFT);
  const direct=invoices.filter(f=>text(f.ID_PROGETTO)===pid);
  const byInvoiceId=idft?invoices.filter(f=>text(f.ID_FT)===idft):[];
- return direct.length?direct:byInvoiceId.filter(f=>!text(f.ID_PROGETTO)||text(f.ID_PROGETTO)===pid);
+ // Both links can exist on a project and refer to different invoices.
+ // A legacy IDFT must never claim an invoice owned by another project.
+ const legacyOwn=byInvoiceId.filter(f=>!text(f.ID_PROGETTO)||text(f.ID_PROGETTO)===pid);
+ return [...new Map([...direct,...legacyOwn].map(f=>[text(f.ID_FT),f])).values()];
 }
 function yearMatch(row,year,field){return year==='all'||yearOf(row?.[field])===Number(year);}
 function projectYearMatch(p,year){if(year==='all')return true;return [p.Data_Pubblicazione,p.Data_Consegna_Master,p.Data_Sessione].some(v=>yearOf(v)===Number(year));}

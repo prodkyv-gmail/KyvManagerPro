@@ -270,6 +270,8 @@
         const el=id=>document.getElementById(id);
 
         const text=v=>String(v??'').trim();
+        // Un solo editor per le modifiche: apri il modulo originale dello Studio Editor.
+        const editProjectHref=id=>'editor.html?table=PROGETTI&editId='+encodeURIComponent(String(id));
         const isArchived=p=>Boolean(p.Archiviato_Il);
         const live=()=>state.rows.filter(p=>!isArchived(p));
         const upper=v=>text(v).toUpperCase();
@@ -373,13 +375,14 @@
                   '<td data-label="Prossima azione"><span class="next">'+H(action)+'</span></td>'+
                   '<td data-label="Ultima attività"><span class="muted cell-secondary">'+H(activityLabel(p))+'</span></td>'+
                   '<td data-label="Azioni"><div class="project-row-actions"><button class="open" data-quick-id="'+H(p.ID)+'" type="button" aria-label="Apri riepilogo rapido di '+H(p.TITOLO||'Senza titolo')+'">Riepilogo</button>'+
+                  '<a class="open" href="'+H(editProjectHref(p.ID))+'">Modifica</a>'+
                   '<a class="open" href="scheda_progetto.html?id='+id+'">Scheda</a></div></td></tr>';
             }).join('');
             const more=el('project-load-more');more.hidden=rows.length<=state.shown;
             more.textContent='Mostra altri '+Math.min(50,rows.length-state.shown)+' ('+Math.min(state.shown,rows.length)+' di '+rows.length+' visualizzati)';
             body.querySelectorAll('[data-id]').forEach(row=>row.addEventListener('click',event=>{
                 if(event.target.closest('a,button'))return;
-                openQuick(row.dataset.id,row);
+                location.href=editProjectHref(row.dataset.id);
             }));
             renderOverview();
         }
@@ -401,7 +404,7 @@
                card('Ultima attività datata',M.recentDate(p)?activityLabel(p):'Non indicata')+
                '</div>'+
                '<nav class="quick-actions" aria-label="Azioni principali del progetto">'+
-               '<button class="quick-edit" type="button" data-quick-edit="'+H(p.ID)+'">Modifica</button>'+
+                '<a class="quick-edit" href="'+H(editProjectHref(p.ID))+'">Modifica</a>'+
                '<a class="quick-primary" href="scheda_progetto.html?id='+encodeURIComponent(p.ID)+'">Apri scheda completa</a>'+
                '</nav>'+
                '<details class="quick-more" id="project-quick-info"><summary>Scadenze e note</summary><div class="quick-more-body">'+

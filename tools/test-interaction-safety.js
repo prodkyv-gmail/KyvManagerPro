@@ -45,8 +45,8 @@ assert.match(invoices, /return null;/, 'Un errore di lettura fatture deve essere
 assert.match(invoices, /Fatture non disponibili/, 'L’interfaccia deve mostrare esplicitamente gli errori di lettura fatture');
 assert.match(invoices, /Collegamento al progetto non impostato/, 'La creazione fattura deve fallire chiusa se ID_PROGETTO non viene precompilato');
 assert.match(invoices, /kyv:invoice-updated/, 'Il salvataggio fattura deve notificare gli altri moduli senza chiamate circolari');
-assert.ok(invoices.includes('if(mapped.length||legacyDirect.length)return uniqueInvoices([...mapped,...legacyDirect,...idftShared]);'), 'In caso di conflitto prevale FATTURE.ID_PROGETTO e IDFT viene usato solo senza collegamento diretto');
-assert.ok(invoices.includes('if(mapped.length||direct.length)return uniqueInvoices([...mapped,...direct,...idftShared]);'), 'La lista Progetti deve usare ID_PROGETTO prima del fallback IDFT e ignorare link ad altri progetti');
+assert.ok(invoices.includes('return uniqueInvoices([...legacyOwn,...legacyDirect,...idftShared,...mapped]);') && invoices.includes('const allocatedAll=new Set('), 'Le fatture collegate tramite entrambe le fonti sono mostrate senza sovrascrivere le quote esplicite');
+assert.ok(invoices.includes('return uniqueInvoices([...legacyOwn,...direct,...idftShared,...mapped]);'), 'La lista Progetti unisce i link validi senza duplicati e lascia prioritarie le quote');
 assert.doesNotMatch(invoices,/legacy\.FT|eq\('Numero',project\.FT\)/,'FT/Numero non deve essere usato come relazione fattura/progetto');
 assert.ok(invoices.includes("projectInput.disabled=true"), 'Durante una nuova fattura contestuale ID_PROGETTO deve restare bloccato');
 assert.ok(invoices.includes('listCoverageLimited'), 'I limiti di lettura non devono diventare falsi “nessuna fattura”');
@@ -56,7 +56,7 @@ assert.doesNotMatch(finance, /KYV_PROJECT_INVOICES\?\.refresh/, 'Il riepilogo ec
 assert.match(finance, /kyv:invoice-updated/, 'Il riepilogo economico deve aggiornarsi tramite evento');
 assert.match(finance, /rows===null/, 'Il riepilogo deve distinguere errore di lettura da assenza di fatture');
 assert.match(finance, /Stato non disponibile/, 'Il riepilogo deve rendere visibile l’errore senza suggerire dati assenti');
-assert.ok(finance.includes('if(explicit.length||legacyDirect.length)return unique([...explicit,...legacyDirect]);'), 'I totali economici devono evitare unioni cieche di fatture in conflitto');
+assert.ok(finance.includes('return unique([...own,...legacyDirect,...idftShared,...explicit]);') && finance.includes('allocatedIds=new Set('), 'I totali economici deduplicano per fattura e proteggono le ripartizioni esplicite');
 
 // Release: la chiusura non deve distruggere note o sovrascrivere modifiche concorrenti.
 assert.match(closeout, /update\(\{STATO:'Pubblicato'\}\)/, 'La chiusura release deve aggiornare soltanto STATO');
