@@ -16,11 +16,13 @@ assert(fields.includes("tr.dataset.kyvProjectRowId"),'le righe progetto non sono
 assert(fields.includes("isInteractiveTarget(event.target)"),'il click riga non protegge controlli interattivi');
 assert(fields.includes("cell.removeAttribute('contenteditable')"),'Progetti mantiene editing inline in conflitto col click riga');
 const primary=producer.split('const primary=[')[1]?.split('];')[0]||'';
+const control=producer.split('const control=[')[1]?.split('];')[0]||'';
 const tools=producer.split('const tools=[')[1]?.split('];')[0]||'';
-assert(primary.includes("['ascolto.html'")&&primary.includes("['pipeline.html'"),'Ascolto/Pipeline devono essere nel menu primario');
-assert(primary.indexOf("['pipeline.html'")>primary.indexOf("['ascolto.html'"),'Pipeline deve seguire Ascolto nella sorgente del menu');
-assert(primary.includes('Pipeline & opportunità'),'etichetta Pipeline non aggiornata');
-assert(!tools.includes("['pipeline.html'"),'Pipeline deve comparire una sola volta');
+assert(control.includes("['ascolto.html'")&&control.includes("['pipeline.html'"),'Ascolto/Pipeline devono essere in Amministrazione');
+assert(control.indexOf("['pipeline.html'")<control.indexOf("['ascolto.html'"),'Pipeline precede Ascolto nella sorgente di Amministrazione');
+assert(control.includes('Pipeline & opportunità'),'etichetta Pipeline non aggiornata');
+assert(!tools.includes("['pipeline.html'")&&!primary.includes("['pipeline.html'"),'Pipeline deve comparire una sola volta');
+assert(primary.includes("['editor.html'"),'Studio Editor appartiene a Produttore');
 assert(!nav.includes('setInterval(')&&!nav.includes('insertBefore('),'Il vecchio nav-order non deve più riordinare il DOM');
 assert(config.includes("editorProjectFields.src='kyv-editor-project-fields.js'"),'config non carica smart fields');
 assert(config.includes("navOrder.src='kyv-nav-order.js'"),'config non carica ordine navigazione');
