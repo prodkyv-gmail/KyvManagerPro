@@ -25,7 +25,7 @@ assert.deepEqual(quoted.candidates.map(p=>p.ID),[99]);
 assert.ok(scheda.includes('_idftShared')&&scheda.includes('Quota da ripartire'),'la Scheda mostra le fatture condivise da ripartire');
 assert.ok(scheda.includes('ripartizione_fattura='),'dalla Scheda si apre la ripartizione della fattura');
 assert.ok(scheda.includes('quotaText')&&scheda.includes("a.descrizione"),'la descrizione della quota di questo progetto è mostrata');
-assert.ok(scheda.includes('const extra=state.fatture.filter(f=>f._v247Shared||f._idftShared)'),'le quote dei progetti non titolari restano visibili (prima venivano scartate da matchFatture)');
+assert.ok(scheda.includes('function matchFatture(p){ return (state.fatture||[]).filter(f=>f._v247Shared||f._idftShared'),'le quote dei progetti non titolari restano visibili (prima venivano scartate da matchFatture)');
 // 3) Moduli collegati.
 assert.ok(invoices.includes('idftShare')&&invoices.includes("select('id_ft,prezzo_unitario,descrizione')"),'kyv-project-invoices: quota con descrizione e fattura condivisa');
 assert.ok(invoices.includes("short:'Quota da ripartire'"),'kyv-project-invoices: stato esplicito');

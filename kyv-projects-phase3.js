@@ -9,6 +9,7 @@ window.KYV_PROJECTS_PHASE3_PENDING=false;
 const FILTERS=[['RECENTI','Recenti'],['DA_FARE','Da fare'],['ATTESA','In attesa'],['USCITI','Usciti'],['TUTTI','Tutti']];
 const STALE_DAYS=14;
 let db=null,projects=[],audioRows=[],activeFilter='RECENTI',loading=false;
+let audioStatus='loading',audioReadIssues=[];
 
 function text(v){return String(v??'').trim();}
 function H(v){
@@ -76,7 +77,13 @@ function mountChrome(){
   }
   const table=document.querySelector('.kyv-project-table');const head=table?.querySelector('thead tr');
   if(head)head.innerHTML='<th class="px-4 py-3 font-semibold border-r border-kyv-border/40">Progetto</th><th class="px-4 py-3 font-semibold border-r border-kyv-border/40">Stato</th><th class="px-4 py-3 font-semibold border-r border-kyv-border/40">Prossima azione</th><th class="px-4 py-3 font-semibold border-r border-kyv-border/40">Ultima attività</th><th class="px-4 py-3 font-semibold border-r border-kyv-border/40">Ultimo audio</th><th class="px-4 py-3 font-semibold text-right">Azioni</th>';
-  const wrapper=table?.closest('.bg-kyv-card');if(wrapper&&!document.getElementById('kyv-project-summary')){const summary=document.createElement('div');summary.id='kyv-project-summary';wrapper.parentNode.insertBefore(summary,wrapper);}
+  const wrapper=table?.closest('.bg-kyv-card');if(wrapper&&!document.getElementById('kyv-project-summary')){
+     const summary=document.createElement('div');summary.id='kyv-project-summary';wrapper.parentNode.insertBefore(summary,wrapper);
+     const warning=document.createElement('div');warning.id='kyv-project-audio-read-warning';
+     warning.setAttribute('role','status');warning.hidden=true;
+     warning.className='rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 mb-3 text-sm text-amber-100';
+     summary.insertAdjacentElement('afterend',warning);
+   }
 }
 
 function renderSummary(all){
@@ -86,6 +93,11 @@ function renderSummary(all){
   const stale=all.filter(x=>x.staleDays!==null&&x.staleDays>=STALE_DAYS).length;
   const done=all.filter(x=>projectDone(x.row)).length;
   el.innerHTML=`<div class="kyv-project-stat kyv-pastel-mint"><span>Da fare</span><b>${todo}</b></div><div class="kyv-project-stat kyv-pastel-sky"><span>In attesa</span><b>${wait}</b></div><div class="kyv-project-stat kyv-pastel-rose"><span>Fermi da ${STALE_DAYS}+ gg</span><b>${stale}</b></div><div class="kyv-project-stat kyv-pastel-lavender"><span>Usciti</span><b>${done}</b></div>`;
+  const warn=document.getElementById('kyv-project-audio-read-warning');
+  if(warn){
+    warn.hidden=audioStatus!=='partial';
+    warn.textContent=audioStatus==='partial'?'Audio non verificabile da: '+audioReadIssues.join(', ')+'. Gli altri dati progetto restano disponibili, ma le sezioni audio potrebbero essere incomplete.':'';
+  }
 }
 function visibleProjects(all){
   let out=[...all].sort((a,b)=>(b.activity-a.activity)||(Number(b.row.ID||0)-Number(a.row.ID||0)));
@@ -105,7 +117,7 @@ function render(){
     if(!visible.length){body.innerHTML='<tr><td colspan="6" class="p-10 text-center text-kyv-text">Nessun progetto in questa vista.</td></tr>';return;}
     body.innerHTML=visible.map(({row,audio,activity,staleDays})=>{
       const status=text(row.STATO)||(!projectDone(row)&&nextAction(row)?'In lavorazione':'Stato non indicato');const tone=statusTone(row);const action=nextAction(row);const a=audio?.row||null;const stale=staleDays!==null&&staleDays>=STALE_DAYS;const pid=encodeURIComponent(String(row.ID));const link=a?audioLink(a):'';
-      return `<tr class="kyv-project-row ${stale?'is-stale':tone==='wait'?'is-wait':tone==='done'?'is-done':'is-active'} cursor-pointer border-b border-kyv-border/40" data-kyv-project-id="${H(row.ID)}"><td data-label="Progetto" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[220px]"><span class="kyv-project-title block">${H(row.TITOLO||'Senza titolo')}</span><span class="kyv-project-artist block">${H(row.ARTISTA||'Artista non indicato')}</span></td><td data-label="Stato" class="px-4 py-3.5 border-r border-kyv-border/40"><span class="kyv-status-chip ${tone}">${H(status)}</span></td><td data-label="Prossima azione" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[200px]"><span class="kyv-next-action">${H(action||(projectDone(row)?'Nessuna: progetto chiuso':'Da decidere'))}</span></td><td data-label="Ultima attività" class="px-4 py-3.5 border-r border-kyv-border/40"><span class="block text-white font-bold">${H(activityLabel(activity))}</span>${stale?`<span class="kyv-stale">Fermo da ${staleDays} gg</span>`:''}</td><td data-label="Ultimo audio" class="px-4 py-3.5 border-r border-kyv-border/40">${a?`<span class="kyv-audio-name block">${H(audioName(a))}</span><span class="kyv-project-muted block mt-1">${H(audioSource(a))}</span>${link?`<a href="${H(link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="text-[10px] font-black text-indigo-200">Apri file ↗</a>`:''}`:'<span class="kyv-project-muted">Nessun audio collegato</span>'}</td><td data-label="Azioni" class="px-4 py-3.5 text-right"><div class="flex items-center justify-end gap-2"><a href="scheda_progetto.html?id=${pid}" onclick="event.stopPropagation()" class="kyv-row-primary">Apri</a><a href="editor.html?table=PROGETTI&editId=${pid}" onclick="event.stopPropagation()" class="kyv-row-menu" title="Modifica in Studio Editor" aria-label="Modifica progetto in Studio Editor">✎</a></div></td></tr>`;
+      return `<tr class="kyv-project-row ${stale?'is-stale':tone==='wait'?'is-wait':tone==='done'?'is-done':'is-active'} cursor-pointer border-b border-kyv-border/40" data-kyv-project-id="${H(row.ID)}"><td data-label="Progetto" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[220px]"><span class="kyv-project-title block">${H(row.TITOLO||'Senza titolo')}</span><span class="kyv-project-artist block">${H(row.ARTISTA||'Artista non indicato')}</span></td><td data-label="Stato" class="px-4 py-3.5 border-r border-kyv-border/40"><span class="kyv-status-chip ${tone}">${H(status)}</span></td><td data-label="Prossima azione" class="px-4 py-3.5 border-r border-kyv-border/40 min-w-[200px]"><span class="kyv-next-action">${H(action||(projectDone(row)?'Nessuna: progetto chiuso':'Da decidere'))}</span></td><td data-label="Ultima attività" class="px-4 py-3.5 border-r border-kyv-border/40"><span class="block text-white font-bold">${H(activityLabel(activity))}</span>${stale?`<span class="kyv-stale">Fermo da ${staleDays} gg</span>`:''}</td><td data-label="Ultimo audio" class="px-4 py-3.5 border-r border-kyv-border/40">${a?`<span class="kyv-audio-name block">${H(audioName(a))}</span><span class="kyv-project-muted block mt-1">${H(audioSource(a))}</span>${link?`<a href="${H(link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="text-[10px] font-black text-indigo-200">Apri file ↗</a>`:''}`:`<span class="kyv-project-muted">${audioStatus==='loading'?'Verifica audio in corso…':audioStatus==='partial'?'Audio non verificabile':'Nessun audio collegato'}</span>`}</td><td data-label="Azioni" class="px-4 py-3.5 text-right"><div class="flex items-center justify-end gap-2"><a href="scheda_progetto.html?id=${pid}" onclick="event.stopPropagation()" class="kyv-row-primary">Apri</a><a href="editor.html?table=PROGETTI&editId=${pid}" onclick="event.stopPropagation()" class="kyv-row-menu" title="Modifica in Studio Editor" aria-label="Modifica progetto in Studio Editor">✎</a></div></td></tr>`;
     }).join('');
     body.querySelectorAll('[data-kyv-project-id]').forEach(row=>row.addEventListener('click',event=>{if(event.target.closest('a,button'))return;location.href=`editor.html?table=PROGETTI&editId=${encodeURIComponent(row.dataset.kyvProjectId)}`;}));
   }catch(error){
@@ -114,20 +126,38 @@ function render(){
   }
 }
 
-async function safeRows(table,limit){try{const {data,error}=await db.from(table).select('*').limit(limit);return error?[]:(data||[]);}catch(_){return[];}}
+async function safeRows(table,limit){
+  const {data,error,count}=await db.from(table).select('*',{count:'exact'}).limit(limit);
+  if(error)throw Error(table+': '+(error.message||'lettura non riuscita'));
+  if(!Array.isArray(data)||!Number.isSafeInteger(count)||count!==data.length)
+    throw Error(table+': dati incompleti ('+(data?.length??0)+'/'+count+').');
+  return data;
+}
 async function load(){
   if(loading)return;loading=true;
-  const body=document.getElementById('tbody-uscite');if(body)body.innerHTML='<tr><td colspan="6" class="p-8 text-center text-kyv-text">Carico i progetti…</td></tr>';
+  const body=document.getElementById('tbody-uscite');
+  if(body)body.innerHTML='<tr><td colspan="6" class="p-8 text-center text-kyv-text">Carico i progetti…</td></tr>';
   try{
-    const {data,error}=await db.from('PROGETTI').select('*').order('ID',{ascending:false}).limit(500);if(error)throw error;
-    projects=data||[];audioRows=[];render();
+    const {data,error,count}=await db.from('PROGETTI').select('*',{count:'exact'}).order('ID',{ascending:false}).limit(500);
+    if(error)throw error;
+    if(!Array.isArray(data)||!Number.isSafeInteger(count)||data.length!==count)
+      throw Error('Progetti: lettura incompleta, impossibile confermare l’archivio.');
+    projects=data;audioRows=[];audioReadIssues=[];audioStatus='loading';render();
     setTimeout(async()=>{
-      try{const [a,d,docs]=await Promise.all([safeRows('AUDIO_VERSIONI',2500),safeRows('DROPBOX_AUDIO_FILES',1500),safeRows('DOCUMENTI_PROGETTO',1500)]);audioRows=[...a,...d,...docs];render();}catch(_){/* la lista progetti resta utilizzabile */}
+      const sources=['AUDIO_VERSIONI','DROPBOX_AUDIO_FILES','DOCUMENTI_PROGETTO'];
+      const results=await Promise.allSettled(sources.map((table,i)=>safeRows(table,i===0?2500:1500)));
+      audioRows=results.filter(x=>x.status==='fulfilled').flatMap(x=>x.value);
+      audioReadIssues=results.map((result,i)=>result.status==='rejected'?sources[i]:null).filter(Boolean);
+      for(const result of results)if(result.status==='rejected')
+        console.warn('[KYV Projects] Lettura audio incompleta',result.reason);
+      audioStatus=audioReadIssues.length?'partial':'ready';
+      render();
     },120);
-  }catch(error){console.error('[KYV Projects] Caricamento non riuscito',error);if(body)body.innerHTML=`<tr><td colspan="6" class="p-8 text-center text-rose-300">Impossibile caricare i progetti: ${H(error.message||'errore')}</td></tr>`;}
-  finally{loading=false;}
+  }catch(error){
+    console.error('[KYV Projects] Caricamento non riuscito',error);
+    if(body)body.innerHTML=`<tr><td colspan="6" class="p-8 text-center text-rose-300">Impossibile caricare i progetti: ${H(error.message||'errore')}</td></tr>`;
+  }finally{loading=false;}
 }
-
 async function boot(){
   injectStyles();mountChrome();db=window.KYV?.createSupabaseClient?.();if(!db)return;
   // Sovrascrive subito i due entry point legacy prima che il vecchio DOMContentLoaded li invochi.

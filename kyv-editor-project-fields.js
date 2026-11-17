@@ -67,9 +67,11 @@ async function loadValues(force=false){
   if(state.values&&!force)return state.values;
   if(state.valuesPromise&&!force)return state.valuesPromise;
   const db=client();
-  if(!db)return {};
-  state.valuesPromise=db.from('PROGETTI').select(RECURRENT_FIELDS.join(',')).limit(1000).then(({data,error})=>{
+  if(!db)throw Error('Collegamento Supabase non disponibile');
+  state.valuesPromise=db.from('PROGETTI').select(RECURRENT_FIELDS.join(','),{count:'exact'}).limit(1000).then(({data,error,count})=>{
     if(error)throw error;
+    if(!Array.isArray(data)||!Number.isSafeInteger(count)||data.length!==count)
+      throw Error('Valori combinati: archivio PROGETTI letto parzialmente');
     const map={};
     RECURRENT_FIELDS.forEach(field=>map[field]=uniqueSorted((data||[]).map(row=>row[field])));
     state.values=map;
@@ -78,8 +80,8 @@ async function loadValues(force=false){
   }).catch(error=>{
     console.warn('[KYV editor project fields] suggerimenti non disponibili',error);
     state.valuesPromise=null;
-    state.values={};
-    return state.values;
+    state.values=null;
+    throw error;
   });
   return state.valuesPromise;
 }
@@ -129,8 +131,23 @@ async function enhanceProjectModal(){
   if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='PROGETTI')return;
   const root=document.getElementById('dynamic-form-fields');
   if(!root)return;
-  const values=await loadValues();
+  let values;
+  try{values=await loadValues();}
+  catch(error){
+    if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='PROGETTI'||!root.isConnected)return;
+    let warning=root.querySelector('#kyv-project-combo-read-warning');
+    if(!warning){
+      warning=document.createElement('div');
+      warning.id='kyv-project-combo-read-warning';
+      warning.setAttribute('role','status');
+      warning.className='md:col-span-2 lg:col-span-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100';
+      root.prepend(warning);
+    }
+    warning.textContent='Suggerimenti non verificabili: non è stato possibile leggere i valori già usati nei progetti. I valori dei campi restano modificabili manualmente. Riapri la scheda per riprovare.';
+    return;
+  }
   if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='PROGETTI'||!root.isConnected)return;
+  root.querySelector('#kyv-project-combo-read-warning')?.remove();
   root.querySelectorAll('.dyn-input[data-key]').forEach(input=>{
     const key=input.dataset.key;
     const type=String(input.getAttribute('type')||'text').toLowerCase();

@@ -8,7 +8,10 @@ const config=read('config.js');
 const sw=read('sw.js');
 
 assert(fields.includes("'ARTISTA','AUTORI','Label','MANAGEMENT','STATO','SVILUPPO'"),'campi progetto ricorrenti non coperti');
-assert(fields.includes("from('PROGETTI').select(RECURRENT_FIELDS.join(','))"),'i valori delle tendine non vengono letti da PROGETTI');
+assert(fields.includes("from('PROGETTI').select(RECURRENT_FIELDS.join(','),{count:'exact'})"),'i valori delle tendine devono leggere PROGETTI con totale verificabile');
+assert(fields.includes('data.length!==count'),'La combobox deve segnalare suggerimenti parziali');
+assert(fields.includes('state.values=null;')&&fields.includes('throw error;'),'Errore dei valori già usati non può diventare un suggerimento vuoto in cache');
+assert(fields.includes('kyv-project-combo-read-warning')&&fields.includes('Suggerimenti non verificabili'),'Studio Editor deve mostrare il fallimento della lettura senza cancellare valori');
 assert(fields.includes("input.removeAttribute('list')"),'il datalist nativo non viene disattivato per le combobox custom');
 assert(fields.includes('scrivine uno nuovo'),'le tendine devono consentire anche valori nuovi');
 assert(fields.includes("type==='date'"),'i campi data non vengono preservati come input calendario');

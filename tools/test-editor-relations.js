@@ -60,4 +60,13 @@ const shown = ['ID', 'TITOLO', 'Strumenti_Suonati_Kyv', 'IDFT', 'NOTE']; // ARTI
 assert.deepEqual(api.relationColumnsFor(shown).map(c => [c.key, c.index]), [['IDFT', 3]], 'con una colonna nascosta l\'indice cambia');
 assert.deepEqual(api.relationColumnsFor(['ID', 'Strumenti_Suonati_Kyv']), [], 'IDFT nascosta: nessun menu in altre colonne');
 
+assert.match(relations,/\.select\('ID,TITOLO,ARTISTA',\{count:'exact'\}\)/);
+assert.match(relations,/\.select\('ID_FT,Numero,Denominazione,Data',\{count:'exact'\}\)/);
+assert.match(relations,/data\.length!==count/,'Relazioni non possono usare elenchi parziali come completi');
+assert.match(relations,/kyv-modal-relation-read-warning/);
+assert.match(relations,/kyv-inline-relation-read-warning/);
+assert.match(relations,/Collegamenti non verificabili/);
+assert.match(relations,/Relazioni non verificabili/);
+assert.match(relations,/if\(error\)throw error/,'Errori Supabase non diventano elenchi vuoti');
+
 console.log('Controlli relazioni Studio Editor: OK');

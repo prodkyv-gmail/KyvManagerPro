@@ -109,6 +109,7 @@
             <div id="empty-state" class="hidden kyv-card p-10 text-center text-kyv-text"><i data-lucide="folder-search" class="w-12 h-12 mx-auto mb-3 opacity-60"></i><h3 class="text-white font-black text-lg">Seleziona un progetto</h3><p class="mt-1">Scegli un brano dalla ricerca per aprire la scheda unica.</p></div>
 
             <div id="project-view" class="hidden space-y-6">
+                <div id="project-read-warning" role="status" class="hidden rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100"></div>
                 <section class="kyv-card p-5 sm:p-6 overflow-hidden relative">
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 opacity-80"></div>
                     <div class="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6">
@@ -180,7 +181,7 @@
         loadKyvSidebar('scheda');
 
         let supabaseClient;
-        const state = { projects: [], audio: [], versions: [], invii: [], documenti: [], consegne: [], fatture: [], spese: [], siae: [], siaeVert: [], imaie: [], stats: { audio: 0, invii: 0, documenti: 0 }, current: null, currentView: null, activeTab: 'sintesi', loadToken: 0 };
+        const state = { projects: [], audio: [], versions: [], invii: [], documenti: [], consegne: [], fatture: [], spese: [], siae: [], siaeVert: [], imaie: [], stats: { audio: null, invii: null, documenti: null }, current: null, currentView: null, activeTab: 'sintesi', loadToken: 0, readIssues: [] };
         const H = (v) => KYV.safeHtml(v ?? '');
         const has = (v) => String(v ?? '').trim().length > 0;
         const N = (v) => KYV.normalize(v ?? '');
@@ -189,40 +190,79 @@
         function daysFrom(value){ if(!value) return null; const d=new Date(value); if(Number.isNaN(d.getTime())) return null; d.setHours(0,0,0,0); return Math.round((d-today)/86400000); }
         function safeUrl(url){ return has(url) ? String(url).trim() : ''; }
         function setLoading(on){ document.getElementById('loading-state').classList.toggle('hidden', !on); }
-        async function safeFilteredTable(table, configure, orderCol=null, limit=500){ try{ let q=supabaseClient.from(table).select('*'); if(configure) q=configure(q); if(orderCol) q=q.order(orderCol,{ascending:false}); const {data,error}=await q.limit(limit); if(error) throw error; return data||[]; } catch(err){ console.warn('Tabella/relazione non disponibile:', table, err.message); return []; } }
-        async function safeProjectRows(table, projectId, orderCol=null){ return safeFilteredTable(table, q=>q.eq('ID_PROGETTO', projectId), orderCol); }
-        async function safeCount(table, column){ try{ const {count,error}=await supabaseClient.from(table).select(column,{count:'exact',head:true}); if(error) throw error; return count||0; } catch(err){ console.warn('Conteggio non disponibile:', table, err.message); return 0; } }
+        // Letture parziali: un problema di rete/schema non va presentato come «nessun dato».
+        // La scheda resta consultabile, ma ogni sorgente non verificabile viene segnalata.
+        async function safeFilteredTable(table, configure, orderCol=null, limit=500, issues=null){
+            try{
+                let q=supabaseClient.from(table).select('*',{count:'exact'});
+                if(configure)q=configure(q);
+                if(orderCol)q=q.order(orderCol,{ascending:false});
+                const {data,error,count}=await q.limit(limit);
+                if(error)throw error;
+                if(!Array.isArray(data)||!Number.isSafeInteger(count)||count!==data.length)
+                    throw Error('Risposta di lettura parziale o non verificabile');
+                return data;
+            }catch(err){
+                console.warn('[KYV Scheda] Lettura relazione non riuscita:',table,err);
+                if(Array.isArray(issues))issues.push(String(table));
+                return [];
+            }
+        }
+        async function safeProjectRows(table, projectId, orderCol=null, issues=null){
+            return safeFilteredTable(table,q=>q.eq('ID_PROGETTO', projectId),orderCol,500,issues);
+        }
+        async function safeCount(table, column){
+            try{
+                const {count,error}=await supabaseClient.from(table).select(column,{count:'exact',head:true});
+                if(error)throw error;
+                if(!Number.isSafeInteger(count)||count<0)throw Error('Conteggio non verificabile');
+                return count;
+            }catch(err){
+                console.warn('[KYV Scheda] Conteggio non disponibile:',table,err);
+                return null;
+            }
+        }
+        function renderReadIssues(issues){
+            const el=document.getElementById('project-read-warning');
+            if(!el)return;
+            const sources=[...new Set(issues||[])];
+            el.classList.toggle('hidden',!sources.length);
+            if(!sources.length){el.textContent='';return;}
+            el.innerHTML='<strong class="block text-amber-100">Alcune informazioni non sono verificabili.</strong>'+
+                '<span class="block mt-1">Caricamento incompleto da: '+H(sources.join(', '))+'. Le sezioni vuote potrebbero contenere dati. Riprova aprendo nuovamente il progetto.</span>';
+        }
         function mergeRows(groups, key){ const rows=groups.flat(); return [...new Map(rows.map(row=>[String(row[key]??JSON.stringify(row)),row])).values()]; }
         function escapeLike(value){ return String(value||'').replace(/[\\%_]/g,'\\$&'); }
         function relationTerms(value){ const full=String(value||'').trim(); return [...new Set([full,...full.split(/\s+/).filter(part=>part.length>=4).slice(0,4)])].filter(Boolean); }
-        async function safeTextRows(table, columns, values, orderCol=null){
+        async function safeTextRows(table, columns, values, orderCol=null, issues=null){
             const terms=[...new Set(values.map(v=>String(v||'').trim()).filter(Boolean))];
             if(!terms.length) return [];
-            const groups=await Promise.all(columns.flatMap(column=>terms.map(term=>safeFilteredTable(table,q=>q.ilike(column,`%${escapeLike(term)}%`),orderCol,150))));
+            const groups=await Promise.all(columns.flatMap(column=>terms.map(term=>safeFilteredTable(table,q=>q.ilike(column,`%${escapeLike(term)}%`),orderCol,150,issues))));
             return mergeRows(groups, '__kyv_missing_key__');
         }
-        async function fetchProjects(){ const { data, error } = await supabaseClient.from('PROGETTI').select('*').order('ID', {ascending:false}).limit(1000); if(error) throw error; return data||[]; }
+        async function fetchProjects(){ const { data, error, count } = await supabaseClient.from('PROGETTI').select('*',{count:'exact'}).order('ID', {ascending:false}).limit(1000); if(error) throw error; if(!Array.isArray(data)||!Number.isSafeInteger(count)||count!==data.length)throw Error('Progetti: elenco incompleto o non verificabile'); return data; }
         async function loadProjectData(p){
+            const issues=[];
             const [audioByProject, versions, documenti, fattureByProject, speseByProject, consegne, siae, siaeVert, imaie] = await Promise.all([
-                safeProjectRows('DROPBOX_AUDIO_FILES',p.ID,'ID_FILE'),
-                safeProjectRows('AUDIO_VERSIONI',p.ID,'ID_VERSIONE'),
-                safeProjectRows('DOCUMENTI_PROGETTO',p.ID,'ID_DOCUMENTO'),
-                safeProjectRows('FATTURE',p.ID,'ID_FT'),
-                safeProjectRows('Spese Extra',p.ID,'ID_SPESE'),
-                safeTextRows('CONSEGNE_MASTER',['Progetto'],relationTerms(p.TITOLO),'ID_CONSEGNA'),
-                safeTextRows('EXPORT SIAE',['Titolo'],relationTerms(p.TITOLO)),
-                safeTextRows('EXPORT SIAE VERTICALE',['Titolo'],relationTerms(p.TITOLO),'ID_SIAVERT'),
-                safeTextRows('ESTRATTO_IMAIE',['TITOLO_OPERA'],relationTerms(p.TITOLO),'id')
+                safeProjectRows('DROPBOX_AUDIO_FILES',p.ID,'ID_FILE',issues),
+                safeProjectRows('AUDIO_VERSIONI',p.ID,'ID_VERSIONE',issues),
+                safeProjectRows('DOCUMENTI_PROGETTO',p.ID,'ID_DOCUMENTO',issues),
+                safeProjectRows('FATTURE',p.ID,'ID_FT',issues),
+                safeProjectRows('Spese Extra',p.ID,'ID_SPESE',issues),
+                safeTextRows('CONSEGNE_MASTER',['Progetto'],relationTerms(p.TITOLO),'ID_CONSEGNA',issues),
+                safeTextRows('EXPORT SIAE',['Titolo'],relationTerms(p.TITOLO),null,issues),
+                safeTextRows('EXPORT SIAE VERTICALE',['Titolo'],relationTerms(p.TITOLO),'ID_SIAVERT',issues),
+                safeTextRows('ESTRATTO_IMAIE',['TITOLO_OPERA'],relationTerms(p.TITOLO),'id',issues)
             ]);
-            const audioFallback=audioByProject.length?[]:await safeTextRows('DROPBOX_AUDIO_FILES',['Progetto','Titolo','Artista','Nome_File'],[p.TITOLO,p.ARTISTA],'ID_FILE');
+            const audioFallback=audioByProject.length?[]:await safeTextRows('DROPBOX_AUDIO_FILES',['Progetto','Titolo','Artista','Nome_File'],[p.TITOLO,p.ARTISTA],'ID_FILE',issues);
             const audio=mergeRows([audioByProject,audioFallback],'ID_FILE');
 
             const audioIds=audio.map(a=>a.ID_FILE).filter(id=>id!==null&&id!==undefined);
             const [inviiByProject, inviiByFile, fattureById, speseFallback] = await Promise.all([
-                safeProjectRows('INVII_AUDIO',p.ID,'ID_INVIO'),
-                audioIds.length?safeFilteredTable('INVII_AUDIO',q=>q.in('ID_FILE',audioIds),'ID_INVIO'):[],
-                has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT'):[],
-                safeTextRows('Spese Extra',['Descrizione','Categoria'],[p.TITOLO,p.ARTISTA],'ID_SPESE')
+                safeProjectRows('INVII_AUDIO',p.ID,'ID_INVIO',issues),
+                audioIds.length?safeFilteredTable('INVII_AUDIO',q=>q.in('ID_FILE',audioIds),'ID_INVIO',500,issues):[],
+                has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT',500,issues):[],
+                safeTextRows('Spese Extra',['Descrizione','Categoria'],[p.TITOLO,p.ARTISTA],'ID_SPESE',issues)
             ]);
             // Unisci FATTURE.ID_PROGETTO e PROGETTI.IDFT: alcuni progetti usano entrambe le relazioni.
             // La deduplicazione per ID_FT evita il conteggio doppio della stessa fattura.
@@ -232,30 +272,30 @@
             ],'ID_FT');
             // Fattura citata dal vecchio campo IDFT ma intestata a un altro progetto, senza quote: va mostrata (quota da ripartire), non nascosta.
             const foreignIds=fattureById.filter(f=>has(f.ID_PROGETTO)&&String(f.ID_PROGETTO)!==String(p.ID)).map(f=>String(f.ID_FT));
-            const foreignShares=foreignIds.length?await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.in('id_ft',foreignIds),'id'):[];
+            const foreignShares=foreignIds.length?await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.in('id_ft',foreignIds),'id',500,issues):[];
             const quotedForeign=new Set(foreignShares.map(a=>String(a.id_ft)));
             const idftShared=fattureById.filter(f=>foreignIds.includes(String(f.ID_FT))&&!quotedForeign.has(String(f.ID_FT))).map(f=>({...f,PrezzoUnitario:'0',PrezzoTotale:'0',XML_SHA256:null,_idftShared:true}));
             // v2.47: invoice allocations supersede the old single-project reference.
-            const ownerShares=await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.eq('id_progetto',p.ID),'id');
+            const ownerShares=await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.eq('id_progetto',p.ID),'id',500,issues);
             const byInvoice=new Map();
             for(const a of ownerShares)byInvoice.set(String(a.id_ft),(byInvoice.get(String(a.id_ft))||0)+Number(a.prezzo_unitario));
             const linkedIds=[...byInvoice.keys()];
-            const sharedDocs=linkedIds.length?await safeFilteredTable('FATTURE',q=>q.in('ID_FT',linkedIds),'ID_FT'):[];
+            const sharedDocs=linkedIds.length?await safeFilteredTable('FATTURE',q=>q.in('ID_FT',linkedIds),'ID_FT',500,issues):[];
             const existingIds=fatture.map(f=>f.ID_FT);
-            const existingShares=existingIds.length?await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.in('id_ft',existingIds),'id'):[];
+            const existingShares=existingIds.length?await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.in('id_ft',existingIds),'id',500,issues):[];
             const explicitIds=new Set(existingShares.map(a=>String(a.id_ft)));
             // La descrizione scritta per la quota di questo progetto vale più di quella generale del documento.
             const quotaText=new Map();
             for(const a of ownerShares){const d=String(a.descrizione??'').trim();if(d)quotaText.set(String(a.id_ft),[...(quotaText.get(String(a.id_ft))||[]),d]);}
             const explicitDocs=sharedDocs.map(f=>({...f,Descrizione:(quotaText.get(String(f.ID_FT))||[]).join(' · ')||f.Descrizione,PrezzoUnitario:String(byInvoice.get(String(f.ID_FT))),PrezzoTotale:String(byInvoice.get(String(f.ID_FT))),XML_SHA256:null,_v247Shared:true}));
             const projectInvoices=mergeRows([explicitDocs,fatture.filter(f=>!explicitIds.has(String(f.ID_FT))),idftShared],'ID_FT');
-            return {audio,versions,documenti,consegne,siae,siaeVert,imaie,invii:mergeRows([inviiByProject,inviiByFile],'ID_INVIO'),fatture:projectInvoices,spese:mergeRows([speseByProject,speseFallback],'ID_SPESE')};
+            return {audio,versions,documenti,consegne,siae,siaeVert,imaie,invii:mergeRows([inviiByProject,inviiByFile],'ID_INVIO'),fatture:projectInvoices,spese:mergeRows([speseByProject,speseFallback],'ID_SPESE'),readIssues:issues};
         }
         async function refreshAll(){
             setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden');
             try{
                 const [projects,versionCount,legacyAudioCount,legacyDeliveryCount,inviiCount,documentiCount] = await Promise.all([fetchProjects(),safeCount('AUDIO_VERSIONI','ID_VERSIONE'),safeCount('DROPBOX_AUDIO_FILES','ID_FILE'),safeCount('CONSEGNE_MASTER','ID_CONSEGNA'),safeCount('INVII_AUDIO','ID_INVIO'),safeCount('DOCUMENTI_PROGETTO','ID_DOCUMENTO')]);
-                state.projects=projects; state.stats={audio:versionCount||legacyAudioCount||legacyDeliveryCount,invii:inviiCount,documenti:documentiCount};
+                state.projects=projects; state.stats={audio:[versionCount,legacyAudioCount,legacyDeliveryCount].some(v=>v===null)?null:Math.max(versionCount,legacyAudioCount,legacyDeliveryCount),invii:inviiCount,documenti:documentiCount};
                 updateStats(); renderProjectResults();
                 const params = new URLSearchParams(location.search); const id = params.get('id'); const requestedTab = params.get('tab'); if(requestedTab) state.activeTab=normalizeProjectTab(requestedTab);
                 const first = id ? state.projects.find(p => String(p.ID) === String(id)) : null;
@@ -263,7 +303,7 @@
             }catch(err){ console.error(err); document.getElementById('empty-state').innerHTML = `<i data-lucide="circle-alert" class="w-12 h-12 mx-auto mb-3 text-rose-300"></i><h3 class="text-white font-black text-lg">Errore caricamento</h3><p class="mt-1 text-rose-200">${H(err.message)}</p>`; document.getElementById('empty-state').classList.remove('hidden'); }
             finally{ setLoading(false); if(window.lucide) lucide.createIcons(); }
         }
-        function updateStats(){ KYV.setText('stat-projects', state.projects.length); KYV.setText('stat-audio', state.stats.audio); KYV.setText('stat-invii', state.stats.invii); KYV.setText('stat-docs', state.stats.documenti); }
+        function updateStats(){ KYV.setText('stat-projects', state.projects.length); KYV.setText('stat-audio', state.stats.audio===null?'—':state.stats.audio); KYV.setText('stat-invii', state.stats.invii===null?'—':state.stats.invii); KYV.setText('stat-docs', state.stats.documenti===null?'—':state.stats.documenti); }
         function renderProjectResults(){
             const q=N(document.getElementById('project-search')?.value||'');
             const matches=state.projects.filter(p=>!q || N([p.TITOLO,p.ARTISTA,p.AUTORI,p.MANAGEMENT,p.Label,p.Codice_ISRC,p.STATO].join(' ')).includes(q));
@@ -280,7 +320,7 @@
             const projectRoute=new URL(location.href);projectRoute.searchParams.set('id',String(p.ID));
             history.replaceState(null,'',projectRoute.pathname+projectRoute.search+projectRoute.hash);
             document.dispatchEvent(new CustomEvent('kyv:project-selected',{detail:{projectId:String(p.ID)}}));
-            setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden'); try{ const related=await loadProjectData(p); if(token!==state.loadToken) return; Object.assign(state,related); buildCurrentView(); renderProjectResults(); document.getElementById('project-view').classList.remove('hidden'); if(window.KYV_AUDIO_LINKED_V245) window.KYV_AUDIO_LINKED_V245.showProject(p.ID); const picker=document.getElementById('project-picker');
+            setLoading(true); document.getElementById('empty-state').classList.add('hidden'); document.getElementById('project-view').classList.add('hidden'); try{ const related=await loadProjectData(p); if(token!==state.loadToken) return; Object.assign(state,related); renderReadIssues(related.readIssues); buildCurrentView(); renderProjectResults(); document.getElementById('project-view').classList.remove('hidden'); if(window.KYV_AUDIO_LINKED_V245) window.KYV_AUDIO_LINKED_V245.showProject(p.ID); const picker=document.getElementById('project-picker');
                 if(picker){
                     picker.removeAttribute('open');
                     const title=picker.querySelector('.kyv-picker-summary strong');
@@ -306,7 +346,7 @@
         function isDriveAudioDoc(d){ return /audio[_ -]?drive|versione audio/i.test(String(d.Tipo_Documento||'')); }
         function matchDriveAudio(p){ return matchByProjectId(state.documenti,p).filter(isDriveAudioDoc).map(d=>({...d,_source:'drive',Link_Dropbox:d.Link_Drive})); }
         function matchDocs(p){ const byId=matchByProjectId(state.documenti,p).filter(d=>!isDriveAudioDoc(d)); const inline=[]; if(has(p['Contratto link'])) inline.push({ID_DOCUMENTO:'contratto', Tipo_Documento:'Contratto principale', Titolo_Documento:p.TITOLO, Link_Drive:p['Contratto link'], Data_Documento:p['Data Contratto'], Fonte:'PROGETTI.Contratto link'}); if(has(p.LINK)) inline.push({ID_DOCUMENTO:'drive', Tipo_Documento:'Cartella Drive progetto', Titolo_Documento:p.TITOLO, Link_Drive:p.LINK, Data_Documento:null, Fonte:'PROGETTI.LINK'}); return [...inline,...byId]; }
-        function matchFatture(p){ const extra=state.fatture.filter(f=>f._v247Shared||f._idftShared); const real=state.fatture.filter(f=>!f._v247Shared&&!f._idftShared); const direct=real.filter(f=>has(f.ID_PROGETTO)&&String(f.ID_PROGETTO)===String(p.ID)); const base=direct.length?direct:real.filter(f=>has(p.IDFT)&&String(f.ID_FT)===String(p.IDFT)&&(!has(f.ID_PROGETTO)||String(f.ID_PROGETTO)===String(p.ID))); return [...extra,...base]; }
+        function matchFatture(p){ return (state.fatture||[]).filter(f=>f._v247Shared||f._idftShared||(has(f.ID_PROGETTO)&&String(f.ID_PROGETTO)===String(p.ID))||(has(p.IDFT)&&String(f.ID_FT)===String(p.IDFT)&&(!has(f.ID_PROGETTO)||String(f.ID_PROGETTO)===String(p.ID)))); }
         function matchSpese(p){ const title=N(p.TITOLO); const artist=N(p.ARTISTA); return state.spese.filter(s=>{ if(Number(s.ID_PROGETTO)===Number(p.ID)) return true; const blob=N([s.Descrizione,s.Categoria].join(' ')); return (title && blob.includes(title)) || (artist && blob.includes(artist)); }); }
         function matchSiae(p){ return [...matchByTitle(state.siaeVert,p,['Titolo']), ...matchByTitle(state.siae,p,['Titolo'])]; }
         function matchImaie(p){ return matchByTitle(state.imaie,p,['TITOLO_OPERA']); }

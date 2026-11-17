@@ -34,6 +34,45 @@ vm.runInNewContext(source.slice(startAudio,endAudio)+'\nthis.matchAudio=matchAud
 assert.deepEqual(Array.from(audioContext.matchAudio({ID:7,TITOLO:'Brano',ARTISTA:'Artista'}),row=>row.ID_FILE).sort(),
   ['dropbox-2','version-1'],'Audio Versioni e Dropbox associati allo stesso progetto devono essere entrambi visibili');
 
+// Letture con copertura verificata: un fallimento non può essere mostrato come «nessun dato».
+assert.match(source,/project-read-warning/);
+assert.match(source,/Alcune informazioni non sono verificabili/);
+assert.match(source,/if\(!Array\.isArray\(data\)\|\|!Number\.isSafeInteger\(count\)\|\|count!==data\.length\)/);
+assert.match(source,/renderReadIssues\(related\.readIssues\)/);
+assert.match(source,/state\.stats\.audio===null\?'—'/,'Conteggio non disponibile != zero');
+assert.match(source,/fetchProjects\(\)\{[\s\S]*?count!==data\.length/);
+assert.match(source,/issues\.push\(String\(table\)\)/);
+const fiStart=source.indexOf('function matchFatture(p){'),fiEnd=source.indexOf('function matchSpese(p){',fiStart);
+assert.ok(fiStart>0&&fiEnd>fiStart);
+const invoiceContext={state:{fatture:[
+  {ID_FT:11,ID_PROGETTO:7},{ID_FT:22,ID_PROGETTO:null},{ID_FT:23,ID_PROGETTO:8}
+]},has:value=>String(value??'').trim().length>0};
+vm.runInNewContext(source.slice(fiStart,fiEnd)+'\nthis.matchFatture=matchFatture;',invoiceContext);
+assert.deepEqual(Array.from(invoiceContext.matchFatture({ID:7,IDFT:22}),row=>row.ID_FT),[11,22],
+ 'La Scheda mostra entrambe le fatture valide, senza prendere soltanto la prima fonte');
+assert.deepEqual(Array.from(invoiceContext.matchFatture({ID:7,IDFT:23}),row=>row.ID_FT),[11],
+ 'Non attribuire una fattura intestata a un altro progetto');
+const projectsList=fs.readFileSync(path.resolve(__dirname,'..','kyv-projects-phase3.js'),'utf8');
+assert.match(projectsList,/Promise\.allSettled/,'La lista progetti preserva le sorgenti audio riuscite');
+assert.match(projectsList,/Audio non verificabile/,'Il dato audio non letto non è descritto come assente');
+assert.match(projectsList,/Lettura audio incompleta/);
+assert.match(projectsList,/count!==data\.length/);
+const readBegin=projectsList.indexOf('async function safeRows(table,limit){');
+const readEnd=projectsList.indexOf('async function load(){',readBegin);
+assert.ok(readBegin>=0&&readEnd>readBegin);
+async function testReadStatus(){
+  const make=data=>({from(){return {select(){return {limit(){return Promise.resolve(data);}};}};}});
+  const ctx={db:make({data:[],error:null,count:0}),Number,Array,Error};
+  vm.runInNewContext(projectsList.slice(readBegin,readEnd)+'\nthis.safeRows=safeRows;',ctx);
+  assert.deepEqual(Array.from(await ctx.safeRows('AUDIO_VERSIONI',100)),[],'Empty archive with confirmed count is valid');
+  ctx.db=make({data:[],error:{message:'Autorizzazione negata'},count:null});
+  await assert.rejects(ctx.safeRows('AUDIO_VERSIONI',100),/Autorizzazione negata/);
+  ctx.db=make({data:[{ID:1}],error:null,count:3});
+  await assert.rejects(ctx.safeRows('AUDIO_VERSIONI',100),/dati incompleti/);
+}
+testReadStatus().then(()=>console.log('Letture progetto: vuoto verificato e errore distinti OK.'))
+  .catch(error=>{console.error(error);process.exitCode=1;});
+
 const financeSource=fs.readFileSync(path.resolve(__dirname,'..','kyv-project-finance-summary.js'),'utf8');
 const fStart=financeSource.indexOf('async function fetchInvoices(pid){');
 const fEnd=financeSource.indexOf('function ensureStyle(){',fStart);
