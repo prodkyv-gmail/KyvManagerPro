@@ -18,7 +18,7 @@ assert.equal(all.filter(x=>x.href==='integrazioni.html').length,1,'App launcher 
 assert.equal(all.filter(x=>x.href==='fatture.html').length,1,'Invoice management has one sidebar destination');
 assert.equal(all.filter(x=>x.href==='kyv_analyst.html').length,1,'Analyst has one sidebar destination');
 assert.ok(control.some(x=>x.href==='kyv_scrivania_creativa.html'));
-const daily=menu.split('Ogni giorno</p>')[1]?.split('</ul>')[0];
+const daily=menu.split('Produttore</p>')[1]?.split('</ul>')[0];
 const legacyTools=menu.split('<span>Strumenti</span>')[1]?.split('</ul>')[0];
 assert.ok(daily&&legacyTools);
 assert.equal((daily.match(/navItem\('integrazioni'/g)||[]).length,0);
