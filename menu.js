@@ -243,21 +243,23 @@ function loadKyvSidebar(activePage = 'dashboard') {
                         ${navItem('assistente', 'assistente.html', 'route', 'Percorso brano', 'text-violet-300')}
                         ${navItem('archivio', 'archivio_musicale.html', 'folder-search-2', 'Archivio musicale', 'text-cyan-300')}
                         ${navItem('progetti', 'progetti.html', 'music-2', 'Progetti', 'text-indigo-300')}
-                        ${navItem('creative', 'kyv_scrivania_creativa.html', 'calendar-range', 'Scrivania creativa', 'text-cyan-300')}
                         ${navItem('audiofinder', 'kyv_audio_finder.html', 'search-check', 'Audio Finder', 'text-emerald-300')}
                         ${navItem('clienti', 'clienti.html', 'users', 'Contatti', 'text-sky-300')}
-                        ${navItem('ascolto', 'ascolto.html', 'headphones', 'Ascolto', 'text-violet-300')}
-                        ${navItem('integrazioni', 'integrazioni.html', 'grid-3x3', 'Tutte le app', 'text-emerald-300')}
+                        ${navItem('editor', 'editor.html', 'database', 'Studio Editor')}
                     </ul>
                 </div>
 
-                <details class="kyv-nav-group" ${groupIsOpen(['fatture', 'intelligence', 'analyst', 'returns', 'liquidazioni', 'spese', 'fisco', 'quote', 'rendiconto']) ? 'open' : ''}>
+                <details class="kyv-nav-group" ${groupIsOpen(['creative', 'pipeline', 'ascolto', 'integrazioni', 'fatture', 'intelligence', 'analyst', 'returns', 'liquidazioni', 'spese', 'fisco', 'quote', 'rendiconto']) ? 'open' : ''}>
                     <summary>
                         <i data-lucide="landmark"></i>
                         <span>Amministrazione</span>
                         <i data-lucide="chevron-down" class="kyv-chevron w-4 h-4"></i>
                     </summary>
                     <ul class="space-y-1">
+                        ${navItem('creative', 'kyv_scrivania_creativa.html', 'calendar-range', 'Scrivania creativa', 'text-cyan-300')}
+                        ${navItem('pipeline', 'pipeline.html', 'columns-3', 'Pipeline & opportunità', 'text-amber-300')}
+                        ${navItem('ascolto', 'ascolto.html', 'headphones', 'Ascolto', 'text-violet-300')}
+                        ${navItem('integrazioni', 'integrazioni.html', 'grid-3x3', 'Tutte le app', 'text-emerald-300')}
                         ${navItem('fatture', 'fatture.html', 'receipt', 'Fatture emesse', 'text-emerald-300')}
                         ${navItem('intelligence', 'kyv_intelligence.html', 'chart-no-axes-combined', 'KYV Intelligence')}
                         ${navItem('analyst', 'kyv_analyst.html', 'brain-circuit', 'KYV Analyst')}
@@ -270,14 +272,13 @@ function loadKyvSidebar(activePage = 'dashboard') {
                     </ul>
                 </details>
 
-                <details class="kyv-nav-group" ${groupIsOpen(['integrazioni', 'editor', 'importexport', 'diagnostica', 'dataquality', 'guida']) ? 'open' : ''}>
+                <details class="kyv-nav-group" ${groupIsOpen(['importexport', 'diagnostica', 'dataquality', 'guida']) ? 'open' : ''}>
                     <summary>
                         <i data-lucide="wrench"></i>
                         <span>Strumenti</span>
                         <i data-lucide="chevron-down" class="kyv-chevron w-4 h-4"></i>
                     </summary>
                     <ul class="space-y-1">
-                        ${navItem('editor', 'editor.html', 'database', 'Studio Editor')}
                         ${navItem('importexport', 'importexport.html', 'arrow-down-up', 'Import / Export', 'text-purple-300')}
                         ${navItem('diagnostica', 'diagnostica.html', 'activity', 'Diagnostica', 'text-cyan-300')}
                         ${navItem('dataquality', 'data_quality.html', 'list-checks', 'Qualità dati', 'text-amber-300')}
