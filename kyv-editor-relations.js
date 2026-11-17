@@ -57,11 +57,13 @@ async function loadProjects(force=false){
   if(state.projects&&!force)return state.projects;
   if(state.projectsPromise&&!force)return state.projectsPromise;
   state.projectsPromise=client().from('PROGETTI')
-    .select('ID,TITOLO,ARTISTA')
+    .select('ID,TITOLO,ARTISTA',{count:'exact'})
     .order('ID',{ascending:false})
     .limit(1500)
-    .then(({data,error})=>{
+    .then(({data,error,count})=>{
       if(error)throw error;
+      if(!Array.isArray(data)||!Number.isSafeInteger(count)||data.length!==count)
+        throw Error('PROGETTI: elenco delle relazioni incompleto');
       state.projects=data||[];
       state.projectsPromise=null;
       return state.projects;
@@ -76,11 +78,13 @@ async function loadInvoices(force=false){
   if(state.invoices&&!force)return state.invoices;
   if(state.invoicesPromise&&!force)return state.invoicesPromise;
   state.invoicesPromise=client().from('FATTURE')
-    .select('ID_FT,Numero,Denominazione,Data')
+    .select('ID_FT,Numero,Denominazione,Data',{count:'exact'})
     .order('ID_FT',{ascending:false})
     .limit(1500)
-    .then(({data,error})=>{
+    .then(({data,error,count})=>{
       if(error)throw error;
+      if(!Array.isArray(data)||!Number.isSafeInteger(count)||data.length!==count)
+        throw Error('FATTURE: elenco delle relazioni incompleto');
       state.invoices=data||[];
       state.invoicesPromise=null;
       return state.invoices;
@@ -191,6 +195,19 @@ function fillSelect(select,spec,items,currentValue){
   select.value=currentValue??'';
 }
 
+function setRelationWarning(parent,id,message){
+  if(!parent)return;
+  let note=parent.querySelector('#'+id);
+  if(!note){
+    note=document.createElement('div');
+    note.id=id;
+    note.setAttribute('role','status');
+    note.className='rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 mb-3 text-sm text-amber-100';
+    parent.prepend(note);
+  }
+  note.textContent=message;
+}
+
 async function decorateInlineRelations(dataArray,table,token){
   if(!Array.isArray(dataArray)||!dataArray.length)return;
   const relationColumns=relationColumnsFor(shownKeys(dataArray));
@@ -201,9 +218,13 @@ async function decorateInlineRelations(dataArray,table,token){
     await Promise.all(uniqueLoads.map(kind=>kind==='project'?loadProjects():loadInvoices()));
   }catch(error){
     console.warn('[KYV editor relations] liste relazione non disponibili',error);
+    const tableElement=document.getElementById('editor-tbody')?.closest('table');
+    setRelationWarning(tableElement?.parentElement,'kyv-inline-relation-read-warning',
+      'Collegamenti non verificabili: il menu delle relazioni non è stato caricato. I valori esistenti restano invariati. Ricarica la tabella per riprovare.');
     return;
   }
   if(token!==state.renderToken||table!==state.currentTable)return;
+  document.getElementById('kyv-inline-relation-read-warning')?.remove();
 
   const tbody=document.getElementById('editor-tbody');
   if(!tbody)return;
@@ -270,9 +291,12 @@ async function enhanceModalRelations(){
     ]);
   }catch(error){
     console.warn('[KYV editor relations] impossibile caricare i menu relazione',error);
+    setRelationWarning(root,'kyv-modal-relation-read-warning',
+      'Relazioni non verificabili: non è stato possibile leggere tutti i progetti o le fatture. I collegamenti attuali non vengono modificati; ricarica la scheda per riprovare.');
     return;
   }
 
+  root.querySelector('#kyv-modal-relation-read-warning')?.remove();
   for(const input of relationInputs){
     if(!input.isConnected)continue;
     const key=input.dataset.key;
