@@ -67,9 +67,11 @@ async function loadValues(force=false){
   if(state.values&&!force)return state.values;
   if(state.valuesPromise&&!force)return state.valuesPromise;
   const db=client();
-  if(!db)return {};
-  state.valuesPromise=db.from('PROGETTI').select(RECURRENT_FIELDS.join(',')).limit(1000).then(({data,error})=>{
+  if(!db)throw Error('Collegamento Supabase non disponibile');
+  state.valuesPromise=db.from('PROGETTI').select(RECURRENT_FIELDS.join(','),{count:'exact'}).limit(1000).then(({data,error,count})=>{
     if(error)throw error;
+    if(!Array.isArray(data)||!Number.isSafeInteger(count)||data.length!==count)
+      throw Error('Valori combinati: archivio PROGETTI letto parzialmente');
     const map={};
     RECURRENT_FIELDS.forEach(field=>map[field]=uniqueSorted((data||[]).map(row=>row[field])));
     state.values=map;
