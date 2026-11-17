@@ -7,20 +7,21 @@ const producer=read('kyv-producer-mode.js'),order=read('kyv-nav-order.js'),
 for(const f of ['kyv-producer-mode.js','kyv-nav-order.js','menu.js','kyv-responsive.js'])
  new vm.Script(read(f),{filename:f});
 const primary=producer.split('const primary=[')[1].split('];')[0];
+const control=producer.split('const control=[')[1].split('];')[0];
 const tools=producer.split('const tools=[')[1].split('];')[0];
-const links=[...primary.matchAll(/\['([^']+)','([^']+)'/g)].map(x=>x[1]);
-assert.equal(links[links.indexOf('ascolto.html')+1],'pipeline.html',
- 'Pipeline should be after Ascolto in the source, not reordered after mount');
-assert.ok(primary.includes("'Pipeline & opportunità'"));
+const links=[...control.matchAll(/\['([^']+)','([^']+)'/g)].map(x=>x[1]);
+assert.ok(links.includes('ascolto.html')&&links.includes('pipeline.html'),
+ 'Ascolto and Pipeline must remain in Administration, without DOM reordering');
+assert.ok(control.includes("'Pipeline & opportunità'"));
 assert.ok(!tools.includes("'pipeline.html'"),'Pipeline must have one menu owner');
 assert.ok(!order.includes('setInterval('),'Retired nav ordering script must never poll');
 assert.ok(!order.includes('insertBefore('),'No post-render navigation movement');
 assert.ok(producer.includes('if(apply())return;'),'Stop watching when the actual menu exists');
 assert.ok(producer.includes('if(apply())observer.disconnect()'));
 assert.ok(!producer.includes('new MutationObserver(apply)'));
-assert.ok(producer.includes("if(parts[0])holder.appendChild(parts[0]);"),
- 'Operational list stays visible without redundant accordion');
-assert.ok(!producer.includes("id:'kyv-dashboard-activity-collapse'"));
+assert.ok(producer.includes("id:'kyv-dashboard-activity-collapse'"),
+ 'Operational list starts closed in native disclosure');
+assert.ok(producer.includes('collapseNode(parts[0]'), 'Keep the original operational list inside disclosure');
 assert.ok(!producer.includes("['chartAndamento','chartTopArtisti'].forEach"),
  'Do not move Chart.js canvases out of v2.63 native disclosures');
 assert.ok(!producer.includes("const types=document.getElementById('tipo-ft-cards')"),
@@ -141,7 +142,7 @@ for(const token of [
  'body.kyv-v260 #kyv-mobile-bottom-nav a[aria-current="page"]',
  'body.kyv-v260 #kyv-help-modal [aria-label="Chiudi guida"]',
  'body.kyv-v260 .kyv-table-hint',
- 'body.kyv-v260 #kyv-dashboard-ops-collapses > .kyv-panel'
+ 'body.kyv-v260 #kyv-dashboard-ops-collapses .kyv-collapse-body > .kyv-panel'
 ])assert.ok(theme.includes(token),'Missing shared style: '+token);
 assert.ok(home.includes('id="home-analytics-details"'));
 assert.ok(home.includes('id="home-billing-types-details"'));
