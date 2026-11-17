@@ -235,7 +235,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
 
             <nav class="flex-1 overflow-y-auto py-4 custom-scrollbar px-3 space-y-3">
                 <div>
-                    <p class="px-3 text-[10px] font-black text-kyv-text uppercase tracking-wider mb-2">Ogni giorno</p>
+                    <p class="px-3 text-[10px] font-black text-kyv-text uppercase tracking-wider mb-2">Produttore</p>
                     <ul class="space-y-1">
                         ${navItem('dashboard', 'index.html', 'layout-dashboard', 'Oggi')}
                         ${navItem('calendar', 'kyv_calendar.html', 'calendar-days', 'Agenda', 'text-blue-300')}
