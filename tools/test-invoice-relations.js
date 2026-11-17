@@ -17,7 +17,7 @@ assert.ok(sheet.includes('data-invoice-id="${H(f.ID_FT)}"'),'Invoice rows must e
 assert.ok(invoices.includes("select('ID,IDFT')"),'Producer invoice module must read IDFT only as legacy ID relation');
 assert.ok(invoices.includes('return uniqueInvoices([...legacyOwn,...legacyDirect,...idftShared,...mapped]);'),'Producer context must combine valid legacy/direct invoices and override with allocations');
 assert.ok(invoices.includes('return uniqueInvoices([...legacyOwn,...direct,...idftShared,...mapped]);'),'Producer list must combine legacy and direct invoices and override with allocations');
-assert.ok(invoices.includes('legacy.filter(row=>!text(row.ID_PROGETTO)'),'Producer legacy cannot override another project ID');
+assert.ok(invoices.includes('const legacyOwn=legacy.filter(row=>')&&invoices.includes('text(row.ID_PROGETTO)===projectId'), 'Producer legacy cannot override another project ID');
 assert.ok(invoices.includes("text(row.ID_FT)===text(legacy.IDFT)"),'Project lists must use IDFT → ID_FT');
 assert.ok(invoices.includes("row.dataset.invoiceId"),'Invoice row opening must use ID_FT');
 assert.doesNotMatch(invoices,/eq\('Numero',project\.FT\)/,'Producer invoice module must not query by invoice number');
