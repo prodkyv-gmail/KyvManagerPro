@@ -17,4 +17,13 @@ assert.doesNotMatch(home,/new MutationObserver/,'Today Home must not add Mutatio
 assert.ok(config.includes("todayPriority.src='kyv-today-home-v5.js'"),'config must load Today Home v5');
 assert.ok(producer.includes('href="pipeline.html"'),'quick actions must expose Pipeline');
 assert.ok(sw.includes("'./kyv-today-home-v5.js'"),'PWA must cache Today Home v5');
+
+assert.match(home,/wrapper=document\.createElement\('details'\)/,'Cabina operativa collapsed on first render');
+assert.match(home,/kyv-today-cabin-collapse/);
+assert.match(producer,/kyv-dashboard-project-actions/,'Azioni progetto must be collapsible');
+assert.match(producer,/kyv-dashboard-activity-collapse/,'Attività da chiudere must be collapsible');
+assert.match(producer,/kyv-dashboard-shortcuts/,'Quick links must start collapsed');
+assert.match(producer,/kyv-dashboard-status-collapse/,'Stato operativo must be collapsible');
+assert.doesNotMatch(home,/wrapper\.open\s*=\s*true/,'Cabina must not open by default');
+
 console.log('OK: Today Home v5 is focused, read-only and integrated.');
