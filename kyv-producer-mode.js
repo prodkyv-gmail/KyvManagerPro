@@ -8,13 +8,14 @@ const primary=[
   ['kyv_calendar.html','Agenda','calendar-days','calendar'],
   ['acquisisci_audio.html','Nuovo','circle-plus','nuovo'],
   ['progetti.html','Progetti','music-2','progetti'],
-  ['kyv_scrivania_creativa.html','Scrivania creativa','calendar-range','creative'],
-  ['ascolto.html','Ascolto','headphones','ascolto'],
-  ['pipeline.html','Pipeline & opportunità','columns-3','pipeline'],
   ['kyv_audio_finder.html','Audio Finder','search-check','audiofinder'],
-  ['integrazioni.html','Tutte le app','grid-3x3','integrazioni']
+  ['editor.html','Studio Editor','database','editor']
 ];
 const control=[
+  ['kyv_scrivania_creativa.html','Scrivania creativa','calendar-range','creative'],
+  ['pipeline.html','Pipeline & opportunità','columns-3','pipeline'],
+  ['ascolto.html','Ascolto','headphones','ascolto'],
+  ['integrazioni.html','Tutte le app','grid-3x3','integrazioni'],
   ['fatture.html','Fatture emesse','receipt','fatture'],
   ['kyv_intelligence.html','KYV Intelligence','chart-no-axes-combined','intelligence'],
   ['kyv_analyst.html','KYV Analyst','brain-circuit','analyst'],
@@ -28,7 +29,6 @@ const control=[
 ];
 const tools=[
   ['clienti.html','Contatti','users','clienti'],
-  ['editor.html','Studio Editor','database','editor'],
   ['archivio_musicale.html','Archivio musicale','archive','archivio'],
   ['assistente.html','Percorso brano','route','assistente'],
   ['importexport.html','Import / Export','arrow-down-up','importexport'],
@@ -158,17 +158,24 @@ function collapseOperationalPanels(){
   holder.className='space-y-3 mb-6';
   pulse.parentNode.insertBefore(holder,pulse);
 
-  // The operational task list is the primary purpose of Oggi: keep it visible.
-  if(parts[0])holder.appendChild(parts[0]);
+  // Oggi: tutte le sezioni operative restano inizialmente chiuse.
+  if(parts[0]){
+    holder.appendChild(parts[0]);
+    collapseNode(parts[0],{
+      id:'kyv-dashboard-activity-collapse',
+      title:'Attività da chiudere',
+      subtitle:'Lista per urgenza, follow-up e scadenze.',
+      pastel:'lavender'
+    });
+  }
   if(parts[1]){
     holder.appendChild(parts[1]);
-    const ops=collapseNode(parts[1],{
+    collapseNode(parts[1],{
       id:'kyv-dashboard-status-collapse',
       title:'Stato operativo',
-      subtitle:'I segnali di controllo dello studio restano disponibili ma non occupano la Home.',
+      subtitle:'Segnali di controllo dello studio.',
       pastel:'sky'
     });
-    if(ops)holder.appendChild(ops);
   }
   pulse.remove();
 }
@@ -186,11 +193,24 @@ function dashboardProducerMode(){
   start.className='kyv-pastel-lavender mb-5 rounded-2xl border border-indigo-500/25 p-5 sm:p-6';
   start.innerHTML=`<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><p class="text-[10px] font-black uppercase tracking-[.18em] text-cyan-200">Prima registra, poi completa</p><h3 class="text-xl sm:text-2xl font-black text-white mt-1">Hai iniziato qualcosa?</h3><p class="text-xs sm:text-sm text-kyv-text mt-2 max-w-2xl">Basta un titolo provvisorio o un appunto. Artista, file, crediti, fee e tutti gli altri dettagli possono arrivare dopo.</p></div><a href="acquisisci_audio.html" class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black shrink-0"><i data-lucide="circle-plus" class="w-5 h-5 mr-2"></i>Nuovo</a></div>`;
   header.insertAdjacentElement('afterend',start);
+  collapseNode(start,{
+    id:'kyv-dashboard-project-actions',
+    title:'Azioni progetto',
+    subtitle:'Nuovo progetto e avvio rapido dei lavori.',
+    pastel:'lavender'
+  });
 
   const quick=document.querySelector('.kyv-quick-actions');
   if(quick){
     quick.innerHTML=`<a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a><a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a><a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a><a href="pipeline.html"><i data-lucide="columns-3" class="w-4 h-4 mr-2 text-amber-300"></i>Pipeline</a>`;
   }
+
+  if(quick)collapseNode(quick,{
+    id:'kyv-dashboard-shortcuts',
+    title:'Collegamenti rapidi',
+    subtitle:'Agenda, Progetti, Ascolto e Pipeline.',
+    pastel:'sky'
+  });
 
   const pulse=document.getElementById('studio-pulse');
   const controlBox=document.createElement('details');
