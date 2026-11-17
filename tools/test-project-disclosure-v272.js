@@ -48,7 +48,7 @@ assert.equal(nodes['quick-title'].textContent,'Demo & test');
 assert.equal(state.lastFocus,trigger);
 assert.equal(modal.hidden,false);assert.equal(focused,1);
 assert.equal((first.match(/<a /g)||[]).length,5,'All destinations and the canonical edit link survive, no duplicates');
-assert.ok(first.includes('href="editor.html?table=PROGETTI&editId=41"'),'Modify opens Studio Editor, not quick-edit duplicate');
+assert.ok(first.includes('href="editor.html?table=PROGETTI&amp;editId=41"'),'Modify opens Studio Editor with safely escaped query separator');
 assert.ok(first.indexOf('Azione principale del progetto')<first.indexOf('id="project-quick-info"'));
 assert.ok(first.includes('class="quick-primary" href="scheda_progetto.html?id=41"'));
 assert.ok(first.includes('sessioni.html?projectId=41'));
