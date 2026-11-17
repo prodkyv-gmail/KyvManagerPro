@@ -24,19 +24,11 @@ function nextAction(row){const v=text(row.SVILUPPO);return !v||/^(FINITA|COMPLET
 function normalizeFilter(v){const key=upper(v);if(key==='WIP')return'RECENTI';if(key==='USCITE')return'USCITI';return FILTERS.some(([k])=>k===key)?key:activeFilter;}
 function daysSince(ts){return ts?Math.max(0,Math.floor((Date.now()-ts)/86400000)):null;}
 function activityLabel(ts){if(!ts)return'Attività non datata';const d=daysSince(ts);if(d===0)return'Oggi';if(d===1)return'Ieri';if(d<45)return`${d} gg fa`;return new Date(ts).toLocaleDateString('it-IT');}
-function audioProjectId(row){return text(row.ID_PROGETTO||row.id_progetto||row.Progetto_ID||row.progetto_id);}
-function audioTimestamp(row){return Math.max(...['DATA_FILE','Data_Caricamento','Data_Documento','Data_Consegna','updated_at','created_at'].map(k=>dateValue(row[k])),0);}
 function audioName(row){return text(row.NOME_FILE||row.Nome_File||row.Titolo_Documento||row.TITOLO||row.Titolo||row.Progetto)||'Versione audio';}
 function audioLink(row){return text(row.LINK_FILE||row.Link_Drive||row.Link_Dropbox);}
 function audioSource(row){const p=upper(row.PROVIDER||row.provider);if(p.includes('DRIVE')||row.Link_Drive)return'Drive';if(p.includes('DROPBOX')||row.Link_Dropbox)return'Dropbox';return'Audio';}
 function latestAudioMap(){
-  const map=new Map();
-  audioRows.forEach((row,index)=>{
-    const pid=audioProjectId(row);if(!pid)return;
-    const score=audioTimestamp(row)||Number(row.ID_VERSIONE||row.ID_FILE||row.ID_DOCUMENTO||row.ID_CONSEGNA||index)||0;
-    const current=map.get(pid);if(!current||score>current.score)map.set(pid,{row,score});
-  });
-  return map;
+  return window.KYV_PROJECT_RELATIONS?.latestAudioByProject(audioRows)||new Map();
 }
 function projectMeta(row,audioMap){
   const audio=audioMap.get(String(row.ID))||null;

@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const read=f=>fs.readFileSync(f,'utf8');
 const scheda=read('scheda_progetto.html'),invoices=read('kyv-project-invoices.js'),summary=read('kyv-project-finance-summary.js'),split=read('kyv-invoice-split-v247.js'),fatture=read('fatture.html'),economy=read('kyv-economy-v6.js');
+const relations=read('kyv-project-relations.js');
 
 // 1) Economia: caso reale fattura 18 (1.875 €) intestata al progetto 15, citata via IDFT anche dal progetto 20.
 const host={};
@@ -22,12 +23,12 @@ const quoted=compute(projects,invoicesRows,[],'all',[{id_ft:18,id_progetto:15,pr
 assert.deepEqual(quoted.candidates.map(p=>p.ID),[99]);
 
 // 2) Scheda progetto: la fattura citata da IDFT e intestata ad altri non sparisce; la descrizione della quota ha la precedenza.
-assert.ok(scheda.includes('_idftShared')&&scheda.includes('Quota da ripartire'),'la Scheda mostra le fatture condivise da ripartire');
+assert.ok(relations.includes('_idftShared')&&scheda.includes('Quota da ripartire'),'la Scheda mostra le fatture condivise da ripartire');
 assert.ok(scheda.includes('ripartizione_fattura='),'dalla Scheda si apre la ripartizione della fattura');
-assert.ok(scheda.includes('quotaText')&&scheda.includes("a.descrizione"),'la descrizione della quota di questo progetto è mostrata');
-assert.ok(scheda.includes('function matchFatture(p){ return (state.fatture||[]).filter(f=>f._v247Shared||f._idftShared'),'le quote dei progetti non titolari restano visibili (prima venivano scartate da matchFatture)');
+assert.ok(relations.includes('detail.description||invoice.Descrizione'),'la descrizione della quota di questo progetto ha la precedenza');
+assert.ok(scheda.includes('function matchFatture(){ return state.fatture||[]; }'),'la Scheda non scarta il risultato condiviso già risolto');
 // 3) Moduli collegati.
-assert.ok(invoices.includes('idftShare')&&invoices.includes("select('id_ft,prezzo_unitario,descrizione')"),'kyv-project-invoices: quota con descrizione e fattura condivisa');
+assert.ok(invoices.includes('KYV_PROJECT_RELATIONS.resolveProjectInvoices')&&invoices.includes("select('id_ft,id_progetto,prezzo_unitario,descrizione')"),'kyv-project-invoices: quota con descrizione e resolver condiviso');
 assert.ok(invoices.includes("short:'Quota da ripartire'"),'kyv-project-invoices: stato esplicito');
 assert.ok(summary.includes('_idft_shared')&&summary.includes('data-kyv-finance-split')&&summary.includes('ripartizione_progetto='),'riepilogo progetto: fattura condivisa e «Fattura su più progetti»');
 // 4) Split: parte dai progetti citati da IDFT, apre da ?ripartizione_fattura, niente finestre del browser.
@@ -35,5 +36,5 @@ assert.ok(split.includes("IDFT")&&split.includes('citedIds'),'lo split propone i
 assert.ok(split.includes('ripartizione_fattura'),'lo split si apre da ?ripartizione_fattura');
 assert.doesNotMatch(split,/\b(?:confirm|alert)\(/,'lo split non usa confirm()/alert() del browser');
 // 5) Fatture: badge «Condivisa da N progetti».
-assert.ok(fatture.includes('correlazioneIdftMapGlobal')&&fatture.includes('Condivisa da')&&fatture.includes('data-split-invoice'),'Fatture mostra le fatture condivise con il pulsante Ripartisci');
+assert.ok(fatture.includes('KYV_PROJECT_RELATIONS')&&fatture.includes('projectsForInvoice')&&fatture.includes('Condivisa da')&&fatture.includes('data-split-invoice'),'Fatture mostra le fatture condivise con il pulsante Ripartisci');
 console.log('OK: fatture condivise tra più progetti — v2.85.');

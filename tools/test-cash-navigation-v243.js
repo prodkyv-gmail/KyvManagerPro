@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
 const read=p=>fs.readFileSync(p,'utf8');
+const relations=require('../kyv-project-relations.js');
 const html=read('fatture.html'),menu=read('menu.js');
 const sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
 for(const p of ['kyv_intelligence.html','kyv_analyst.html','kyv_ritorni_progetti.html','kyv_liquidazioni.html']){
@@ -44,7 +45,7 @@ assert.ok(html.includes('Incassata (storico): data bancaria non documentata'));
 assert.ok(html.includes("if(fatRes.error || projRes.error) throw (fatRes.error || projRes.error)"));
 assert.ok(html.includes('Caricamento non riuscito'));
 assert.ok(html.includes("correlazioneFattureGlobal = [];"),'Read errors must clear stale invoice list');
-const functionMatch=html.match(/window\.applyCorrelazioneFilters = function\(\) \{([\s\S]*?)\n        \}\n        document\.addEventListener\('DOMContentLoaded'/);
+const functionMatch=html.match(/window\.applyCorrelazioneFilters = function\(\) \{([\s\S]*?)\r?\n        \}\r?\n        document\.addEventListener\('DOMContentLoaded'/);
 assert.ok(functionMatch,'Fatture filtering/cash summary function must exist');
 const states={
   1:{kind:'paid',total:100,received:100,remaining:0,legacyPaid:true},
@@ -60,12 +61,12 @@ const rows=[
 ];
 const elements=new Map();
 const el=id=>{if(!elements.has(id))elements.set(id,{value:'',innerText:'',innerHTML:''});return elements.get(id)};
-const window={KYV_COLLECTIONS_V236:{paymentState:f=>states[f.ID_FT]}};
+const window={KYV_COLLECTIONS_V236:{paymentState:f=>states[f.ID_FT]},KYV_PROJECT_RELATIONS:relations};
 const H=v=>String(v??'');
 const KYV={isPaid:v=>String(v).toUpperCase()==='SI'};
 const fmtEuro={format:x=>'EUR '+Number(x).toFixed(2)};
 const sandbox={window,document:{getElementById:el},correlazioneFattureGlobal:rows,
- correlazioneProjMapGlobal:{},correlazioneIdftMapGlobal:{},fmtEuro,H,KYV,parseKyvNumber:Number,Date};
+ correlazioneProjectsGlobal:[],correlazioneProjMapGlobal:{},correlazioneIdftMapGlobal:{},fmtEuro,H,KYV,parseKyvNumber:Number,Date};
 vm.runInNewContext('window.applyCorrelazioneFilters = function(){'+functionMatch[1]+'\n};',sandbox);
 window.applyCorrelazioneFilters();
 assert.equal(el('tot-pagate').innerText,'EUR 140.00','Fully received invoices only');
@@ -79,11 +80,11 @@ assert.match(el('tbody-ft-nopag').innerHTML,/data-kyv-edit-id="2"/);
 assert.match(el('tbody-ft-nopag').innerHTML,/Incassata parzialmente/);
 assert.match(el('tbody-ft-pag').innerHTML,/data bancaria non documentata/);
 // v2.85: fattura citata (IDFT) da più progetti e senza quote → «Condivisa da N progetti» con pulsante Ripartisci.
-rows[1].ID_PROGETTO=7;sandbox.correlazioneProjMapGlobal={7:'Progetto Alfa'};sandbox.correlazioneIdftMapGlobal={'2':['Progetto Beta']};
+rows[1].ID_PROGETTO=7;sandbox.correlazioneProjectsGlobal=[{ID:7,TITOLO:'Progetto Alfa'},{ID:20,TITOLO:'Progetto Beta',IDFT:2}];
 window.applyCorrelazioneFilters();
 assert.match(el('tbody-ft-nopag').innerHTML,/Condivisa da 2 progetti/);
 assert.match(el('tbody-ft-nopag').innerHTML,/data-split-invoice="2"/);
-rows[1].ID_PROGETTO=null;sandbox.correlazioneProjMapGlobal={};sandbox.correlazioneIdftMapGlobal={};
+rows[1].ID_PROGETTO=null;sandbox.correlazioneProjectsGlobal=[];sandbox.correlazioneProjMapGlobal={};sandbox.correlazioneIdftMapGlobal={};
 el('correlazione-search').value='Cliente Beta';
 window.applyCorrelazioneFilters();
 assert.equal(el('tot-pagate').innerText,'EUR 0.00');

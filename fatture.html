@@ -248,7 +248,7 @@
         function parseKyvNumber(val) { return (window.KYV_HELPERS ? KYV_HELPERS.parseKyvNumber(val) : KYV.parseNumber(val)); }
         const H = (value) => KYV.safeHtml(value ?? '');
 
-        let correlazioneFattureGlobal = [], correlazioneProjMapGlobal = {}, correlazioneIdftMapGlobal = {};
+        let correlazioneFattureGlobal = [], correlazioneProjectsGlobal = [], correlazioneProjMapGlobal = {}, correlazioneIdftMapGlobal = {};
         function renderManualInvoiceHelp(){
             const projectId = new URLSearchParams(location.search).get('collegaProgetto');
             const help = document.getElementById('kyv-manual-invoice-link');
@@ -268,11 +268,11 @@
             try {
                 const [fatRes, projRes] = await Promise.all([supabaseClient.from('FATTURE').select('ID_FT, Numero, Numero_Originale, Data, Denominazione, Descrizione, ImportoTotaleDocumento, PrezzoUnitario, PrezzoTotale, ImportoPagamento, PAGATA, ID_PROGETTO, DataScadenzaPagamento, XML_SHA256').order('Data', { ascending: false }), supabaseClient.from('PROGETTI').select('ID, TITOLO, IDFT')]);
                 if(fatRes.error || projRes.error) throw (fatRes.error || projRes.error);
-                correlazioneProjMapGlobal = {}; correlazioneIdftMapGlobal = {}; if(projRes.data) projRes.data.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; const ft = String(p.IDFT ?? '').trim(); if(ft) (correlazioneIdftMapGlobal[ft] = correlazioneIdftMapGlobal[ft] || []).push(p.TITOLO || ('Progetto #' + p.ID)); });
+                correlazioneProjectsGlobal = projRes.data || []; correlazioneProjMapGlobal = {}; correlazioneIdftMapGlobal = {}; correlazioneProjectsGlobal.forEach(p => { correlazioneProjMapGlobal[p.ID] = p.TITOLO; const ft = String(p.IDFT ?? '').trim(); if(ft) (correlazioneIdftMapGlobal[ft] = correlazioneIdftMapGlobal[ft] || []).push(p.TITOLO || ('Progetto #' + p.ID)); });
                 correlazioneFattureGlobal = fatRes.data || []; await window.KYV_INVOICE_SPLIT_V247?.refresh?.(); window.applyCorrelazioneFilters(); renderManualInvoiceHelp();
             } catch(e) {
                 correlazioneFattureGlobal = [];
-                correlazioneProjMapGlobal = {}; correlazioneIdftMapGlobal = {};
+                correlazioneProjectsGlobal = []; correlazioneProjMapGlobal = {}; correlazioneIdftMapGlobal = {};
                 document.getElementById('kyv-invoice-filter-status').textContent = 'Registro fatture non disponibile · Ricarica per riprovare. Ricerca mantenuta; non interpretare i totali come zero.';
                 console.error('[KYV Fatture] Caricamento non riuscito', e);
                 if(errorNode){
@@ -292,12 +292,12 @@
             let hNopag = [], hPag = [], sumDaIncassare = 0, sumPagate = 0, sumIncassatoTutti = 0, sumAccontiAperti = 0;
             correlazioneFattureGlobal.forEach(f => {
                 const multi = window.KYV_INVOICE_SPLIT_V247?.names(f.ID_FT);
-                // Collegamenti storici (PROGETTI.IDFT): finché non esistono quote, la fattura è «condivisa» e va ripartita.
-                const idftTitles = multi?.length ? [] : (correlazioneIdftMapGlobal[String(f.ID_FT)] || []);
-                const ownerTitle = f.ID_PROGETTO ? correlazioneProjMapGlobal[f.ID_PROGETTO] : null;
-                const sharedTitles = [...new Set([ownerTitle, ...idftTitles].filter(Boolean))];
+                // Senza quote esplicite, il riepilogo usa lo stesso contratto di Scheda e Progetti.
+                const sharedTitles = multi?.length ? multi.map(x=>x.title) : window.KYV_PROJECT_RELATIONS
+                    .projectsForInvoice({invoice:f,projects:correlazioneProjectsGlobal})
+                    .map(link=>link.project.TITOLO || ('Progetto #' + link.project.ID));
                 const needsSplit = !multi?.length && sharedTitles.length > 1;
-                let linkedProj = multi?.length ? multi.map(x=>x.title).join(' · ') : (sharedTitles.length ? sharedTitles.join(' · ') : null);
+                let linkedProj = sharedTitles.length ? sharedTitles.join(' · ') : null;
                 let combinedStr = `${f.Numero} ${f.Numero_Originale||''} ${f.Denominazione} ${f.Descrizione} ${linkedProj}`.toLowerCase();
                 if (searchTxt && !combinedStr.includes(searchTxt)) return;
                 const stat = window.KYV_COLLECTIONS_V236?.paymentState(f);

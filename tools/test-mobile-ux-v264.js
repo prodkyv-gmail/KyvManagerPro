@@ -66,7 +66,7 @@ assert.equal(classes.has('hidden'),true);
 assert.equal(openerFocus,1,'Focus must return to the invoking control');
 assert.ok(menu.includes("if (helpOpen && event.key === 'Tab')"));
 assert.ok(menu.includes("if (event.key !== 'Escape') return;"));
-assert.ok(menu.includes("if (helpOpen) {\n        event.preventDefault();\n        closeHelpModal();"));
+assert.match(menu,/if \(helpOpen\) \{\r?\n        event\.preventDefault\(\);\r?\n        closeHelpModal\(\);/);
 assert.ok(menu.includes("const first=buttons[0],last=buttons[buttons.length-1]"));
 assert.ok(menu.includes("toggleMobileMenu(false)"),'Existing Escape sidebar close kept');
 // Exercise actual responsive enhancer, including row-only mutations, with lightweight DOM.
@@ -135,7 +135,7 @@ assert.equal(c2.getAttribute('data-label'),'Etichetta esplicita','Custom labels 
 assert.ok(responsive.includes('const changed = new Map()'));
 assert.ok(responsive.includes('changed.forEach((rows, table) => enhanceTable(table, rows))'));
 assert.ok(responsive.includes("node.querySelectorAll('tr')"));
-assert.ok(!responsive.includes('if (table) enhanceTable(table);\n                    if (node.querySelectorAll) enhanceTables(node)'),
+assert.doesNotMatch(responsive,/if \(table\) enhanceTable\(table\);\r?\n                    if \(node\.querySelectorAll\) enhanceTables\(node\)/,
  'Removed full-table scan on each DOM mutation');
 assert.ok(responsive.includes("window.KYV_RESPONSIVE = { enhanceTables };"));
 for(const token of [

@@ -264,31 +264,14 @@
                 has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT',500,issues):[],
                 safeTextRows('Spese Extra',['Descrizione','Categoria'],[p.TITOLO,p.ARTISTA],'ID_SPESE',issues)
             ]);
-            // Unisci FATTURE.ID_PROGETTO e PROGETTI.IDFT: alcuni progetti usano entrambe le relazioni.
-            // La deduplicazione per ID_FT evita il conteggio doppio della stessa fattura.
-            const fatture=mergeRows([
-                fattureByProject,
-                fattureById.filter(f=>!has(f.ID_PROGETTO)||String(f.ID_PROGETTO)===String(p.ID))
-            ],'ID_FT');
-            // Fattura citata dal vecchio campo IDFT ma intestata a un altro progetto, senza quote: va mostrata (quota da ripartire), non nascosta.
-            const foreignIds=fattureById.filter(f=>has(f.ID_PROGETTO)&&String(f.ID_PROGETTO)!==String(p.ID)).map(f=>String(f.ID_FT));
-            const foreignShares=foreignIds.length?await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.in('id_ft',foreignIds),'id',500,issues):[];
-            const quotedForeign=new Set(foreignShares.map(a=>String(a.id_ft)));
-            const idftShared=fattureById.filter(f=>foreignIds.includes(String(f.ID_FT))&&!quotedForeign.has(String(f.ID_FT))).map(f=>({...f,PrezzoUnitario:'0',PrezzoTotale:'0',XML_SHA256:null,_idftShared:true}));
-            // v2.47: invoice allocations supersede the old single-project reference.
+            // Le letture restano mirate; il modulo condiviso decide precedenze e deduplicazione.
             const ownerShares=await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.eq('id_progetto',p.ID),'id',500,issues);
-            const byInvoice=new Map();
-            for(const a of ownerShares)byInvoice.set(String(a.id_ft),(byInvoice.get(String(a.id_ft))||0)+Number(a.prezzo_unitario));
-            const linkedIds=[...byInvoice.keys()];
+            const linkedIds=[...new Set(ownerShares.map(a=>String(a.id_ft)).filter(Boolean))];
             const sharedDocs=linkedIds.length?await safeFilteredTable('FATTURE',q=>q.in('ID_FT',linkedIds),'ID_FT',500,issues):[];
-            const existingIds=fatture.map(f=>f.ID_FT);
-            const existingShares=existingIds.length?await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.in('id_ft',existingIds),'id',500,issues):[];
-            const explicitIds=new Set(existingShares.map(a=>String(a.id_ft)));
-            // La descrizione scritta per la quota di questo progetto vale più di quella generale del documento.
-            const quotaText=new Map();
-            for(const a of ownerShares){const d=String(a.descrizione??'').trim();if(d)quotaText.set(String(a.id_ft),[...(quotaText.get(String(a.id_ft))||[]),d]);}
-            const explicitDocs=sharedDocs.map(f=>({...f,Descrizione:(quotaText.get(String(f.ID_FT))||[]).join(' · ')||f.Descrizione,PrezzoUnitario:String(byInvoice.get(String(f.ID_FT))),PrezzoTotale:String(byInvoice.get(String(f.ID_FT))),XML_SHA256:null,_v247Shared:true}));
-            const projectInvoices=mergeRows([explicitDocs,fatture.filter(f=>!explicitIds.has(String(f.ID_FT))),idftShared],'ID_FT');
+            const invoiceDocs=mergeRows([fattureByProject,fattureById,sharedDocs],'ID_FT');
+            const invoiceIds=invoiceDocs.map(f=>f.ID_FT).filter(id=>id!==null&&id!==undefined);
+            const relevantShares=invoiceIds.length?await safeFilteredTable('FATTURE_RIPARTIZIONI',q=>q.in('id_ft',invoiceIds),'id',1000,issues):[];
+            const projectInvoices=window.KYV_PROJECT_RELATIONS.resolveProjectInvoices({project:p,invoices:invoiceDocs,allocations:relevantShares});
             return {audio,versions,documenti,consegne,siae,siaeVert,imaie,invii:mergeRows([inviiByProject,inviiByFile],'ID_INVIO'),fatture:projectInvoices,spese:mergeRows([speseByProject,speseFallback],'ID_SPESE'),readIssues:issues};
         }
         async function refreshAll(){
@@ -330,23 +313,16 @@
 
         function matchByProjectId(rows, p){ return (rows||[]).filter(r=>has(r.ID_PROGETTO) && String(r.ID_PROGETTO)===String(p.ID)); }
         function matchByTitle(rows, p, titleFields=['Titolo','TITOLO_OPERA','Progetto']){ const pt=N(p.TITOLO); if(!pt) return []; return (rows||[]).filter(r=>titleFields.some(f=>N(r[f]).includes(pt)||pt.includes(N(r[f])))); }
-        function normalizeUnifiedAudio(a){ const drive=N(a.PROVIDER)==='drive'; return {...a, ID_FILE:a.ID_FILE||`v-${a.ID_VERSIONE}`, Nome_File:a.Nome_File||a.NOME_FILE, Titolo:a.Titolo||a.TITOLO, Artista:a.Artista||a.ARTISTA, Titolo_Documento:a.Titolo_Documento||a.NOME_FILE||a.TITOLO, Tipo_File:a.Tipo_File||a.TIPO_VERSIONE, Versione:a.Versione||a.ETICHETTA_VERSIONE, Link_Drive:drive?(a.Link_Drive||a.LINK_FILE):a.Link_Drive, Link_Dropbox:drive?a.Link_Dropbox:(a.Link_Dropbox||a.LINK_FILE), Hash_SHA256:a.Hash_SHA256||a.CONTENT_HASH, Data_Caricamento:a.Data_Caricamento||a.DATA_FILE, _source:drive?'drive':'audio'}; }
         function matchAudio(p){
-            const unified=state.versions.map(normalizeUnifiedAudio);
-            const fromVersions=matchByProjectId(unified,p);
-            const fromDropbox=matchByProjectId(state.audio,p);
-            // Non scegliere solo una fonte: VERSIONI e DROPBOX possono coesistere nello stesso progetto.
-            if(fromVersions.length||fromDropbox.length)
-                return mergeRows([fromDropbox,fromVersions],'ID_FILE');
-            const title=N(p.TITOLO),artist=N(p.ARTISTA);
-            return state.audio.filter(a=>{const blob=N([a.Progetto,a.Titolo,a.Artista,a.Nome_File].join(' '));return (title&&blob.includes(title))||(artist&&blob.includes(artist));});
+            const linked=window.KYV_PROJECT_RELATIONS.resolveProjectAudio({project:p,audioVersions:state.versions,dropboxFiles:state.audio});
+            return mergeRows([linked.dropbox,linked.versions],'ID_FILE');
         }
         function matchConsegne(p){ const audio=matchAudio(p).map(a=>({ ...a, Link_Dropbox:a.Link_Dropbox, Hash_File:a.Hash_SHA256, _source:a._source||'audio' })); const title=N(p.TITOLO); const legacy=state.consegne.filter(c=>{ const cp=N(c.Progetto); return title && cp && (cp.includes(title)||title.includes(cp)); }); return [...audio,...legacy]; }
         function matchInvii(p, audio){ const ids=new Set((audio||[]).map(a=>String(a.ID_FILE))); const byFile=state.invii.filter(i=>ids.has(String(i.ID_FILE))); const byProject=matchByProjectId(state.invii,p); return [...new Map([...byFile,...byProject].map(i=>[String(i.ID_INVIO),i])).values()]; }
-        function isDriveAudioDoc(d){ return /audio[_ -]?drive|versione audio/i.test(String(d.Tipo_Documento||'')); }
-        function matchDriveAudio(p){ return matchByProjectId(state.documenti,p).filter(isDriveAudioDoc).map(d=>({...d,_source:'drive',Link_Dropbox:d.Link_Drive})); }
+        function isDriveAudioDoc(d){ return window.KYV_PROJECT_RELATIONS.isDriveAudioDocument(d); }
+        function matchDriveAudio(p){ return window.KYV_PROJECT_RELATIONS.resolveProjectAudio({project:p,driveDocuments:state.documenti}).drive; }
         function matchDocs(p){ const byId=matchByProjectId(state.documenti,p).filter(d=>!isDriveAudioDoc(d)); const inline=[]; if(has(p['Contratto link'])) inline.push({ID_DOCUMENTO:'contratto', Tipo_Documento:'Contratto principale', Titolo_Documento:p.TITOLO, Link_Drive:p['Contratto link'], Data_Documento:p['Data Contratto'], Fonte:'PROGETTI.Contratto link'}); if(has(p.LINK)) inline.push({ID_DOCUMENTO:'drive', Tipo_Documento:'Cartella Drive progetto', Titolo_Documento:p.TITOLO, Link_Drive:p.LINK, Data_Documento:null, Fonte:'PROGETTI.LINK'}); return [...inline,...byId]; }
-        function matchFatture(p){ return (state.fatture||[]).filter(f=>f._v247Shared||f._idftShared||(has(f.ID_PROGETTO)&&String(f.ID_PROGETTO)===String(p.ID))||(has(p.IDFT)&&String(f.ID_FT)===String(p.IDFT)&&(!has(f.ID_PROGETTO)||String(f.ID_PROGETTO)===String(p.ID)))); }
+        function matchFatture(){ return state.fatture||[]; }
         function matchSpese(p){ const title=N(p.TITOLO); const artist=N(p.ARTISTA); return state.spese.filter(s=>{ if(Number(s.ID_PROGETTO)===Number(p.ID)) return true; const blob=N([s.Descrizione,s.Categoria].join(' ')); return (title && blob.includes(title)) || (artist && blob.includes(artist)); }); }
         function matchSiae(p){ return [...matchByTitle(state.siaeVert,p,['Titolo']), ...matchByTitle(state.siae,p,['Titolo'])]; }
         function matchImaie(p){ return matchByTitle(state.imaie,p,['TITOLO_OPERA']); }

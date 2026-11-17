@@ -100,7 +100,7 @@ for(const token of [
  'body.kyv-v260 #kyv-easy-wizard',
  'body.kyv-v260 #quick-edit-modal'
 ])assert.ok(theme.includes(token),'Shared theme must style the original component: '+token);
-assert.ok(theme.includes('body.kyv-v260.kyv-easy-mode #kyv-v2-next,\nbody.kyv-v260.kyv-easy-mode .kyv-project-progressive {\n  display: none !important;'),
+assert.match(theme,/body\.kyv-v260\.kyv-easy-mode #kyv-v2-next,\r?\nbody\.kyv-v260\.kyv-easy-mode \.kyv-project-progressive \{\r?\n  display: none !important;/,
  'Redundant easy-mode shortcuts must be hidden, without destroying complete-mode content');
 const sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
 assert.equal(pkg.version,(require('./release-contract').version()+'.0'));

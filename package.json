@@ -6,7 +6,8 @@
   "scripts": {
     "check:js": "node tools/check-js-syntax.js",
     "check:assets": "node tools/check-local-assets.js",
-    "check:data-quality": "node tools/test-data-quality.js",
+    "check:data-quality": "node tools/test-data-quality.js && npm run check:project-relations",
+    "check:project-relations": "node tools/test-project-relations.js",
     "check:project-sheet": "node tools/test-project-sheet-loading.js",
     "check:integrations": "node tools/check-integrations.js",
     "check:safety": "node tools/test-interaction-safety.js",

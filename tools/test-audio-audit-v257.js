@@ -69,7 +69,7 @@ assert.ok(ui.includes("A.report({catalogue,decisions,links,projects,preview})"))
 assert.ok(ui.includes('function renderAudit()')&&ui.includes('function focusAuditPending(name)'));
 assert.ok(ui.includes('data-audit-file')&&ui.includes('data-audit-pending'));
 assert.ok(ui.includes("renderExplorer();renderAudit();info('Anteprima scartata"));
-assert.ok(ui.includes(' updateScanSelected();\n renderAudit();'));
+assert.match(ui,/ updateScanSelected\(\);\r?\n renderAudit\(\);/);
 for(const id of ['finder-audit','audit-kpis','audit-coverage','audit-status',
  'audit-items','audit-more','audit-query','audit-type','audit-source'])assert.ok(html.includes('id="'+id+'"'),id);
 assert.ok(html.includes('kyv-audio-audit-v257.js'));

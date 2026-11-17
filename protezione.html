@@ -231,12 +231,15 @@ ARTISTA - TITOLO - ANNO
         }
 
         function matchConsegna(project) {
-            const id = String(project.ID || '');
             const title = project.TITOLO || '';
-            const audioByProject = (protectionDatasets.audioFiles || []).find(item => id && String(item.ID_PROGETTO || '') === id);
-            const audioByTitle = matchByTitle(protectionDatasets.audioFiles, title, ['Titolo', 'Progetto', 'Nome_File']);
+            const audio = window.KYV_PROJECT_RELATIONS.resolveProjectAudio({
+                project,
+                audioVersions: protectionDatasets.audioVersions,
+                dropboxFiles: protectionDatasets.audioFiles,
+                driveDocuments: protectionDatasets.documenti
+            }).files;
             const legacyByTitle = matchByTitle(protectionDatasets.consegne, title, ['Progetto']);
-            const found = audioByProject || audioByTitle || legacyByTitle || null;
+            const found = audio[0] || legacyByTitle || null;
             if (found && found.Link_Dropbox && !found.Hash_File && found.Hash_SHA256) found.Hash_File = found.Hash_SHA256;
             return found;
         }
@@ -247,10 +250,10 @@ ARTISTA - TITOLO - ANNO
         }
 
         function matchFatture(project) {
-            const id = String(project.ID || '');
-            const idft = String(project.IDFT || project.FT || '');
-            return (protectionDatasets.fatture || []).filter(f => {
-                return (id && String(f.ID_PROGETTO || '') === id) || (idft && (String(f.ID_FT || '') === idft || String(f.Numero || '') === idft));
+            return window.KYV_PROJECT_RELATIONS.resolveProjectInvoices({
+                project,
+                invoices: protectionDatasets.fatture,
+                allocations: protectionDatasets.ripartizioni
             });
         }
 
@@ -457,9 +460,11 @@ ARTISTA - TITOLO - ANNO
                 protectionDatasets = {
                     progetti: await safeTable('PROGETTI'),
                     consegne: await safeTable('CONSEGNE_MASTER'),
+                    audioVersions: await safeTable('AUDIO_VERSIONI'),
                     audioFiles: await safeTable('DROPBOX_AUDIO_FILES'),
                     documenti: await safeTable('DOCUMENTI_PROGETTO'),
                     fatture: await safeTable('FATTURE'),
+                    ripartizioni: await safeTable('FATTURE_RIPARTIZIONI'),
                     siaeVerticale: await safeTable('EXPORT SIAE VERTICALE'),
                     siae: await safeTable('EXPORT SIAE'),
                     imaie: await safeTable('ESTRATTO_IMAIE')
