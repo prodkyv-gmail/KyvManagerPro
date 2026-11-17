@@ -1012,6 +1012,31 @@
             } finally { editorInlineWrites = Math.max(0,editorInlineWrites-1); }
         });
 
+        // Modifica (PROGETTI): ingresso diretto dalla lista Produttore.
+        // Legge il record completo per ID, senza usare righe parziali o dati di riepilogo.
+        async function openRequestedProjectFromUrl() {
+            const params = new URLSearchParams(location.search);
+            if(params.get('table') !== 'PROGETTI' || !params.has('editId')) return;
+            const rawId = String(params.get('editId') || '').trim();
+            if(!/^[1-9][0-9]{0,14}$/.test(rawId) || !Number.isSafeInteger(Number(rawId))) {
+                showToast('Identificativo progetto non valido. Apri di nuovo il progetto dalla lista.', true);
+                return;
+            }
+            try {
+                const { data, error } = await supabaseClient.from('PROGETTI')
+                    .select('*').eq('ID',rawId).maybeSingle();
+                if(error) throw error;
+                if(!data || String(data.ID)!==rawId)
+                    throw new Error('Progetto non trovato o non accessibile.');
+                // Usa il modulo ORIGINALE di Studio Editor e tutti i suoi campi.
+                // Il rowOverride evita di perdere i record non ancora caricati nella griglia.
+                window.openDynamicModal(data.ID,'PROGETTI',data);
+            } catch(error) {
+                console.warn('[KYV Editor] Apertura PROGETTI da navigazione:',error);
+                showToast('Impossibile aprire Modifica (PROGETTI): '+(error.message||'riprova'),true);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             supabaseClient = KYV.createSupabaseClient();
             
@@ -1023,6 +1048,8 @@
             supabaseClient.from('FATTURE').select('ID_FT, Numero, Denominazione, Data, PrezzoTotale, PrezzoUnitario').then(({data}) => { if (data) globalInvoicesList = data; });
 
             loadEditorTable('PROGETTI');
+            // Non attendere la lettura dell’intero archivio per aprire il record scelto.
+            openRequestedProjectFromUrl();
         });
     </script>
 </body>
