@@ -78,8 +78,8 @@ async function loadValues(force=false){
   }).catch(error=>{
     console.warn('[KYV editor project fields] suggerimenti non disponibili',error);
     state.valuesPromise=null;
-    state.values={};
-    return state.values;
+    state.values=null;
+    throw error;
   });
   return state.valuesPromise;
 }
@@ -129,8 +129,23 @@ async function enhanceProjectModal(){
   if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='PROGETTI')return;
   const root=document.getElementById('dynamic-form-fields');
   if(!root)return;
-  const values=await loadValues();
+  let values;
+  try{values=await loadValues();}
+  catch(error){
+    if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='PROGETTI'||!root.isConnected)return;
+    let warning=root.querySelector('#kyv-project-combo-read-warning');
+    if(!warning){
+      warning=document.createElement('div');
+      warning.id='kyv-project-combo-read-warning';
+      warning.setAttribute('role','status');
+      warning.className='md:col-span-2 lg:col-span-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100';
+      root.prepend(warning);
+    }
+    warning.textContent='Suggerimenti non verificabili: non è stato possibile leggere i valori già usati nei progetti. I valori dei campi restano modificabili manualmente. Riapri la scheda per riprovare.';
+    return;
+  }
   if(window.KYV_EDITOR_ACTIVE_MODAL_TABLE!=='PROGETTI'||!root.isConnected)return;
+  root.querySelector('#kyv-project-combo-read-warning')?.remove();
   root.querySelectorAll('.dyn-input[data-key]').forEach(input=>{
     const key=input.dataset.key;
     const type=String(input.getAttribute('type')||'text').toLowerCase();
