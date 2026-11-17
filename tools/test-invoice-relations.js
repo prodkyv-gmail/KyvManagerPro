@@ -5,7 +5,7 @@ const finance=fs.readFileSync('kyv-project-finance-summary.js','utf8');
 const economy=fs.readFileSync('kyv-economy-v6.js','utf8');
 const quality=fs.readFileSync('kyv-data-quality.js','utf8');
 
-assert.ok(sheet.includes("safeProjectRows('FATTURE',p.ID,'ID_FT')"),'Scheda must link by FATTURE.ID_PROGETTO');
+assert.ok(sheet.includes("safeProjectRows('FATTURE',p.ID,'ID_FT',issues)"),'Scheda must link by FATTURE.ID_PROGETTO');
 assert.ok(sheet.includes("q=>q.eq('ID_FT',p.IDFT)"),'Scheda must support PROGETTI.IDFT → FATTURE.ID_FT');
 assert.ok(sheet.includes('const fatture=mergeRows(['),'Scheda must combine direct and legacy invoice sources');
 assert.ok(sheet.includes("has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT')")&&sheet.includes('_idftShared'),'Scheda must read the IDFT invoice and flag it as shared when it belongs to another project');
