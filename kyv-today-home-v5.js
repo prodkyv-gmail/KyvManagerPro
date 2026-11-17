@@ -84,7 +84,15 @@ function mount(){
  const start=document.getElementById('kyv-producer-start'),quick=document.querySelector('.kyv-quick-actions'),header=document.querySelector('main section > header');
  if(!header)return null;
  panel=document.createElement('section');panel.id='kyv-today-home-v5';panel.className='kyv-panel p-4 sm:p-5';
- if(start)start.insertAdjacentElement('afterend',panel);else if(quick)quick.insertAdjacentElement('beforebegin',panel);else header.insertAdjacentElement('afterend',panel);
+ const wrapper=document.createElement('details');
+ wrapper.id='kyv-today-cabin-collapse';wrapper.className='kyv-collapse kyv-pastel-lavender mb-5';
+ wrapper.innerHTML='<summary><span class="text-sm font-black text-white">Cabina operativa</span><span class="text-xs text-kyv-text"> · Priorità, incassi e cose da controllare</span><i data-lucide="chevron-down" class="kyv-collapse-chevron w-5 h-5 text-kyv-text"></i></summary>';
+ wrapper.appendChild(panel);
+ const projectActions=start?.closest('#kyv-dashboard-project-actions');
+ if(projectActions)projectActions.insertAdjacentElement('afterend',wrapper);
+ else if(start)start.insertAdjacentElement('afterend',wrapper);
+ else if(quick)quick.insertAdjacentElement('beforebegin',wrapper);
+ else header.insertAdjacentElement('afterend',wrapper);
  return panel;
 }
 function render(projects,invoices,sends){

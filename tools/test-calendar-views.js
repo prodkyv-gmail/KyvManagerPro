@@ -296,4 +296,13 @@ assert.deepEqual(selected.map(x=>x.title),['Today','Tomorrow','All-day']);
 assert.deepEqual(h.eventsInRange([],period),[]);
 assert.deepEqual(h.eventsInRange([{date:'2026-11-08'}],null),[]);
 
+
+const agendaUi=read('kyv-agenda-phase5.js');
+assert.match(agendaUi,/panel=document\.createElement\('details'\)/,'Organization starts closed');
+assert.match(agendaUi,/kyv-agenda-planning-collapse/,'Planning form uses native disclosure');
+assert.match(agendaUi,/layout\.insertAdjacentElement\('afterend',panel\)/,'Organization goes below Calendar');
+assert.match(page,/\.kyv-calendar-main\s*\{\s*order:-1;/,'Calendar stays at top');
+assert.match(page,/\.kyv-calendar-layout\s*\{\s*display:flex;\s*flex-direction:column/,'Calendar gets full width');
+assert.doesNotMatch(agendaUi,/details\.open\s*=\s*true/,'Planning and organization start closed');
+
 console.log('Viste calendario: OK');

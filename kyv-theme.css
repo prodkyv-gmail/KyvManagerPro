@@ -1456,16 +1456,17 @@ body.kyv-v260 .kyv-table-shell :is(button,a,select,input):focus-visible {
  outline:3px solid var(--kyv-ui-focus);
  outline-offset:2px;
 }
-body.kyv-v260 #kyv-dashboard-ops-collapses > .kyv-panel {
+body.kyv-v260 #kyv-dashboard-ops-collapses .kyv-collapse-body > .kyv-panel {
  border:1px solid var(--kyv-ui-border);
  border-radius:var(--kyv-ui-radius);
  background:linear-gradient(140deg,#192234,#121a28);
 }
-body.kyv-v260 #kyv-dashboard-ops-collapses > .kyv-panel .activity-filter {
+body.kyv-v260 #kyv-dashboard-ops-collapses .kyv-collapse-body > .kyv-panel .activity-filter {
  min-height:40px;
 }
 body.kyv-v260 #kyv-dashboard-control > summary,
-body.kyv-v260 #kyv-dashboard-status-collapse > summary {
+body.kyv-v260 #kyv-dashboard-status-collapse > summary,
+body.kyv-v260 #kyv-dashboard-activity-collapse > summary {
  min-height:48px;
 }
 @media(max-width:767px) {
@@ -1480,7 +1481,7 @@ body.kyv-v260 #kyv-dashboard-status-collapse > summary {
  }
  body.kyv-v260 #kyv-help-modal .custom-scrollbar {min-height:0;}
  body.kyv-v260 .kyv-table-hint {font-size:12px;}
- body.kyv-v260 #kyv-dashboard-ops-collapses > .kyv-panel {padding:14px;}
+ body.kyv-v260 #kyv-dashboard-ops-collapses .kyv-collapse-body > .kyv-panel {padding:14px;}
 }
 @media(prefers-reduced-motion:reduce) {
  body.kyv-v260 #kyv-dashboard-ops-collapses .activity-filter {transition:none;}

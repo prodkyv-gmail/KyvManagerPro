@@ -13,17 +13,28 @@ const entries=text=>[...text.matchAll(/\['([^']+)','([^']+)','([^']+)','([^']+)'
 const primary=entries(navGroup('primary')),control=entries(navGroup('control')),
  tools=entries(navGroup('tools'));
 const all=[...primary,...control,...tools];
-assert.equal(primary.filter(x=>x.href==='integrazioni.html').length,1);
+assert.equal(control.filter(x=>x.href==='integrazioni.html').length,1);
 assert.equal(all.filter(x=>x.href==='integrazioni.html').length,1,'App launcher must not appear twice');
 assert.equal(all.filter(x=>x.href==='fatture.html').length,1,'Invoice management has one sidebar destination');
 assert.equal(all.filter(x=>x.href==='kyv_analyst.html').length,1,'Analyst has one sidebar destination');
-assert.ok(primary.some(x=>x.href==='kyv_scrivania_creativa.html'));
-const daily=menu.split('Ogni giorno</p>')[1]?.split('</ul>')[0];
+assert.ok(control.some(x=>x.href==='kyv_scrivania_creativa.html'));
+const daily=menu.split('Produttore</p>')[1]?.split('</ul>')[0];
 const legacyTools=menu.split('<span>Strumenti</span>')[1]?.split('</ul>')[0];
 assert.ok(daily&&legacyTools);
-assert.equal((daily.match(/navItem\('integrazioni'/g)||[]).length,1);
+assert.equal((daily.match(/navItem\('integrazioni'/g)||[]).length,0);
 assert.equal((legacyTools.match(/navItem\('integrazioni'/g)||[]).length,0);
 assert.equal((daily.match(/navItem\('fatture'/g)||[]).length,0);
+const admin=menu.split('<span>Amministrazione</span>')[1]?.split('</ul>')[0];
+assert.ok(admin,'Fallback Administration nav is present');
+for(const key of ['creative','pipeline','ascolto','integrazioni']){
+ assert.equal(control.filter(x=>x.key===key).length,1,key+' belongs to Administration exactly once');
+ assert.ok(admin.includes("navItem('"+key+"'"),key+' fallback in Administration');
+ assert.ok(!primary.some(x=>x.key===key),key+' not in Producer');
+}
+assert.ok(primary.some(x=>x.href==='editor.html'),'Studio Editor must be in Producer');
+assert.ok(daily.includes("navItem('editor'"),'Fallback Studio Editor must be in daily Producer section');
+assert.ok(!legacyTools.includes("navItem('editor'"),'Editor not duplicated under tools');
+assert.equal(new Set(all.map(x=>x.href)).size,all.length,'No duplicate Producer Mode sidebar destinations');
 assert.ok(menu.includes("navItem('fatture', 'fatture.html'"),'Invoices remain accessible in Administration');
 assert.ok(menu.includes("page: 'ascolto', href: 'ascolto.html', label: 'Ascolto'"));
 assert.ok(!menu.includes("page: 'clienti', href: 'clienti.html', label: 'Rubrica'"),'No temporary Rubrica link');

@@ -57,7 +57,12 @@
         .custom-scrollbar::-webkit-scrollbar { width: 16px; height: 16px; }
 
         /* Agenda responsive: niente pannelli compressi o contenuti spostati fuori area. */
-        .kyv-calendar-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:1.5rem; min-width:0; }
+        .kyv-calendar-layout { display:flex; flex-direction:column; gap:1rem; min-width:0; }
+        .kyv-calendar-main { order:-1; }
+        .kyv-calendar-sidebar { order:1; }
+        #kyv-agenda-planning-collapse { min-width:0; }
+        #kyv-agenda-planning-collapse .kyv-collapse-body { padding:0.4rem 0 0; }
+        #kyv-agenda-planning-collapse .kyv-calendar-card { box-shadow:none; }
         .kyv-calendar-sidebar, .kyv-calendar-main, .kyv-calendar-card { min-width:0; width:100%; max-width:100%; }
         .kyv-calendar-layout > * { min-width:0; }
         .kyv-calendar-main { container-type:inline-size; container-name:kyv-calendar; }

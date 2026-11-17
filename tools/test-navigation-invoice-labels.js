@@ -13,9 +13,13 @@ for(const [href,label] of [['fatture.html','Fatture emesse'],['kyv_intelligence.
  assert.ok(fs.existsSync(href),'Navigation target missing: '+href);
 }
 const primary=producer.split('const primary=[')[1].split('];')[0];
-assert.ok(primary.includes("['integrazioni.html','Tutte le app'"),'Producer mode needs visible launcher link');
+const admin=producer.split('const control=[')[1].split('];')[0];
+assert.ok(!primary.includes("['integrazioni.html'"),'Launcher must not duplicate in Producer');
+assert.ok(admin.includes("['integrazioni.html','Tutte le app'"),'Administration must contain the launcher link');
 const basic=menu.split('<nav class="flex-1 overflow-y-auto')[1].split('<details class="kyv-nav-group"')[0];
-assert.ok(basic.includes("navItem('integrazioni', 'integrazioni.html'"),'Legacy sidebar needs visible launcher link');
+const adminFallback=menu.split('<span>Amministrazione</span>')[1].split('</ul>')[0];
+assert.ok(!basic.includes("navItem('integrazioni', 'integrazioni.html'"),'Launcher is not in fallback main links');
+assert.ok(adminFallback.includes("navItem('integrazioni', 'integrazioni.html'"),'Fallback Administration contains launcher link');
 const head=launcher.split('</head>')[0];
 const order=['supabase/supabase-js@2.49.4','src="config.js"','src="kyv-core.js"','src="kyv-auth.js"','src="menu.js"'];
 let last=-1;

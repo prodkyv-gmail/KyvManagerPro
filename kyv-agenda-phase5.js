@@ -498,12 +498,12 @@ function mountOverview(){
     return;
   }
 
-  const panel=document.createElement('section');
+  const panel=document.createElement('details');
 
   panel.id='kyv-agenda-phase5';
 
   panel.className=
-    'kyv-agenda-overview kyv-pastel-lavender';
+    'kyv-agenda-overview kyv-collapse kyv-pastel-lavender';
 
   panel.innerHTML=`
     <div
@@ -607,10 +607,11 @@ function mountOverview(){
     </div>
   `;
 
-  header.insertAdjacentElement(
-    'afterend',
-    panel
-  );
+  // Keep the actual Google Calendar at the top. Planning is secondary.
+  panel.innerHTML='<summary><span class="text-sm font-black text-white">Cosa c’è da organizzare</span><i data-lucide="chevron-down" class="kyv-collapse-chevron w-5 h-5 text-kyv-text"></i></summary><div class="kyv-collapse-body">'+panel.innerHTML+'</div>';
+  const layout=document.querySelector('.kyv-calendar-layout');
+  if(layout)layout.insertAdjacentElement('afterend',panel);
+  else header.insertAdjacentElement('afterend',panel);
 
   renderFilters();
   updateStats();
@@ -1352,6 +1353,23 @@ function ensureOriginalCalendarVisible(){
   }
 }
 
+function collapsePlanningForm(){
+  const form=document.getElementById('form-new-event');
+  const card=form?.closest('.kyv-calendar-card');
+  if(!card||document.getElementById('kyv-agenda-planning-collapse'))return;
+  const details=document.createElement('details');
+  details.id='kyv-agenda-planning-collapse';
+  details.className='kyv-collapse kyv-pastel-sky';
+  const summary=document.createElement('summary');
+  summary.innerHTML='<span class="text-sm font-black text-white">Pianifica attività</span><i data-lucide="chevron-down" class="kyv-collapse-chevron w-5 h-5 text-kyv-text"></i>';
+  const body=document.createElement('div');
+  body.className='kyv-collapse-body';
+  card.parentNode.insertBefore(details,card);
+  details.appendChild(summary);
+  details.appendChild(body);
+  body.appendChild(card);
+}
+
 function boot(){
   injectStyles();
 
@@ -1367,7 +1385,7 @@ function boot(){
    */
 
   mountTypeSelector();
-
+  collapsePlanningForm();
   mountOverview();
 
   watchEvents();
