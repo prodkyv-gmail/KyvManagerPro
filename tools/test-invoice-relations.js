@@ -4,42 +4,37 @@ const invoices=fs.readFileSync('kyv-project-invoices.js','utf8');
 const finance=fs.readFileSync('kyv-project-finance-summary.js','utf8');
 const economy=fs.readFileSync('kyv-economy-v6.js','utf8');
 const quality=fs.readFileSync('kyv-data-quality.js','utf8');
+const relations=require('../kyv-project-relations.js');
 
 assert.ok(sheet.includes("safeProjectRows('FATTURE',p.ID,'ID_FT',issues)"),'Scheda must link by FATTURE.ID_PROGETTO');
 assert.ok(sheet.includes("q=>q.eq('ID_FT',p.IDFT)"),'Scheda must support PROGETTI.IDFT → FATTURE.ID_FT');
-assert.ok(sheet.includes('const fatture=mergeRows(['),'Scheda must combine direct and legacy invoice sources');
-assert.ok(sheet.includes("has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT',500,issues)")&&sheet.includes('_idftShared'),'Scheda must read the IDFT invoice and flag it as shared when it belongs to another project');
-assert.ok(sheet.includes('function matchFatture(p){ return (state.fatture||[]).filter'),'Scheda matches must include all valid direct and legacy invoices');
+assert.ok(sheet.includes('KYV_PROJECT_RELATIONS.resolveProjectInvoices'),'Scheda must delegate relation precedence to the shared resolver');
+assert.ok(sheet.includes("has(p.IDFT)?safeFilteredTable('FATTURE',q=>q.eq('ID_FT',p.IDFT),'ID_FT',500,issues)"),'Scheda must read the stable legacy invoice ID');
+assert.ok(sheet.includes('function matchFatture(){ return state.fatture||[]; }'),'Scheda must consume the resolved set without reinterpreting it');
 assert.doesNotMatch(sheet,/eq\('Numero',p\.FT\)/,'Scheda must never join project to invoice number');
 assert.doesNotMatch(sheet,/fattureByNumero/,'Scheda must not load invoices by number');
 assert.ok(sheet.includes('data-invoice-id="${H(f.ID_FT)}"'),'Invoice rows must expose stable ID_FT');
 
 assert.ok(invoices.includes("select('ID,IDFT')"),'Producer invoice module must read IDFT only as legacy ID relation');
-assert.ok(invoices.includes('return uniqueInvoices([...legacyOwn,...legacyDirect,...idftShared,...mapped]);'),'Producer context must combine valid legacy/direct invoices and override with allocations');
-assert.ok(invoices.includes('return uniqueInvoices([...legacyOwn,...direct,...idftShared,...mapped]);'),'Producer list must combine legacy and direct invoices and override with allocations');
-assert.ok(invoices.includes('const legacyOwn=legacy.filter(row=>')&&invoices.includes('text(row.ID_PROGETTO)===projectId'), 'Producer legacy cannot override another project ID');
-assert.ok(invoices.includes("text(row.ID_FT)===text(legacy.IDFT)"),'Project lists must use IDFT → ID_FT');
+assert.equal((invoices.match(/KYV_PROJECT_RELATIONS\.resolveProjectInvoices/g)||[]).length,2,'Context and project list must use the same resolver');
 assert.ok(invoices.includes("row.dataset.invoiceId"),'Invoice row opening must use ID_FT');
 assert.doesNotMatch(invoices,/eq\('Numero',project\.FT\)/,'Producer invoice module must not query by invoice number');
 assert.doesNotMatch(invoices,/legacy\.FT/,'Project lists must not match legacy FT to Numero');
 
 assert.ok(finance.includes(".eq('ID_PROGETTO',pid)"),'Finance summary must use project ID relation');
-assert.ok(finance.includes(".eq('ID_FT',project.data.IDFT)"),'Finance summary must use legacy invoice ID relation');
-assert.ok(finance.includes('return unique([...own,...legacyDirect,...idftShared,...explicit]);'),'Finance summary must combine all invoice links with allocations taking precedence');
-assert.ok(finance.includes('const own=(legacy.data||[]).filter(row=>')&&finance.includes('text(row.ID_PROGETTO)===text(pid)'), 'Finance fallback excludes legacy invoice owned by another project');
+assert.ok(finance.includes('text(projectRow.IDFT)'),'Finance summary must include the stable legacy invoice ID among candidate documents');
+assert.ok(finance.includes('KYV_PROJECT_RELATIONS.resolveProjectInvoices'),'Finance summary must use the shared precedence rules');
 assert.doesNotMatch(finance,/eq\('Numero',project\.data\.FT\)/,'Finance summary must not query invoice number');
 
-assert.ok(economy.includes('const direct=invoices.filter'), 'Economy must include FATTURE.ID_PROGETTO relation');
-assert.ok(economy.includes('const byInvoiceId=idft?invoices.filter'), 'Economy must include IDFT → ID_FT relation');
-assert.ok(economy.includes('const legacyOwn=byInvoiceId.filter')&&economy.includes('new Map([...direct,...legacyOwn]'), 'Economy must combine valid direct and legacy invoices without duplicates');
-const fn=economy.match(/function projectInvoices\(p,invoices\)\{[\s\S]*?\n\}/)?.[0];
-assert.ok(fn,'Economy invoice resolver must be testable');
-const projectInvoices=new Function('text',fn+'\nreturn projectInvoices;')(value=>String(value??'').trim());
+assert.ok(economy.includes('KYV_PROJECT_RELATIONS.resolveProjectInvoices'), 'Economy must use the shared resolver');
+const projectInvoices=(project,invoices,allocations=[])=>relations.resolveProjectInvoices({project,invoices,allocations});
 const rows=[{ID_FT:86,ID_PROGETTO:86,Numero:7},{ID_FT:93,ID_PROGETTO:null,Numero:12},{ID_FT:94,ID_PROGETTO:2,Numero:7}];
 assert.deepEqual(projectInvoices({ID:86,IDFT:93,FT:12},rows).map(row=>row.ID_FT),[86,93],'Distinct direct and legacy invoices both belong in summary');
 assert.deepEqual(projectInvoices({ID:11,IDFT:93,FT:12},rows).map(row=>row.ID_FT),[93],'Valid legacy IDFT remains available');
 assert.deepEqual(projectInvoices({ID:19,FT:7},rows),[],'FT-only projects must not match by invoice number');
-assert.deepEqual(projectInvoices({ID:11,IDFT:94},rows),[],'An invoice owned by project 2 cannot be claimed by legacy IDFT');
+const shared=projectInvoices({ID:11,IDFT:94},rows);
+assert.equal(shared.length,1);
+assert.equal(shared[0]._kyvRelation.kind,'idft-shared','A foreign IDFT remains visible only as a zero-value allocation warning');
 assert.doesNotMatch(economy,/text\(p\.FT\)/,'Economy must not relate by FT number');
 
 assert.ok(quality.includes("key:'invoice-number-only'"),'Data Quality must flag projects left with FT number only');

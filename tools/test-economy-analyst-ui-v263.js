@@ -69,10 +69,10 @@ assert.ok(analystUi.includes("report.linkedTotal"));
 assert.ok(analystUi.includes("'kyv-analyst-artist-track'")===false); // native DOM bar; not duplicate charting backend
 assert.ok(analystUi.includes("Math.round(r.amount/max*100)"));
 assert.ok(analystUi.includes("$('analyst-artist-limit').addEventListener('change',renderArtistChart)"));
-assert.ok(analystUi.includes("renderArtistChart();\n $('analyst-footnote')"));
+assert.match(analystUi,/renderArtistChart\(\);\r?\n \$\('analyst-footnote'\)/);
 assert.ok(engine.includes('const artistRanks='),'Ranking already computed by authoritative analyst engine');
 assert.doesNotMatch(analystUi,/\.insert\(|\.update\(|\.upsert\(|\.delete\(|api\.openai|api\.anthropic/);
-const extracted=analystUi.match(/function renderArtistChart\(\)\{([\s\S]*?)\n\}\nfunction renderSuggestions\(/);
+const extracted=analystUi.match(/function renderArtistChart\(\)\{([\s\S]*?)\r?\n\}\r?\nfunction renderSuggestions\(/);
 assert.ok(extracted,'Chart renderer is pure presentation and extractable');
 const nodes={
  'analyst-artist-limit':{value:'5'},'analyst-artist-note':{textContent:''},

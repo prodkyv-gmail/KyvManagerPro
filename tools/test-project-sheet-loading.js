@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
+const relations = require('../kyv-project-relations.js');
 
 const source = fs.readFileSync(path.resolve(__dirname, '..', 'scheda_progetto.html'), 'utf8');
 
@@ -15,20 +16,17 @@ assert.match(source, /q=>q\.eq\('ID_FT',p\.IDFT\)/, 'Il fallback legacy ammesso 
 
 
 const vm=require('node:vm');
-assert.match(source,/const fatture=mergeRows\(\[/,'Fatture dirette + IDFT devono essere unite, non alternative');
+assert.match(source,/KYV_PROJECT_RELATIONS\.resolveProjectInvoices/,'Scheda e riepiloghi devono usare il resolver condiviso');
 assert.doesNotMatch(source,/fattureByProject\.length\?fattureByProject:fattureById/,'No first-source-wins for invoices');
-assert.match(source,/fromVersions=matchByProjectId\(unified,p\)/);
-assert.match(source,/fromDropbox=matchByProjectId\(state\.audio,p\)/);
+assert.match(source,/KYV_PROJECT_RELATIONS\.resolveProjectAudio/);
 const startAudio=source.indexOf('function matchAudio(p){');
 const endAudio=source.indexOf('function matchConsegne(p){',startAudio);
 assert.ok(startAudio>0&&endAudio>startAudio);
 const audioContext={
+  window:{KYV_PROJECT_RELATIONS:relations},
   state:{versions:[{ID_VERSIONE:1,ID_FILE:'version-1',ID_PROGETTO:7}],
     audio:[{ID_FILE:'dropbox-2',ID_PROGETTO:7}]},
-  normalizeUnifiedAudio:row=>({...row}),
-  matchByProjectId:(rows,p)=>rows.filter(row=>String(row.ID_PROGETTO)===String(p.ID)),
   mergeRows:(groups,key)=>[...new Map(groups.flat().map(row=>[String(row[key]),row])).values()],
-  N:v=>String(v??'').trim().toLowerCase()
 };
 vm.runInNewContext(source.slice(startAudio,endAudio)+'\nthis.matchAudio=matchAudio;',audioContext);
 assert.deepEqual(Array.from(audioContext.matchAudio({ID:7,TITOLO:'Brano',ARTISTA:'Artista'}),row=>row.ID_FILE).sort(),
@@ -42,16 +40,14 @@ assert.match(source,/renderReadIssues\(related\.readIssues\)/);
 assert.match(source,/state\.stats\.audio===null\?'—'/,'Conteggio non disponibile != zero');
 assert.match(source,/fetchProjects\(\)\{[\s\S]*?count!==data\.length/);
 assert.match(source,/issues\.push\(String\(table\)\)/);
-const fiStart=source.indexOf('function matchFatture(p){'),fiEnd=source.indexOf('function matchSpese(p){',fiStart);
+const fiStart=source.indexOf('function matchFatture(){'),fiEnd=source.indexOf('function matchSpese(p){',fiStart);
 assert.ok(fiStart>0&&fiEnd>fiStart);
 const invoiceContext={state:{fatture:[
-  {ID_FT:11,ID_PROGETTO:7},{ID_FT:22,ID_PROGETTO:null},{ID_FT:23,ID_PROGETTO:8}
-]},has:value=>String(value??'').trim().length>0};
+  {ID_FT:11,ID_PROGETTO:7},{ID_FT:22,ID_PROGETTO:null}
+]}};
 vm.runInNewContext(source.slice(fiStart,fiEnd)+'\nthis.matchFatture=matchFatture;',invoiceContext);
 assert.deepEqual(Array.from(invoiceContext.matchFatture({ID:7,IDFT:22}),row=>row.ID_FT),[11,22],
- 'La Scheda mostra entrambe le fatture valide, senza prendere soltanto la prima fonte');
-assert.deepEqual(Array.from(invoiceContext.matchFatture({ID:7,IDFT:23}),row=>row.ID_FT),[11],
- 'Non attribuire una fattura intestata a un altro progetto');
+ 'La Scheda consuma senza reinterpretazioni il risultato condiviso già risolto');
 const projectsList=fs.readFileSync(path.resolve(__dirname,'..','kyv-projects-phase3.js'),'utf8');
 assert.match(projectsList,/Promise\.allSettled/,'La lista progetti preserva le sorgenti audio riuscite');
 assert.match(projectsList,/Audio non verificabile/,'Il dato audio non letto non è descritto come assente');
@@ -103,6 +99,7 @@ function mockClient(invoiceId=22,allocations=[]){
 }
 async function testCombinedFinance(){
   const context={
+    window:{KYV_PROJECT_RELATIONS:relations},
     fields:'*',
     client:()=>mockClient(),
     text:value=>String(value??'').trim(),

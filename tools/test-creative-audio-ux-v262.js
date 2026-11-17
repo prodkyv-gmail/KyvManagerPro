@@ -105,7 +105,7 @@ assert.ok(audio.includes("if(node?.tagName==='DETAILS')node.open=true"));
 assert.ok(audio.includes("if(parent.tagName==='DETAILS')parent.open=true"));
 assert.ok(audio.includes("window.addEventListener('hashchange'"));
 assert.ok(audio.includes("function renderCatalogue()"));
-assert.ok(audio.includes("function render(){\n renderCatalogue();\n renderGroups();\n renderExplorer();\n renderAudit();\n}"));
+assert.match(audio,/function render\(\)\{\r?\n renderCatalogue\(\);\r?\n renderGroups\(\);\r?\n renderExplorer\(\);\r?\n renderAudit\(\);\r?\n\}/);
 for(const token of [
  "$('finder-query').addEventListener('input',()=>{shown=120;renderCatalogue()})",
  "$('finder-source').addEventListener('change',()=>{shown=120;renderCatalogue()})",

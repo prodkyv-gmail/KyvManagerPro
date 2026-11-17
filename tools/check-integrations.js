@@ -58,11 +58,11 @@ assert(!projectSheetPage.includes("safeTable('DROPBOX_AUDIO_FILES'"), 'La Scheda
 assert(audioProjects.includes('insertProjectSafely') && audioProjects.includes('Crea progetto e collega'), 'La creazione progetto contestuale deve restare disponibile');
 
 assert(config.includes("invoices.src='kyv-project-invoices.js'"), 'Le fatture progetto devono essere caricate nelle viste producer collegate');
+assert(config.includes("projectRelations.src='kyv-project-relations.js'"), 'Il contratto relazioni deve essere caricato prima dei consumer');
 assert(projectInvoices.includes("from('FATTURE').select") && projectInvoices.includes(".eq('ID_PROGETTO',projectId)"), 'Le fatture progetto devono usare ID_PROGETTO come collegamento principale');
 assert(projectInvoices.includes("select('ID,IDFT')"), 'Il fallback legacy deve usare soltanto IDFT → FATTURE.ID_FT');
-assert(projectInvoices.includes('return uniqueInvoices([...legacyOwn,...legacyDirect,...idftShared,...mapped]);'), 'Le ripartizioni prevalgono anche unendo tutte le fonti dirette e legacy');
-assert(projectInvoices.includes('return uniqueInvoices([...legacyOwn,...direct,...idftShared,...mapped]);'), 'Le ripartizioni devono avere precedenza nella lista progetti');
-assert(projectSheetPage.includes('const fatture=mergeRows([')&&projectSheetPage.includes('fattureById.filter(f=>!has(f.ID_PROGETTO)||String(f.ID_PROGETTO)===String(p.ID))'), 'La Scheda combina relazioni ID valide senza attribuire fatture di altri progetti');
+assert.equal((projectInvoices.match(/KYV_PROJECT_RELATIONS\.resolveProjectInvoices/g)||[]).length,2, 'Contesto e lista progetti devono usare lo stesso resolver');
+assert(projectSheetPage.includes('KYV_PROJECT_RELATIONS.resolveProjectInvoices'), 'La Scheda combina le relazioni tramite il contratto condiviso');
 assert(!projectInvoices.includes(".eq('Numero',project.FT)"), 'Il numero fattura FT non deve mai essere usato per collegare un progetto');
 assert(projectInvoices.includes("tab=amministrazione") && projectInvoices.includes("newInvoice=1"), 'Le viste collegate devono aprire direttamente Amministrazione e la creazione fattura contestuale');
 assert(projectInvoices.includes('Registra fattura') && projectInvoices.includes('Da incassare') && projectInvoices.includes('Incassata'), 'Lo stato fattura deve essere visibile nel flusso producer');
@@ -74,8 +74,8 @@ assert(financeSummary.includes('Fattura') && financeSummary.includes('Pagamento'
 assert(financeSummary.includes('KYV_INVOICE_LINE?.amount') && financeSummary.includes('PrezzoUnitario'), 'Il riepilogo deve utilizzare il prezzo unitario, non il totale fiscale');
 assert(financeSummary.includes(".eq('ID_PROGETTO',pid)") && financeSummary.includes("select('ID,IDFT')"), 'Il riepilogo economico deve usare ID_PROGETTO e IDFT/ID_FT');
 assert(!financeSummary.includes(".eq('Numero',project.data.FT)"), 'Il riepilogo economico non deve collegare per numero fattura');
-assert(financeSummary.includes('return unique([...own,...legacyDirect,...idftShared,...explicit]);'), 'Riepilogo deve preferire quote esplicite quando integra più fonti');
-assert(economyInvoices.includes('new Map([...direct,...legacyOwn]'), 'Economia deve includere fatture collegate con entrambi gli ID e deduplicare');
+assert(financeSummary.includes('KYV_PROJECT_RELATIONS.resolveProjectInvoices'), 'Riepilogo deve preferire quote esplicite tramite il resolver condiviso');
+assert(economyInvoices.includes('KYV_PROJECT_RELATIONS.resolveProjectInvoices'), 'Economia deve includere fatture collegate con lo stesso resolver');
 assert(qualityInvoices.includes("key:'invoice-id-conflict'"), 'Data Quality deve rilevare conflitti ID_PROGETTO/IDFT');
 for(const source of [projectSheetPage,projectInvoices,financeSummary,economyInvoices]) assert(!/\.eq\(['"]Numero['"]\s*,[^)]*\b(?:p|project)(?:\.data)?\.FT\b/.test(source),'Vietato collegare fatture tramite Numero = FT');
 assert(config.includes("layoutPolish.src='kyv-layout-polish.js'"), 'Le viste producer devono caricare il modulo di leggibilità/scroll');

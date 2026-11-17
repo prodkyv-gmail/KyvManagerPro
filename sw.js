@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-verified-read-20261105';
+const CACHE_NAME = 'kyv-studio-v2-82-shared-relations-20261117';
 const APP_SHELL = [
     './',
     './index.html',
@@ -56,6 +56,7 @@ const APP_SHELL = [
     './kyv-editor-modal-v278.js',
     './editor.html',
     './kyv-invoice-line-amount.js',
+    './kyv-project-relations.js',
     './kyv-invoice-split-v247.js',
     './rendiconto.html',
     './manifest.json',

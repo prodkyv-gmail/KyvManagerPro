@@ -84,6 +84,16 @@ window.KYV_CONFIG = KYV_CONFIG;
         document.head.appendChild(invoiceLines);
     }
 
+    // Contratto puro e condiviso: nessuna query o scrittura, solo risoluzione coerente
+    // di progetti, fatture, ripartizioni e sorgenti audio per i consumer esistenti.
+    if(!document.querySelector('script[data-kyv-project-relations]')){
+        const projectRelations=document.createElement('script');
+        projectRelations.src='kyv-project-relations.js';
+        projectRelations.async=false;
+        projectRelations.dataset.kyvProjectRelations='1';
+        document.head.appendChild(projectRelations);
+    }
+
     if(page==='progetti.html'||page==='editor.html'){
         const sheetControls=document.createElement('script');
         sheetControls.src='kyv-sheet-controls.js';

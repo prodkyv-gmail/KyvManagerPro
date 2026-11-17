@@ -29,48 +29,23 @@ const fields='ID_FT,Numero,Data,Denominazione,Descrizione,ImportoTotaleDocumento
 async function fetchInvoices(pid){
   if(!client())return null;
   try{
-    const direct=await client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(200);
-    if(direct.error)throw direct.error;
-    // v2.47: explicit allocation rows take precedence over the historical single ID_PROGETTO.
-    const shares=await client().from('FATTURE_RIPARTIZIONI').select('id_ft,prezzo_unitario')
-      .eq('id_progetto',pid).limit(1000);
-    if(shares.error)throw shares.error;
-    const shareById=new Map();
-    for(const r of shares.data||[])shareById.set(text(r.id_ft),(shareById.get(text(r.id_ft))||0)+Number(r.prezzo_unitario));
-    const ids=[...shareById.keys()];
-    const shared=ids.length?await client().from('FATTURE').select(fields).in('ID_FT',ids).limit(1000):{data:[],error:null};
-    if(shared.error)throw shared.error;
-    if((shared.data||[]).length!==ids.length)throw Error('Fatture ripartite non leggibili interamente');
-    const relevantDirect=direct.data||[];
-    const directIds=relevantDirect.map(r=>r.ID_FT);
-    const allShare=directIds.length?await client().from('FATTURE_RIPARTIZIONI').select('id_ft').in('id_ft',directIds).limit(1000):{data:[],error:null};
-    if(allShare.error)throw allShare.error;
-    const splitIds=new Set((allShare.data||[]).map(a=>text(a.id_ft)));
-    const explicit=(shared.data||[]).map(f=>({...f,PrezzoUnitario:String(shareById.get(text(f.ID_FT))),PrezzoTotale:String(shareById.get(text(f.ID_FT))),XML_SHA256:null,_v247_shared:true}));
-    const legacyDirect=relevantDirect.filter(f=>!splitIds.has(text(f.ID_FT)));
-    // Leggi sempre anche il riferimento legacy PROGETTI.IDFT: può puntare a un'altra
-    // fattura rispetto a FATTURE.ID_PROGETTO (senza essere un duplicato).
-    const project=await client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle();
-    if(project.error)throw project.error;
-    if(!project.data||!text(project.data.IDFT))return unique([...legacyDirect,...explicit]);
-    const legacy=await client().from('FATTURE').select(fields).eq('ID_FT',project.data.IDFT).limit(5);
-    if(legacy.error)throw legacy.error;
-    // Le quote esplicite prevalgono anche sul campo legacy: non attribuire
-    // l'intera fattura due volte se esiste una ripartizione su altri progetti.
-    const legacyIds=(legacy.data||[]).map(row=>row.ID_FT);
-    const allLegacyShares=legacyIds.length?await client().from('FATTURE_RIPARTIZIONI')
-      .select('id_ft').in('id_ft',legacyIds).limit(1000):{data:[],error:null};
-    if(allLegacyShares.error)throw allLegacyShares.error;
-    const allocatedIds=new Set([...splitIds,...(allLegacyShares.data||[]).map(row=>text(row.id_ft))]);
-    const own=(legacy.data||[]).filter(row=>
-      (!text(row.ID_PROGETTO)||text(row.ID_PROGETTO)===text(pid))&&!allocatedIds.has(text(row.ID_FT)));
-    // Fattura citata da IDFT ma intestata a un altro progetto e senza quote:
-    // mostralo come collegamento, a valore zero finché non viene ripartita.
-    const foreign=(legacy.data||[]).filter(row=>
-      text(row.ID_PROGETTO)&&text(row.ID_PROGETTO)!==text(pid)&&!allocatedIds.has(text(row.ID_FT)));
-    const idftShared=foreign.map(row=>({...row,PrezzoUnitario:'0',PrezzoTotale:'0',ImportoPagamento:null,XML_SHA256:null,_idft_shared:true}));
-    // ID_FT è la chiave univoca: le quote esplicite restano l'ultima fonte.
-    return unique([...own,...legacyDirect,...idftShared,...explicit]);
+    const [direct,project,ownShares]=await Promise.all([
+      client().from('FATTURE').select(fields).eq('ID_PROGETTO',pid).order('Data',{ascending:false}).limit(200),
+      client().from('PROGETTI').select('ID,IDFT').eq('ID',pid).maybeSingle(),
+      client().from('FATTURE_RIPARTIZIONI').select('id_ft,id_progetto,prezzo_unitario,descrizione').eq('id_progetto',pid).limit(1000)
+    ]);
+    if(direct.error||project.error||ownShares.error)throw(direct.error||project.error||ownShares.error);
+    const projectRow=project.data||{ID:pid,IDFT:null};
+    const candidateIds=[...new Set([...(direct.data||[]).map(row=>text(row.ID_FT)),text(projectRow.IDFT),...(ownShares.data||[]).map(row=>text(row.id_ft))].filter(Boolean))];
+    const [documents,allocations]=candidateIds.length?await Promise.all([
+      client().from('FATTURE').select(fields).in('ID_FT',candidateIds).limit(1000),
+      client().from('FATTURE_RIPARTIZIONI').select('id_ft,id_progetto,prezzo_unitario,descrizione').in('id_ft',candidateIds).limit(5000)
+    ]):[{data:[],error:null},{data:[],error:null}];
+    if(documents.error||allocations.error)throw(documents.error||allocations.error);
+    const docs=unique([...(direct.data||[]),...(documents.data||[])]);
+    const missingShare=[...new Set((ownShares.data||[]).map(row=>text(row.id_ft)))].filter(id=>!docs.some(row=>text(row.ID_FT)===id));
+    if(missingShare.length)throw Error('Fatture ripartite non leggibili interamente');
+    return window.KYV_PROJECT_RELATIONS.resolveProjectInvoices({project:projectRow,invoices:docs,allocations:allocations.data||[]});
   }catch(error){console.warn('[KYV Finance Summary] Lettura fatture non riuscita',error);return null;}
 }
 
