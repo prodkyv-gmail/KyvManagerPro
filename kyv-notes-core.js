@@ -14,7 +14,7 @@ function normalize(value){return String(value??'').normalize('NFD').replace(/[\u
 function readableTitle(note){return String(note?.title||'').trim()||String(note?.content||'').trim().split('\n')[0].slice(0,66)||'Memo vocale';}
 function cleanPayload(raw,ownerId){
  if(!isUuid(ownerId)||!isUuid(raw.id))throw Error('Sessione o nota non valide.');
- const content=String(raw.content||'').trim(),title=String(raw.title||'').trim();
+ const content=String(raw.content??''),title=String(raw.title||'').trim();
  if(content.length>NOTE_LIMIT||title.length>180)throw Error('Nota troppo lunga: riduci il testo.');
  const category=CATEGORIES.some(c=>c.id===raw.category)?raw.category:'info';
  const projectId=raw.project_id===null||raw.project_id===undefined||raw.project_id===''?null:Number(raw.project_id);
@@ -73,7 +73,7 @@ function createStore(db,uid){
  }
  async function save(raw){
   const payload=cleanPayload(raw,uid);
-  if(!payload.title&&!payload.content&&!raw.audio_path&&!raw.allowEmptyForAudio)
+  if(!payload.title&&!payload.content.trim()&&!raw.audio_path&&!raw.allowEmptyForAudio)
    throw Error('Scrivi o registra qualcosa prima di salvare.');
   // Never upsert: a partial upsert could erase audio_path and its metadata from an existing note.
   const {data:existing,error:readError}=await db.from(TABLE).select('id')
