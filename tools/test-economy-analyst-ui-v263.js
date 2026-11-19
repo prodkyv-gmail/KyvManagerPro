@@ -1,7 +1,7 @@
 // v2.63 — Home, Economy and Analyst: UI-only simplification without data math changes.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const read=x=>fs.readFileSync(x,'utf8');
-const home=read('index.html'),economy=read('fatture.html'),analyst=read('kyv_analyst.html'),
+const home=read('oggi.html'),economy=read('fatture.html'),analyst=read('kyv_analyst.html'),
  analystUi=read('kyv-analyst-ui-v241.js'),theme=read('kyv-theme.css'),
  homeUi=read('kyv-home-charts-ui-v250.js'),engine=read('kyv-analyst-engine-v241.js');
 const homeMarkup=home.slice(home.indexOf('<body'),home.indexOf('<!-- SCRIPT DASHBOARD -->'));
