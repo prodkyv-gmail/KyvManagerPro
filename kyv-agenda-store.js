@@ -71,19 +71,29 @@ function displayTime(row){
   return fmt(start)+' – '+fmt(end);
 }
 function formHtml(){
-  return '<form id="kyv-agenda-inline-form" class="kyv-agenda-inline-form" aria-label="Inserisci un nuovo evento nella tabella">'+
+  const today=dayKey(new Date());
+  const statuses=Object.entries(statusLabels).map(([value,label])=>
+    '<option value="'+H(value)+'">'+H(label)+'</option>').join('');
+  const types=Object.entries(typeLabel).map(([value,label])=>
+    '<option value="'+H(value)+'">'+H(label)+'</option>').join('');
+  return '<form id="kyv-agenda-inline-form" class="kyv-agenda-inline-form" aria-label="Nuova Attività con tutti i dettagli del popup">'+
     '<div class="kyv-agenda-form-fields">'+
       '<label>Titolo<input name="title" type="text" maxlength="250" required placeholder="Attività o appuntamento"></label>'+
-      '<label>Data<input name="date" type="date" required value="'+dayKey(new Date())+'"></label>'+
-      '<label>Inizio<input name="time" type="time" required value="11:00"></label>'+
-      '<label>Fine<input name="endTime" type="time" required value="12:00"></label>'+
-      '<label>Tipo<select name="activityType"><option value="other">Altro</option><option value="session">Sessione</option><option value="followup">Follow-up</option><option value="deadline">Scadenza</option></select></label>'+
-      '<label>Luogo<input name="location" maxlength="500" placeholder="Facoltativo"></label>'+
-      '<label class="kyv-agenda-form-notes">Note<input name="description" maxlength="5000" placeholder="Facoltative"></label>'+
+      '<label>Data inizio<input name="date" type="date" required value="'+today+'"></label>'+
+      '<label>Data fine<input name="endDate" type="date" required value="'+today+'"></label>'+
+      '<label>Ora inizio<input name="time" type="time" value="11:00"></label>'+
+      '<label>Ora fine<input name="endTime" type="time" value="12:00"></label>'+
+      '<label class="kyv-agenda-form-checkbox">Tutto il giorno<input name="allDay" type="checkbox"></label>'+
+      '<label>Tipo<select name="activityType">'+types+'</select></label>'+
+      '<label>Luogo / indirizzo<input name="location" maxlength="500" placeholder="Facoltativo"></label>'+
+      '<label class="kyv-agenda-form-notes">Descrizione / partecipanti / dettagli<textarea name="description" maxlength="5000" placeholder="Facoltativa"></textarea></label>'+
+      '<label>Stato<select name="workflowStatus">'+statuses+'</select></label>'+
+      '<label>Data promemoria o rinvio<input name="remindOn" type="date"></label>'+
+      '<label class="kyv-agenda-form-notes">Nota promemoria<textarea name="workflowNote" maxlength="2000" placeholder="Facoltativa"></textarea></label>'+
     '</div><div class="kyv-agenda-form-actions">'+
       '<button type="submit" class="kyv-agenda-primary">Salva evento nella tabella</button>'+
       '<button type="button" data-kyv-agenda-action="close-form">Annulla</button>'+
-      '<span>Questa modalità salva solo nell’app. Per creare anche in Google Calendar usa «Pianifica attività».</span>'+
+      '<span>Salvataggio solo nell’app. Il pannello «Nuova Attività» può creare anche su Google Calendar per gli eventi con orario e stessa data.</span>'+
     '</div></form>';
 }
 function render(){
@@ -223,19 +233,31 @@ async function importGoogle(events){
   return {saved,skipped,idless,total:state.rows.length};
 }
 async function saveCreated(input,created){
-  const userId=await owner(),id=String(created?.eventId||'').trim(),
-    start=asDate(created?.date||input.date+'T'+input.time),end=asDate(created?.endDate||input.date+'T'+input.endTime);
-  if(!start||!end||end<=start)throw Error('Orari attività non validi.');
-  const remote=!!id,day=String(input.date),key=remote?id+'#'+day:'local-'+new Date().getTime()+'-'+Math.random().toString(36).slice(2);
+  // The same validation is used for new entries and edits in the shared calendar popup.
+  const fields=validateDetails(input);
+  const workflow_status=String(input.workflowStatus||'da_fare');
+  if(!Object.prototype.hasOwnProperty.call(statusLabels,workflow_status))
+    throw Error('Stato attività non valido.');
+  const remind_on=String(input.remindOn||'').trim()||null;
+  if(remind_on&&!/^\d{4}-\d{2}-\d{2}$/.test(remind_on))
+    throw Error('Data promemoria non valida.');
+  if(workflow_status==='posticipato'&&!remind_on)
+    throw Error('Per posticipare, indica una data.');
+  const userId=await owner(),id=String(created?.eventId||'').trim();
+  const day=fields.event_date,remote=!!id;
+  const key=remote?id+'#'+day:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2);
   const row={owner_id:userId,source:remote?'google':'manual',source_key:key,calendar_id:id||null,
-    title:String(input.title).trim().slice(0,250),event_date:day,starts_at:start.toISOString(),ends_at:end.toISOString(),
-    all_day:false,activity_type:input.activityType||kindFromText(input.title),
-    description:String(input.description||'').slice(0,5000),location:String(input.location||'').slice(0,500),
+    ...fields,workflow_status,remind_on,
+    workflow_note:String(input.workflowNote||'').slice(0,2000),
+    status_updated_at:new Date().toISOString(),edited_in_app:true,
     created_from_app:true,imported_at:new Date().toISOString()};
   await upsertRows([row]);await load();
-  if(!state.rows.some(r=>r.owner_id===userId&&r.source===row.source&&r.source_key===row.source_key))
-    throw Error('Nuova attività non verificata nella tabella: salvataggio da controllare.');
-  return row;
+  const saved=state.rows.find(r=>r.owner_id===userId&&r.source===row.source&&r.source_key===row.source_key);
+  if(!saved)throw Error('Nuova attività non verificata nella tabella: controlla prima di ripetere.');
+  if(saved.workflow_status!==workflow_status||saved.remind_on!==remind_on||
+      saved.workflow_note!==row.workflow_note||saved.all_day!==row.all_day)
+    throw Error('Dati attività non verificati dopo il salvataggio: non ripetere senza controllare.');
+  return saved;
 }
 
 const statusLabels={da_fare:'Da fare',fatto:'Fatto',chiuso:'Chiuso',da_rimandare:'Da rimandare',
@@ -257,8 +279,6 @@ async function updateWorkflow(id,workflow_status,remind_on,workflow_note=''){
   await load();return true;
 }
 async function saveManual(input){
-  if(!input?.title||!input?.date||!input?.time||!input?.endTime)throw Error('Titolo, data e orari sono obbligatori.');
-  if(input.endTime<=input.time)throw Error('L’ora finale deve essere dopo l’inizio.');
   return saveCreated({...input,activityType:input.activityType||'other'},null);
 }
 
@@ -384,9 +404,10 @@ function wireTableActions(list){
     const form=event.target,submit=form.querySelector('button[type="submit"]');
     if(submit?.disabled)return;
     const read=name=>String(form.elements.namedItem(name)?.value||'').trim();
-    const input={title:read('title'),date:read('date'),time:read('time'),
-      endTime:read('endTime'),activityType:read('activityType'),
-      location:read('location'),description:read('description')};
+    const input={title:read('title'),date:read('date'),endDate:read('endDate'),
+      time:read('time'),endTime:read('endTime'),allDay:!!form.elements.namedItem('allDay')?.checked,
+      activityType:read('activityType'),location:read('location'),description:read('description'),
+      workflowStatus:read('workflowStatus'),remindOn:read('remindOn'),workflowNote:read('workflowNote')};
     if(submit){submit.disabled=true;submit.textContent='Salvo…';}
     try{
       await saveManual(input);
