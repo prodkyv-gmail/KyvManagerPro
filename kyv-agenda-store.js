@@ -43,7 +43,7 @@ function toEvent(row){
     endDate:row.all_day?(row.ends_at?dayKey(row.ends_at):''):row.ends_at,
     allDay:!!row.all_day,description:row.description||'',location:row.location||'',
     source:row.source,createdFromApp:row.created_from_app,activityType:row.activity_type,
-    stored:true};
+    stored:!row.unsaved,unsaved:!!row.unsaved};
 }
 function uniqueRows(rows){
   const seen=new Set();return rows.filter(r=>{const key=r.source+'|'+r.source_key;if(seen.has(key))return false;seen.add(key);return true;});
@@ -55,7 +55,7 @@ function showStatus(message,isError=false){
 function notify(){
   opened=[...state.rows,...state.previewRows].map(toEvent);
   root.dispatchEvent(new CustomEvent('kyv:calendar-events',{
-    detail:{events:opened,success:state.loaded,truncated:false,persisted:true}
+    detail:{events:opened,success:state.loaded,truncated:false,persisted:state.previewRows.length===0}
   }));
 }
 function displayDate(row){
@@ -201,6 +201,11 @@ async function importGoogle(events){
   const saved=await upsertRows(rows);
   // Upsert succeeded; force a fresh verified read and only then drop transient previews.
   await load();
+  // A successful upsert response alone does not prove that each row is readable:
+  // verify the actual persisted keys before declaring the import completed.
+  const storedKeys=new Set(state.rows.filter(r=>r.owner_id===userId).map(r=>r.source+'|'+r.source_key));
+  const missing=rows.filter(r=>!storedKeys.has(r.source+'|'+r.source_key));
+  if(missing.length)throw Error('Salvataggio Agenda non verificato: '+missing.length+' eventi Google non presenti nella tabella.');
   state.previewRows=[];render();
   state.lastImport=new Date();
   showStatus(saved+' eventi Google salvati o aggiornati; '+state.rows.length+' righe conservate'+(skipped?'. '+skipped+' senza identificativo non archiviati.':'.'),!!skipped);
@@ -216,7 +221,10 @@ async function saveCreated(input,created){
     all_day:false,activity_type:input.activityType||kindFromText(input.title),
     description:String(input.description||'').slice(0,5000),location:String(input.location||'').slice(0,500),
     created_from_app:true,imported_at:new Date().toISOString()};
-  await upsertRows([row]);await load();return row;
+  await upsertRows([row]);await load();
+  if(!state.rows.some(r=>r.owner_id===userId&&r.source===row.source&&r.source_key===row.source_key))
+    throw Error('Nuova attività non verificata nella tabella: salvataggio da controllare.');
+  return row;
 }
 
 const statusLabels={da_fare:'Da fare',fatto:'Fatto',chiuso:'Chiuso',da_rimandare:'Da rimandare',
@@ -243,7 +251,9 @@ async function saveManual(input){
   return saveCreated({...input,activityType:input.activityType||'other'},null);
 }
 function showPreview(events,message){
+  const alreadyStored=new Set(state.rows.map(row=>row.source+'|'+row.source_key));
   state.previewRows=uniqueRows((events||[]).map(ev=>normalizeGoogle(ev,'preview')).filter(Boolean))
+    .filter(row=>!alreadyStored.has(row.source+'|'+row.source_key))
     .map(row=>({...row,unsaved:true}));
   state.error=String(message||'La scrittura in Supabase non è riuscita.');
   showStatus('Anteprima non salvata: '+state.previewRows.length+' eventi Google. '+state.error,true);
