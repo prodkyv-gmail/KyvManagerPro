@@ -52,12 +52,10 @@ body{background:#0f111a;color:#f8fafc;font-family:Inter,system-ui,sans-serif}.ca
     <div><label class="capture-label" for="quick-note">Nota veloce · facoltativa</label>
       <input id="quick-note" class="capture-field" maxlength="500" placeholder="Es. ritornello da riscrivere"></div>
   </div>
-  <div class="hidden" aria-hidden="true">
-    <datalist id="quick-artist-options"></datalist>
-    <datalist id="quick-authors-options"></datalist>
-    <datalist id="quick-label-options"></datalist>
-    <datalist id="quick-management-options"></datalist>
-  </div>
+  <datalist id="quick-artist-options"></datalist>
+  <datalist id="quick-authors-options"></datalist>
+  <datalist id="quick-label-options"></datalist>
+  <datalist id="quick-management-options"></datalist>
   <p id="quick-suggestion-status" class="hint" role="status">Puoi scrivere un nuovo nome o scegliere tra quelli già registrati.</p>
   <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
     <button id="quick-save" class="primary" type="submit"><i data-lucide="check" class="w-4 h-4 inline mr-2"></i>Salva progetto</button>
