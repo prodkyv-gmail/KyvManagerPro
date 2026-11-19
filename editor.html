@@ -143,6 +143,19 @@
     <link rel="stylesheet" href="kyv-theme.css">
     <link rel="stylesheet" href="kyv-operational-ui-v276.css">
     <link rel="stylesheet" href="kyv-workspace-ui-v279.css">
+    <style>
+      /* Embedded mode: show ONLY the original Modifica (PROGETTI) dialog. */
+      body.kyv-embedded-project-editor > main,
+      body.kyv-embedded-project-editor > #kyv-sidebar-container {display:none!important}
+      body.kyv-embedded-project-editor #modal-dynamic {position:fixed!important;inset:0!important;background:transparent!important;backdrop-filter:none!important;padding:0!important}
+      body.kyv-embedded-project-editor #modal-dynamic-content {max-height:calc(100dvh - 12px);margin:6px;max-width:min(95vw,1100px)}
+      body.kyv-embedded-project-editor #toast {z-index:60}
+    </style>
+    <script>
+      if(window.parent!==window && new URLSearchParams(location.search).get('embeddedProject')==='1'){
+        document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('kyv-embedded-project-editor'),{once:true});
+      }
+    </script>
 </head>
 <body class="flex h-screen overflow-hidden antialiased text-sm editor-compact kyv-v279-workspace">
 
@@ -684,6 +697,18 @@
         document.getElementById('editor-modal-field-search').addEventListener('input',refreshEditorModalFieldView);
         document.getElementById('editor-modal-only-changed').addEventListener('change',refreshEditorModalFieldView);
 
+        const kyvEmbeddedProject=new URLSearchParams(location.search).get('embeddedProject')==='1'&&window.parent!==window;
+        function notifyEmbeddedProject(type,detail={}) {
+            if(!kyvEmbeddedProject)return;
+            window.parent.postMessage({type,...detail},window.location.origin);
+        }
+        window.addEventListener('message',event=>{
+            if(!kyvEmbeddedProject||event.origin!==window.location.origin||event.source!==window.parent)return;
+            if(event.data?.type==='kyv:project-modal-request-close'){
+                if(!editorModalOpen){notifyEmbeddedProject('kyv:project-modal-closed');return;}
+                closeEditorModal();
+            }
+        });
         function closeEditorModal(force = false) {
             if (!editorModalOpen) return true;
             if (editorModalSaving && !force) return false;
@@ -693,6 +718,7 @@
             document.getElementById('modal-dynamic-content').classList.add('scale-95');
             editorModalOpen = false;
             modal.setAttribute('aria-hidden','true');
+            notifyEmbeddedProject('kyv:project-modal-closed');
             window.KYV_EDITOR_ACTIVE_MODAL_TABLE = null;
             editorModalTouched = new Set();
             const focusReturn=editorModalFocusReturn;
@@ -850,7 +876,7 @@
                 showToast(modalHasRecord() ? 'Modifiche salvate.' : 'Record creato.');
                 try { document.dispatchEvent(new CustomEvent('kyv:record-saved', { detail: {table: savedTable, id: savedId} })); }
                 catch (notifyError) { console.warn('[KYV Studio Editor] Notifica salvataggio:', notifyError); }
-                loadEditorTable(currentEditorTable);
+                if(!kyvEmbeddedProject)loadEditorTable(currentEditorTable);
             } catch (error) {
                 console.error('[KYV Studio Editor] Salvataggio', error);
                 showToast('Salvataggio non riuscito: ' + (error.message || 'verifica i dati.'), true);
@@ -1031,9 +1057,11 @@
                 // Usa il modulo ORIGINALE di Studio Editor e tutti i suoi campi.
                 // Il rowOverride evita di perdere i record non ancora caricati nella griglia.
                 window.openDynamicModal(data.ID,'PROGETTI',data);
+                notifyEmbeddedProject('kyv:project-modal-ready',{id:data.ID});
             } catch(error) {
                 console.warn('[KYV Editor] Apertura PROGETTI da navigazione:',error);
                 showToast('Impossibile aprire Modifica (PROGETTI): '+(error.message||'riprova'),true);
+                notifyEmbeddedProject('kyv:project-modal-error',{message:String(error.message||'Errore apertura')});
             }
         }
 
@@ -1047,8 +1075,8 @@
             supabaseClient.from('PROGETTI').select('ID, TITOLO, ARTISTA').then(({data}) => { if (data) globalProjectsList = data; });
             supabaseClient.from('FATTURE').select('ID_FT, Numero, Denominazione, Data, PrezzoTotale, PrezzoUnitario').then(({data}) => { if (data) globalInvoicesList = data; });
 
-            loadEditorTable('PROGETTI');
-            // Non attendere la lettura dell’intero archivio per aprire il record scelto.
+            if(!kyvEmbeddedProject)loadEditorTable('PROGETTI');
+            // Embedded mode avoids loading the full Studio Editor table and opens only the original dialog.
             openRequestedProjectFromUrl();
         });
     </script>

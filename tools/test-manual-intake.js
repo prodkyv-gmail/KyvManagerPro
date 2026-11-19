@@ -37,7 +37,24 @@ for(const id of ['quick-date','quick-authors','quick-label','quick-management'])
   assert.ok(html.includes('id="'+id+'"'),'Field exists: '+id);
 for(const key of ['TITOLO','ARTISTA','NOTE','Data_Sessione','AUTORI','Label','MANAGEMENT'])
   assert.match(html,new RegExp(key+':'),'Quick insert writes real PROGETTI column: '+key);
-assert.match(html,/editor\.html\?table=PROGETTI&editId=/,'Open project goes to original Studio Editor popup');
+assert.match(html,/editor\.html\?table=PROGETTI&editId=/,'Shared original Editor is embedded in-page');
+assert.match(html,/id="project-editor-overlay"/,'Popup is hosted directly above ADD Progetto');
+assert.match(html,/id="project-editor-frame"/,'Shared Studio Editor popup loads in frame');
+assert.match(html,/link\.dataset\.projectOpen=String\(p\.ID\)/,'Open project is an action on ADD Progetto, not navigation');
+assert.match(html,/link\.addEventListener\('click',\(\)=>openProjectEditor\(p\.ID\)\)/,'Save action directly opens modal');
+assert.doesNotMatch(html,/link\.href='editor\.html\?table=PROGETTI/,'No navigation to Studio Editor when opening');
+for(const [key,id] of [['ARTISTA','quick-artist'],['AUTORI','quick-authors'],['Label','quick-label'],['MANAGEMENT','quick-management']]){
+  assert.match(html,new RegExp('id="'+id+'" list="choices-'+key+'"'),'Editable suggestion input '+key);
+  assert.match(html,new RegExp('id="choices-'+key+'"'),'Existing-values datalist for '+key);
+}
+assert.match(html,/\.range\(page\*batch,\(page\+1\)\*batch-1\)/,'Suggestions paginate the entire existing projects list');
+assert.match(html,/if\(normalized&&!seen\[key\]\.has\(normalized\)\)/,'Deduplication must be based on normalized values');
+assert.match(html,/new Option\('',value\)/,'User can select a previous value');
+const editorHtml=fs.readFileSync(path.join(root,'editor.html'),'utf8');
+assert.match(editorHtml,/body\.kyv-embedded-project-editor > main/,'Embedded Editor page is hidden');
+assert.match(editorHtml,/if\(!kyvEmbeddedProject\)loadEditorTable\('PROGETTI'\)/,'Embedded mode does not load entire table');
+assert.match(editorHtml,/window\.openDynamicModal\(data\.ID,'PROGETTI',data\)/,'Editor auto-opens original Modifica (PROGETTI)');
+assert.match(editorHtml,/kyv:project-modal-closed/,'Embedded popup can close without navigation');
 assert.match(fs.readFileSync(path.join(root,'editor.html'),'utf8'),/window\.openDynamicModal\(data\.ID,'PROGETTI',data\)/,'Editor auto-opens original Modifica (PROGETTI)');
 assert.doesNotMatch(html,/if\(response\.error\)response=await db\.from\('PROGETTI'\)/,'No blind second insert');
 assert.match(html,/id="cloud-flow"/);
