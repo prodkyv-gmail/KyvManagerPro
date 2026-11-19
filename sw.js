@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-editor-project-focus-v285-20261119';
+const CACHE_NAME = 'kyv-studio-v2-82-editor-organize-v286-20261119';
 const APP_SHELL = [
     './',
     './index.html',
@@ -61,6 +61,8 @@ const APP_SHELL = [
     './editor.html',
     './kyv-editor-focus-v285.js',
     './kyv-editor-focus-v285.css',
+    './kyv-editor-organize-v286.js',
+    './kyv-editor-organize-v286.css',
     './kyv-invoice-line-amount.js',
     './kyv-project-relations.js',
     './kyv-invoice-split-v247.js',
