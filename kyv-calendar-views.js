@@ -130,7 +130,7 @@
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
   function readView() {
     try { var v = root.localStorage && root.localStorage.getItem(STORAGE_KEY); if (VIEWS.indexOf(v) >= 0) return v; } catch (e) { /* storage non disponibile */ }
-    return 'day';
+    return 'list';
   }
   function saveView(v) { try { if (root.localStorage) root.localStorage.setItem(STORAGE_KEY, v); } catch (e) { /* ignora */ } }
 
@@ -274,6 +274,7 @@
 
     var bar = el(doc, 'div', 'kyv-cal-bar');
     var group = el(doc, 'div', 'kyv-cal-group');
+    group.title='Visualizzazione della stessa tabella eventi salvata';
     group.setAttribute('role', 'group');
     group.setAttribute('aria-label', 'Vista agenda');
     var buttons = {};
@@ -326,6 +327,17 @@
 
     function loadVisiblePeriod() {
       if (state.view === 'list') return;
+      // La tabella Supabase è l'unica fonte anche per giorno/settimana/mese/anno.
+      // Non interrogare Google a ogni cambio vista e non cancellare il passato.
+      if(root.KYV_AGENDA_STORE){
+        var savedBounds=periodBounds(state.anchor,state.view);
+        state.periodEvents=eventsInRange(state.events,savedBounds);
+        state.periodStatus='Vista dall’archivio salvato. Aggiorna agenda per importare altri eventi Google.';
+        state.yearPending=null;
+        state.requestId++;
+        render();
+        return;
+      }
       var requested = periodBounds(state.anchor, state.view);
       var requestId = ++state.requestId;
       var today=startOfDay(new Date());
