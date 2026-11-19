@@ -25,12 +25,12 @@ function normalizeGoogle(ev,ownerId){
   const start=asDate(ev?.date),end=asDate(ev?.endDate);
   if(!start||!sourceEventDate(ev)||!String(ev?.title||'').trim())return null;
   const id=String(ev?.id||'').trim();
+  const day=sourceEventDate(ev),allDay=!!ev.allDay||isDateOnly(ev.date);
   // Some deployed legacy Apps Script versions omit event IDs. Preserve those rows using a
   // deterministic content fingerprint, without pretending it is a Google event ID.
   const basis=[ev.title,day,ev.date,ev.endDate,ev.description,ev.location].map(x=>String(x??'')).join('|');
   let hash=2166136261;for(let i=0;i<basis.length;i++){hash^=basis.charCodeAt(i);hash=Math.imul(hash,16777619);}
   const sourceKey=id?id+'#'+day:'legacy-'+(hash>>>0).toString(36)+'#'+day;
-  const day=sourceEventDate(ev),allDay=!!ev.allDay||isDateOnly(ev.date);
   return {owner_id:ownerId,source:'google',source_key:sourceKey,calendar_id:id||null,
     title:String(ev.title).trim().slice(0,250),event_date:day,starts_at:start.toISOString(),
     ends_at:end?.toISOString()||null,all_day:allDay,
