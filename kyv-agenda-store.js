@@ -276,7 +276,8 @@ function validateDetails(input){
   if(!/^\d{2}:\d{2}$/.test(time)||!/^\d{2}:\d{2}$/.test(endTime))
     throw Error('Indica gli orari validi.');
   const start=asDate(day+'T'+time);
-  const end=allDay?new Date(asDate(endDay+'T00:00').getTime()+86400000):asDate(endDay+'T'+endTime);
+  const endStart=allDay?asDate(endDay+'T00:00'):null;
+  const end=allDay&&endStart?new Date(endStart.getTime()+86400000):allDay?null:asDate(endDay+'T'+endTime);
   if(!start||!end||Number.isNaN(end.getTime())||end<=start)throw Error('La fine deve seguire l’inizio.');
   return {title,event_date:day,starts_at:start.toISOString(),ends_at:end.toISOString(),all_day:allDay,
     activity_type:input.activityType||'other',description:String(input.description||'').slice(0,5000),
@@ -299,7 +300,10 @@ async function updateEvent(id,input){
   if(!Array.isArray(data)||data.length!==1)throw Error('Modifica non confermata dal database.');
   await load();
   const saved=state.rows.find(r=>r.id===id);
-  if(!saved||!EDIT_FIELDS.every(field=>saved[field]===patch[field])||saved.workflow_status!==status)
+  const sameField=field=>['starts_at','ends_at'].includes(field)
+    ? asDate(saved[field])?.getTime()===asDate(patch[field])?.getTime()
+    : saved[field]===patch[field];
+  if(!saved||!EDIT_FIELDS.every(sameField)||saved.workflow_status!==status)
     throw Error('I dati aggiornati non sono verificabili nella tabella.');
   return saved;
 }
