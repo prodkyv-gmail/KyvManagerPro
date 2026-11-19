@@ -307,49 +307,52 @@
             }
         });
 
-        DOM.formNew.addEventListener('submit', async (e) => {
+        DOM.formNew.addEventListener('submit', async e=>{
             e.preventDefault();
-            const title = document.getElementById('ev-title').value;
-            const date = document.getElementById('ev-date').value;
-            const time = document.getElementById('ev-time').value;
-            const endTime = document.getElementById('ev-end-time').value;
-            const description = document.getElementById('ev-description').value.trim();
-            const location = document.getElementById('ev-location').value.trim();
-            if(!endTime || endTime <= time){
-                showToast('L’ora di fine deve essere successiva all’ora di inizio.', true);
-                return;
+            const input={
+                title:document.getElementById('ev-title').value.trim(),
+                date:document.getElementById('ev-date').value,
+                time:document.getElementById('ev-time').value,
+                endTime:document.getElementById('ev-end-time').value,
+                description:document.getElementById('ev-description').value.trim(),
+                location:document.getElementById('ev-location').value.trim(),
+                activityType:document.querySelector('.kyv-agenda-type.active')?.dataset.kind||'other'
+            };
+            if(!input.title||!input.date||!input.time||!input.endTime||input.endTime<=input.time){
+                showToast('Indica titolo, data e orari validi (fine successiva all’inizio).',true);return;
             }
-            const confirmed = window.confirm(`Confermi la creazione su ${calendarAccount.email}?\n\n${title}\n${date} dalle ${time} alle ${endTime}${location ? '\nLuogo: ' + location : ''}`);
-            if(!confirmed) return;
-
-            DOM.btnCreate.disabled = true;
-            DOM.createIcon.setAttribute('data-lucide', 'loader-2');
+            if(!window.confirm('Salvare l’attività nella tabella e tentare la creazione su Google Calendar?\n\n'+
+                input.title+' · '+input.date+' '+input.time+'–'+input.endTime))return;
+            DOM.btnCreate.disabled=true;
             DOM.createIcon.classList.add('animate-spin');
-            if(window.lucide) lucide.createIcons({root: DOM.btnCreate.parentElement});
-
-            try {
-                const data = await calendarRequest('createEvent', {
-                    title,
-                    date,
-                    time,
-                    endTime,
-                    description,
-                    location,
-                    clientRequestId: `calendar-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-                });
-
-                if(data.error) throw new Error(data.error);
-                showToast('Evento inserito in Google Calendar!');
+            let created=null,googleError='';
+            try{
+                try{
+                    created=await calendarRequest('createEvent',{
+                        title:input.title,date:input.date,time:input.time,endTime:input.endTime,
+                        description:input.description,location:input.location,
+                        clientRequestId:'kyv-agenda-'+Date.now()+'-'+Math.random().toString(36).slice(2)
+                    });
+                    if(created?.error||created?.success===false)throw Error(created.error||'Google Calendar non ha confermato la creazione.');
+                }catch(err){
+                    googleError=String(err?.message||err);
+                    created=null;
+                }
+                if(!window.KYV_AGENDA_STORE)throw Error('Archivio permanente non disponibile.');
+                await KYV_AGENDA_STORE.saveCreated(input,created);
+                listEventsCache=KYV_AGENDA_STORE.getEvents();
                 DOM.formNew.reset();
                 window.dispatchEvent(new CustomEvent('kyv:calendar-created'));
-                setTimeout(() => DOM.btnSync.click(), 500);
-            } catch(err) {
-                showToast(err.message || 'Errore durante la creazione.', true);
-            } finally {
-                DOM.btnCreate.disabled = false;
-                DOM.createIcon.setAttribute('data-lucide', 'calendar-plus');
+                showToast(googleError
+                    ?'Attività salvata nella tabella. Google Calendar non aggiornato: '+googleError
+                    :created?.eventId?'Evento salvato in Google Calendar e nella tabella.':'Evento salvato nella tabella; identificativo Google non verificato.',
+                    !!googleError||!created?.eventId);
+            }catch(err){
+                showToast((created?'Evento creato su Google, ma non archiviato: non reinviarlo. ':'')+
+                    String(err?.message||err),true);
+            }finally{
+                DOM.btnCreate.disabled=false;
                 DOM.createIcon.classList.remove('animate-spin');
-                if(window.lucide) lucide.createIcons({root: DOM.btnCreate.parentElement});
             }
         });
 
@@ -360,7 +363,19 @@
             document.getElementById('ev-date').value = localDate;
             document.getElementById('ev-time').value = '11:00';
             document.getElementById('ev-end-time').value = '13:00';
-            if(window.lucide) lucide.createIcons();
+            const width=document.getElementById('kyv-agenda-width');
+            const output=document.getElementById('kyv-agenda-width-value');
+            const panel=document.querySelector('.kyv-calendar-main');
+            const changeWidth=value=>{
+                const v=Math.min(100,Math.max(65,Number(value)||100));
+                if(panel)panel.style.setProperty('--kyv-agenda-width',v+'%');
+                if(output)output.textContent=v+'%';
+            };
+            if(width){
+                width.addEventListener('input',()=>changeWidth(width.value));
+                changeWidth(width.value);
+            }
+            if(window.lucide)lucide.createIcons();
         });
     </script>
 </body>
