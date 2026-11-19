@@ -38,7 +38,7 @@ for(const id of ['quick-date','quick-authors','quick-label','quick-management'])
 for(const key of ['TITOLO','ARTISTA','NOTE','Data_Sessione','AUTORI','Label','MANAGEMENT'])
   assert.match(html,new RegExp(key+':'),'Quick insert writes real PROGETTI column: '+key);
 assert.match(html,/editor\.html\?table=PROGETTI&editId=/,'Open project goes to original Studio Editor popup');
-assert.match(read('editor.html'),/window\.openDynamicModal\(data\.ID,'PROGETTI',data\)/,'Editor auto-opens original Modifica (PROGETTI)');
+assert.match(fs.readFileSync(path.join(root,'editor.html'),'utf8'),/window\.openDynamicModal\(data\.ID,'PROGETTI',data\)/,'Editor auto-opens original Modifica (PROGETTI)');
 assert.doesNotMatch(html,/if\(response\.error\)response=await db\.from\('PROGETTI'\)/,'No blind second insert');
 assert.match(html,/id="cloud-flow"/);
 assert.match(config,/kyv-producer-mode\.js/);
