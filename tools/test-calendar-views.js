@@ -173,7 +173,7 @@ assert.match(src,/state.yearPending/);
 assert.match(src,/remaining:months.length/);
 assert.match(page,/id="ev-end-time"/);
 assert.match(page,/id="ev-description"/);
-assert.match(page,/endTime,\s*description,\s*location/);
+assert.match(page,/endTime:input\.endTime/);assert.match(page,/description:input\.description/);assert.match(page,/location:input\.location/);
 
 // Lo script completo mantiene Drive e la creazione preesistente, con orari configurabili.
 const full=read('integrations/google-apps-script/kyv-calendar-drive-v2.gs');
