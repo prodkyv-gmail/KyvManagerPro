@@ -162,7 +162,7 @@ function polishScheda(){
 }
 
 function polishToday(){
-  if(page!=='index.html'&&page!=='')return;
+  if(page!=='oggi.html')return;
   const pulse=document.getElementById('studio-pulse');
   const quick=document.querySelector('.kyv-quick-actions');
   if(pulse&&quick&&!pulse.dataset.kyvUiPriority){quick.insertAdjacentElement('afterend',pulse);pulse.dataset.kyvUiPriority='1';}
