@@ -3,15 +3,10 @@
 #editor-tabs>.kyv-editor-primary-tab{white-space:nowrap;flex:0 0 auto;min-height:39px;padding:10px 13px;border:1px solid #44506a;background:#1c2536;color:#d4e0ef;border-radius:10px;font-size:12px;font-weight:740;transition:background .15s,color .15s}
 #editor-tabs>.kyv-editor-primary-tab:hover{background:#313d58;color:#fff}
 #editor-tabs .kyv-editor-nav-active{background:#4f46e5!important;color:#fff!important;border-color:#7f7af8!important;box-shadow:0 4px 12px #3e35bd44}
-#editor-extra-tables{position:relative;flex-shrink:0}
-#editor-extra-tables>summary{list-style:none;display:flex;align-items:center;gap:8px;padding:10px 12px;min-height:39px;background:#1c2536;border:1px solid #3b4e69;border-radius:10px;font-size:12px;font-weight:750;color:#e4ebff;cursor:pointer}
-#editor-extra-tables>summary::-webkit-details-marker{display:none}
-#editor-extra-tables>summary:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
-#editor-extra-tables[open]>summary{background:#303959;border-color:#8484ef}
-#editor-extra-tables-menu{position:fixed;top:var(--kyv-editor-menu-top,120px);left:var(--kyv-editor-menu-left,100px);width:min(360px,calc(100vw - 24px));max-height:min(62vh,520px);overflow-y:auto;z-index:200;background:#151c29;border:1px solid #516078;border-radius:13px;box-shadow:0 24px 65px #000a;padding:10px;display:grid;gap:5px}
-#editor-extra-tables-menu button{display:flex;align-items:center;text-align:left;padding:11px 12px;min-height:40px;border:1px solid transparent;border-radius:8px;background:#202a3c;color:#e2e9f7;font-size:12px;font-weight:650;white-space:normal;overflow-wrap:anywhere}
-#editor-extra-tables-menu button:hover,#editor-extra-tables-menu button[aria-current="page"]{background:#363968;border-color:#6d6be1;color:#fff}
-#editor-extra-tables:not([open]) #editor-extra-tables-menu{display:none}
+#editor-extra-tables{display:inline-flex;align-items:center;gap:8px;border:1px solid #3b4e69;border-radius:10px;padding:3px 4px 3px 12px;background:#1c2536;min-height:39px;color:#dfe7f8;font-size:12px;font-weight:750;white-space:nowrap}
+#editor-extra-tables select{border:0;border-radius:7px;background:#303a52;color:#f1f5ff;min-height:33px;max-width:205px;width:190px;padding:5px 7px;cursor:pointer;font-weight:700;font-size:12px}
+#editor-extra-tables select:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
+#editor-extra-tables select option{background:#182133;color:#f1f5ff}
 #editor-operational-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 20px;background:#131b2a;border-bottom:1px solid #2e3c51;flex-shrink:0}
 #editor-operational-filters label{font-size:12px;font-weight:700;color:#c2cee2;display:flex;align-items:center;gap:7px}
 #editor-operational-filters select{min-width:125px;max-width:min(100%,320px);padding:9px 10px;background:#101725;border:1px solid #485878;color:#edf2fc;border-radius:10px;min-height:40px;font-size:12px}
@@ -30,5 +25,5 @@ body.kyv-v279-workspace #editor-operational-filters{position:relative;z-index:5}
  #editor-operational-filters label{flex:1 1 145px;justify-content:space-between}
  #editor-operational-filters select{min-width:110px;max-width:58vw}
  #editor-date-sort-note{margin-left:0;width:100%}
- #editor-extra-tables-menu{width:calc(100vw - 24px)}
+ #editor-extra-tables select{width:155px;max-width:42vw}
 }
