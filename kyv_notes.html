@@ -189,7 +189,7 @@ function drawList(){
  }
 }
 async function openNote(record){
- if(voice?.isRecording()||busyAudio){signal('Termina la registrazione o il caricamento prima di cambiare nota.','error');return;}
+ if(voice?.isRecording()||busyAudio||audioPending){signal('Salva la registrazione o scarica una copia prima di cambiare nota.','error');return;}
  if(current){clearTimeout(saveTimer);void saveNow().catch(()=>{});}
  let item={...record};
  if(record.__localDraft&&record.__remote&&
@@ -227,7 +227,7 @@ function releaseAudio(){
  if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl=null;
 }
 function addNew(){
- if(voice?.isRecording()||busyAudio){signal('Termina la registrazione prima di creare una nuova nota.','error');return;}
+ if(voice?.isRecording()||busyAudio||audioPending){signal('Salva la registrazione o scarica una copia prima di creare un’altra nota.','error');return;}
  if(current){clearTimeout(saveTimer);void saveNow().catch(()=>{});}
  current=fresh();audioPending=null;releaseAudio();audioDuration=0;
  $('notes-title').value='';$('notes-content').value='';$('notes-category').value='info';
@@ -272,8 +272,11 @@ async function saveAudio(){
   signal('Salvataggio nota e caricamento registrazione…');
   await saveNow(true);
   const updated=await store.uploadVoice(noteId,pendingBlob,pendingSeconds);
-  if(current?.id===noteId){current={...current,...updated};audioPending=null;
-   $('notes-upload-audio').hidden=true;$('notes-backup-audio').hidden=true;}
+  if(current?.id===noteId){
+   current.audio_path=updated.audio_path;current.audio_mime=updated.audio_mime;
+   current.audio_duration_seconds=updated.audio_duration_seconds;audioPending=null;
+   $('notes-upload-audio').hidden=true;$('notes-backup-audio').hidden=true;
+  }
   notes=notes.map(n=>n.id===noteId?updated:n);
   signal('Registrazione salvata nello spazio privato.','success');drawList();
  }catch(err){signal('Audio non salvato: '+err.message+'. La copia locale è ancora disponibile: scaricala come sicurezza.','error');
