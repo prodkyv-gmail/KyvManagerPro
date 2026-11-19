@@ -37,6 +37,7 @@
     <script src="kyv-editor-read-v267.js"></script>
     <script src="kyv-editor-changes-v268.js"></script>
     <script src="kyv-editor-modal-v278.js"></script>
+    <script src="kyv-editor-focus-v285.js"></script>
     <script src="kyv-help.js"></script>
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
@@ -143,6 +144,7 @@
     <link rel="stylesheet" href="kyv-theme.css">
     <link rel="stylesheet" href="kyv-operational-ui-v276.css">
     <link rel="stylesheet" href="kyv-workspace-ui-v279.css">
+    <link rel="stylesheet" href="kyv-editor-focus-v285.css">
     <style>
       /* Embedded mode: show ONLY the original Modifica (PROGETTI) dialog. */
       body.kyv-embedded-project-editor > main,
@@ -220,6 +222,10 @@
                 <button type="button" data-action="export-csv" aria-label="Esporta CSV della tabella corrente" class="px-3 py-2 bg-kyv-card border border-kyv-border hover:bg-kyv-border text-white rounded-lg transition-colors flex items-center text-sm shadow-sm whitespace-nowrap">
                     <i data-lucide="download" class="w-4 h-4 sm:mr-2 text-kyv-text"></i> <span class="hidden sm:inline">Esporta</span>
                 </button>
+                <div id="editor-display-mode" role="group" aria-label="Visualizzazione Progetti">
+                    <button type="button" data-action="set-display-mode" data-mode="essential" aria-pressed="true" title="Solo le informazioni principali, senza modifiche accidentali">Essenziale</button>
+                    <button type="button" data-action="set-display-mode" data-mode="all" aria-pressed="false" title="Tutte le colonne e modifica delle celle">Completa</button>
+                </div>
                 <div id="editor-column-wrap" class="relative shrink-0">
                     <button type="button" data-action="toggle-columns" id="editor-columns-toggle" aria-expanded="false" aria-controls="editor-column-panel" class="px-3 py-2 bg-kyv-card border border-indigo-500/60 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm whitespace-nowrap" title="Scegli le colonne da mostrare in questa tabella">
                         <i data-lucide="list-filter" class="w-4 h-4 sm:mr-2 text-indigo-300"></i><span>Colonne</span>
@@ -260,6 +266,25 @@
             </div>
         </div>
     </main>
+
+    <!-- PROGETTI: pannello di lettura, nessuna seconda implementazione del salvataggio -->
+    <div id="editor-project-detail" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="editor-project-detail-title">
+        <section id="editor-project-detail-panel" aria-label="Scheda di consultazione Progetti">
+            <div class="kyv-detail-head">
+                <p class="kyv-detail-eyebrow">Studio Editor · PROGETTI · Consultazione</p>
+                <h3 id="editor-project-detail-title">Progetto</h3>
+                <p id="editor-project-detail-subtitle"></p>
+                <div class="kyv-detail-head-buttons">
+                    <button type="button" id="editor-project-detail-edit" data-action="project-detail-edit"><i data-lucide="pencil" class="w-4 h-4 inline mr-1"></i> Modifica (PROGETTI)</button>
+                    <button type="button" id="editor-project-detail-close" data-action="project-detail-close"><i data-lucide="x" class="w-4 h-4 inline mr-1"></i> Chiudi</button>
+                </div>
+            </div>
+            <div class="kyv-detail-toolbar">
+                <label><input id="editor-project-detail-show-empty" type="checkbox"> Mostra anche i campi vuoti</label>
+            </div>
+            <div id="editor-project-detail-body" class="custom-scrollbar" aria-live="polite"></div>
+        </section>
+    </div>
 
     <!-- MODAL GENERICA (INSERT & UPDATE) -->
     <div id="modal-dynamic" aria-hidden="true" aria-modal="true" role="dialog" aria-labelledby="dynamic-modal-title" aria-describedby="editor-modal-change-status" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
@@ -365,6 +390,28 @@
         let currentSortColumn = null, currentSortDesc = false;
         const editorViewEngine=window.KYV_EDITOR_VIEW_V277.create({normalize:value=>KYV.normalize(value),parseSort:value=>parseForSort(value)});
         const editorColumnKeys = () => currentEditorData.length ? Object.keys(currentEditorData[0]) : (tableColumnsFallback[currentEditorTable] || []);
+        const DISPLAY_KEY='kyv-editor-display-mode-v285';
+        let projectDisplayMode='essential',projectDetailId=null,projectDetailFocusReturn=null;
+        try{projectDisplayMode=KYV_EDITOR_FOCUS_V285.modeFromStorage(localStorage.getItem(DISPLAY_KEY));}catch(_){}
+        const essentialProjects=()=>currentEditorTable==='PROGETTI'&&projectDisplayMode==='essential';
+        function syncEditorDisplayControls(){
+            const supported=currentEditorTable==='PROGETTI';
+            const mode=document.getElementById('editor-display-mode');
+            if(mode)mode.hidden=!supported;
+            document.getElementById('editor-column-wrap').hidden=supported&&essentialProjects();
+            document.querySelectorAll('#editor-display-mode [data-mode]').forEach(btn=>
+                btn.setAttribute('aria-pressed',String(btn.dataset.mode===projectDisplayMode)));
+            const help=document.getElementById('editor-column-note');
+            if(help&&supported&&essentialProjects())
+                help.textContent='In vista Essenziale sono mostrate le informazioni principali. Passa a Completa per personalizzare le colonne.';
+        }
+        function changeProjectDisplayMode(mode){
+            if(currentEditorTable!=='PROGETTI'||!['essential','all'].includes(mode))return;
+            projectDisplayMode=mode;
+            try{localStorage.setItem(DISPLAY_KEY,JSON.stringify({PROGETTI:mode}));}catch(_){}
+            syncEditorDisplayControls();
+            if(!editorIsLoading){refreshEditorView();renderColumnPicker();}
+        }
         function toggleColumnPanel(open) {
             const panel = document.getElementById('editor-column-panel'),button=document.getElementById('editor-columns-toggle');
             if (!panel || !button) return;
@@ -402,8 +449,10 @@
         async function loadEditorTable(tableName) {
             const requestId = ++editorLoadSerial;
             const changingTable=currentEditorTable!==tableName;
+            if(projectDetailId!==null)closeProjectDetails(false);
             clearTimeout(window.debounceTimer);
             currentEditorTable = tableName;
+            syncEditorDisplayControls();
             currentEditorData = [];
             editorViewEngine.setRows([]);
             editorIsLoading = true;
@@ -511,8 +560,10 @@
             const search = document.getElementById('editor-search')?.value.trim();
             const sort = currentSortColumn ? ` · Ordinamento: ${currentSortColumn} (${currentSortDesc ? 'decrescente' : 'crescente'})` : '';
             const filter = search ? ` · Filtro: “${search}”` : '';
-            const totalCols = editorColumnKeys().length, shownCols = window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,editorColumnKeys()).length ?? totalCols;
-            status.textContent = `${visibleCount} righe mostrate di ${matchingCount} corrispondenze su ${currentEditorData.length} record verificati · Colonne ${shownCols}/${totalCols}${filter}${sort}${currentEditorTable==='ESTRATTO SIAE'?' · SIAE: − nell’originale = entrata per noi; + = uscita per noi':''}`;
+            const totalCols = editorColumnKeys().length, shownCols = essentialProjects()
+                ? KYV_EDITOR_FOCUS_V285.essentialKeys(currentEditorTable,editorColumnKeys()).length
+                : window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,editorColumnKeys()).length ?? totalCols;
+            status.textContent = `${visibleCount} righe mostrate di ${matchingCount} corrispondenze su ${currentEditorData.length} record verificati · ${essentialProjects()?'Vista essenziale · ':''}Colonne ${shownCols}/${totalCols}${filter}${sort}${currentEditorTable==='ESTRATTO SIAE'?' · SIAE: − nell’originale = entrata per noi; + = uscita per noi':''}`;
         }
 
         function refreshEditorView() {
@@ -581,10 +632,14 @@
         }
 
         function renderEditorTable(dataArray) {
+            const isEssential=essentialProjects();
+            document.getElementById('editor-table-element').classList.toggle('kyv-editor-essential',isEssential);
             const sourceRow = dataArray?.[0] || currentEditorData?.[0];
             if(!sourceRow) { const message=readOnlyTables.has(currentEditorTable)?'Nessuna versione presente. Usa Archivio Musicale per collegare i file.':'Nessun dato. Usa il pulsante "Aggiungi" per creare un record.'; DOM.editorThead.innerHTML = ''; DOM.editorTbody.innerHTML = `<tr><td class="p-8 text-center text-kyv-text">${message}</td></tr>`; return; }
 
-            const keys = window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,Object.keys(sourceRow)) || Object.keys(sourceRow);
+            const keys = isEssential
+                ? KYV_EDITOR_FOCUS_V285.essentialKeys(currentEditorTable,Object.keys(sourceRow))
+                : window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,Object.keys(sourceRow)) || Object.keys(sourceRow);
             const pk = tablePKs[currentEditorTable] || 'id'; // default fallback a 'id'
             
             const isProgetti = currentEditorTable === 'PROGETTI'; 
@@ -608,6 +663,16 @@
             dataArray.forEach(row => {
                 htmlBody.push(`<tr class="hover:bg-kyv-border/30 transition-colors group ${textSize}">`);
                 keys.forEach(key => {
+                    if(isEssential){
+                        const display=KYV_EDITOR_FOCUS_V285.valueText(row[key]);
+                        const empty=!KYV_EDITOR_FOCUS_V285.isFilled(row[key]);
+                        const label=KYV.safeHtml(display);
+                        const cell=key==='TITOLO'
+                            ? `<button type="button" data-action="open-project-detail" data-id="${KYV.safeHtml(row[pk])}" class="kyv-editor-essential-title" title="Apri riepilogo progetto">${label}</button>`
+                            : `<span class="${empty?'kyv-editor-essential-empty':''}">${label}</span>`;
+                        htmlBody.push(`<td class="${tdPad} kyv-editor-essential-cell border-r border-kyv-border/20" data-column="${KYV.safeHtml(key)}">${cell}</td>`);
+                        return;
+                    }
                     let val = row[key] !== null ? row[key] : ''; 
                     const colClass = getEditorColumnClass(key);
                     let isForeignKey = key === 'IDFT' || key === 'ID_PROGETTO' || key === 'Progetto_Collegato'; 
@@ -625,6 +690,13 @@
                         htmlBody.push(`<td class="${tdPad} ${colClass} ${cellStyle} border-r border-transparent group-hover:border-kyv-border/50 outline-none editable-cell transition-all cursor-text" contenteditable="true" data-original="${KYV.safeHtml(val)}" data-id="${KYV.safeHtml(row[pk])}" data-col="${KYV.safeHtml(key)}" title="${KYV.safeHtml(val)}">${KYV.safeHtml(val)}</td>`); 
                     }
                 });
+                if(isEssential){
+                    htmlBody.push(`<td class="${tdPad} kyv-editor-essential-actions sticky right-0 bg-[#111724]">
+                        <button type="button" class="kyv-editor-open-detail" data-action="open-project-detail" data-id="${KYV.safeHtml(row[pk])}">Dettaglio</button>
+                        <button type="button" data-action="edit-record" data-id="${KYV.safeHtml(row[pk])}" class="ml-1 p-2 rounded hover:bg-indigo-500/20 text-indigo-200" title="Modifica nel popup originale" aria-label="Modifica progetto"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                    </td></tr>`);
+                    return;
+                }
                 htmlBody.push(isReadOnly
                     ? `<td class="${tdPad} kyv-actions-col text-center sticky right-0 bg-[#0d0f16]/90 border-l border-kyv-border/20 text-emerald-300" title="Gestito da Archivio Musicale"><i data-lucide="shield-check" class="w-4 h-4 inline"></i></td></tr>`
                     : `<td class="${tdPad} kyv-actions-col text-center sticky right-0 bg-[#0d0f16]/90 group-hover:bg-[#12151e] transition-colors border-l border-kyv-border/20 whitespace-nowrap"><button data-action="edit-record" data-id="${KYV.safeHtml(row[pk])}" class="text-kyv-text hover:text-indigo-400 p-1 rounded transition-colors mr-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button data-action="delete-record" data-id="${KYV.safeHtml(row[pk])}" class="text-kyv-text hover:text-red-500 p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`);
@@ -634,6 +706,97 @@
                 : `<tr><td colspan="${keys.length + 1}" class="p-8 text-center text-kyv-text"><i data-lucide="search-x" class="w-6 h-6 mx-auto mb-2 text-slate-500"></i>Nessun record corrisponde al filtro. Cancella o modifica la ricerca.</td></tr>`;
             if(window.lucide) lucide.createIcons({ root: document.getElementById('editor-table-element') });
         }
+
+
+        // Fase B: sola lettura dagli stessi record già verificati dalla tabella.
+        // Nessuna query aggiuntiva, nessuna duplicazione del popup di salvataggio.
+        function projectRow(id){
+            return currentEditorData.find(row=>String(row.ID)===String(id))||null;
+        }
+        function renderProjectDetails(){
+            if(projectDetailId===null)return;
+            const row=projectRow(projectDetailId);
+            if(!row){closeProjectDetails(false);return;}
+            document.getElementById('editor-project-detail-title').textContent=
+                KYV_EDITOR_FOCUS_V285.isFilled(row.TITOLO)?String(row.TITOLO):'Progetto #'+row.ID;
+            document.getElementById('editor-project-detail-subtitle').textContent=
+                [row.ARTISTA,row.STATO,row.Label].filter(KYV_EDITOR_FOCUS_V285.isFilled).map(String).join(' · ')||
+                'ID progetto: '+row.ID;
+            const showEmpty=!!document.getElementById('editor-project-detail-show-empty').checked;
+            const body=document.getElementById('editor-project-detail-body');
+            const fragment=document.createDocumentFragment();
+            const groups=KYV_EDITOR_FOCUS_V285.sections(row);
+            for(const group of groups){
+                const keys=showEmpty?group.keys:group.keys.filter(key=>KYV_EDITOR_FOCUS_V285.isFilled(row[key]));
+                if(!keys.length)continue;
+                const section=document.createElement('details');
+                section.className='kyv-detail-section';
+                section.dataset.group=group.id;
+                section.open=['identity','people','dates'].includes(group.id);
+                const summary=document.createElement('summary');
+                const title=document.createElement('span');title.textContent=group.title;
+                const count=document.createElement('span');count.className='kyv-detail-section-count';
+                count.textContent=group.filled+' di '+group.keys.length+' compilati';
+                summary.append(title,count);section.append(summary);
+                const grid=document.createElement('dl');grid.className='kyv-detail-grid';
+                for(const key of keys){
+                    const field=document.createElement('div');field.className='kyv-detail-field';
+                    const label=document.createElement('dt');
+                    label.textContent=displayEditorColumnLabel(key,'PROGETTI');
+                    const value=document.createElement('dd');
+                    value.textContent=KYV_EDITOR_FOCUS_V285.valueText(row[key]);
+                    if(!KYV_EDITOR_FOCUS_V285.isFilled(row[key]))value.classList.add('kyv-field-empty');
+                    field.append(label,value);grid.append(field);
+                }
+                section.append(grid);fragment.append(section);
+            }
+            if(!fragment.childNodes.length){
+                const empty=document.createElement('p');
+                empty.className='kyv-detail-section-empty';
+                empty.textContent='Nessuna informazione compilata. Attiva «Mostra anche i campi vuoti».';
+                fragment.append(empty);
+            }
+            body.replaceChildren(fragment);
+        }
+        function openProjectDetails(id,opener){
+            if(editorIsLoading||currentEditorTable!=='PROGETTI')return;
+            const row=projectRow(id);
+            if(!row){showToast('Progetto non disponibile nella tabella verificata. Ricarica la scheda.',true);return;}
+            projectDetailId=String(row.ID);
+            projectDetailFocusReturn=opener||document.activeElement;
+            const modal=document.getElementById('editor-project-detail');
+            document.getElementById('editor-project-detail-show-empty').checked=false;
+            renderProjectDetails();
+            modal.hidden=false;modal.setAttribute('aria-hidden','false');
+            document.getElementById('editor-project-detail-close').focus();
+        }
+        function closeProjectDetails(restoreFocus=true){
+            if(projectDetailId===null)return;
+            projectDetailId=null;
+            const panel=document.getElementById('editor-project-detail');
+            panel.hidden=true;panel.setAttribute('aria-hidden','true');
+            if(restoreFocus&&projectDetailFocusReturn?.isConnected)projectDetailFocusReturn.focus();
+            projectDetailFocusReturn=null;
+        }
+        const projectDetailsOverlay=document.getElementById('editor-project-detail');
+        projectDetailsOverlay.addEventListener('click',event=>{
+            if(event.target===projectDetailsOverlay)closeProjectDetails();
+        });
+        document.getElementById('editor-project-detail-show-empty').addEventListener('change',renderProjectDetails);
+        document.addEventListener('keydown',event=>{
+            if(projectDetailId===null)return;
+            if(event.key==='Escape'){
+                event.preventDefault();event.stopImmediatePropagation();closeProjectDetails();return;
+            }
+            if(event.key!=='Tab')return;
+            const focusable=[...projectDetailsOverlay.querySelectorAll('button:not([disabled]),input:not([disabled]),summary,[href]')]
+                .filter(el=>el.getClientRects().length);
+            if(!focusable.length)return;
+            const first=focusable[0],last=focusable[focusable.length-1];
+            if(!projectDetailsOverlay.contains(document.activeElement)){event.preventDefault();first.focus();return;}
+            if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+            else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+        },true);
 
         function modalHasRecord() {
             return currentEditingRowId !== null && currentEditingRowId !== undefined;
@@ -897,7 +1060,14 @@
 
         document.addEventListener('click', async (e) => {
             const btn = e.target.closest('[data-action]'); if (!btn) return; const action = btn.dataset.action;
-            if (action === 'load-table') loadEditorTable(btn.dataset.table);
+            if (action === 'set-display-mode')changeProjectDisplayMode(btn.dataset.mode);
+            else if (action === 'open-project-detail')openProjectDetails(btn.dataset.id,btn);
+            else if (action === 'project-detail-close')closeProjectDetails();
+            else if (action === 'project-detail-edit') {
+                const id=projectDetailId,row=id===null?null:projectRow(id);
+                if(row){closeProjectDetails(true);openDynamicModal(row.ID,'PROGETTI',row);}
+            }
+            else if (action === 'load-table') loadEditorTable(btn.dataset.table);
             else if (action === 'retry-table') loadEditorTable(currentEditorTable);
             else if (action === 'load-more-rows') {
                 if (!editorIsLoading) { editorShownRows += EDITOR_ROWS_STEP; refreshEditorView(); }
