@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-add-project-full-agenda-20261119';
+const CACHE_NAME = 'kyv-studio-v2-82-add-project-modal-choices-20261119';
 const APP_SHELL = [
     './',
     './index.html',
