@@ -216,7 +216,7 @@ function dashboardProducerMode(){
 }
 
 function loadNotesCapture(){
-  if(page==='login.html'||page==='kyv_notes.html')return;
+  if(page==='login.html'||page==='kyv_notes.html'||new URLSearchParams(location.search).get('embeddedProject')==='1')return;
   for(const src of ['kyv-notes-core.js','kyv-notes-voice.js','kyv-notes-quick.js']){
     if(document.querySelector('script[src="'+src+'"]'))continue;
     const script=document.createElement('script');script.src=src;script.async=false;
