@@ -49,11 +49,11 @@ function fakeDB({records=data,total=records.length,missingCount=false,limitAt=In
  assert.ok(!html.includes('select(querySelection).limit(1000)'),'Do not truncate Editor lists to 1000');
  assert.ok(html.includes('requestId !== editorLoadSerial'),'Old async responses cannot replace the current table');
  assert.ok(html.includes('renderEditorTable(rows.slice(0, visibleCount))'),'Render a bounded visible subset');
- assert.ok(html.includes("editorShownRows += EDITOR_ROWS_STEP"),'Explicit load-more action');
+ assert.ok(html.includes("editorShownRows += editorPageStep()"),'Explicit load-more action');
  assert.ok(html.includes("rows.length - visibleCount"),'Show real remaining row count');
  assert.ok(html.includes('Nessun risultato parziale mostrato'),'Incomplete read is visibly blocked');
  assert.ok(html.includes('data-action="retry-table"'));
- assert.ok(html.includes("const EDITOR_ROWS_STEP = 120"));
+ assert.ok(html.includes("const EDITOR_DEFAULT_ROWS_STEP = 120"));
  assert.ok(html.includes("Colonne nascoste solo nella griglia"),'Column visibility remains independent of data reads');
  assert.ok(html.includes('if (action === \'export-csv\')'),'Existing full data CSV stays available');
  assert.ok(html.includes("const readOnlyTables = new Set(['AUDIO_VERSIONI'])"));

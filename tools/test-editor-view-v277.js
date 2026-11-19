@@ -46,8 +46,8 @@ assert.ok(html.includes("editorViewEngine.setRows(processedData)"),'Successful r
 assert.ok(html.includes('editorViewEngine.invalidate();'),'Successful inline update invalidates cache');
 assert.ok(html.includes("if (searchInput && changingTable) searchInput.value = ''"),'Same-table refresh must retain search; table change clears it');
 assert.ok(html.includes('clearTimeout(window.debounceTimer);'),'Refresh clears pending search input debounce');
-assert.ok(html.includes('return editorViewEngine.select({'),'Current UI must use shared view cache');
-assert.ok(html.includes('editorShownRows += EDITOR_ROWS_STEP'),'Progressive UI remains intact');
+assert.ok(html.includes('const searched=editorViewEngine.select({') && html.includes('KYV_EDITOR_ORGANIZE_V286.filterRows(searched,'),'Current UI must use shared view cache');
+assert.ok(html.includes('editorShownRows += editorPageStep()'),'Progressive UI remains intact');
 assert.ok(html.includes('KYV_EDITOR_READ_V267.readComplete('),'Complete verified data remains');
 assert.ok(html.includes('currentEditorData.forEach(row => csv +='),'CSV must include every raw record');
 assert.ok(html.includes("const keys = Object.keys(currentEditorData[0])"),'CSV includes every raw column');
