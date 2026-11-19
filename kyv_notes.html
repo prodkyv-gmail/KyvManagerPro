@@ -194,8 +194,16 @@ async function openNote(record){
  let item={...record};
  if(record.__localDraft&&record.__remote&&
    new Date(record.__remote.updated_at)>new Date(record.base_updated_at||0)){
-  const restore=confirm('Questa bozza locale è precedente a una modifica salvata sul cloud. Vuoi aprire la bozza locale? Il contenuto cloud resta disponibile finché non premi Salva.');
-  if(!restore)item={...record.__remote};
+  const restore=confirm('Questa bozza locale è precedente a una modifica più recente sul cloud. OK ripristina la bozza originale; Annulla conserva il cloud e mantiene la bozza come una nota separata, senza cancellarla.');
+  if(!restore){
+   const copy={...record,id:crypto.randomUUID(),title:'Bozza recuperata · '+(record.title||'Senza titolo'),
+    created_at:new Date().toISOString(),updated_at:new Date().toISOString(),base_updated_at:null};
+   delete copy.__localDraft;delete copy.__remote;
+   drafts.put(copy);
+   drafts.clear(record.id);
+   item={...record.__remote};
+   signal('Bozza recuperata come nota separata, non sincronizzata.','success');
+  }
  }
  current=item;audioPending=null;audioDuration=0;releaseAudio();
  $('notes-title').value=item.title||'';$('notes-content').value=item.content||'';
@@ -342,12 +350,22 @@ async function boot(){
   });
   $('notes-upload-audio').addEventListener('click',()=>{void saveAudio();});
   $('notes-backup-audio').addEventListener('click',downloadPending);
-  window.addEventListener('online',()=>{if(currentDraft())void saveNow().catch(()=>{});});
+  window.addEventListener('online',()=>{
+   if(currentDraft())void saveNow().catch(()=>{});
+   void store.listAll().then(all=>{notes=all;drawList();}).catch(error=>{
+    signal('Riconnessione: archivio cloud non ancora disponibile: '+error.message,'error');
+   });
+  });
   window.addEventListener('beforeunload',event=>{
    if(voice.isRecording()||audioPending||busyAudio){event.preventDefault();event.returnValue='';}
   });
   await loadProjects();
-  notes=await store.listAll();
+  try{notes=await store.listAll();}
+  catch(error){
+   // Fail closed: do not pretend the cloud archive was loaded; display only local drafts.
+   notes=[];
+   signal('Archivio cloud non leggibile: puoi lavorare sulle bozze locali. Ricollegati e ricarica per vedere tutte le note.', 'error');
+  }
   loading=false;
   const param=new URLSearchParams(location.search);
   if(param.get('new')==='1'||param.has('project'))addNew();
