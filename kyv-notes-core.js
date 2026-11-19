@@ -73,8 +73,16 @@ function createStore(db,uid){
  }
  async function save(raw){
   const payload=cleanPayload(raw,uid);
-  if(!payload.title&&!payload.content&&!raw.audio_path)throw Error('Scrivi o registra qualcosa prima di salvare.');
-  const {data,error}=await db.from(TABLE).upsert(payload,{onConflict:'id'}).select('*').single();
+  if(!payload.title&&!payload.content&&!raw.audio_path&&!raw.allowEmptyForAudio)
+   throw Error('Scrivi o registra qualcosa prima di salvare.');
+  // Never upsert: a partial upsert could erase audio_path and its metadata from an existing note.
+  const {data:existing,error:readError}=await db.from(TABLE).select('id')
+   .eq('owner_id',uid).eq('id',payload.id).maybeSingle();
+  if(readError)throw readError;
+  const {id,owner_id,...patch}=payload;
+  const {data,error}=existing
+   ?await db.from(TABLE).update(patch).eq('owner_id',uid).eq('id',id).select('*').single()
+   :await db.from(TABLE).insert(payload).select('*').single();
   if(error)throw error;
   if(!data||data.owner_id!==uid)throw Error('Salvataggio non confermato.');
   return data;
