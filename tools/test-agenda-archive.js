@@ -42,7 +42,10 @@ const client={
   return {
    select(){return {order(){return {range:async(a,b)=>{const data=[...rows.values()].sort((x,y)=>x.starts_at.localeCompare(y.starts_at)).slice(a,b+1);return {data,count:rows.size,error:null};}}}};},
    upsert:async(batch)=>{if(suppressUpsert)return {error:null};for(const x of batch){const key=x.owner_id+'|'+x.source+'|'+x.source_key;rows.set(key,{id:rows.get(key)?.id||'fake-row-'+(++sequence),...rows.get(key),...x,workflow_status:x.workflow_status||rows.get(key)?.workflow_status||'da_fare',remind_on:x.remind_on===undefined?rows.get(key)?.remind_on||null:x.remind_on});}return{error:null};},
-   update(patch){const filters={};return {eq(k,v){filters[k]=v;return this;},async select(){for(const [key,row]of rows){if(row.id===filters.id&&row.owner_id===filters.owner_id){rows.set(key,{...row,...patch});return{data:[{id:row.id}],error:null};}}return{data:[],error:null};}};}
+   update(patch){const filters={};return {eq(k,v){filters[k]=v;return this;},is(k,v){filters[k]=v;return this;},async select(){for(const [key,row]of rows){if(row.id===filters.id&&row.owner_id===filters.owner_id&&
+      (filters.deleted_at===undefined||(row.deleted_at||null)===filters.deleted_at)){
+      const updated={...row,...patch};rows.set(key,updated);return{data:[updated],error:null};}}
+      return{data:[],error:null};}};}
   };
  }
 };
@@ -71,6 +74,17 @@ assert.match(html,/reportSync/,'Sync exposes separate Google/archive stages');
 assert.match(html,/segment<3/,'Read 90 days via three supported date windows');
 assert.match(read('docs/agenda-workflow-reminders-v283.sql'),/workflow_status/);
 assert.match(read('docs/agenda-workflow-reminders-v283.sql'),/remind_on/);
+const editMigration=read('docs/agenda-event-editor-soft-delete-v284.sql');
+assert.match(editMigration,/add column if not exists edited_in_app/);
+assert.match(editMigration,/add column if not exists deleted_at/);
+assert.doesNotMatch(editMigration,/\bdelete\s+from\b/i,'No destructive migration');
+const phase5=read('kyv-agenda-phase5.js');
+assert.match(phase5,/Nuova Attività/);
+assert.doesNotMatch(phase5,/Pianifica attività/);
+assert.match(phase5,/kyv-activity-width/,'Planner uses its own width slider');
+assert.match(views,/root\.KYV_AGENDA_STORE\.updateEvent\(ev\.archiveId,input\)/);
+assert.match(views,/root\.KYV_AGENDA_STORE\.deleteEvent\(ev\.archiveId\)/);
+assert.match(css,/\.kyv-cal-detail-dialog/,'Editable popup has responsive styles');
 async function run(){
  await api.importGoogle([google,google]);assert.equal(rows.size,1,'Repeated ID in same sync deduped');
  await api.importGoogle([google]);assert.equal(rows.size,1,'Repeated sync must upsert not duplicate');
@@ -95,6 +109,27 @@ async function run(){
  assert.equal(rows.size,3,'Empty Google response cannot erase saved history');
  await api.saveManual({title:'Attività locale',date:'2026-11-28',time:'08:30',endTime:'09:30',activityType:'followup'},);
  assert.equal(rows.size,4,'Inline manual row is persisted in same table');
+ const edited=await api.updateEvent(first.id,{
+   title:'Sessione · prova aggiornata',date:'2026-11-25',endDate:'2026-11-25',
+   time:'12:00',endTime:'14:00',activityType:'session',
+   description:'Partecipanti integrati',location:'Studio 2',
+   workflowStatus:'da_rivedere',remindOn:'2026-12-04',workflowNote:'Contattare manager'
+ });
+ assert.equal(edited.title,'Sessione · prova aggiornata');
+ assert.equal(edited.description,'Partecipanti integrati');
+ assert.equal(api.toEvent(edited).archiveId,first.id,'Popup must receive Supabase row ID');
+ await api.importGoogle([google]);
+ assert.equal([...rows.values()].find(r=>r.id===first.id).title,'Sessione · prova aggiornata',
+   'Google reimport must preserve manually edited title');
+ assert.equal([...rows.values()].find(r=>r.id===first.id).location,'Studio 2',
+   'Google reimport must preserve supplemented details');
+ await api.deleteEvent(first.id);
+ assert.equal(rows.size,4,'Soft removal never destroys historical records');
+ assert.equal(api.getState().rows.some(r=>r.id===first.id),false,'Deleted events disappear from visible Agenda');
+ assert.equal(api.getState().hiddenKeys.has('google|recurring-event#2026-11-25'),true);
+ await api.importGoogle([google]);
+ assert.equal(api.getState().rows.some(r=>r.id===first.id),false,'Removed Google event must not resurrect');
+ assert.equal([...rows.values()].find(r=>r.id===first.id).deleted_at!=null,true);
  assert.equal(events[events.length-1].detail.persisted,true,'Successful table saves are marked as persisted');
  suppressUpsert=true;
  await assert.rejects(api.importGoogle([{...google,id:'unverified',title:'Evento Google mai scritto'}]),/non presenti nella tabella/,

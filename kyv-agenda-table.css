@@ -226,3 +226,65 @@ body.kyv-v260 .kyv-agenda-source-unsaved{
   body.kyv-v260 .kyv-agenda-table-actions{width:100%;justify-content:space-between}
   body.kyv-v260 .kyv-agenda-table{min-width:1100px!important}
 }
+
+
+/* Nuova Attività: independently resizable just like Calendario. */
+body.kyv-v260 #kyv-agenda-planning-collapse{
+  width:var(--kyv-activity-width,100%)!important;max-width:100%!important;
+  min-width:0!important;align-self:center;margin-inline:auto;
+}
+body.kyv-v260 #kyv-agenda-planning-collapse .kyv-calendar-card{
+  width:100%;max-width:100%;overflow:visible;
+}
+body.kyv-v260 #kyv-activity-resize{
+  width:var(--kyv-activity-width,100%);max-width:100%;margin-inline:auto;
+  display:flex;align-items:center;justify-content:flex-end;gap:.6rem;
+  color:#c2d8cf;font-size:11px;min-width:0;
+}
+body.kyv-v260 #kyv-activity-resize input[type=range]{
+  width:clamp(90px,12vw,170px);accent-color:#a4d3bf;
+}
+body.kyv-v260 #kyv-activity-resize output{
+  min-width:3rem;font-variant-numeric:tabular-nums;text-align:right;
+}
+/* Editable event popup: accessible fields and explicit local-only actions. */
+body.kyv-v260 .kyv-cal-detail-dialog{
+  width:min(94vw,760px)!important;max-width:760px!important;max-height:90dvh!important;
+}
+body.kyv-v260 .kyv-cal-detail-head{align-items:center!important;flex-wrap:wrap!important;gap:.5rem!important}
+body.kyv-v260 .kyv-cal-detail-title{flex:1 1 100%;min-width:0}
+body.kyv-v260 .kyv-cal-detail-edit,
+body.kyv-v260 .kyv-cal-detail-save{
+  border:1px solid #88c7ac;border-radius:.6rem;padding:.6rem .85rem;
+  background:#34594d;color:#f2fff9;font-weight:750;cursor:pointer;
+}
+body.kyv-v260 .kyv-cal-detail-delete{
+  border:1px solid #ad626c;border-radius:.6rem;padding:.6rem .85rem;
+  background:#5c3038;color:#ffe5e7;font-weight:750;cursor:pointer;
+}
+body.kyv-v260 .kyv-cal-detail-head [hidden]{display:none!important}
+body.kyv-v260 .kyv-cal-detail-dialog :is(button:disabled){opacity:.6;cursor:wait}
+body.kyv-v260 .kyv-cal-edit-form{display:flex;flex-direction:column;gap:.85rem}
+body.kyv-v260 .kyv-cal-edit-fields{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:.8rem;
+}
+body.kyv-v260 .kyv-cal-edit-field{
+  display:flex;flex-direction:column;gap:.35rem;min-width:0;
+}
+body.kyv-v260 .kyv-cal-edit-field:has(textarea){grid-column:1/-1}
+body.kyv-v260 .kyv-cal-edit-input{
+  width:100%;min-width:0;border:1px solid #566c70;border-radius:.6rem;
+  background:#22363b;color:#f4fff9;padding:.65rem .7rem;font:inherit;
+  min-height:43px;color-scheme:dark;
+}
+body.kyv-v260 textarea.kyv-cal-edit-input{min-height:88px;resize:vertical}
+body.kyv-v260 .kyv-cal-edit-whole{display:flex;align-items:center;gap:.5rem;font-size:12px}
+body.kyv-v260 .kyv-cal-edit-notice{color:#b9d1c5;font-size:12px;line-height:1.5}
+body.kyv-v260 .kyv-cal-edit-feedback{color:#ffd3ba;font-size:12px}
+body.kyv-v260 .kyv-cal-edit-actions{display:flex;flex-wrap:wrap;gap:.65rem}
+@media(max-width:700px){
+  body.kyv-v260 #kyv-activity-resize,
+  body.kyv-v260 #kyv-agenda-planning-collapse{width:100%!important}
+  body.kyv-v260 #kyv-activity-resize input[type=range]{display:none}
+  body.kyv-v260 .kyv-cal-detail-dialog{max-width:96vw!important}
+}

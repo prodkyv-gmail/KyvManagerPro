@@ -362,7 +362,7 @@ function renamePage(){
 
   if(heading){
     heading.innerHTML=
-      '<i data-lucide="calendar-plus" class="w-5 h-5 mr-2 text-emerald-300"></i> Pianifica attività';
+      '<i data-lucide="calendar-plus" class="w-5 h-5 mr-2 text-emerald-300"></i> Nuova Attività';
   }
 
   const submit=document.getElementById('btn-create');
@@ -1361,10 +1361,32 @@ function collapsePlanningForm(){
   details.id='kyv-agenda-planning-collapse';
   details.className='kyv-collapse kyv-pastel-sky';
   const summary=document.createElement('summary');
-  summary.innerHTML='<span class="text-sm font-black text-white">Pianifica attività</span><i data-lucide="chevron-down" class="kyv-collapse-chevron w-5 h-5 text-kyv-text"></i>';
+  summary.innerHTML='<span class="text-sm font-black text-white">Nuova Attività</span><i data-lucide="chevron-down" class="kyv-collapse-chevron w-5 h-5 text-kyv-text"></i>';
   const body=document.createElement('div');
   body.className='kyv-collapse-body';
+  const toolbar=document.createElement('div');
+  toolbar.id='kyv-activity-resize';
+  toolbar.className='kyv-agenda-activity-resize';
+  const label=document.createElement('label');
+  label.htmlFor='kyv-activity-width';
+  label.textContent='Larghezza Nuova Attività';
+  const slider=document.createElement('input');
+  slider.type='range';slider.id='kyv-activity-width';
+  slider.min='65';slider.max='100';slider.step='5';slider.value='100';
+  slider.setAttribute('aria-label','Larghezza del pannello Nuova Attività');
+  const output=document.createElement('output');
+  output.id='kyv-activity-width-value';output.htmlFor='kyv-activity-width';
+  toolbar.appendChild(label);toolbar.appendChild(slider);toolbar.appendChild(output);
+  const resize=()=>{
+    const value=Math.max(65,Math.min(100,Number(slider.value)||100));
+    details.style.setProperty('--kyv-activity-width',value+'%');
+    toolbar.style.setProperty('--kyv-activity-width',value+'%');
+    output.textContent=value+'%';
+  };
+  slider.addEventListener('input',resize);
+  card.parentNode.insertBefore(toolbar,card);
   card.parentNode.insertBefore(details,card);
+  resize();
   details.appendChild(summary);
   details.appendChild(body);
   body.appendChild(card);

@@ -5,7 +5,7 @@
 const page=(root.location?.pathname.split('/').pop()||'').toLowerCase();
 if(page!=='kyv_calendar.html')return;
 const TABLE='KYV_AGENDA_EVENTI',PAGE_SIZE=500;
-const state={rows:[],previewRows:[],loaded:false,loading:false,error:'',lastImport:null,persistError:'',filter:'all',formOpen:false,diagnostics:null};
+const state={rows:[],previewRows:[],loaded:false,loading:false,error:'',lastImport:null,persistError:'',filter:'all',formOpen:false,diagnostics:null,hiddenKeys:new Set()};
 let db=null,opened=[],loadingPromise=null;
 const H=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const dayKey=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'':[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
@@ -43,7 +43,9 @@ function toEvent(row){
     endDate:row.all_day?(row.ends_at?dayKey(row.ends_at):''):row.ends_at,
     allDay:!!row.all_day,description:row.description||'',location:row.location||'',
     source:row.source,createdFromApp:row.created_from_app,activityType:row.activity_type,
-    stored:!row.unsaved,unsaved:!!row.unsaved};
+    stored:!row.unsaved,unsaved:!!row.unsaved,archiveId:row.unsaved?null:row.id,
+    activityType:row.activity_type||'other',workflowStatus:row.workflow_status||'da_fare',
+    remindOn:row.remind_on||'',workflowNote:row.workflow_note||'',editedInApp:!!row.edited_in_app};
 }
 function uniqueRows(rows){
   const seen=new Set();return rows.filter(r=>{const key=r.source+'|'+r.source_key;if(seen.has(key))return false;seen.add(key);return true;});
@@ -160,7 +162,9 @@ async function load(){
   loadingPromise=(async()=>{
     try{
       await owner();
-      state.rows=await readAll();state.loaded=true;state.error='';
+      const all=await readAll();
+      state.hiddenKeys=new Set(all.filter(r=>r.deleted_at).map(r=>r.source+'|'+r.source_key));
+      state.rows=all.filter(r=>!r.deleted_at);state.loaded=true;state.error='';
       showStatus('Archivio permanente disponibile: '+state.rows.length+' eventi conservati.');
       render();return state.rows;
     }catch(err){
@@ -191,10 +195,17 @@ async function importGoogle(events){
     const row=normalizeGoogle(ev,userId);if(!row){skipped++;return null;}
     if(!row.calendar_id)idless++;
     const kept=existing.get(row.source+'|'+row.source_key);
+    if(kept?.deleted_at)return null; // Tombstone: never resurrect a removed Google event.
     if(kept){
       row.workflow_status=kept.workflow_status||'da_fare';row.remind_on=kept.remind_on||null;
       row.workflow_note=kept.workflow_note||'';row.status_updated_at=kept.status_updated_at||null;
       row.created_from_app=!!kept.created_from_app;
+      row.edited_in_app=!!kept.edited_in_app;
+      // Preserve user edits to Google-backed events when Google is synchronized again.
+      if(kept.edited_in_app){
+        for(const field of ['title','event_date','starts_at','ends_at','all_day','activity_type','description','location'])
+          row[field]=kept[field];
+      }
     }
     return row;
   }).filter(Boolean));
@@ -250,8 +261,70 @@ async function saveManual(input){
   if(input.endTime<=input.time)throw Error('L’ora finale deve essere dopo l’inizio.');
   return saveCreated({...input,activityType:input.activityType||'other'},null);
 }
+
+const EDIT_FIELDS=['title','event_date','starts_at','ends_at','all_day','activity_type','description','location'];
+function validateDetails(input){
+  const title=String(input?.title||'').trim(),day=String(input?.date||'');
+  const endDay=String(input?.endDate||day);
+  if(!title||title.length>250)throw Error('Il titolo è obbligatorio (max 250 caratteri).');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||!/^\d{4}-\d{2}-\d{2}$/.test(endDay))
+    throw Error('Indica date di inizio e fine valide.');
+  if(!typeLabel[input.activityType||'other'])throw Error('Tipo attività non valido.');
+  const allDay=!!input.allDay;
+  const time=allDay?'00:00':String(input.time||'');
+  const endTime=allDay?'00:00':String(input.endTime||'');
+  if(!/^\d{2}:\d{2}$/.test(time)||!/^\d{2}:\d{2}$/.test(endTime))
+    throw Error('Indica gli orari validi.');
+  const start=asDate(day+'T'+time);
+  const endStart=allDay?asDate(endDay+'T00:00'):null;
+  const end=allDay&&endStart?new Date(endStart.getTime()+86400000):allDay?null:asDate(endDay+'T'+endTime);
+  if(!start||!end||Number.isNaN(end.getTime())||end<=start)throw Error('La fine deve seguire l’inizio.');
+  return {title,event_date:day,starts_at:start.toISOString(),ends_at:end.toISOString(),all_day:allDay,
+    activity_type:input.activityType||'other',description:String(input.description||'').slice(0,5000),
+    location:String(input.location||'').slice(0,500)};
+}
+async function updateEvent(id,input){
+  const uid=await owner(),original=state.rows.find(r=>r.id===id);
+  if(!original)throw Error('Evento non trovato o non modificabile. Ricarica l’Agenda.');
+  const fields=validateDetails(input);
+  const status=input.workflowStatus||original.workflow_status||'da_fare';
+  if(!Object.prototype.hasOwnProperty.call(statusLabels,status))throw Error('Stato non valido.');
+  const remind=input.remindOn||null;
+  if(remind&&!/^\d{4}-\d{2}-\d{2}$/.test(remind))throw Error('Data promemoria non valida.');
+  if(status==='posticipato'&&!remind)throw Error('Per posticipare, indica una data.');
+  const patch={...fields,edited_in_app:true,workflow_status:status,remind_on:remind,
+    workflow_note:String(input.workflowNote||'').slice(0,2000),status_updated_at:new Date().toISOString()};
+  const {data,error}=await client().from(TABLE).update(patch).eq('id',id).eq('owner_id',uid)
+    .is('deleted_at',null).select('*');
+  if(error)throw error;
+  if(!Array.isArray(data)||data.length!==1)throw Error('Modifica non confermata dal database.');
+  await load();
+  const saved=state.rows.find(r=>r.id===id);
+  const sameField=field=>['starts_at','ends_at'].includes(field)
+    ? asDate(saved[field])?.getTime()===asDate(patch[field])?.getTime()
+    : saved[field]===patch[field];
+  if(!saved||!EDIT_FIELDS.every(sameField)||saved.workflow_status!==status)
+    throw Error('I dati aggiornati non sono verificabili nella tabella.');
+  return saved;
+}
+async function deleteEvent(id){
+  const uid=await owner();
+  if(!state.rows.some(r=>r.id===id))throw Error('Evento già rimosso o non disponibile.');
+  const stamp=new Date().toISOString();
+  const {data,error}=await client().from(TABLE).update({deleted_at:stamp})
+    .eq('id',id).eq('owner_id',uid).is('deleted_at',null).select('id,deleted_at');
+  if(error)throw error;
+  if(!Array.isArray(data)||data.length!==1||!data[0].deleted_at)
+    throw Error('Rimozione non confermata dal database.');
+  await load();
+  const saved=await readAll();
+  if(state.rows.some(r=>r.id===id)||!saved.some(r=>r.id===id&&r.deleted_at))
+    throw Error('Rimozione non verificata: ricarica l’Agenda.');
+  return true;
+}
+
 function showPreview(events,message){
-  const alreadyStored=new Set(state.rows.map(row=>row.source+'|'+row.source_key));
+  const alreadyStored=new Set([...state.rows.map(row=>row.source+'|'+row.source_key),...state.hiddenKeys]);
   state.previewRows=uniqueRows((events||[]).map(ev=>normalizeGoogle(ev,'preview')).filter(Boolean))
     .filter(row=>!alreadyStored.has(row.source+'|'+row.source_key))
     .map(row=>({...row,unsaved:true}));
@@ -274,7 +347,7 @@ function reportSync(info){
   el.hidden=false;
 }
 
-const api={updateWorkflow,saveManual,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
+const api={updateWorkflow,updateEvent,deleteEvent,saveManual,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
 root.KYV_AGENDA_STORE=api;
 function wireTableActions(list){
   if(!list||typeof list.addEventListener!=='function')return;

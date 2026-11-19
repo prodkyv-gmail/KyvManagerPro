@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-agenda-workflow-20261119';
+const CACHE_NAME = 'kyv-studio-v2-82-agenda-editor-20261119';
 const APP_SHELL = [
     './',
     './index.html',
