@@ -26,6 +26,7 @@ create index if not exists kyv_agenda_owner_date_idx on public."KYV_AGENDA_EVENT
 alter table public."KYV_AGENDA_EVENTI" enable row level security;
 revoke all on public."KYV_AGENDA_EVENTI" from anon;
 grant select,insert,update on public."KYV_AGENDA_EVENTI" to authenticated;
+revoke delete on public."KYV_AGENDA_EVENTI" from authenticated;
 create policy "kyv_agenda_owner_select" on public."KYV_AGENDA_EVENTI"
   for select to authenticated using (owner_id=(select auth.uid()));
 create policy "kyv_agenda_owner_insert" on public."KYV_AGENDA_EVENTI"
