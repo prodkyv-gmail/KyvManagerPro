@@ -26,7 +26,7 @@ assert.equal((legacyTools.match(/navItem\('integrazioni'/g)||[]).length,0);
 assert.equal((daily.match(/navItem\('fatture'/g)||[]).length,0);
 const admin=menu.split('<span>Amministrazione</span>')[1]?.split('</ul>')[0];
 assert.ok(admin,'Fallback Administration nav is present');
-for(const key of ['creative','pipeline','ascolto','integrazioni']){
+for(const key of ['dashboard','progetti','audiofinder','creative','pipeline','ascolto','integrazioni']){
  assert.equal(control.filter(x=>x.key===key).length,1,key+' belongs to Administration exactly once');
  assert.ok(admin.includes("navItem('"+key+"'"),key+' fallback in Administration');
  assert.ok(!primary.some(x=>x.key===key),key+' not in Producer');
@@ -36,26 +36,29 @@ assert.ok(daily.includes("navItem('editor'"),'Fallback Studio Editor must be in 
 assert.ok(!legacyTools.includes("navItem('editor'"),'Editor not duplicated under tools');
 assert.equal(new Set(all.map(x=>x.href)).size,all.length,'No duplicate Producer Mode sidebar destinations');
 assert.ok(menu.includes("navItem('fatture', 'fatture.html'"),'Invoices remain accessible in Administration');
-assert.ok(menu.includes("page: 'ascolto', href: 'ascolto.html', label: 'Ascolto'"));
+assert.ok(admin.includes("navItem('ascolto'"),'Ascolto remains in Administration');
 assert.ok(!menu.includes("page: 'clienti', href: 'clienti.html', label: 'Rubrica'"),'No temporary Rubrica link');
 assert.ok(!producer.includes("rubrica.href='ascolto.html'"),'No post-render navigation rewrite');
-assert.ok(producer.includes("link.setAttribute('aria-current','page')"),'Mobile aria-current state');
+assert.ok(!producer.includes('function fixMobileNav('),'Retired mobile dock synchronization');
 assert.ok(menu.includes('aria-current="page"'),'Legacy active links should have aria-current');
-const mobile=menu.match(/function renderKyvMobileBottomNav\(activePage = 'dashboard'\) \{([\s\S]*?)\n\}/);
-assert.ok(mobile,'Mobile nav renderer remains available');
-let appended=null;
-const fakeDoc={
- getElementById:()=>null,createElement:()=>({innerHTML:'',setAttribute(){}}),
- body:{appendChild:x=>{appended=x;}}
-};
-vm.runInNewContext('function renderKyvMobileBottomNav(activePage = \'dashboard\'){'+mobile[1]+
- '\n};renderKyvMobileBottomNav(\'ascolto\');',{document:fakeDoc});
-assert.ok(appended?.innerHTML.includes('href="ascolto.html"'));
-assert.ok(appended.innerHTML.includes('class="is-active" aria-label="Ascolto"'));
-assert.ok(!appended.innerHTML.includes('href="clienti.html"'));
-assert.equal((appended.innerHTML.match(/<a href=/g)||[]).length,5,'Exactly five mobile destinations');
+// The fixed 5-button dock is deliberately removed on ALL pages.
+assert.ok(!menu.includes('function renderKyvMobileBottomNav('));
+assert.ok(!menu.includes('renderKyvMobileBottomNav(activePage)'));
+assert.ok(!menu.includes("document.body.appendChild(nav)"));
+assert.ok(menu.includes("getElementById('kyv-mobile-bottom-nav')?.remove()"),'Stale mobile dock is removed');
+assert.ok(css.includes('#kyv-mobile-bottom-nav { display: none !important; }'));
+const launch=read('index.html'),today=read('oggi.html');
+for(const name of ['Agenda','Nuovo','Studio Editor','Amministrazione','Strumenti'])
+ assert.ok(launch.includes('<strong>'+name+'</strong>'),'Missing launch destination: '+name);
+for(const route of ['kyv_calendar.html','acquisisci_audio.html','editor.html'])
+ assert.ok(launch.includes('href="'+route+'"'),'Launch route missing '+route);
+assert.ok(launch.includes("openKyvHomeGroup('admin')")&&launch.includes("openKyvHomeGroup('tools')"),'Group buttons must work');
+assert.ok(today.includes('id="home-analytics-details"')&&today.includes('id="activity-list"'),'Historical Oggi remains intact');
+assert.ok(control.some(x=>x.href==='oggi.html'),'Old Oggi is accessible inside Administration');
+assert.ok(menu.includes('id="kyv-nav-admin"')&&menu.includes('id="kyv-nav-tools"'),'Fallback group IDs support home buttons');
+assert.ok(producer.includes('id="${id}"'),'Producer Mode group IDs support home buttons');
 const scopedPages=[
- 'index.html','kyv_scrivania_creativa.html','kyv_audio_finder.html',
+ 'index.html','oggi.html','kyv_scrivania_creativa.html','kyv_audio_finder.html',
  'fatture.html','integrazioni.html','kyv_analyst.html','kyv_intelligence.html',
  'ascolto.html','kyv_calendar.html','rendiconto.html',
  'kyv_ritorni_progetti.html','kyv_liquidazioni.html','scheda_progetto.html'
