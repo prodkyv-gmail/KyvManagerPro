@@ -161,7 +161,7 @@ function init(){
   let status=root.document.getElementById('kyv-agenda-store-status');
   if(!status){status=root.document.createElement('p');status.id='kyv-agenda-store-status';status.setAttribute('role','status');
     status.className='kyv-agenda-store-status';const main=root.document.querySelector('.kyv-calendar-main');
-    main?.querySelector('#last-sync')?.insertAdjacentElement('afterend',status);}
+    main?.firstElementChild?.insertAdjacentElement('afterend',status);}
   load().catch(err=>console.warn('[KYV Agenda] Archivio non disponibile:',err));
 }
 if(root.document?.readyState==='loading')root.document.addEventListener('DOMContentLoaded',init,{once:true});
