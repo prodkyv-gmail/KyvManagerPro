@@ -150,6 +150,9 @@ function dismiss(force=false){
  if(!force&&(voice?.isRecording()||audioBlob)){
   const ok=confirm('Registrazione non ancora salvata. Vuoi chiudere e perderla? Usa “Scarica una copia” prima di chiudere, se vuoi conservarla.');
   if(!ok)return;
+ }else if(!force&&note?.content.trim()){
+  const ok=confirm('La nota non è ancora salvata nel cloud. La bozza testuale resta su questo dispositivo e potrai recuperarla nel Taccuino. Vuoi chiudere?');
+  if(!ok)return;
  }
  voice?.dispose();voice=null;audioBlob=null;releaseAudio();
  modal.hidden=true;modal.setAttribute('aria-hidden','true');open=false;
