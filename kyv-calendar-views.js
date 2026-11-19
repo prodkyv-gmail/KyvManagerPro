@@ -59,6 +59,14 @@
         title: String((ev && ev.title) || 'Senza titolo'),
         description: String((ev && ev.description) || ''),
         location: String((ev && ev.location) || ''),
+        archiveId: String((ev && ev.archiveId) || ''),
+        source: String((ev && ev.source) || ''),
+        stored: !!(ev && ev.stored && ev.archiveId),
+        unsaved: !!(ev && ev.unsaved),
+        activityType: String((ev && ev.activityType) || 'other'),
+        workflowStatus: String((ev && ev.workflowStatus) || 'da_fare'),
+        remindOn: String((ev && ev.remindOn) || ''),
+        workflowNote: String((ev && ev.workflowNote) || ''),
         key: dayKey(p.date)
       });
     });
@@ -216,16 +224,21 @@
     details.setAttribute('aria-labelledby',detailTitle.id);
     var detailClose = el(doc,'button','kyv-cal-detail-close','Chiudi');
     detailClose.type='button';
-    detailHead.appendChild(detailTitle);detailHead.appendChild(detailClose);
+    var detailEdit = el(doc,'button','kyv-cal-detail-edit','Modifica');
+    detailEdit.type='button';
+    var detailDelete = el(doc,'button','kyv-cal-detail-delete','Elimina');
+    detailDelete.type='button';
+    detailHead.appendChild(detailTitle);
+    detailHead.appendChild(detailEdit);detailHead.appendChild(detailDelete);detailHead.appendChild(detailClose);
     var detailBody=el(doc,'div','kyv-cal-detail-body');
     details.appendChild(detailHead);details.appendChild(detailBody);
     doc.body.appendChild(details);
-    var detailOpener=null;
+    var detailOpener=null,activeDetail=null;
     detailClose.addEventListener('click',function(){details.close();});
     details.addEventListener('click',function(e){if(e.target===details)details.close();});
     details.addEventListener('close',function(){
       if(detailOpener && detailOpener.isConnected)detailOpener.focus();
-      detailOpener=null;
+      detailOpener=null;activeDetail=null;
     });
     function detailRow(title,value){
       var section=el(doc,'div','');
@@ -236,7 +249,10 @@
     function showEventDetails(raw,opener){
       var ev=raw && raw.date instanceof Date ? raw : normalizeEvents([raw])[0];
       if(!ev || !details.showModal)return;
+      activeDetail=ev;
       detailTitle.textContent=ev.title;
+      var editable=!!(ev.stored && ev.archiveId && root.KYV_AGENDA_STORE?.updateEvent);
+      detailEdit.hidden=!editable;detailDelete.hidden=!editable;
       clear(detailBody);
       var dateFormat={weekday:'long',day:'numeric',month:'long',year:'numeric'};
       detailRow('Data',ev.date.toLocaleDateString('it-IT',dateFormat));
@@ -251,11 +267,108 @@
       }
       detailRow('Descrizione',ev.description || 'Nessuna descrizione disponibile');
       detailRow('Luogo',ev.location || 'Non indicato');
-      detailOpener=opener || doc.activeElement;
-      if(details.open)details.close();
-      details.showModal();
+      if(ev.source==='google')detailRow('Sincronizzazione','Le modifiche e l’eliminazione agiscono solo nell’Agenda KYV, non su Google Calendar.');
+      if(ev.unsaved)detailRow('Salvataggio','Evento in anteprima: prima aggiorna l’Agenda per salvarlo.');
+      detailOpener=opener || detailOpener || doc.activeElement;
+      if(!details.open)details.showModal();
       detailClose.focus();
     }
+
+    function editDetails(ev){
+      if(!ev?.stored||!ev.archiveId||!root.KYV_AGENDA_STORE?.updateEvent)return;
+      detailEdit.hidden=true;detailDelete.hidden=true;
+      clear(detailBody);
+      var form=el(doc,'form','kyv-cal-edit-form');
+      form.id='kyv-cal-edit-form';
+      var fields=el(doc,'div','kyv-cal-edit-fields');
+      form.appendChild(fields);
+      function field(label,name,value,type,maxLength){
+        var wrap=el(doc,'label','kyv-cal-edit-field');
+        wrap.appendChild(el(doc,'span','kyv-cal-detail-label',label));
+        var input=el(doc,type==='textarea'?'textarea':type==='select'?'select':'input','kyv-cal-edit-input');
+        input.name=name;
+        if(type!=='textarea'&&type!=='select')input.type=type||'text';
+        input.value=value==null?'':String(value);
+        if(maxLength)input.maxLength=maxLength;
+        if(['title','date','endDate'].includes(name))input.required=true;
+        wrap.appendChild(input);fields.appendChild(wrap);return input;
+      }
+      function hm(date,fallback){
+        return date instanceof Date&&!Number.isNaN(date.getTime())
+          ?pad(date.getHours())+':'+pad(date.getMinutes()):fallback;
+      }
+      var endDay=ev.endDate && ev.allDay ? addDays(ev.endDate,-1) : ev.endDate;
+      field('Titolo','title',ev.title,'text',250);
+      field('Data inizio','date',dayKey(ev.date),'date');
+      field('Data fine','endDate',dayKey(endDay||ev.date),'date');
+      field('Ora inizio','time',hm(ev.date,'11:00'),'time');
+      field('Ora fine','endTime',hm(ev.endDate,'12:00'),'time');
+      var whole=el(doc,'label','kyv-cal-edit-whole');
+      var checkbox=el(doc,'input');
+      checkbox.type='checkbox';checkbox.name='allDay';checkbox.checked=!!ev.allDay;
+      whole.appendChild(checkbox);whole.appendChild(doc.createTextNode(' Tutto il giorno'));
+      fields.appendChild(whole);
+      var activity=field('Tipo','activityType',ev.activityType,'select');
+      [['session','Sessione'],['followup','Follow-up'],['deadline','Scadenza'],['other','Altro']].forEach(function(item){
+        var opt=el(doc,'option','',item[1]);opt.value=item[0];activity.appendChild(opt);
+      });activity.value=ev.activityType||'other';
+      field('Luogo / indirizzo','location',ev.location,'text',500);
+      field('Descrizione / partecipanti / dettagli','description',ev.description,'textarea',5000);
+      var status=field('Stato','workflowStatus',ev.workflowStatus,'select');
+      Object.entries(root.KYV_AGENDA_STORE.statusLabels||{}).forEach(function(pair){
+        var opt=el(doc,'option','',pair[1]);opt.value=pair[0];status.appendChild(opt);
+      });status.value=ev.workflowStatus||'da_fare';
+      field('Data promemoria o rinvio','remindOn',ev.remindOn,'date');
+      field('Nota promemoria','workflowNote',ev.workflowNote,'textarea',2000);
+      var note=el(doc,'p','kyv-cal-edit-notice','Modifiche salvate nell’archivio KYV. Gli eventi Google restano invariati nel calendario originale.');
+      form.appendChild(note);
+      var feedback=el(doc,'p','kyv-cal-edit-feedback');feedback.setAttribute('role','status');form.appendChild(feedback);
+      var actions=el(doc,'div','kyv-cal-edit-actions');
+      var save=el(doc,'button','kyv-cal-detail-save','Salva modifiche');
+      save.type='submit';
+      var cancel=el(doc,'button','kyv-cal-detail-close','Annulla');
+      cancel.type='button';cancel.addEventListener('click',function(){showEventDetails(ev,detailOpener);});
+      actions.appendChild(save);actions.appendChild(cancel);form.appendChild(actions);
+      form.addEventListener('submit',async function(event){
+        event.preventDefault();
+        if(save.disabled)return;
+        var val=name=>String(form.elements.namedItem(name)?.value||'').trim();
+        var input={title:val('title'),date:val('date'),endDate:val('endDate'),
+          time:val('time'),endTime:val('endTime'),allDay:checkbox.checked,
+          activityType:val('activityType'),description:val('description'),
+          location:val('location'),workflowStatus:val('workflowStatus'),
+          remindOn:val('remindOn'),workflowNote:val('workflowNote')};
+        save.disabled=true;feedback.textContent='Salvataggio in corso…';
+        try{
+          var updated=await root.KYV_AGENDA_STORE.updateEvent(ev.archiveId,input);
+          showEventDetails(root.KYV_AGENDA_STORE.toEvent(updated),detailOpener);
+        }catch(error){
+          feedback.textContent='Impossibile salvare: '+String(error?.message||error);
+          save.disabled=false;
+        }
+      });
+      detailBody.appendChild(form);
+      form.querySelector('[name="title"]').focus();
+    }
+    detailEdit.addEventListener('click',function(){if(activeDetail)editDetails(activeDetail);});
+    detailDelete.addEventListener('click',async function(){
+      var ev=activeDetail;
+      if(!ev?.stored||!ev.archiveId||!root.KYV_AGENDA_STORE?.deleteEvent)return;
+      var message='Eliminare «'+ev.title+'» dall’Agenda KYV?\n\n'+
+        (ev.source==='google'
+          ?'L’evento resterà su Google Calendar, ma non ricomparirà in KYV alle successive sincronizzazioni.'
+          :'L’attività verrà tolta dalle viste, conservando una traccia recuperabile nell’archivio.');
+      if(!root.confirm(message))return;
+      detailDelete.disabled=true;
+      try{
+        await root.KYV_AGENDA_STORE.deleteEvent(ev.archiveId);
+        details.close();
+      }catch(error){
+        var alert=el(doc,'p','kyv-cal-edit-feedback','Rimozione non riuscita: '+String(error?.message||error));
+        detailBody.prepend(alert);
+      }finally{detailDelete.disabled=false;}
+    });
+
     function eventButton(ev,compact){
       var btn=el(doc,'button','kyv-cal-ev kyv-cal-event-button');
       btn.type='button';
