@@ -32,6 +32,7 @@ assert.match(views,/return 'list';/,'Unified table is default');
 assert.match(views,/state\.periodEvents=eventsInRange\(state\.events,savedBounds\)/,'Existing calendar views must use persisted events');
 assert.ok(sw.includes("'./kyv-agenda-store.js'")&&sw.includes("'./kyv-agenda-table.css'"));
 assert.equal(pkg.scripts['check:agenda-archive'],'node tools/test-agenda-archive.js');
+let sequence=0;
 const rows=new Map(),userId='11111111-1111-4111-8111-111111111111';
 const client={
  auth:{getUser:async()=>({data:{user:{id:userId}},error:null})},
@@ -39,7 +40,8 @@ const client={
   assert.equal(table,'KYV_AGENDA_EVENTI');
   return {
    select(){return {order(){return {range:async(a,b)=>{const data=[...rows.values()].sort((x,y)=>x.starts_at.localeCompare(y.starts_at)).slice(a,b+1);return {data,count:rows.size,error:null};}}}};},
-   upsert:async(batch)=>{for(const x of batch)rows.set(x.owner_id+'|'+x.source+'|'+x.source_key,{...rows.get(x.owner_id+'|'+x.source+'|'+x.source_key),...x});return{error:null};}
+   upsert:async(batch)=>{for(const x of batch){const key=x.owner_id+'|'+x.source+'|'+x.source_key;rows.set(key,{id:rows.get(key)?.id||'fake-row-'+(++sequence),...rows.get(key),...x,workflow_status:x.workflow_status||rows.get(key)?.workflow_status||'da_fare',remind_on:x.remind_on===undefined?rows.get(key)?.remind_on||null:x.remind_on});}return{error:null};},
+   update(patch){const filters={};return {eq(k,v){filters[k]=v;return this;},async select(){for(const [key,row]of rows){if(row.id===filters.id&&row.owner_id===filters.owner_id){rows.set(key,{...row,...patch});return{data:[{id:row.id}],error:null};}}return{data:[],error:null};}};}
   };
  }
 };
@@ -71,6 +73,18 @@ assert.match(read('docs/agenda-workflow-reminders-v283.sql'),/remind_on/);
 async function run(){
  await api.importGoogle([google,google]);assert.equal(rows.size,1,'Repeated ID in same sync deduped');
  await api.importGoogle([google]);assert.equal(rows.size,1,'Repeated sync must upsert not duplicate');
+ const first=[...rows.values()][0];
+ await api.updateWorkflow(first.id,'da_rivedere','2026-12-01','Richiamare il cliente');
+ assert.equal([...rows.values()][0].workflow_status,'da_rivedere');
+ assert.equal([...rows.values()][0].remind_on,'2026-12-01');
+ await api.importGoogle([google]); // Reimport never resets the saved manual workflow.
+ assert.equal([...rows.values()][0].workflow_status,'da_rivedere');
+ assert.equal([...rows.values()][0].workflow_note,'Richiamare il cliente');
+ assert.equal([...rows.values()][0].remind_on,'2026-12-01');
+ await assert.rejects(api.updateWorkflow(first.id,'posticipato','', ''),/scegli prima una data/);
+ await api.updateWorkflow(first.id,'posticipato','2026-12-07','Spostato promemoria');
+ assert.equal([...rows.values()][0].remind_on,'2026-12-07');
+
  await api.importGoogle([{...google,date:'2026-11-26T11:00:00+01:00',endDate:'2026-11-26T13:00:00+01:00'}]);
  assert.equal(rows.size,2,'Recurring occurrence with new day survives');
  await api.saveCreated({title:'Nota nel gestionale',date:'2026-11-27',time:'10:00',endTime:'11:00',description:'Solo app',location:'',activityType:'other'},null);
@@ -78,6 +92,13 @@ async function run(){
  assert.equal([...rows.values()].filter(x=>x.source==='manual').length,1);
  await api.importGoogle([]);
  assert.equal(rows.size,3,'Empty Google response cannot erase saved history');
+ await api.saveManual({title:'Attività locale',date:'2026-11-28',time:'08:30',endTime:'09:30',activityType:'followup'},);
+ assert.equal(rows.size,4,'Inline manual row is persisted in same table');
+ api.showPreview([{...google,id:'preview-1',title:'Evento Google non salvato'}],'Rete Supabase non disponibile');
+ assert.equal(rows.size,4,'Preview never writes unverified rows to database');
+ assert.ok(api.getEvents().some(x=>x.title==='Evento Google non salvato'));
+ api.reportSync({stage:'salvataggio',googleCount:1,savedCount:null,storedCount:4,error:'Rete indisponibile'});
+ assert.equal(api.getState().diagnostics.stage,'salvataggio');
  assert.ok(events.some(e=>e.type==='kyv:calendar-events'),'All views receive the same saved source');
  console.log('OK Agenda archivio: fonte unica, sync idempotente, storico, attività locali, RLS e responsive.');
 }
