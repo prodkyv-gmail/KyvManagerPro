@@ -5,7 +5,7 @@
 const page=(root.location?.pathname.split('/').pop()||'').toLowerCase();
 if(page!=='kyv_calendar.html')return;
 const TABLE='KYV_AGENDA_EVENTI',PAGE_SIZE=500;
-const state={rows:[],loaded:false,loading:false,error:'',lastImport:null,persistError:''};
+const state={rows:[],previewRows:[],loaded:false,loading:false,error:'',lastImport:null,persistError:'',filter:'all',formOpen:false,diagnostics:null};
 let db=null,opened=[],loadingPromise=null;
 const H=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const dayKey=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'':[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
@@ -25,9 +25,13 @@ function normalizeGoogle(ev,ownerId){
   const start=asDate(ev?.date),end=asDate(ev?.endDate);
   if(!start||!sourceEventDate(ev)||!String(ev?.title||'').trim())return null;
   const id=String(ev?.id||'').trim();
-  if(!id)return null; // Non inventare identificativi Google: un sync senza ID non è verificabile.
   const day=sourceEventDate(ev),allDay=!!ev.allDay||isDateOnly(ev.date);
-  return {owner_id:ownerId,source:'google',source_key:id+'#'+day,calendar_id:id,
+  // Some deployed legacy Apps Script versions omit event IDs. Preserve those rows using a
+  // deterministic content fingerprint, without pretending it is a Google event ID.
+  const basis=[ev.title,day,ev.date,ev.endDate,ev.description,ev.location].map(x=>String(x??'')).join('|');
+  let hash=2166136261;for(let i=0;i<basis.length;i++){hash^=basis.charCodeAt(i);hash=Math.imul(hash,16777619);}
+  const sourceKey=id?id+'#'+day:'legacy-'+(hash>>>0).toString(36)+'#'+day;
+  return {owner_id:ownerId,source:'google',source_key:sourceKey,calendar_id:id||null,
     title:String(ev.title).trim().slice(0,250),event_date:day,starts_at:start.toISOString(),
     ends_at:end?.toISOString()||null,all_day:allDay,
     activity_type:kindFromText(ev.title),description:String(ev.description||'').slice(0,5000),
@@ -49,7 +53,7 @@ function showStatus(message,isError=false){
   if(!el)return;el.textContent=message;el.classList.toggle('kyv-agenda-store-error',!!isError);
 }
 function notify(){
-  opened=state.rows.map(toEvent);
+  opened=[...state.rows,...state.previewRows].map(toEvent);
   root.dispatchEvent(new CustomEvent('kyv:calendar-events',{
     detail:{events:opened,success:state.loaded,truncated:false,persisted:true}
   }));
@@ -64,30 +68,77 @@ function displayTime(row){
   const fmt=d=>d?.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})||'—';
   return fmt(start)+' – '+fmt(end);
 }
+function formHtml(){
+  return '<form id="kyv-agenda-inline-form" class="kyv-agenda-inline-form" aria-label="Inserisci un nuovo evento nella tabella">'+
+    '<div class="kyv-agenda-form-fields">'+
+      '<label>Titolo<input name="title" type="text" maxlength="250" required placeholder="Attività o appuntamento"></label>'+
+      '<label>Data<input name="date" type="date" required value="'+dayKey(new Date())+'"></label>'+
+      '<label>Inizio<input name="time" type="time" required value="11:00"></label>'+
+      '<label>Fine<input name="endTime" type="time" required value="12:00"></label>'+
+      '<label>Tipo<select name="activityType"><option value="other">Altro</option><option value="session">Sessione</option><option value="followup">Follow-up</option><option value="deadline">Scadenza</option></select></label>'+
+      '<label>Luogo<input name="location" maxlength="500" placeholder="Facoltativo"></label>'+
+      '<label class="kyv-agenda-form-notes">Note<input name="description" maxlength="5000" placeholder="Facoltative"></label>'+
+    '</div><div class="kyv-agenda-form-actions">'+
+      '<button type="submit" class="kyv-agenda-primary">Salva evento nella tabella</button>'+
+      '<button type="button" data-kyv-agenda-action="close-form">Annulla</button>'+
+      '<span>Questa modalità salva solo nell’app. Per creare anche in Google Calendar usa «Pianifica attività».</span>'+
+    '</div></form>';
+}
 function render(){
   const list=root.document.getElementById('events-list');if(!list)return;
-  if(!state.loaded){
+  if(!state.loaded&&!state.previewRows.length){
     list.innerHTML='<p class="kyv-agenda-table-empty">Archivio non ancora verificato. '+H(state.error||'Caricamento in corso…')+'</p>';
     return;
   }
-  const rows=state.rows;
-  if(!rows.length){
-    list.innerHTML='<p class="kyv-agenda-table-empty">La tabella è vuota. Premi «Aggiorna agenda» per importare gli eventi Google, oppure pianifica una nuova attività.</p>';
-    notify();return;
-  }
-  const future=rows.filter(r=>r.event_date>=dayKey(new Date())).length;
-  const header='<div class="kyv-agenda-table-head"><span>Archivio eventi · '+rows.length+' registrati · '+future+' oggi/futuri</span><span>Google Calendar + attività pianificate</span></div>';
-  list.innerHTML=header+'<div class="kyv-agenda-table-wrap" role="region" aria-label="Tabella unica agenda e storico" tabindex="0">'+
-    '<table class="kyv-agenda-table"><thead><tr><th scope="col">Data</th><th scope="col">Orario</th><th scope="col">Attività</th><th scope="col">Tipo</th><th scope="col">Fonte</th><th scope="col">Luogo / note</th></tr></thead><tbody>'+
-    rows.map((row,i)=>'<tr class="'+(row.event_date<dayKey(new Date())?'kyv-agenda-past':'')+'">'+
-    '<td data-label="Data">'+H(displayDate(row))+'</td><td data-label="Orario">'+H(displayTime(row))+'</td>'+
-    '<td data-label="Attività"><button type="button" class="kyv-agenda-table-title" data-kyv-calendar-index="'+i+'" aria-label="Dettagli di '+H(row.title)+'">'+H(row.title)+'</button></td>'+
-    '<td data-label="Tipo">'+H(typeLabel[row.activity_type]||typeLabel.other)+'</td>'+
-    '<td data-label="Fonte"><span class="kyv-agenda-source '+(row.source==='google'?'kyv-agenda-source-google':'kyv-agenda-source-local')+'">'+
-      H(row.source==='google'?(row.created_from_app?'Google · da app':'Google Calendar'):'Solo app')+'</span></td>'+
-    '<td data-label="Luogo / note"><span title="'+H(row.description||'')+'">'+H(row.location||row.description||'—')+'</span></td></tr>').join('')+
+  const originals=[...state.rows,...state.previewRows];
+  const today=dayKey(new Date());
+  const pending=originals.filter(r=>!['fatto','chiuso'].includes(r.workflow_status||'da_fare'));
+  const due=pending.filter(r=>r.remind_on&&r.remind_on<=today).length;
+  const review=pending.filter(r=>r.workflow_status==='da_rivedere').length;
+  const delay=pending.filter(r=>['da_rimandare','posticipato'].includes(r.workflow_status)).length;
+  const activeCount=pending.length;
+  const filtered=originals.map((row,index)=>({row,index}))
+    .filter(({row})=>state.filter==='all'||(state.filter==='pending'
+      ? !['fatto','chiuso'].includes(row.workflow_status||'da_fare')
+      : (row.workflow_status||'da_fare')===state.filter))
+    .sort((a,b)=>{
+      const openA=['fatto','chiuso'].includes(a.row.workflow_status)?1:0;
+      const openB=['fatto','chiuso'].includes(b.row.workflow_status)?1:0;
+      const keyA=a.row.remind_on||a.row.event_date,keyB=b.row.remind_on||b.row.event_date;
+      const futureA=keyA>=today?0:1,futureB=keyB>=today?0:1;
+      return openA-openB||futureA-futureB||keyA.localeCompare(keyB)||a.row.title.localeCompare(b.row.title);
+    });
+  const filters=[['all','Tutti'],['pending','Da gestire'],...Object.entries(statusLabels)];
+  const controls='<div class="kyv-agenda-table-controls">'+
+    '<div><strong>Archivio Agenda · '+originals.length+' eventi</strong><p>Google Calendar e attività inserite nell’app, senza cancellare lo storico.</p></div>'+
+    '<div class="kyv-agenda-table-actions">'+
+      '<label>Filtra <select id="kyv-agenda-filter">'+filters.map(([v,label])=>'<option value="'+H(v)+'"'+(state.filter===v?' selected':'')+'>'+H(label)+'</option>').join('')+'</select></label>'+
+      '<button type="button" class="kyv-agenda-primary" data-kyv-agenda-action="new-form">+ Nuova attività</button>'+
+    '</div></div>'+
+    '<div class="kyv-agenda-reminders" role="status">Promemoria: <strong>'+activeCount+' da gestire</strong> · '+
+      due+' scaduti/in data odierna · '+review+' da rivedere · '+delay+' da rimandare/posticipati'+
+      (state.previewRows.length?' · '+state.previewRows.length+' eventi Google in anteprima NON salvati':'')+
+    '</div>';
+  const table='<div class="kyv-agenda-table-wrap" role="region" aria-label="Archivio Google Calendar e attività, con stato e promemoria" tabindex="0">'+
+    '<table class="kyv-agenda-table"><thead><tr><th scope="col">Data</th><th scope="col">Orario</th><th scope="col">Attività</th><th scope="col">Tipo</th><th scope="col">Fonte</th><th scope="col">Luogo / note</th><th scope="col">Stato</th><th scope="col">Promemoria / rinvio</th><th scope="col">Salva</th></tr></thead><tbody>'+
+    (filtered.length?filtered.map(({row,index})=>{
+      const status=row.workflow_status||'da_fare';
+      const disabled=row.unsaved?' disabled title="Evento Google ancora da archiviare"':'';
+      return '<tr class="'+(row.event_date<today?'kyv-agenda-past ':'')+(row.remind_on&&row.remind_on<=today&&!['fatto','chiuso'].includes(status)?'kyv-agenda-reminder-due':'')+'">'+
+        '<td>'+H(displayDate(row))+'</td><td>'+H(displayTime(row))+'</td>'+
+        '<td><button type="button" class="kyv-agenda-table-title" data-kyv-calendar-index="'+index+'">'+H(row.title)+'</button></td>'+
+        '<td>'+H(typeLabel[row.activity_type]||typeLabel.other)+'</td>'+
+        '<td><span class="kyv-agenda-source '+(row.unsaved?'kyv-agenda-source-unsaved':row.source==='google'?'kyv-agenda-source-google':'kyv-agenda-source-local')+'">'+H(row.unsaved?'Google · NON salvato':row.source==='google'?'Google Calendar':'Solo app')+'</span></td>'+
+        '<td><span title="'+H(row.description||'')+'">'+H(row.location||row.description||'—')+'</span></td>'+
+        '<td><select class="kyv-agenda-row-status" aria-label="Stato '+H(row.title)+'"'+disabled+'>'+
+        Object.entries(statusLabels).map(([v,label])=>'<option value="'+v+'"'+(status===v?' selected':'')+'>'+H(label)+'</option>').join('')+
+        '</select></td>'+
+        '<td><input class="kyv-agenda-row-reminder" type="date" aria-label="Data promemoria o rinvio" value="'+H(row.remind_on||'')+'"'+disabled+'>'+
+        '<input class="kyv-agenda-row-note" type="text" maxlength="2000" aria-label="Nota promemoria" value="'+H(row.workflow_note||'')+'" placeholder="Nota (facoltativa)"'+disabled+'></td>'+
+        '<td><button type="button" class="kyv-agenda-row-save" data-kyv-agenda-id="'+H(row.id||'')+'"'+disabled+'>Salva</button></td></tr>';
+    }).join(''):'<tr><td colspan="9" class="kyv-agenda-table-empty">Nessun evento per il filtro selezionato.</td></tr>')+
     '</tbody></table></div>';
-  // Mantiene un solo popup dettagli per tabella, giorno, settimana, mese e anno.
+  list.innerHTML=controls+(state.formOpen?formHtml():'')+table;
   notify();
 }
 async function readAll(){
@@ -133,13 +184,27 @@ async function upsertRows(rows){
 }
 async function importGoogle(events){
   if(!Array.isArray(events))throw Error('Gli eventi di Google non sono un elenco valido.');
-  const userId=await owner();let skipped=0;
-  const rows=uniqueRows(events.map(ev=>{const row=normalizeGoogle(ev,userId);if(!row)skipped++;return row;}).filter(Boolean));
+  const userId=await owner();let skipped=0,idless=0;
+  const previous=await readAll(); // Verify current workflow decisions before Google upsert.
+  const existing=new Map(previous.map(row=>[row.source+'|'+row.source_key,row]));
+  const rows=uniqueRows(events.map(ev=>{
+    const row=normalizeGoogle(ev,userId);if(!row){skipped++;return null;}
+    if(!row.calendar_id)idless++;
+    const kept=existing.get(row.source+'|'+row.source_key);
+    if(kept){
+      row.workflow_status=kept.workflow_status||'da_fare';row.remind_on=kept.remind_on||null;
+      row.workflow_note=kept.workflow_note||'';row.status_updated_at=kept.status_updated_at||null;
+      row.created_from_app=!!kept.created_from_app;
+    }
+    return row;
+  }).filter(Boolean));
   const saved=await upsertRows(rows);
+  // Upsert succeeded; force a fresh verified read and only then drop transient previews.
   await load();
+  state.previewRows=[];render();
   state.lastImport=new Date();
   showStatus(saved+' eventi Google salvati o aggiornati; '+state.rows.length+' righe conservate'+(skipped?'. '+skipped+' senza identificativo non archiviati.':'.'),!!skipped);
-  return {saved,skipped,total:state.rows.length};
+  return {saved,skipped,idless,total:state.rows.length};
 }
 async function saveCreated(input,created){
   const userId=await owner(),id=String(created?.eventId||'').trim(),
@@ -153,11 +218,108 @@ async function saveCreated(input,created){
     created_from_app:true,imported_at:new Date().toISOString()};
   await upsertRows([row]);await load();return row;
 }
-const api={load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
+
+const statusLabels={da_fare:'Da fare',fatto:'Fatto',chiuso:'Chiuso',da_rimandare:'Da rimandare',
+  da_rivedere:'Da rivedere',posticipato:'Posticipato a data'};
+async function updateWorkflow(id,workflow_status,remind_on,workflow_note=''){
+  if(!Object.prototype.hasOwnProperty.call(statusLabels,workflow_status))
+    throw Error('Stato evento non valido.');
+  if(workflow_status==='posticipato'&&!/^\d{4}-\d{2}-\d{2}$/.test(remind_on||''))
+    throw Error('Per posticipare scegli prima una data.');
+  if(remind_on&&!/^\d{4}-\d{2}-\d{2}$/.test(remind_on))
+    throw Error('Data promemoria non valida.');
+  const uid=await owner();
+  const {data,error}=await client().from(TABLE).update({
+    workflow_status,remind_on:remind_on||null,workflow_note:String(workflow_note||'').slice(0,2000),
+    status_updated_at:new Date().toISOString()
+  }).eq('id',id).eq('owner_id',uid).select('id');
+  if(error)throw error;
+  if(!Array.isArray(data)||data.length!==1)throw Error('Aggiornamento non verificabile: nessun evento modificato.');
+  await load();return true;
+}
+async function saveManual(input){
+  if(!input?.title||!input?.date||!input?.time||!input?.endTime)throw Error('Titolo, data e orari sono obbligatori.');
+  if(input.endTime<=input.time)throw Error('L’ora finale deve essere dopo l’inizio.');
+  return saveCreated({...input,activityType:input.activityType||'other'},null);
+}
+function showPreview(events,message){
+  state.previewRows=uniqueRows((events||[]).map(ev=>normalizeGoogle(ev,'preview')).filter(Boolean))
+    .map(row=>({...row,unsaved:true}));
+  state.error=String(message||'La scrittura in Supabase non è riuscita.');
+  showStatus('Anteprima non salvata: '+state.previewRows.length+' eventi Google. '+state.error,true);
+  render();
+}
+function reportSync(info){
+  state.diagnostics={...info,at:new Date().toISOString()};
+  const el=root.document.getElementById('kyv-agenda-sync-report');
+  if(!el)return;
+  const stage=String(info.stage||'');
+  const pieces=['Google: '+(info.googleCount===null||info.googleCount===undefined?'—':info.googleCount),
+    'Scritti nella tabella: '+(info.savedCount===null||info.savedCount===undefined?'—':info.savedCount),
+    'Archivio verificato: '+(info.storedCount===null||info.storedCount===undefined?'—':info.storedCount)];
+  const period=info.period?' · '+info.period:'';
+  el.textContent=(info.error?'Errore '+stage+': '+String(info.error):pieces.join(' · ')+period)+
+    (info.warning?' · '+info.warning:'');
+  el.classList.toggle('kyv-agenda-sync-error',!!info.error);
+  el.hidden=false;
+}
+
+const api={updateWorkflow,saveManual,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
 root.KYV_AGENDA_STORE=api;
+function wireTableActions(list){
+  if(!list||typeof list.addEventListener!=='function')return;
+  list.addEventListener('change',event=>{
+    if(event.target?.id==='kyv-agenda-filter'){
+      state.filter=event.target.value;render();
+    }
+  });
+  list.addEventListener('click',async event=>{
+    const action=event.target?.closest?.('[data-kyv-agenda-action]');
+    if(action){
+      if(action.dataset.kyvAgendaAction==='new-form')state.formOpen=true;
+      else if(action.dataset.kyvAgendaAction==='close-form')state.formOpen=false;
+      render();return;
+    }
+    const button=event.target?.closest?.('[data-kyv-agenda-id]');
+    if(!button||button.disabled)return;
+    const tr=button.closest('tr');if(!tr)return;
+    const status=tr.querySelector('.kyv-agenda-row-status')?.value;
+    const remind=tr.querySelector('.kyv-agenda-row-reminder')?.value||'';
+    const note=tr.querySelector('.kyv-agenda-row-note')?.value||'';
+    button.disabled=true;button.textContent='Salvo…';
+    try{
+      await updateWorkflow(button.dataset.kyvAgendaId,status,remind,note);
+      showStatus('Stato e promemoria salvati e verificati nella tabella.');
+    }catch(err){
+      showStatus('Impossibile salvare il promemoria: '+String(err?.message||err),true);
+      button.disabled=false;button.textContent='Riprova';
+    }
+  });
+  list.addEventListener('submit',async event=>{
+    if(event.target?.id!=='kyv-agenda-inline-form')return;
+    event.preventDefault();
+    const form=event.target,submit=form.querySelector('button[type="submit"]');
+    if(submit?.disabled)return;
+    const read=name=>String(form.elements.namedItem(name)?.value||'').trim();
+    const input={title:read('title'),date:read('date'),time:read('time'),
+      endTime:read('endTime'),activityType:read('activityType'),
+      location:read('location'),description:read('description')};
+    if(submit){submit.disabled=true;submit.textContent='Salvo…';}
+    try{
+      await saveManual(input);
+      state.formOpen=false;render();
+      showStatus('Nuova attività registrata nella tabella. Non inviata a Google Calendar.');
+    }catch(err){
+      showStatus('Inserimento non riuscito: '+String(err?.message||err),true);
+      if(submit){submit.disabled=false;submit.textContent='Riprova salvataggio';}
+    }
+  });
+}
+
 function init(){
   const list=root.document.getElementById('events-list');
   if(!list)return;
+  wireTableActions(list);
   let status=root.document.getElementById('kyv-agenda-store-status');
   if(!status){status=root.document.createElement('p');status.id='kyv-agenda-store-status';status.setAttribute('role','status');
     status.className='kyv-agenda-store-status';const main=root.document.querySelector('.kyv-calendar-main');

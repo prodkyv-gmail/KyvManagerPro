@@ -202,6 +202,9 @@
     main.dataset.kyvViews = '1';
     injectStyle(doc);
 
+    // Catch archive events loaded before this module mounted.
+    var fromArchive=root.KYV_AGENDA_STORE?.getEvents?.()||[];
+    if(fromArchive.length){cachedEvents=normalizeEvents(fromArchive);calendarLoaded=true;}
     var state = { view: readView(), anchor: startOfDay(new Date()), events: cachedEvents, loaded: calendarLoaded, truncated: calendarTruncated, periodStatus: '', periodEvents: null, requestId: 0, yearPending:null };
 
     // One native, focus-managed detail dialog reused by every calendar view.

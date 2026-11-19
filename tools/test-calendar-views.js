@@ -34,8 +34,8 @@ const packageText=read('package.json');
 assert.doesNotMatch(packageText,/check:google-oauth|test-google-calendar-oauth\.js/);
 
 // Contratto sincronizzazione: successo distinto dall'errore, niente eventi vecchi dopo il fallimento.
-assert.match(page,/KYV_AGENDA_STORE\.importGoogle\(events\)/,'La sincronizzazione salva in tabella prima di aggiornare le viste');
-assert.match(page,/Gli eventi già salvati restano invariati/,'L’errore Google non deve cancellare la cronologia');
+assert.match(page,/store\.importGoogle\(googleEvents\)/,'La sincronizzazione salva in tabella prima di aggiornare le viste');
+assert.match(page,/Gli eventi gia salvati non sono stati cancellati/,'L’errore Google non deve cancellare la cronologia');
 assert.match(src, /calendarLoaded = !!\(detail && detail\.success\)/, 'la vista deve distinguere dati aggiornati e non aggiornati');
 assert.match(src, /cachedEvents = calendarLoaded \? normalizeEvents\(detail\.events\) : \[\]/, 'i dati precedenti devono essere cancellati dopo un errore');
 assert.match(src, /Vista parziale:/, 'la vista deve segnalare eventi limitati');
@@ -240,11 +240,11 @@ assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:
  assert.match(src,/Apps Script collegato in modalità compatibilità/);
  assert.match(page,/today\.getDate\(\)\)/);
  assert.doesNotMatch(page,/today\.getDate\(\)-30/);
- assert.match(page,/today\.getDate\(\)\+15/);
+ assert.match(page,/from\.getDate\(\)\+90/);
  assert.match(page,/data\.range\?\.startDate===wanted\.startDate/);
  assert.match(page,/data-kyv-calendar-index/);
  assert.match(page,/kyv:calendar-open-event/);
- assert.match(page,/listEventsCache = \[\]/);
+ assert.match(page,/store\.showPreview\(googleEvents,message\)/,'Errore Supabase mostra anteprima non salvata');
 
  // La descrizione, il luogo e l'orario finale devono arrivare al popup senza innerHTML.
  const detailed=h.normalizeEvents([{
@@ -271,15 +271,15 @@ assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:
 assert.match(src,/Storico Google Calendar disattivato/);
 assert.match(src,/new Date\(requested\.endDate\+'T00:00:00'\)<=today/);
 assert.match(src,/pending\.historyDisabled/);
-assert.match(page,/Storico mantenuto/,'La cronologia registrata resta accessibile');
+assert.match(page,/lo storico salvato rimane nella tabella/,'La cronologia registrata resta accessibile');
 
 
 // v289 - legacy Apps Script: events without range must not trigger a false red "not connected".
-assert.match(page,/const verified=data\.range\?\.startDate/);
-assert.match(page,/if\(data\.range&&!verified\)/,'mismatched explicit range still rejected');
-assert.match(page,/Salvato · intervallo non verificato/);
+assert.match(page,/const confirmed=data\.range\?\.startDate/);
+assert.match(page,/if\(data\.range&&!confirmed\)/,'mismatched explicit range still rejected');
+assert.match(page,/Archivio verificato/);
 assert.doesNotMatch(page,/Lo script Google attivo non conferma l’intervallo storico/);
-assert.match(page,/listEventsCache=KYV_AGENDA_STORE\.getEvents\(\)/);
+assert.match(page,/listEventsCache=store\.getEvents\(\)/);
 assert.match(src,/eventsInRange\(d\.response\.events,d\.requested\)/);
 assert.match(src,/pending\.legacy=true/);
 assert.match(src,/pending\.nextIndex=pending\.months\.length/);
