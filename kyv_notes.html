@@ -196,7 +196,7 @@ async function openNote(record){
    new Date(record.__remote.updated_at)>new Date(record.base_updated_at||0)){
   const restore=confirm('Questa bozza locale è precedente a una modifica più recente sul cloud. OK ripristina la bozza originale; Annulla conserva il cloud e mantiene la bozza come una nota separata, senza cancellarla.');
   if(!restore){
-   const copy={...record,id:crypto.randomUUID(),title:'Bozza recuperata · '+(record.title||'Senza titolo'),
+   const copy={...record,id:crypto.randomUUID(),title:('Bozza recuperata · '+(record.title||'Senza titolo')).slice(0,180),
     created_at:new Date().toISOString(),updated_at:new Date().toISOString(),base_updated_at:null};
    delete copy.__localDraft;delete copy.__remote;
    drafts.put(copy);
