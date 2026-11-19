@@ -40,7 +40,7 @@ for(const key of ['TITOLO','ARTISTA','NOTE','Data_Sessione','AUTORI','Label','MA
 assert.match(html,/editor\.html\?table=PROGETTI&editId=/,'Shared original Editor is embedded in-page');
 assert.match(html,/id="project-editor-overlay"/,'Popup is hosted directly above ADD Progetto');
 assert.match(html,/id="project-editor-frame"/,'Shared Studio Editor popup loads in frame');
-assert.match(html,/data\.projectOpen=String\(p\.ID\)/,'Open project is an action on ADD Progetto, not navigation');
+assert.match(html,/link\.dataset\.projectOpen=String\(p\.ID\)/,'Open project is an action on ADD Progetto, not navigation');
 assert.match(html,/link\.addEventListener\('click',\(\)=>openProjectEditor\(p\.ID\)\)/,'Save action directly opens modal');
 assert.doesNotMatch(html,/link\.href='editor\.html\?table=PROGETTI/,'No navigation to Studio Editor when opening');
 for(const [key,id] of [['ARTISTA','quick-artist'],['AUTORI','quick-authors'],['Label','quick-label'],['MANAGEMENT','quick-management']]){
