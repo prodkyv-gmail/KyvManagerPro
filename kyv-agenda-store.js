@@ -10,7 +10,7 @@ let db=null,opened=[],loadingPromise=null;
 const H=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const dayKey=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'':[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
 const isDateOnly=value=>/^\d{4}-\d{2}-\d{2}$/.test(String(value??''));
-const asDate=value=>{if(isDateOnly(value)){const [y,m,d]=value.split('-').map(Number);const local=new Date(y,m-1,d);return Number.isNaN(local.getTime())?null:local;}const d=new Date(value);return Number.isNaN(d.getTime())?null:d;};
+const asDate=value=>{if(value===null||value===undefined||value==='')return null;if(isDateOnly(value)){const [y,m,d]=value.split('-').map(Number);const local=new Date(y,m-1,d);return Number.isNaN(local.getTime())?null:local;}const d=new Date(value);return Number.isNaN(d.getTime())?null:d;};
 const sourceEventDate=ev=>isDateOnly(ev.date)?ev.date:dayKey(ev.date);
 const kindFromText=value=>{const t=String(value??'').toLowerCase();return /scaden|deadline|consegna|release|uscita|pagament|fattur|deposito|siae/.test(t)?'deadline':/follow|sollecit|feedback|richiam|invio|pitch|contatt/.test(t)?'followup':/session|studio|registr|produz|mix|master|riunion|meeting/.test(t)?'session':'other';};
 const typeLabel={session:'Sessione',followup:'Follow-up',deadline:'Scadenza',other:'Altro'};
@@ -23,7 +23,7 @@ async function owner(){
 }
 function normalizeGoogle(ev,ownerId){
   const start=asDate(ev?.date),end=asDate(ev?.endDate);
-  if(!start||!String(ev?.title||'').trim())return null;
+  if(!start||!sourceEventDate(ev)||!String(ev?.title||'').trim())return null;
   const id=String(ev?.id||'').trim();
   if(!id)return null; // Non inventare identificativi Google: un sync senza ID non è verificabile.
   const day=sourceEventDate(ev),allDay=!!ev.allDay||isDateOnly(ev.date);
