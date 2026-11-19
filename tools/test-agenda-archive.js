@@ -34,13 +34,14 @@ assert.ok(sw.includes("'./kyv-agenda-store.js'")&&sw.includes("'./kyv-agenda-tab
 assert.equal(pkg.scripts['check:agenda-archive'],'node tools/test-agenda-archive.js');
 let sequence=0;
 const rows=new Map(),userId='11111111-1111-4111-8111-111111111111';
+let suppressUpsert=false;
 const client={
  auth:{getUser:async()=>({data:{user:{id:userId}},error:null})},
  from(table){
   assert.equal(table,'KYV_AGENDA_EVENTI');
   return {
    select(){return {order(){return {range:async(a,b)=>{const data=[...rows.values()].sort((x,y)=>x.starts_at.localeCompare(y.starts_at)).slice(a,b+1);return {data,count:rows.size,error:null};}}}};},
-   upsert:async(batch)=>{for(const x of batch){const key=x.owner_id+'|'+x.source+'|'+x.source_key;rows.set(key,{id:rows.get(key)?.id||'fake-row-'+(++sequence),...rows.get(key),...x,workflow_status:x.workflow_status||rows.get(key)?.workflow_status||'da_fare',remind_on:x.remind_on===undefined?rows.get(key)?.remind_on||null:x.remind_on});}return{error:null};},
+   upsert:async(batch)=>{if(suppressUpsert)return {error:null};for(const x of batch){const key=x.owner_id+'|'+x.source+'|'+x.source_key;rows.set(key,{id:rows.get(key)?.id||'fake-row-'+(++sequence),...rows.get(key),...x,workflow_status:x.workflow_status||rows.get(key)?.workflow_status||'da_fare',remind_on:x.remind_on===undefined?rows.get(key)?.remind_on||null:x.remind_on});}return{error:null};},
    update(patch){const filters={};return {eq(k,v){filters[k]=v;return this;},async select(){for(const [key,row]of rows){if(row.id===filters.id&&row.owner_id===filters.owner_id){rows.set(key,{...row,...patch});return{data:[{id:row.id}],error:null};}}return{data:[],error:null};}};}
   };
  }
@@ -94,9 +95,19 @@ async function run(){
  assert.equal(rows.size,3,'Empty Google response cannot erase saved history');
  await api.saveManual({title:'Attività locale',date:'2026-11-28',time:'08:30',endTime:'09:30',activityType:'followup'},);
  assert.equal(rows.size,4,'Inline manual row is persisted in same table');
- api.showPreview([{...google,id:'preview-1',title:'Evento Google non salvato'}],'Rete Supabase non disponibile');
+ assert.equal(events[events.length-1].detail.persisted,true,'Successful table saves are marked as persisted');
+ suppressUpsert=true;
+ await assert.rejects(api.importGoogle([{...google,id:'unverified',title:'Evento Google mai scritto'}]),/non presenti nella tabella/,
+   'An acknowledged but missing database write must never be reported as saved');
+ suppressUpsert=false;
+ assert.equal(rows.size,4,'Silent failure cannot add a row');
+ api.showPreview([google,{...google,id:'preview-1',title:'Evento Google non salvato'}],'Rete Supabase non disponibile');
  assert.equal(rows.size,4,'Preview never writes unverified rows to database');
+ assert.equal(api.getState().previewRows.length,1,'Already persisted events are excluded from unsaved preview');
  assert.ok(api.getEvents().some(x=>x.title==='Evento Google non salvato'));
+ assert.equal(api.getEvents().find(x=>x.title==='Evento Google non salvato').stored,false,
+   'Google preview events must not claim to be stored');
+ assert.equal(events[events.length-1].detail.persisted,false,'Combined calendar events must flag an unsaved preview');
  api.reportSync({stage:'salvataggio',googleCount:1,savedCount:null,storedCount:4,error:'Rete indisponibile'});
  assert.equal(api.getState().diagnostics.stage,'salvataggio');
  assert.ok(events.some(e=>e.type==='kyv:calendar-events'),'All views receive the same saved source');
