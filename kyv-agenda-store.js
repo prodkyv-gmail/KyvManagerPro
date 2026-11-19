@@ -5,7 +5,7 @@
 const page=(root.location?.pathname.split('/').pop()||'').toLowerCase();
 if(page!=='kyv_calendar.html')return;
 const TABLE='KYV_AGENDA_EVENTI',PAGE_SIZE=500;
-const state={rows:[],loaded:false,loading:false,error:'',lastImport:null,persistError:''};
+const state={rows:[],previewRows:[],loaded:false,loading:false,error:'',lastImport:null,persistError:'',filter:'all',diagnostics:null};
 let db=null,opened=[],loadingPromise=null;
 const H=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const dayKey=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'':[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
@@ -25,9 +25,13 @@ function normalizeGoogle(ev,ownerId){
   const start=asDate(ev?.date),end=asDate(ev?.endDate);
   if(!start||!sourceEventDate(ev)||!String(ev?.title||'').trim())return null;
   const id=String(ev?.id||'').trim();
-  if(!id)return null; // Non inventare identificativi Google: un sync senza ID non è verificabile.
+  // Some deployed legacy Apps Script versions omit event IDs. Preserve those rows using a
+  // deterministic content fingerprint, without pretending it is a Google event ID.
+  const basis=[ev.title,day,ev.date,ev.endDate,ev.description,ev.location].map(x=>String(x??'')).join('|');
+  let hash=2166136261;for(let i=0;i<basis.length;i++){hash^=basis.charCodeAt(i);hash=Math.imul(hash,16777619);}
+  const sourceKey=id?id+'#'+day:'legacy-'+(hash>>>0).toString(36)+'#'+day;
   const day=sourceEventDate(ev),allDay=!!ev.allDay||isDateOnly(ev.date);
-  return {owner_id:ownerId,source:'google',source_key:id+'#'+day,calendar_id:id,
+  return {owner_id:ownerId,source:'google',source_key:sourceKey,calendar_id:id||null,
     title:String(ev.title).trim().slice(0,250),event_date:day,starts_at:start.toISOString(),
     ends_at:end?.toISOString()||null,all_day:allDay,
     activity_type:kindFromText(ev.title),description:String(ev.description||'').slice(0,5000),
@@ -49,7 +53,7 @@ function showStatus(message,isError=false){
   if(!el)return;el.textContent=message;el.classList.toggle('kyv-agenda-store-error',!!isError);
 }
 function notify(){
-  opened=state.rows.map(toEvent);
+  opened=[...state.rows,...state.previewRows].map(toEvent);
   root.dispatchEvent(new CustomEvent('kyv:calendar-events',{
     detail:{events:opened,success:state.loaded,truncated:false,persisted:true}
   }));
@@ -66,11 +70,11 @@ function displayTime(row){
 }
 function render(){
   const list=root.document.getElementById('events-list');if(!list)return;
-  if(!state.loaded){
+  if(!state.loaded&&!state.previewRows.length){
     list.innerHTML='<p class="kyv-agenda-table-empty">Archivio non ancora verificato. '+H(state.error||'Caricamento in corso…')+'</p>';
     return;
   }
-  const rows=state.rows;
+  const rows=[...state.rows,...state.previewRows];
   if(!rows.length){
     list.innerHTML='<p class="kyv-agenda-table-empty">La tabella è vuota. Premi «Aggiorna agenda» per importare gli eventi Google, oppure pianifica una nuova attività.</p>';
     notify();return;
@@ -84,7 +88,7 @@ function render(){
     '<td data-label="Attività"><button type="button" class="kyv-agenda-table-title" data-kyv-calendar-index="'+i+'" aria-label="Dettagli di '+H(row.title)+'">'+H(row.title)+'</button></td>'+
     '<td data-label="Tipo">'+H(typeLabel[row.activity_type]||typeLabel.other)+'</td>'+
     '<td data-label="Fonte"><span class="kyv-agenda-source '+(row.source==='google'?'kyv-agenda-source-google':'kyv-agenda-source-local')+'">'+
-      H(row.source==='google'?(row.created_from_app?'Google · da app':'Google Calendar'):'Solo app')+'</span></td>'+
+      H(row.unsaved?'Google · NON salvato':row.source==='google'?(row.created_from_app?'Google · da app':'Google Calendar'):'Solo app')+'</span></td>'+
     '<td data-label="Luogo / note"><span title="'+H(row.description||'')+'">'+H(row.location||row.description||'—')+'</span></td></tr>').join('')+
     '</tbody></table></div>';
   // Mantiene un solo popup dettagli per tabella, giorno, settimana, mese e anno.
@@ -133,13 +137,15 @@ async function upsertRows(rows){
 }
 async function importGoogle(events){
   if(!Array.isArray(events))throw Error('Gli eventi di Google non sono un elenco valido.');
-  const userId=await owner();let skipped=0;
-  const rows=uniqueRows(events.map(ev=>{const row=normalizeGoogle(ev,userId);if(!row)skipped++;return row;}).filter(Boolean));
+  const userId=await owner();let skipped=0,idless=0;
+  const rows=uniqueRows(events.map(ev=>{const row=normalizeGoogle(ev,userId);if(!row)skipped++;else if(!row.calendar_id)idless++;return row;}).filter(Boolean));
   const saved=await upsertRows(rows);
+  // Upsert succeeded; force a fresh verified read and only then drop transient previews.
   await load();
+  state.previewRows=[];render();
   state.lastImport=new Date();
   showStatus(saved+' eventi Google salvati o aggiornati; '+state.rows.length+' righe conservate'+(skipped?'. '+skipped+' senza identificativo non archiviati.':'.'),!!skipped);
-  return {saved,skipped,total:state.rows.length};
+  return {saved,skipped,idless,total:state.rows.length};
 }
 async function saveCreated(input,created){
   const userId=await owner(),id=String(created?.eventId||'').trim(),
@@ -153,7 +159,53 @@ async function saveCreated(input,created){
     created_from_app:true,imported_at:new Date().toISOString()};
   await upsertRows([row]);await load();return row;
 }
-const api={load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
+
+const statusLabels={da_fare:'Da fare',fatto:'Fatto',chiuso:'Chiuso',da_rimandare:'Da rimandare',
+  da_rivedere:'Da rivedere',posticipato:'Posticipato a data'};
+async function updateWorkflow(id,workflow_status,remind_on,workflow_note=''){
+  if(!Object.prototype.hasOwnProperty.call(statusLabels,workflow_status))
+    throw Error('Stato evento non valido.');
+  if(workflow_status==='posticipato'&&!/^\d{4}-\d{2}-\d{2}$/.test(remind_on||''))
+    throw Error('Per posticipare scegli prima una data.');
+  if(remind_on&&!/^\d{4}-\d{2}-\d{2}$/.test(remind_on))
+    throw Error('Data promemoria non valida.');
+  const uid=await owner();
+  const {data,error}=await client().from(TABLE).update({
+    workflow_status,remind_on:remind_on||null,workflow_note:String(workflow_note||'').slice(0,2000),
+    status_updated_at:new Date().toISOString()
+  }).eq('id',id).eq('owner_id',uid).select('id');
+  if(error)throw error;
+  if(!Array.isArray(data)||data.length!==1)throw Error('Aggiornamento non verificabile: nessun evento modificato.');
+  await load();return true;
+}
+async function saveManual(input){
+  if(!input?.title||!input?.date||!input?.time||!input?.endTime)throw Error('Titolo, data e orari sono obbligatori.');
+  if(input.endTime<=input.time)throw Error('L’ora finale deve essere dopo l’inizio.');
+  return saveCreated({...input,activityType:input.activityType||'other'},null);
+}
+function showPreview(events,message){
+  state.previewRows=uniqueRows((events||[]).map(ev=>normalizeGoogle(ev,'preview')).filter(Boolean))
+    .map(row=>({...row,unsaved:true}));
+  state.error=String(message||'La scrittura in Supabase non è riuscita.');
+  showStatus('Anteprima non salvata: '+state.previewRows.length+' eventi Google. '+state.error,true);
+  render();
+}
+function reportSync(info){
+  state.diagnostics={...info,at:new Date().toISOString()};
+  const el=root.document.getElementById('kyv-agenda-sync-report');
+  if(!el)return;
+  const stage=String(info.stage||'');
+  const pieces=['Google: '+(info.googleCount===null||info.googleCount===undefined?'—':info.googleCount),
+    'Scritti nella tabella: '+(info.savedCount===null||info.savedCount===undefined?'—':info.savedCount),
+    'Archivio verificato: '+(info.storedCount===null||info.storedCount===undefined?'—':info.storedCount)];
+  const period=info.period?' · '+info.period:'';
+  el.textContent=(info.error?'Errore '+stage+': '+String(info.error):pieces.join(' · ')+period)+
+    (info.warning?' · '+info.warning:'');
+  el.classList.toggle('kyv-agenda-sync-error',!!info.error);
+  el.hidden=false;
+}
+
+const api={updateWorkflow,saveManual,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
 root.KYV_AGENDA_STORE=api;
 function init(){
   const list=root.document.getElementById('events-list');
