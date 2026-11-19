@@ -38,6 +38,7 @@
     <script src="kyv-editor-changes-v268.js"></script>
     <script src="kyv-editor-modal-v278.js"></script>
     <script src="kyv-editor-focus-v285.js"></script>
+    <script src="kyv-editor-organize-v286.js"></script>
     <script src="kyv-help.js"></script>
     <script src="kyv-auth.js"></script>
     <script src="menu.js"></script>
@@ -145,6 +146,7 @@
     <link rel="stylesheet" href="kyv-operational-ui-v276.css">
     <link rel="stylesheet" href="kyv-workspace-ui-v279.css">
     <link rel="stylesheet" href="kyv-editor-focus-v285.css">
+    <link rel="stylesheet" href="kyv-editor-organize-v286.css">
     <style>
       /* Embedded mode: show ONLY the original Modifica (PROGETTI) dialog. */
       body.kyv-embedded-project-editor > main,
@@ -186,27 +188,28 @@
         <!-- BARRA CONTROLLI STICKY (Flexbox anti-accavallamento e permanentemente visibile) -->
         <div class="px-4 md:px-8 pb-4 flex flex-col lg:flex-row gap-4 shrink-0 items-start lg:items-center justify-between border-b border-kyv-border/50 sticky top-0 z-40 bg-[#0f111a]/95 backdrop-blur-md shadow-md">
             
-            <!-- CONTENITORE TABS -->
+            <!-- CONTENITORE TABS: quattro archivi primari e tutti gli altri accessibili nel menu -->
             <div class="flex-1 min-w-0 w-full overflow-x-auto pb-2 custom-scrollbar">
-                <div class="flex space-x-2 w-max" id="editor-tabs">
-                    <button data-action="load-table" data-table="PROGETTI" id="tab-PROGETTI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-indigo-600 text-white transition-all shadow-lg shadow-indigo-500/20 border border-indigo-500">Progetti</button>
-                    <button data-action="load-table" data-table="CLIENTI" id="tab-CLIENTI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Clienti</button>
-                    <button data-action="load-table" data-table="FATTURE" id="tab-FATTURE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Fatture</button>
-                    <button data-action="load-table" data-table="CONSEGNE_MASTER" id="tab-CONSEGNE_MASTER" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Consegne</button>
-                    <button data-action="load-table" data-table="Spese Extra" id="tab-Spese Extra" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Spese Extra</button>
-                    <button data-action="load-table" data-table="PIANI_FISCALI" id="tab-PIANI_FISCALI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Piani Fiscali</button>
-                    <button data-action="load-table" data-table="EXPORT SIAE VERTICALE" id="tab-EXPORT SIAE VERTICALE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">SIAE Verticale</button>
-                    <button data-action="load-table" data-table="EXPORT SIAE" id="tab-EXPORT SIAE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">SIAE Orizz.</button>
-                    <button data-action="load-table" data-table="ESTRATTO SIAE" id="tab-ESTRATTO SIAE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Estratto SIAE</button>
-                    <!-- NUOVO TAB: ESTRATTO IMAIE -->
-
-                    <button data-action="load-table" data-table="AUDIO_VERSIONI" id="tab-AUDIO_VERSIONI" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Versioni Audio</button>
-                    <button data-action="load-table" data-table="DROPBOX_AUDIO_FILES" id="tab-DROPBOX_AUDIO_FILES" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Audio Dropbox</button>
-                    <button data-action="load-table" data-table="INVII_AUDIO" id="tab-INVII_AUDIO" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Invii Audio</button>
-                    <button data-action="load-table" data-table="DOCUMENTI_PROGETTO" id="tab-DOCUMENTI_PROGETTO" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all">Documenti</button>
-                    <button data-action="load-table" data-table="ESTRATTO_IMAIE" id="tab-ESTRATTO_IMAIE" class="px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all flex items-center">
-                        <i data-lucide="music-2" class="w-3 h-3 mr-1"></i> Nuovo IMAIE
-                    </button>
+                <div id="editor-tabs" aria-label="Seleziona archivio Studio Editor">
+                    <button type="button" data-action="load-table" data-table="PROGETTI" id="tab-PROGETTI" class="kyv-editor-primary-tab" aria-current="page">Progetti</button>
+                    <button type="button" data-action="load-table" data-table="FATTURE" id="tab-FATTURE" class="kyv-editor-primary-tab" aria-current="false">Fatture</button>
+                    <button type="button" data-action="load-table" data-table="ESTRATTO SIAE" id="tab-ESTRATTO SIAE" class="kyv-editor-primary-tab" aria-current="false">Estratto SIAE</button>
+                    <button type="button" data-action="load-table" data-table="ESTRATTO_IMAIE" id="tab-ESTRATTO_IMAIE" class="kyv-editor-primary-tab" aria-current="false">IMAIE</button>
+                    <details id="editor-extra-tables">
+                        <summary id="editor-extra-tables-trigger" aria-controls="editor-extra-tables-menu">Altre tabelle <span id="editor-extra-current"></span><i data-lucide="chevron-down" class="w-4 h-4"></i></summary>
+                        <div id="editor-extra-tables-menu" role="group" aria-label="Altri archivi">
+                            <button type="button" data-action="load-table" data-table="CLIENTI" id="tab-CLIENTI" class="kyv-editor-extra-tab" aria-current="false">Clienti</button>
+                            <button type="button" data-action="load-table" data-table="CONSEGNE_MASTER" id="tab-CONSEGNE_MASTER" class="kyv-editor-extra-tab" aria-current="false">Consegne Master</button>
+                            <button type="button" data-action="load-table" data-table="Spese Extra" id="tab-Spese Extra" class="kyv-editor-extra-tab" aria-current="false">Spese Extra</button>
+                            <button type="button" data-action="load-table" data-table="PIANI_FISCALI" id="tab-PIANI_FISCALI" class="kyv-editor-extra-tab" aria-current="false">Piani fiscali</button>
+                            <button type="button" data-action="load-table" data-table="EXPORT SIAE VERTICALE" id="tab-EXPORT SIAE VERTICALE" class="kyv-editor-extra-tab" aria-current="false">SIAE Verticale</button>
+                            <button type="button" data-action="load-table" data-table="EXPORT SIAE" id="tab-EXPORT SIAE" class="kyv-editor-extra-tab" aria-current="false">SIAE Orizzontale</button>
+                            <button type="button" data-action="load-table" data-table="AUDIO_VERSIONI" id="tab-AUDIO_VERSIONI" class="kyv-editor-extra-tab" aria-current="false">Versioni Audio</button>
+                            <button type="button" data-action="load-table" data-table="DROPBOX_AUDIO_FILES" id="tab-DROPBOX_AUDIO_FILES" class="kyv-editor-extra-tab" aria-current="false">Audio Dropbox</button>
+                            <button type="button" data-action="load-table" data-table="INVII_AUDIO" id="tab-INVII_AUDIO" class="kyv-editor-extra-tab" aria-current="false">Invii Audio</button>
+                            <button type="button" data-action="load-table" data-table="DOCUMENTI_PROGETTO" id="tab-DOCUMENTI_PROGETTO" class="kyv-editor-extra-tab" aria-current="false">Documenti</button>
+                        </div>
+                    </details>
                 </div>
             </div>
 
@@ -251,6 +254,24 @@
         </div>
 
         <div id="editor-view-status" class="px-4 md:px-8 py-2 border-b border-kyv-border/40 bg-[#11141d] text-[11px] text-kyv-text shrink-0" aria-live="polite">Caricamento dati...</div>
+
+        <!-- Fasi C e D: controlli presentazione per singolo archivio, non mutano il database -->
+        <div id="editor-operational-filters" role="group" aria-label="Filtri rapidi e preferenze di visualizzazione">
+            <label for="editor-fast-filter">Mostra
+                <select id="editor-fast-filter" aria-label="Filtro rapido della tabella">
+                    <option value="all">Tutti i record</option>
+                </select>
+            </label>
+            <label for="editor-page-size">Righe
+                <select id="editor-page-size" aria-label="Numero di righe per pagina">
+                    <option value="60">60</option>
+                    <option value="120">120</option>
+                    <option value="240">240</option>
+                </select>
+            </label>
+            <button type="button" id="editor-reset-filters" data-action="reset-editor-filters" title="Azzera ricerca e filtri; mantiene le preferenze delle colonne">Azzera filtri</button>
+            <span id="editor-date-sort-note" role="status" aria-live="polite"></span>
+        </div>
 
         <!-- TABELLA DATI; risultati completi verificati, visualizzazione progressiva -->
         <div class="flex-1 overflow-auto bg-kyv-bg relative custom-scrollbar">
@@ -383,8 +404,18 @@
         let editorModalFocusReturn = null;
         let editorModalTouched = new Set(), pendingEditorDelete = null, editorDeleteBusy = false;
         let editorInlineWrites = 0;
-        const EDITOR_ROWS_STEP = 120;
-        let editorShownRows = EDITOR_ROWS_STEP;
+        const EDITOR_DEFAULT_ROWS_STEP = 120;
+        const EDITOR_PREF_KEY = 'kyv-editor-table-preferences-v286';
+        let editorSavedPrefs={};
+        try{editorSavedPrefs=KYV_EDITOR_ORGANIZE_V286.safePreferences(localStorage.getItem(EDITOR_PREF_KEY));}catch(_){}
+        const editorTablePreferences = table => editorSavedPrefs[table] || {filter:'all',pageSize:EDITOR_DEFAULT_ROWS_STEP};
+        const editorPageStep=()=>editorTablePreferences(currentEditorTable).pageSize;
+        const storeEditorPrefs=(table,changes)=>{
+            editorSavedPrefs[table]={...editorTablePreferences(table),...changes};
+            try{localStorage.setItem(EDITOR_PREF_KEY,JSON.stringify(editorSavedPrefs));}catch(_){}
+        };
+        let editorDefaultSort=null;
+        let editorShownRows = EDITOR_DEFAULT_ROWS_STEP;
         let editorLoadSerial = 0, editorIsLoading = false;
         const readOnlyTables = new Set(['AUDIO_VERSIONI']);
         let currentSortColumn = null, currentSortDesc = false;
@@ -412,6 +443,67 @@
             syncEditorDisplayControls();
             if(!editorIsLoading){refreshEditorView();renderColumnPicker();}
         }
+        const editorMenu=document.getElementById('editor-extra-tables');
+        const EDITOR_NAV_EXTRA_LABELS=Object.freeze({"CLIENTI":"Clienti","CONSEGNE_MASTER":"Consegne Master","Spese Extra":"Spese Extra","PIANI_FISCALI":"Piani fiscali","EXPORT SIAE VERTICALE":"SIAE Verticale","EXPORT SIAE":"SIAE Orizzontale","AUDIO_VERSIONI":"Versioni Audio","DROPBOX_AUDIO_FILES":"Audio Dropbox","INVII_AUDIO":"Invii Audio","DOCUMENTI_PROGETTO":"Documenti"});
+        function positionEditorExtraMenu(){
+            const el=document.getElementById('editor-extra-tables-trigger');
+            const rect=el.getBoundingClientRect();
+            const left=Math.min(Math.max(12,rect.left),Math.max(12,window.innerWidth-372));
+            document.documentElement.style.setProperty('--kyv-editor-menu-left',left+'px');
+            document.documentElement.style.setProperty('--kyv-editor-menu-top',Math.min(window.innerHeight-100,rect.bottom+5)+'px');
+        }
+        function toggleEditorExtraMenu(open){
+            if(!editorMenu)return;
+            if(open){positionEditorExtraMenu();editorMenu.open=true;}
+            else editorMenu.open=false;
+        }
+        function syncEditorNav(){
+            document.querySelectorAll('#editor-tabs [data-action="load-table"]').forEach(btn=>{
+                const active=btn.dataset.table===currentEditorTable;
+                btn.classList.toggle('kyv-editor-nav-active',active);
+                btn.setAttribute('aria-current',active?'page':'false');
+            });
+            const extra=document.getElementById('editor-extra-current');
+            if(extra)extra.textContent=EDITOR_NAV_EXTRA_LABELS[currentEditorTable]?'· '+EDITOR_NAV_EXTRA_LABELS[currentEditorTable]:'';
+        }
+        editorMenu.addEventListener('toggle',()=>{if(editorMenu.open)positionEditorExtraMenu();});
+        window.addEventListener('resize',()=>{if(editorMenu.open)positionEditorExtraMenu();},{passive:true});
+        document.addEventListener('pointerdown',event=>{
+            if(editorMenu.open&&!editorMenu.contains(event.target))toggleEditorExtraMenu(false);
+        });
+        function syncEditorQuickFilters(){
+            const select=document.getElementById('editor-fast-filter');
+            if(!select)return;
+            const preferences=editorTablePreferences(currentEditorTable);
+            const options=KYV_EDITOR_ORGANIZE_V286.availableFilters(
+                currentEditorTable,editorDefaultSort?.isDate?editorDefaultSort.column:null);
+            select.replaceChildren(...options.map(option=>new Option(option.label,option.value)));
+            select.value=options.some(item=>item.value===preferences.filter)?preferences.filter:'all';
+            if(select.value!==preferences.filter)storeEditorPrefs(currentEditorTable,{filter:'all'});
+            document.getElementById('editor-page-size').value=String(preferences.pageSize);
+        }
+        function updateEditorSortNote(){
+            const note=document.getElementById('editor-date-sort-note');
+            if(!note)return;
+            if(!currentSortColumn){note.textContent='Ordinamento: archivio originale';return;}
+            const isDefault=editorDefaultSort&&currentSortColumn===editorDefaultSort.column;
+            const dateSort=!!editorDefaultSort?.isDate&&isDefault;
+            note.textContent=(dateSort?'Data':isDefault?'Nessuna colonna data · ID':'Colonna')+
+                ': '+currentSortColumn+' '+(currentSortDesc?'↓':'↑');
+        }
+        document.getElementById('editor-fast-filter').addEventListener('change',event=>{
+            storeEditorPrefs(currentEditorTable,{filter:event.target.value});
+            editorShownRows=editorPageStep();
+            refreshEditorView();
+        });
+        document.getElementById('editor-page-size').addEventListener('change',event=>{
+            const size=Number(event.target.value);
+            if(![60,120,240].includes(size))return;
+            storeEditorPrefs(currentEditorTable,{pageSize:size});
+            editorShownRows=editorPageStep();
+            refreshEditorView();
+        });
+
         function toggleColumnPanel(open) {
             const panel = document.getElementById('editor-column-panel'),button=document.getElementById('editor-columns-toggle');
             if (!panel || !button) return;
@@ -450,13 +542,16 @@
             const requestId = ++editorLoadSerial;
             const changingTable=currentEditorTable!==tableName;
             if(projectDetailId!==null)closeProjectDetails(false);
+            toggleEditorExtraMenu(false);
             clearTimeout(window.debounceTimer);
             currentEditorTable = tableName;
             syncEditorDisplayControls();
+            syncEditorNav();
+            syncEditorQuickFilters();
             currentEditorData = [];
             editorViewEngine.setRows([]);
             editorIsLoading = true;
-            editorShownRows = EDITOR_ROWS_STEP;
+            editorShownRows = editorPageStep();
             toggleColumnPanel(false);
             currentSortColumn = null;
             currentSortDesc = false;
@@ -469,10 +564,8 @@
             const status = document.getElementById('editor-view-status');
             if (status) status.textContent = 'Lettura e verifica completa dell’archivio ' + tableName + '…';
             
-            // UI Update per i Tabs
-            document.querySelectorAll('#editor-tabs button').forEach(btn => btn.className = 'px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-transparent text-kyv-text hover:bg-kyv-border/50 border border-kyv-border transition-all');
-            const activeTab = document.getElementById('tab-' + tableName); 
-            if(activeTab) activeTab.className = 'px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-indigo-600 text-white transition-all shadow-lg shadow-indigo-500/20 border border-indigo-500';
+            // La navigazione tiene visibile l’archivio selezionato nel riepilogo Altre tabelle.
+            syncEditorNav();
             
             DOM.editorThead.innerHTML = ''; 
             DOM.editorTbody.innerHTML = '<tr><td class="p-8 text-center text-kyv-text"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500"></i> Lettura dal Database...</td></tr>'; 
@@ -507,6 +600,12 @@
                 if (requestId !== editorLoadSerial) return;
                 currentEditorData = processedData;
                 editorViewEngine.setRows(processedData);
+                editorDefaultSort=KYV_EDITOR_ORGANIZE_V286.defaultSort(
+                    tableName,Object.keys(processedData[0]||Object.fromEntries((tableColumnsFallback[tableName]||[]).map(key=>[key,null]))),
+                    tablePKs[tableName]||'id');
+                currentSortColumn=editorDefaultSort.column;
+                currentSortDesc=editorDefaultSort.descending;
+                syncEditorQuickFilters();
                 editorIsLoading = false;
                 if (addButton) {
                     addButton.disabled = readOnly;
@@ -518,10 +617,12 @@
                 if (searchInput && changingTable) searchInput.value = '';
                 refreshEditorView();
                 renderColumnPicker();
+                updateEditorSortNote();
             } catch (error) {
                 if (requestId !== editorLoadSerial) return;
                 editorIsLoading = false;
                 currentEditorData = [];
+                editorDefaultSort=null;
                 editorViewEngine.setRows([]);
                 if (addButton) addButton.disabled = true;
                 if (exportButton) exportButton.disabled = true;
@@ -547,10 +648,14 @@
         }
 
         function getEditorViewData() {
-            return editorViewEngine.select({
+            const searched=editorViewEngine.select({
                 query:document.getElementById('editor-search')?.value||'',
                 sortColumn:currentSortColumn,
                 descending:currentSortDesc
+            });
+            return KYV_EDITOR_ORGANIZE_V286.filterRows(searched,{
+                table:currentEditorTable,filter:editorTablePreferences(currentEditorTable).filter,
+                dateColumn:editorDefaultSort?.isDate?editorDefaultSort.column:null
             });
         }
 
@@ -559,7 +664,9 @@
             if (!status) return;
             const search = document.getElementById('editor-search')?.value.trim();
             const sort = currentSortColumn ? ` · Ordinamento: ${currentSortColumn} (${currentSortDesc ? 'decrescente' : 'crescente'})` : '';
-            const filter = search ? ` · Filtro: “${search}”` : '';
+            const quick=editorTablePreferences(currentEditorTable).filter;
+            const quickLabel=KYV_EDITOR_ORGANIZE_V286.FILTERS.find(x=>x.value===quick)?.label||'Tutti';
+            const filter = (search ? ` · Ricerca: “${search}”` : '')+(quick!=='all'?' · '+quickLabel:'');
             const totalCols = editorColumnKeys().length, shownCols = essentialProjects()
                 ? KYV_EDITOR_FOCUS_V285.essentialKeys(currentEditorTable,editorColumnKeys()).length
                 : window.KYV_EDITOR_COLUMNS?.visible(currentEditorTable,editorColumnKeys()).length ?? totalCols;
@@ -582,14 +689,15 @@
         window.sortTable = function(colName) {
             if (currentSortColumn === colName) currentSortDesc = !currentSortDesc;
             else { currentSortColumn = colName; currentSortDesc = false; }
-            editorShownRows = EDITOR_ROWS_STEP;
+            editorShownRows = editorPageStep();
             refreshEditorView();
+            updateEditorSortNote();
         }
 
         window.debounceFilterEditorTable = function() {
             clearTimeout(window.debounceTimer);
             window.debounceTimer = setTimeout(() => {
-                editorShownRows = EDITOR_ROWS_STEP;
+                editorShownRows = editorPageStep();
                 refreshEditorView();
             }, 180);
         }
@@ -661,7 +769,11 @@
             
             let htmlBody = [];
             dataArray.forEach(row => {
-                htmlBody.push(`<tr class="hover:bg-kyv-border/30 transition-colors group ${textSize}">`);
+                const signals=KYV_EDITOR_ORGANIZE_V286.rowFlags(currentEditorTable,row,new Date());
+                const badges=signals.length?'<span class="kyv-editor-signal-stack">'+signals.map(signal=>
+                    `<span class="kyv-editor-signal-pill" data-kind="${signal.kind}">${KYV.safeHtml(signal.label)}</span>`).join('')+'</span>':'';
+                const flagged=signals.some(x=>x.kind==='attention')?'kyv-editor-attention-row':signals.length?'kyv-editor-missing-row':'';
+                htmlBody.push(`<tr class="hover:bg-kyv-border/30 transition-colors group ${textSize} ${flagged}">`);
                 keys.forEach(key => {
                     if(isEssential){
                         const display=KYV_EDITOR_FOCUS_V285.valueText(row[key]);
@@ -670,7 +782,7 @@
                         const cell=key==='TITOLO'
                             ? `<button type="button" data-action="open-project-detail" data-id="${KYV.safeHtml(row[pk])}" class="kyv-editor-essential-title" title="Apri riepilogo progetto">${label}</button>`
                             : `<span class="${empty?'kyv-editor-essential-empty':''}">${label}</span>`;
-                        htmlBody.push(`<td class="${tdPad} kyv-editor-essential-cell border-r border-kyv-border/20" data-column="${KYV.safeHtml(key)}">${cell}</td>`);
+                        htmlBody.push(`<td class="${tdPad} kyv-editor-essential-cell border-r border-kyv-border/20" data-column="${KYV.safeHtml(key)}">${cell}${key==='TITOLO'?badges:''}</td>`);
                         return;
                     }
                     let val = row[key] !== null ? row[key] : ''; 
@@ -699,7 +811,7 @@
                 }
                 htmlBody.push(isReadOnly
                     ? `<td class="${tdPad} kyv-actions-col text-center sticky right-0 bg-[#0d0f16]/90 border-l border-kyv-border/20 text-emerald-300" title="Gestito da Archivio Musicale"><i data-lucide="shield-check" class="w-4 h-4 inline"></i></td></tr>`
-                    : `<td class="${tdPad} kyv-actions-col text-center sticky right-0 bg-[#0d0f16]/90 group-hover:bg-[#12151e] transition-colors border-l border-kyv-border/20 whitespace-nowrap"><button data-action="edit-record" data-id="${KYV.safeHtml(row[pk])}" class="text-kyv-text hover:text-indigo-400 p-1 rounded transition-colors mr-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button data-action="delete-record" data-id="${KYV.safeHtml(row[pk])}" class="text-kyv-text hover:text-red-500 p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`);
+                    : `<td class="${tdPad} kyv-actions-col text-center sticky right-0 bg-[#0d0f16]/90 group-hover:bg-[#12151e] transition-colors border-l border-kyv-border/20 whitespace-nowrap">${badges}<button data-action="edit-record" data-id="${KYV.safeHtml(row[pk])}" class="text-kyv-text hover:text-indigo-400 p-1 rounded transition-colors mr-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button data-action="delete-record" data-id="${KYV.safeHtml(row[pk])}" class="text-kyv-text hover:text-red-500 p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`);
             });
             DOM.editorTbody.innerHTML = htmlBody.length
                 ? htmlBody.join('')
@@ -1060,7 +1172,15 @@
 
         document.addEventListener('click', async (e) => {
             const btn = e.target.closest('[data-action]'); if (!btn) return; const action = btn.dataset.action;
-            if (action === 'set-display-mode')changeProjectDisplayMode(btn.dataset.mode);
+            if (action === 'reset-editor-filters'){
+                storeEditorPrefs(currentEditorTable,{filter:'all',pageSize:EDITOR_DEFAULT_ROWS_STEP});
+                document.getElementById('editor-search').value='';
+                clearTimeout(window.debounceTimer);
+                editorShownRows=editorPageStep();
+                syncEditorQuickFilters();
+                refreshEditorView();
+            }
+            else if (action === 'set-display-mode')changeProjectDisplayMode(btn.dataset.mode);
             else if (action === 'open-project-detail')openProjectDetails(btn.dataset.id,btn);
             else if (action === 'project-detail-close')closeProjectDetails();
             else if (action === 'project-detail-edit') {
@@ -1070,13 +1190,13 @@
             else if (action === 'load-table') loadEditorTable(btn.dataset.table);
             else if (action === 'retry-table') loadEditorTable(currentEditorTable);
             else if (action === 'load-more-rows') {
-                if (!editorIsLoading) { editorShownRows += EDITOR_ROWS_STEP; refreshEditorView(); }
+                if (!editorIsLoading) { editorShownRows += editorPageStep(); refreshEditorView(); }
             } 
             else if (action === 'clear-search') {
                 clearTimeout(window.debounceTimer);
                 const input = document.getElementById('editor-search');
                 if (input) input.value = '';
-                editorShownRows = EDITOR_ROWS_STEP;
+                editorShownRows = editorPageStep();
                 refreshEditorView();
                 input?.focus();
             }
