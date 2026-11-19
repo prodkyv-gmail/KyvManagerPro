@@ -17,7 +17,7 @@ assert.match(sql,/revoke delete on public/);
 assert.doesNotMatch(sql,/for delete to authenticated/i);
 assert.match(store,/\.upsert\(batch,\{onConflict:'owner_id,source,source_key'\}\)/);
 assert.doesNotMatch(store,/\.delete\(|\.truncate\(/);
-assert.match(html,/KYV_AGENDA_STORE\.importGoogle\(events\)/);
+assert.match(html,/store\.importGoogle\(googleEvents\)/);
 assert.match(html,/KYV_AGENDA_STORE\.saveCreated\(input,created\)/);
 assert.match(html,/created=await calendarRequest\('createEvent'/);
 assert.match(html,/googleError=String/,'Google failure must be distinguishable from database persistence');
@@ -59,8 +59,15 @@ const google={
 assert.equal(api.normalizeGoogle(google,userId).source_key,'recurring-event#2026-11-25');
 assert.equal(api.normalizeGoogle({...google,date:'2026-11-26T11:00:00+01:00'},userId).source_key,'recurring-event#2026-11-26',
  'Recurring dates must not overwrite one another');
-assert.equal(api.normalizeGoogle({...google,id:null},userId),null,'Never pretend Google IDs are verified');
+assert.equal(api.normalizeGoogle({...google,id:null},userId).calendar_id,null,'Legacy event has no Google ID but must still be visible and persistable');
 assert.equal(api.normalizeGoogle({...google,date:'invalid'},userId),null,'Invalid event date is not silently archived');
+assert.match(store,/workflow_status=kept.workflow_status/,'Google refresh must retain manually assigned status');
+assert.match(store,/kyv-agenda-inline-form/,'Table has native manual entry form');
+assert.match(store,/updateWorkflow\(id,workflow_status,remind_on/,'Table can update workflow state and reminder');
+assert.match(html,/reportSync/,'Sync exposes separate Google/archive stages');
+assert.match(html,/segment<3/,'Read 90 days via three supported date windows');
+assert.match(read('docs/agenda-workflow-reminders-v283.sql'),/workflow_status/);
+assert.match(read('docs/agenda-workflow-reminders-v283.sql'),/remind_on/);
 async function run(){
  await api.importGoogle([google,google]);assert.equal(rows.size,1,'Repeated ID in same sync deduped');
  await api.importGoogle([google]);assert.equal(rows.size,1,'Repeated sync must upsert not duplicate');
