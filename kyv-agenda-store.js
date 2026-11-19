@@ -185,7 +185,19 @@ async function upsertRows(rows){
 async function importGoogle(events){
   if(!Array.isArray(events))throw Error('Gli eventi di Google non sono un elenco valido.');
   const userId=await owner();let skipped=0,idless=0;
-  const rows=uniqueRows(events.map(ev=>{const row=normalizeGoogle(ev,userId);if(!row)skipped++;else if(!row.calendar_id)idless++;return row;}).filter(Boolean));
+  const previous=await readAll(); // Verify current workflow decisions before Google upsert.
+  const existing=new Map(previous.map(row=>[row.source+'|'+row.source_key,row]));
+  const rows=uniqueRows(events.map(ev=>{
+    const row=normalizeGoogle(ev,userId);if(!row){skipped++;return null;}
+    if(!row.calendar_id)idless++;
+    const kept=existing.get(row.source+'|'+row.source_key);
+    if(kept){
+      row.workflow_status=kept.workflow_status||'da_fare';row.remind_on=kept.remind_on||null;
+      row.workflow_note=kept.workflow_note||'';row.status_updated_at=kept.status_updated_at||null;
+      row.created_from_app=!!kept.created_from_app;
+    }
+    return row;
+  }).filter(Boolean));
   const saved=await upsertRows(rows);
   // Upsert succeeded; force a fresh verified read and only then drop transient previews.
   await load();
