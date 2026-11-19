@@ -195,21 +195,22 @@
                     <button type="button" data-action="load-table" data-table="FATTURE" id="tab-FATTURE" class="kyv-editor-primary-tab" aria-current="false">Fatture</button>
                     <button type="button" data-action="load-table" data-table="ESTRATTO SIAE" id="tab-ESTRATTO SIAE" class="kyv-editor-primary-tab" aria-current="false">Estratto SIAE</button>
                     <button type="button" data-action="load-table" data-table="ESTRATTO_IMAIE" id="tab-ESTRATTO_IMAIE" class="kyv-editor-primary-tab" aria-current="false">IMAIE</button>
-                    <details id="editor-extra-tables">
-                        <summary id="editor-extra-tables-trigger" aria-controls="editor-extra-tables-menu">Altre tabelle <span id="editor-extra-current"></span><i data-lucide="chevron-down" class="w-4 h-4"></i></summary>
-                        <div id="editor-extra-tables-menu" role="group" aria-label="Altri archivi">
-                            <button type="button" data-action="load-table" data-table="CLIENTI" id="tab-CLIENTI" class="kyv-editor-extra-tab" aria-current="false">Clienti</button>
-                            <button type="button" data-action="load-table" data-table="CONSEGNE_MASTER" id="tab-CONSEGNE_MASTER" class="kyv-editor-extra-tab" aria-current="false">Consegne Master</button>
-                            <button type="button" data-action="load-table" data-table="Spese Extra" id="tab-Spese Extra" class="kyv-editor-extra-tab" aria-current="false">Spese Extra</button>
-                            <button type="button" data-action="load-table" data-table="PIANI_FISCALI" id="tab-PIANI_FISCALI" class="kyv-editor-extra-tab" aria-current="false">Piani fiscali</button>
-                            <button type="button" data-action="load-table" data-table="EXPORT SIAE VERTICALE" id="tab-EXPORT SIAE VERTICALE" class="kyv-editor-extra-tab" aria-current="false">SIAE Verticale</button>
-                            <button type="button" data-action="load-table" data-table="EXPORT SIAE" id="tab-EXPORT SIAE" class="kyv-editor-extra-tab" aria-current="false">SIAE Orizzontale</button>
-                            <button type="button" data-action="load-table" data-table="AUDIO_VERSIONI" id="tab-AUDIO_VERSIONI" class="kyv-editor-extra-tab" aria-current="false">Versioni Audio</button>
-                            <button type="button" data-action="load-table" data-table="DROPBOX_AUDIO_FILES" id="tab-DROPBOX_AUDIO_FILES" class="kyv-editor-extra-tab" aria-current="false">Audio Dropbox</button>
-                            <button type="button" data-action="load-table" data-table="INVII_AUDIO" id="tab-INVII_AUDIO" class="kyv-editor-extra-tab" aria-current="false">Invii Audio</button>
-                            <button type="button" data-action="load-table" data-table="DOCUMENTI_PROGETTO" id="tab-DOCUMENTI_PROGETTO" class="kyv-editor-extra-tab" aria-current="false">Documenti</button>
-                        </div>
-                    </details>
+                    <label id="editor-extra-tables" for="editor-extra-table-select">
+                        <span>Altre tabelle</span>
+                        <select id="editor-extra-table-select" aria-label="Apri un'altra tabella">
+                            <option value="">Seleziona tabella…</option>
+                            <option value="CLIENTI">Clienti</option>
+                            <option value="CONSEGNE_MASTER">Consegne Master</option>
+                            <option value="Spese Extra">Spese Extra</option>
+                            <option value="PIANI_FISCALI">Piani fiscali</option>
+                            <option value="EXPORT SIAE VERTICALE">SIAE Verticale</option>
+                            <option value="EXPORT SIAE">SIAE Orizzontale</option>
+                            <option value="AUDIO_VERSIONI">Versioni Audio</option>
+                            <option value="DROPBOX_AUDIO_FILES">Audio Dropbox</option>
+                            <option value="INVII_AUDIO">Invii Audio</option>
+                            <option value="DOCUMENTI_PROGETTO">Documenti</option>
+                        </select>
+                    </label>
                 </div>
             </div>
 
@@ -443,33 +444,18 @@
             syncEditorDisplayControls();
             if(!editorIsLoading){refreshEditorView();renderColumnPicker();}
         }
-        const editorMenu=document.getElementById('editor-extra-tables');
-        const EDITOR_NAV_EXTRA_LABELS=Object.freeze({"CLIENTI":"Clienti","CONSEGNE_MASTER":"Consegne Master","Spese Extra":"Spese Extra","PIANI_FISCALI":"Piani fiscali","EXPORT SIAE VERTICALE":"SIAE Verticale","EXPORT SIAE":"SIAE Orizzontale","AUDIO_VERSIONI":"Versioni Audio","DROPBOX_AUDIO_FILES":"Audio Dropbox","INVII_AUDIO":"Invii Audio","DOCUMENTI_PROGETTO":"Documenti"});
-        function positionEditorExtraMenu(){
-            const el=document.getElementById('editor-extra-tables-trigger');
-            const rect=el.getBoundingClientRect();
-            const left=Math.min(Math.max(12,rect.left),Math.max(12,window.innerWidth-372));
-            document.documentElement.style.setProperty('--kyv-editor-menu-left',left+'px');
-            document.documentElement.style.setProperty('--kyv-editor-menu-top',Math.min(window.innerHeight-100,rect.bottom+5)+'px');
-        }
-        function toggleEditorExtraMenu(open){
-            if(!editorMenu)return;
-            if(open){positionEditorExtraMenu();editorMenu.open=true;}
-            else editorMenu.open=false;
-        }
         function syncEditorNav(){
             document.querySelectorAll('#editor-tabs [data-action="load-table"]').forEach(btn=>{
                 const active=btn.dataset.table===currentEditorTable;
                 btn.classList.toggle('kyv-editor-nav-active',active);
                 btn.setAttribute('aria-current',active?'page':'false');
             });
-            const extra=document.getElementById('editor-extra-current');
-            if(extra)extra.textContent=EDITOR_NAV_EXTRA_LABELS[currentEditorTable]?'· '+EDITOR_NAV_EXTRA_LABELS[currentEditorTable]:'';
+            const selection=document.getElementById('editor-extra-table-select');
+            if(selection)selection.value=KYV_EDITOR_ORGANIZE_V286.PRIMARY.includes(currentEditorTable)?'':currentEditorTable;
         }
-        editorMenu.addEventListener('toggle',()=>{if(editorMenu.open)positionEditorExtraMenu();});
-        window.addEventListener('resize',()=>{if(editorMenu.open)positionEditorExtraMenu();},{passive:true});
-        document.addEventListener('pointerdown',event=>{
-            if(editorMenu.open&&!editorMenu.contains(event.target))toggleEditorExtraMenu(false);
+        document.getElementById('editor-extra-table-select').addEventListener('change',event=>{
+            const selected=event.target.value;
+            if(selected&&window.KYV_DB?.SCHEMAS?.[selected])loadEditorTable(selected);
         });
         function syncEditorQuickFilters(){
             const select=document.getElementById('editor-fast-filter');
@@ -542,7 +528,6 @@
             const requestId = ++editorLoadSerial;
             const changingTable=currentEditorTable!==tableName;
             if(projectDetailId!==null)closeProjectDetails(false);
-            toggleEditorExtraMenu(false);
             clearTimeout(window.debounceTimer);
             currentEditorTable = tableName;
             syncEditorDisplayControls();
