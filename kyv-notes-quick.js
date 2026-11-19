@@ -167,6 +167,7 @@ async function persist(){
   if(audioBlob){const uploaded=await store.uploadVoice(note.id,audioBlob,audioSeconds);note={...note,...uploaded};audioBlob=null;}
   drafts.clear(note.id);
   message('Nota salvata nel tuo Taccuino.','success');
+  if(root.KYV?.showToast)root.KYV.showToast('Nota salvata nel Taccuino.','success');
   dismiss(true);
  }catch(error){
   message('Impossibile salvare: '+(error?.message||'controlla rete e accesso')+'. La bozza testuale resta sul dispositivo.',true);
