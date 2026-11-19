@@ -73,7 +73,7 @@ window.KYV_CONFIG = KYV_CONFIG;
 
 (function loadKyvFeatureModules(){
     const page=(window.location.pathname.split('/').pop()||'index.html').toLowerCase();
-    const producerViews=['progetti.html','scheda_progetto.html','ascolto.html','kyv_calendar.html','index.html',''];
+    const producerViews=['progetti.html','scheda_progetto.html','ascolto.html','kyv_calendar.html','oggi.html','index.html',''];
     // Intelligence loads this helper with an explicit ordered script tag.
     // Other pages use dynamic feature loaders, so ensure it is enqueued first.
     if(page!=='kyv_intelligence.html'){
@@ -225,7 +225,7 @@ window.KYV_CONFIG = KYV_CONFIG;
         document.head.appendChild(easySecondary);
     }
 
-    if(page==='index.html'||page===''){
+    if(page==='oggi.html'){
         const todayPriority=document.createElement('script');
         todayPriority.src='kyv-today-home-v5.js';
         todayPriority.async=false;

@@ -16,7 +16,7 @@ const primary=producer.split('const primary=[')[1].split('];')[0];
 const admin=producer.split('const control=[')[1].split('];')[0];
 assert.ok(!primary.includes("['integrazioni.html'"),'Launcher must not duplicate in Producer');
 assert.ok(admin.includes("['integrazioni.html','Tutte le app'"),'Administration must contain the launcher link');
-const basic=menu.split('<nav class="flex-1 overflow-y-auto')[1].split('<details class="kyv-nav-group"')[0];
+const basic=menu.split('<nav class="flex-1 overflow-y-auto')[1].split('<details id="kyv-nav-admin" class="kyv-nav-group"')[0];
 const adminFallback=menu.split('<span>Amministrazione</span>')[1].split('</ul>')[0];
 assert.ok(!basic.includes("navItem('integrazioni', 'integrazioni.html'"),'Launcher is not in fallback main links');
 assert.ok(adminFallback.includes("navItem('integrazioni', 'integrazioni.html'"),'Fallback Administration contains launcher link');

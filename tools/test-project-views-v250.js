@@ -50,7 +50,7 @@ assert.equal(C.year('2026-02-31'),null,'Invalid date must not be plotted');
 assert.equal(C.statuses(projects).reduce((s,x)=>s+x.count,0),projects.length);
 assert.equal(C.artists(projects,10).missingArtist,1);
 assert.equal(C.artists(projects,10).rows.find(x=>x.artist==='EMMA').count,2);
-const page=read('progetti.html'),home=read('index.html'),ui=read('kyv-home-charts-ui-v250.js'),sw=read('sw.js');
+const page=read('progetti.html'),home=read('oggi.html'),ui=read('kyv-home-charts-ui-v250.js'),sw=read('sw.js');
 for(const id of ['project-quick-modal','project-artist-filter','project-status-filter','project-phase-filter','project-sort','project-overview-field','project-overview-bars','project-load-more','project-view-toggle'])assert.ok(page.includes(id),id);
 assert.ok(page.includes("count:'exact'")&&page.includes('.range('),'No hidden page-only search or silent 500 cap');
 assert.ok(page.includes("M.filterRows(pool"),'Search all loaded projects');

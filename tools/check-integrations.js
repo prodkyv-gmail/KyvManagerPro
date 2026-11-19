@@ -7,7 +7,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 const calendar = read('kyv_calendar.html');
 const menu = read('menu.js');
-const dashboard = read('index.html');
+const dashboard = read('oggi.html');
 const config = read('config.js');
 const bridge = read('kyv-drive-bridge.js');
 const dropbox = read('kyv_dropbox.html');
@@ -36,7 +36,7 @@ assert(htmlBundle.includes('chart.js@4.4.7'), 'Versione Chart.js attesa non trov
 assert(calendar.includes("loadKyvSidebar('calendar')"), 'Calendar deve evidenziare Agenda nel menu');
 assert(calendar.includes('KYV_DRIVE.fetchJson'), 'Calendar deve usare il proxy condiviso');
 assert(!calendar.includes('fetch(`${url}?action=getEvents`)'), 'Calendar non deve chiamare Apps Script direttamente');
-assert(menu.match(/kyv_calendar\.html/g)?.length >= 2, 'Agenda deve comparire nel menu desktop e mobile');
+assert(menu.match(/kyv_calendar\.html/g)?.length >= 1, 'Agenda deve essere raggiungibile dal menu desktop e mobile laterale');
 assert(dashboard.includes('href="kyv_calendar.html"'), 'Oggi deve offrire accesso rapido ad Agenda');
 assert(config.includes("email: 'prodkyv@gmail.com'"), 'Deve essere dichiarato l’account Google richiesto');
 assert(config.includes("DROPBOX_APP_KEY: 'kpapjm7sybfs8ze'"), 'La chiave pubblica Dropbox deve essere centralizzata');

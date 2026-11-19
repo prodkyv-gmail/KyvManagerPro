@@ -119,7 +119,7 @@ function renderTodayPanel(){
 }
 
 async function mountToday(){
-  if((page!=='index.html'&&page!=='')||document.getElementById('kyv-today-project-actions'))return;
+  if((page!=='oggi.html')||document.getElementById('kyv-today-project-actions'))return;
   const anchor=document.querySelector('.kyv-quick-actions')||document.getElementById('kyv-producer-start');
   if(!anchor)return;
   const panel=document.createElement('section');
@@ -143,7 +143,7 @@ function renderLegacyProjectFilter(){
 }
 
 function mountLegacyFilter(){
-  if(page!=='index.html'&&page!=='')return;
+  if(page!=='oggi.html')return;
   const original=window.setActivityFilter;
   const anyFilter=document.querySelector('[data-activity-filter="followup"]');
   if(typeof original!=='function'||!anyFilter)return false;
@@ -202,7 +202,7 @@ function prefillCalendar(){
 }
 
 function boot(){
-  if(page==='index.html'||page===''){
+  if(page==='oggi.html'){
     const start=()=>{if(document.querySelector('.kyv-quick-actions')||document.getElementById('kyv-producer-start')){mountToday();return true;}return false;};
     if(!start()){const observer=new MutationObserver(()=>{if(start())observer.disconnect();});observer.observe(document.documentElement,{childList:true,subtree:true});setTimeout(()=>observer.disconnect(),7000);}
     const legacyTimer=setInterval(()=>{if(mountLegacyFilter())clearInterval(legacyTimer);},350);setTimeout(()=>clearInterval(legacyTimer),8000);

@@ -2,22 +2,22 @@
    Superfici nitide, gerarchia più calma e controlli adatti anche al touch. */
 :root {
   color-scheme: dark;
-  --kyv-shell: #080a0f;
-  --kyv-sidebar: #0b0d13;
-  --kyv-canvas: #10131b;
-  --kyv-surface: #171b25;
-  --kyv-surface-raised: #1c2130;
-  --kyv-surface-soft: #121620;
-  --kyv-border: rgba(255,255,255,.085);
-  --kyv-border-strong: rgba(255,255,255,.14);
-  --kyv-text: #f5f7fb;
-  --kyv-muted: #969eae;
-  --kyv-primary: #8b83ff;
-  --kyv-primary-strong: #6f65f4;
-  --kyv-mint: #44d7b6;
+  --kyv-shell: #111d22;
+  --kyv-sidebar: #17262b;
+  --kyv-canvas: #1b292d;
+  --kyv-surface: #26363b;
+  --kyv-surface-raised: #2d3e43;
+  --kyv-surface-soft: #1d2d31;
+  --kyv-border: rgba(191,216,206,.13);
+  --kyv-border-strong: rgba(191,216,206,.24);
+  --kyv-text: #edf5f0;
+  --kyv-muted: #b1c2c1;
+  --kyv-primary: #9cc4b4;
+  --kyv-primary-strong: #769e92;
+  --kyv-mint: #9bceba;
   --kyv-warning: #f5b95f;
   --kyv-danger: #ff7285;
-  --kyv-shadow: 0 18px 45px rgba(0,0,0,.22);
+  --kyv-shadow: 0 11px 28px rgba(0,0,0,.12);
 }
 
 html, body { background: var(--kyv-shell) !important; }
@@ -27,8 +27,8 @@ body > main,
 main.h-screen,
 main.flex-1 {
   background:
-    radial-gradient(circle at 3% 0%, rgba(139,131,255,.10), transparent 25rem),
-    radial-gradient(circle at 96% 8%, rgba(68,215,182,.055), transparent 28rem),
+    radial-gradient(circle at 3% 0%, rgba(155,194,174,.075), transparent 29rem),
+    radial-gradient(circle at 96% 8%, rgba(126,175,178,.06), transparent 30rem),
     var(--kyv-canvas) !important;
   color: var(--kyv-text) !important;
 }
@@ -44,7 +44,7 @@ main > section { padding: clamp(1rem, 2.2vw, 2.25rem) !important; }
 #sidebar,
 #kyv-sidebar-container #sidebar {
   width: 17rem !important;
-  background: linear-gradient(180deg, #0c0f16 0%, var(--kyv-sidebar) 100%) !important;
+  background: linear-gradient(180deg, #1b2b30 0%, var(--kyv-sidebar) 100%) !important;
   border-color: var(--kyv-border) !important;
   box-shadow: 20px 0 55px rgba(0,0,0,.24) !important;
 }
@@ -78,9 +78,9 @@ main > section { padding: clamp(1rem, 2.2vw, 2.25rem) !important; }
 }
 
 #sidebar a.bg-indigo-500\/10 {
-  background: linear-gradient(90deg, rgba(139,131,255,.18), rgba(139,131,255,.07)) !important;
-  color: #e4e1ff !important;
-  border-color: rgba(139,131,255,.24) !important;
+  background: linear-gradient(90deg, rgba(156,196,180,.18), rgba(156,196,180,.065)) !important;
+  color: #e4f1eb !important;
+  border-color: rgba(156,196,180,.26) !important;
   box-shadow: inset 3px 0 0 var(--kyv-primary);
 }
 
@@ -116,17 +116,8 @@ main > section { padding: clamp(1rem, 2.2vw, 2.25rem) !important; }
   backdrop-filter: blur(8px);
 }
 
-.kyv-mobile-bottom-nav {
-  background: rgba(11,13,19,.9) !important;
-  border-color: var(--kyv-border) !important;
-  box-shadow: 0 -14px 38px rgba(0,0,0,.32);
-  backdrop-filter: blur(18px);
-}
-
-.kyv-mobile-bottom-nav a.is-active {
-  background: rgba(139,131,255,.16) !important;
-  border-color: rgba(139,131,255,.22) !important;
-}
+/* Legacy dock hidden defensively, including cached old scripts. */
+#kyv-mobile-bottom-nav { display: none !important; }
 
 .kyv-context-help-fab {
   position: fixed;
@@ -243,13 +234,13 @@ main .kyv-soft-panel,
 main .kyv-card,
 main .bg-slate-900,
 main .bg-gray-900 {
-  background: linear-gradient(180deg, rgba(28,33,48,.94), rgba(23,27,37,.94)) !important;
+  background: linear-gradient(180deg, rgba(42,61,66,.94), rgba(33,49,54,.94)) !important;
   border-color: var(--kyv-border) !important;
   box-shadow: var(--kyv-shadow) !important;
 }
 
 main .kyv-soft {
-  background: rgba(12,15,22,.52) !important;
+  background: rgba(23,39,43,.58) !important;
   border-color: var(--kyv-border) !important;
   box-shadow: none !important;
 }
@@ -259,7 +250,7 @@ main .bg-\[\#0f111a\],
 main .bg-kyv-bg\/50,
 main .bg-black\/20,
 main .bg-black\/30,
-main .bg-black\/40 { background: rgba(12,15,22,.55) !important; }
+main .bg-black\/40 { background: rgba(21,35,39,.58) !important; }
 
 main .border-kyv-border,
 main .border-slate-800,
@@ -643,7 +634,7 @@ main a.hover\:bg-kyv-border:hover { background: rgba(255,255,255,.085) !importan
 @media (max-width: 767px) {
   #sidebar,
   #kyv-sidebar-container #sidebar { width: min(86vw, 19rem) !important; }
-  main > section { padding: 1rem !important; padding-bottom: 6.5rem !important; }
+  main > section { padding: 1rem !important; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important; }
   .kyv-metric-card { min-height: 116px; }
   .kyv-quick-actions { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); }
   .kyv-quick-actions a { justify-content: center; padding-inline: .55rem; }
@@ -675,7 +666,7 @@ main a.hover\:bg-kyv-border:hover { background: rgba(255,255,255,.085) !importan
   .kyv-action-menu > div { left: auto; right: 0; }
   .kyv-project-tabs { border-radius: .8rem; }
   .kyv-context-help-fab {
-    bottom: calc(5.35rem + env(safe-area-inset-bottom));
+    bottom: calc(1rem + env(safe-area-inset-bottom));
     right: max(.85rem, env(safe-area-inset-right));
     width: 42px;
     height: 42px;
@@ -753,12 +744,12 @@ main a.hover\:bg-kyv-border:hover { background: rgba(255,255,255,.085) !importan
   --kyv-ui-radius-small: 11px;
   --kyv-ui-control-height: 44px;
   --kyv-ui-content-width: 1480px;
-  --kyv-ui-focus: #b9b4ff;
-  --kyv-ui-panel: #151b28;
-  --kyv-ui-panel-alt: #1b2434;
-  --kyv-ui-border: #354259;
-  --kyv-ui-secondary-text: #bdc7d8;
-  --kyv-ui-selection: rgba(139,131,255,.16);
+  --kyv-ui-focus: #bce1d1;
+  --kyv-ui-panel: #26373c;
+  --kyv-ui-panel-alt: #2c3f43;
+  --kyv-ui-border: #40575a;
+  --kyv-ui-secondary-text: #bdcfcc;
+  --kyv-ui-selection: rgba(156,196,180,.18);
 }
 
 /* Consistent rhythm and hierarchy: scoped to opt-in app pages. */
@@ -914,7 +905,7 @@ body.kyv-v260 [hidden] { display:none !important; }
 
 /* One touch-target scale on narrow screens. Preserve document forms and tables. */
 @media (max-width: 767px) {
-  body.kyv-v260 :is(.desk-content,.finder-main) {padding: 14px 14px calc(110px + env(safe-area-inset-bottom,0px));}
+  body.kyv-v260 :is(.desk-content,.finder-main) {padding: 14px 14px calc(24px + env(safe-area-inset-bottom,0px));}
   body.kyv-v260 :is(.desk-header,.finder-head) {padding: 16px;}
   body.kyv-v260 :is(.desk-quicklinks,.finder-links) {gap: 7px;}
   body.kyv-v260 :is(.desk-quicklinks a,.finder-links a) {flex: 1 1 auto;min-height: 44px;}
@@ -1409,13 +1400,6 @@ body.kyv-v260 .kyv-invoice-status-details>summary:focus-visible{
 
 
 /* v2.64 · Shared touch/focus polish. Keep original functional controls and Safe Projects isolated. */
-body.kyv-v260 #kyv-mobile-bottom-nav a[aria-current="page"] {
- color: #fff;
- background: rgba(139,131,255,.2) !important;
- border-color: rgba(185,178,255,.5) !important;
- box-shadow: inset 0 3px 0 #b9b4ff;
-}
-body.kyv-v260 #kyv-mobile-bottom-nav a:focus-visible,
 body.kyv-v260 #sidebar nav a:focus-visible,
 body.kyv-v260 .kyv-nav-group > summary:focus-visible {
  outline: 3px solid var(--kyv-ui-focus);
@@ -1502,4 +1486,20 @@ body.kyv-v260 #kyv-dashboard-activity-collapse > summary {
   color: #a9b4c7;
   background: transparent;
   border: 1px dashed rgba(148,163,184,.32);
+}
+
+/* v2.82 · Palette soft globale. I colori funzionali di stati, errori e grafici restano distinti. */
+body.kyv-v260 :is(.desk-header,.finder-head) {
+  background: linear-gradient(135deg,#2a3d41,#1d2d31) !important;
+}
+body.kyv-v260 :is(.desk-panel,.desk-stat,.finder-card,.hub-project,.hub-graph,.explorer,.finder-preview) {
+  background: linear-gradient(145deg,#2b3d42,#23343a) !important;
+  border-color: var(--kyv-ui-border) !important;
+  box-shadow: 0 9px 23px rgba(3,15,16,.11) !important;
+}
+body.kyv-v260 :is(.kyv-card-mode tr,.kyv-table-shell,.kyv-v260-disclosure,.kyv-v263-disclosure) {
+  border-color: var(--kyv-ui-border) !important;
+}
+@media(max-width:767px){
+  body.kyv-v260 :is(.desk-content,.finder-main){padding-bottom:calc(24px + env(safe-area-inset-bottom,0px)) !important;}
 }

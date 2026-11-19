@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="./favicon.ico">
+    <title>KYV Studio · Oggi</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#10131b">
+    <script>
+        // Filtra il warning non bloccante della CDN Tailwind in ambiente statico.
+        (function(){
+            const originalWarn = console.warn;
+            console.warn = function(){
+                const first = String(arguments[0] || '');
+                if(first.includes('cdn.tailwindcss.com should not be used in production')) return;
+                return originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+    <script src="https://unpkg.com/lucide@0.468.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7"></script>
+    
+    <!-- FILE ESTERNI -->
+    <script src="config.js"></script>
+    <script src="kyv-drive-bridge.js"></script>
+    <script src="kyv-core.js"></script>
+    <script src="kyv-toast.js"></script>
+    <script src="kyv-helpers.js"></script>
+    <script src="kyv-invoice-line-amount.js"></script>
+    <script src="kyv-home-charts-v250.js"></script>
+    <script src="kyv-home-charts-ui-v250.js"></script>
+    <script src="kyv-data-guard.js"></script>
+    <script src="kyv-priority.js"></script>
+    <script src="kyv-help.js"></script>
+    <script src="kyv-auth.js"></script>
+    <script src="menu.js"></script>
+<script src="kyv-responsive.js" defer></script>
+    <script src="kyv-searchable-select.js" defer></script>
+    <script src="kyv-field-memory.js" defer></script>
+    <script src="kyv-link-viewer.js" defer></script>
+    <script src="kyv-table-tools.js" defer></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { kyv: { bg: '#0f111a', card: '#151923', border: '#232838', accent: '#6366f1', text: '#94a3b8' } } } }
+        }
+    </script>
+        <link rel="stylesheet" href="kyv-responsive.css">
+<style>
+        body { background-color: #0f111a; color: #f8fafc; }
+        ::-webkit-scrollbar { width: 12px; height: 12px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #232838; border-radius: 6px; }
+        ::-webkit-scrollbar-thumb:hover { background: #333a50; }
+        /* Nuove Scrollbar Allargate e Chiare */
+        ::-webkit-scrollbar { width: 16px; height: 16px; } 
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; } 
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 8px; border: 4px solid #0f111a; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .custom-scrollbar { scrollbar-width: auto; scrollbar-color: #4b5563 rgba(255, 255, 255, 0.02); }
+        .custom-scrollbar::-webkit-scrollbar { width: 16px; height: 16px; }
+    </style>
+    <link rel="stylesheet" href="kyv-theme.css">
+</head>
+<body class="kyv-v260 flex h-screen overflow-hidden antialiased text-sm">
+
+    <!-- CONTENITORE SIDEBAR (Il menu verrà iniettato qui da menu.js) -->
+    <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative"></div>
+
+    <!-- MAIN AREA (Solo Panoramica) -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        <section class="flex-1 overflow-y-auto w-full h-full p-4 sm:p-8 pt-8">
+            <header class="flex flex-col sm:flex-row justify-between sm:items-end gap-5 mb-5">
+                <div class="flex items-center">
+                    <button class="md:hidden kyv-icon-action mr-3" onclick="toggleMobileMenu()" aria-label="Apri menu">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <div>
+                        <p class="kyv-eyebrow mb-1">Cabina di regia</p>
+                        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Oggi in studio</h2>
+                        <p class="text-kyv-text mt-2 text-xs sm:text-sm">Priorità, incassi e prossime consegne in un colpo d’occhio.</p>
+                    </div>
+                </div>
+                <button onclick="fetchDashboardData()" class="kyv-icon-action" aria-label="Aggiorna dati" title="Aggiorna dati">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
+            </header>
+
+            <div class="kyv-quick-actions mb-6" aria-label="Azioni rapide">
+                <a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a>
+                <a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a>
+                <a href="kyv_scrivania_creativa.html?tab=sessions"><i data-lucide="calendar-clock" class="w-4 h-4 mr-2 text-cyan-300"></i>Sessioni</a>
+                <a href="fatture.html"><i data-lucide="receipt" class="w-4 h-4 mr-2 text-emerald-300"></i>Fatture</a>
+                <a href="documenti.html"><i data-lucide="folder-lock" class="w-4 h-4 mr-2 text-sky-300"></i>Documenti</a>
+                <a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a>
+            </div>
+
+            <p id="home-data-status" class="text-xs text-slate-300 mb-4" role="status">In attesa di dati autenticati. Importi non ancora verificati.</p>
+            <!-- CARDS TOTALI -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(139,131,255,.18)">
+                    <div class="flex items-center"><i data-lucide="file-signature" class="w-4 h-4 text-indigo-300 mr-2"></i><p class="kyv-metric-label">Fee concordate</p></div>
+                    <h3 class="kyv-metric-value text-white" id="val-fee">—</h3>
+                </div>
+                <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(180,122,255,.16)">
+                    <div class="flex items-center"><i data-lucide="receipt" class="w-4 h-4 text-purple-300 mr-2"></i><p class="kyv-metric-label">Fatturato</p></div>
+                    <div><h3 class="kyv-metric-value text-purple-100" id="val-fatturato">—</h3><p class="text-[10px] text-amber-300/80 font-medium mt-2" id="val-da-incassare">Da incassare (flag): non ancora disponibile</p></div>
+                </div>
+                <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(68,215,182,.16)">
+                    <div class="flex items-center"><i data-lucide="banknote" class="w-4 h-4 text-emerald-300 mr-2"></i><p class="kyv-metric-label">Incassato (flag)</p></div>
+                    <h3 class="kyv-metric-value text-emerald-300" id="val-incassato">—</h3><p class="text-[10px] text-kyv-text mt-2">Stima dal flag PAGATA. Incassi bancari verificati in Fatture.</p>
+                </div>
+                <div class="kyv-metric-card bg-kyv-card p-5 rounded-2xl border border-kyv-border" style="--metric-glow:rgba(255,114,133,.15)">
+                    <div class="flex items-center"><i data-lucide="trending-down" class="w-4 h-4 text-rose-300 mr-2"></i><p class="kyv-metric-label">Uscite</p></div>
+                    <h3 class="kyv-metric-value text-rose-300" id="val-uscite">—</h3>
+                </div>
+            </div>
+
+            <!-- v2.63: billed-by-type is secondary to today's operational actions. -->
+            <details id="home-billing-types-details" class="kyv-v263-disclosure mb-6">
+              <summary>Fatture per tipologia <small>Indicatore storico basato sul flag PAGATA · per incassi verificati apri Economia</small></summary>
+            <div class="mb-6">
+                <div class="flex items-center mb-3">
+                    <i data-lucide="wallet" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                    <h3 class="kyv-section-title text-white">Fatture segnate incassate per tipologia (PAGATA)</h3>
+                </div>
+                <div class="flex space-x-3 overflow-x-auto custom-scrollbar pb-2" id="tipo-ft-cards">
+                    <div class="text-kyv-text text-xs italic">Calcolo in corso...</div>
+                </div>
+            </div>
+
+            </details>
+
+            <!-- CONTROL CENTER OPERATIVO -->
+            <div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 mb-6" id="studio-pulse">
+                <div class="kyv-panel p-5">
+                    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="kyv-section-title text-white flex items-center"><i data-lucide="list-todo" class="w-5 h-5 text-indigo-300 mr-2"></i>Attività da chiudere</h3>
+                            <p class="text-xs text-kyv-text mt-1">Una sola lista ordinata per urgenza, inclusi i follow-up dei progetti.</p>
+                        </div>
+                        <span id="activity-count" class="kyv-chip">0 attività</span>
+                    </div>
+                    <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2 mb-3" aria-label="Filtra attività">
+                        <button class="activity-filter active" data-activity-filter="all" onclick="setActivityFilter('all')">Tutte</button>
+                        <button class="activity-filter" data-activity-filter="followup" onclick="setActivityFilter('followup')">Follow-up</button>
+                        <button class="activity-filter" data-activity-filter="sessioni" onclick="setActivityFilter('sessioni')">Sessioni</button>
+                        <button class="activity-filter" data-activity-filter="fatture" onclick="setActivityFilter('fatture')">Fatture</button>
+                        <button class="activity-filter" data-activity-filter="documenti" onclick="setActivityFilter('documenti')">Documenti</button>
+                        <button class="activity-filter" data-activity-filter="protezione" onclick="setActivityFilter('protezione')">Protezione</button>
+                    </div>
+                    <div id="activity-list" class="space-y-2 min-h-[240px]"></div>
+                </div>
+                <div class="kyv-panel p-5">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="kyv-section-title text-white flex items-center"><i data-lucide="radio-tower" class="w-5 h-5 text-cyan-300 mr-2"></i>Stato operativo</h3>
+                            <p class="text-xs text-kyv-text mt-1">I cinque segnali principali.</p>
+                        </div>
+                    </div>
+                    <div id="ops-radar" class="grid grid-cols-2 gap-3"></div>
+                    <a href="assistente.html" class="mt-4 w-full px-4 py-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-black text-indigo-100 inline-flex items-center justify-center">Apri Assistente completo <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i></a>
+                </div>
+            </div>
+
+            <details id="home-analytics-details" class="kyv-v263-disclosure mb-6">
+              <summary>Grafici di approfondimento <small>Fatturato emesso, stati dei progetti e numero di brani per artista · tre filtri indipendenti</small></summary>
+              <p class="text-xs text-kyv-text px-4 pt-3 mb-2">Sono grafici descrittivi dell'archivio: il fatturato usa il valore unitario delle voci. Il conteggio degli artisti indica progetti, non incassi.</p>
+            <!-- GRAFICI COMPATTATI E MIGLIORATI -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                <!-- Grafico Andamento Eloquente (Stacked Bar) -->
+                <div class="lg:col-span-2 bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[400px]">
+                    <div class="flex items-center mb-4">
+                        <i data-lucide="bar-chart-big" class="w-5 h-5 text-sky-400 mr-2"></i>
+                        <h3 class="font-semibold text-white text-sm">Fatturato emesso per anno · PrezzoUnitario</h3>
+                    </div>
+                    <div class="flex-1 relative w-full">
+                        <canvas id="chartAndamento"></canvas>
+                    </div>
+                </div>
+
+                <!-- Grafico Stati Lavori (Doughnut) -->
+                <div class="bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[400px]">
+                    <div class="flex items-center mb-4">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-400 mr-2"></i>
+                        <h3 class="font-semibold text-white text-sm">Progetti per stato o fase</h3>
+                    </div>
+                    <div class="flex-1 relative w-full flex justify-center">
+                        <canvas id="chartStati"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <div class="bg-kyv-card rounded-xl border border-kyv-border p-5 flex flex-col h-[350px]">
+                    <div class="flex items-center mb-4">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 text-purple-400 mr-2"></i>
+                        <h3 class="font-semibold text-white text-sm">Artisti · numero di progetti</h3>
+                    </div>
+                    <div class="flex-1 relative w-full">
+                        <canvas id="chartTopArtisti"></canvas>
+                    </div>
+                </div>
+            </div>
+            </details>
+        </section>
+    </main>
+
+    <!-- SCRIPT DASHBOARD -->
+    <script>
+        // Sostituto Sicurezza (chat)
+        if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4">Fallback Menu</aside>`;};}
+        
+        loadKyvSidebar('dashboard');
+
+        let supabaseClient;
+
+        const fmtEuro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+        function parseKyvNumber(val) { return (window.KYV_HELPERS ? KYV_HELPERS.parseKyvNumber(val) : KYV.parseNumber(val)); }
+
+        let chartStatiInstance = null, chartTopArtistiInstance = null, chartAndamentoInstance = null;
+
+        async function fetchDashboardData() {
+            try {
+                // MODIFICA: select('*') su FATTURE per estrarre anche Data e Tipo FT
+                const [projRes, fatRes, speseRes, docsRes, audioRes] = await Promise.all([
+                    supabaseClient.from('PROGETTI').select('*'), 
+                    supabaseClient.from('FATTURE').select('*'), 
+                    supabaseClient.from('Spese Extra').select('Importo'),
+                    supabaseClient.from('DOCUMENTI_PROGETTO').select('*'),
+                    supabaseClient.from('DROPBOX_AUDIO_FILES').select('*')
+                ]);
+                if([projRes,fatRes,speseRes,docsRes,audioRes].some(x=>x.error))throw Error('Almeno un archivio non è leggibile: dati dashboard non aggiornati');
+                const projData = projRes.data || []; const fatData = fatRes.data || []; const speseData = speseRes.data || []; const docsData = docsRes.data || []; const audioData = audioRes.data || [];
+                let totFee = 0, totFatturato = 0, totIncassato = 0, totUscite = 0;
+                
+                projData.forEach(p => totFee += parseKyvNumber(p.FEE));
+                
+                let tipoFtData = {}; 
+
+                fatData.forEach(f => {
+                    let numVal = window.KYV_INVOICE_LINE.amount(f); 
+                    totFatturato += numVal;
+                    let isPagata = f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI');
+                    
+                    if(isPagata) {
+                        totIncassato += numVal;
+                        
+                        // Estrai Tipologia
+                        let tipo = String(f['TIPO FT'] || f.TipoFT || f['Tipo FT'] || f.TIPO_FT || 'ALTRO').trim().toUpperCase();
+                        // Only the explicit PAGATA flag informs this *estimated* card.
+                        // Verified cash payments are shown in Fatture / KYV Intelligence.
+                        tipoFtData[tipo] = (tipoFtData[tipo] || 0) + numVal;
+                    }
+                });
+                speseData.forEach(s => totUscite += parseKyvNumber(s.Importo));
+
+                document.getElementById('val-fee').innerText = fmtEuro.format(totFee); 
+                document.getElementById('val-fatturato').innerText = fmtEuro.format(totFatturato);
+                document.getElementById('val-incassato').innerText = fmtEuro.format(totIncassato); 
+                document.getElementById('val-da-incassare').innerText = `Da incassare (flag): ${fmtEuro.format(totFatturato - totIncassato)}`;
+                document.getElementById('val-uscite').innerText = fmtEuro.format(totUscite); 
+                
+                // RENDER CARDS TIPO FT
+                const cardsContainer = document.getElementById('tipo-ft-cards');
+                const safeType=x=>String(x).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+                if (Object.keys(tipoFtData).length > 0) {
+                    cardsContainer.innerHTML = Object.entries(tipoFtData)
+                        .sort((a,b) => b[1] - a[1]) // Ordina per incasso decrescente
+                        .map(([tipo, val]) => `
+                        <div class="bg-kyv-card border border-kyv-border rounded-xl p-4 min-w-[150px] shrink-0 border-l-4 border-l-emerald-500 shadow-sm">
+                            <p class="text-[10px] font-bold text-kyv-text uppercase truncate mb-1" title="${safeType(tipo)}">${safeType(tipo)}</p>
+                            <h4 class="text-xl font-black text-white">${fmtEuro.format(val)}</h4>
+                        </div>
+                    `).join('');
+                } else {
+                    cardsContainer.innerHTML = '<div class="text-kyv-text text-sm">Nessuna entrata registrata.</div>';
+                }
+
+                renderStudioPulse(projData, fatData, docsData, audioData);
+                updateDashboardCharts(projData, fatData);
+                document.getElementById('home-data-status').textContent =
+                    'Dashboard aggiornata con i dati letti. Fatturato = righe PrezzoUnitario; PAGATA è solo un flag storico. Per la riconciliazione degli incassi apri Economia.';
+            } catch (err) {
+                console.error("Errore dashboard:", err);
+                document.getElementById('home-data-status').textContent =
+                    'Dati non verificabili: impossibile aggiornare la panoramica. Verifica accesso e archivi in Economia.';
+                for(const id of ['val-fee','val-fatturato','val-incassato','val-uscite'])
+                    document.getElementById(id).textContent='—';
+                document.getElementById('val-da-incassare').textContent =
+                    'Da incassare (flag): non disponibile';
+                document.getElementById('tipo-ft-cards').textContent =
+                    'Riepilogo non disponibile. Nessun importo sostituito con zero.';
+            }
+        }
+        let dashboardActivities = [];
+        let activeActivityFilter = 'all';
+
+        window.setActivityFilter = function(type) {
+            activeActivityFilter = type;
+            document.querySelectorAll('[data-activity-filter]').forEach(button => button.classList.toggle('active', button.dataset.activityFilter === type));
+            renderDashboardActivities();
+        };
+
+        function renderDashboardActivities() {
+            const safe = (v) => (window.KYV ? KYV.safeHtml(v || '') : String(v || ''));
+            const filtered = dashboardActivities.filter(item => activeActivityFilter === 'all' || item.type === activeActivityFilter);
+            const rows = filtered.slice(0, 14);
+            const count = document.getElementById('activity-count');
+            if (count) count.textContent = `${filtered.length} attività`;
+            const list = document.getElementById('activity-list');
+            if (!list) return;
+            if (!rows.length) {
+                list.innerHTML = '<div class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-6 text-center text-sm text-emerald-100 font-bold"><i data-lucide="check-circle-2" class="w-6 h-6 mx-auto mb-2"></i>Nessuna attività nel filtro selezionato.</div>';
+            } else {
+                const visuals = {
+                    followup: { icon: 'message-square-text', box: 'border-rose-500/25 bg-rose-500/10 text-rose-200', label: 'Follow-up' },
+                    sessioni: { icon: 'calendar-clock', box: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200', label: 'Sessioni' },
+                    fatture: { icon: 'receipt', box: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200', label: 'Fatture' },
+                    documenti: { icon: 'folder-lock', box: 'border-sky-500/25 bg-sky-500/10 text-sky-200', label: 'Documenti' },
+                    protezione: { icon: 'shield-alert', box: 'border-amber-500/25 bg-amber-500/10 text-amber-200', label: 'Protezione' }
+                };
+                list.innerHTML = rows.map(item => {
+                    const view = visuals[item.type] || visuals.sessioni;
+                    const badge = item.badge || (item.priority >= 95 ? 'Urgente' : item.priority >= 78 ? 'Priorità' : '');
+                    const urgency = item.priority >= 95
+                        ? `<span class="rounded-full border border-rose-500/25 bg-rose-500/10 text-rose-100 px-2 py-1 text-[9px] font-black uppercase">${safe(badge)}</span>`
+                        : item.priority >= 78
+                            ? `<span class="rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-100 px-2 py-1 text-[9px] font-black uppercase">${safe(badge)}</span>`
+                            : badge
+                                ? `<span class="rounded-full border border-cyan-500/25 bg-cyan-500/10 text-cyan-100 px-2 py-1 text-[9px] font-black uppercase">${safe(badge)}</span>`
+                                : '';
+                    return `<a href="${item.href}" class="kyv-activity-row">
+                        <span class="w-10 h-10 rounded-xl border ${view.box} flex items-center justify-center"><i data-lucide="${view.icon}" class="w-4 h-4"></i></span>
+                        <span class="min-w-0"><span class="flex flex-wrap items-center gap-2"><span class="text-[9px] uppercase tracking-wider font-black text-kyv-text">${view.label}</span>${urgency}</span><strong class="block text-sm text-white truncate mt-1">${safe(item.title)}</strong><span class="block text-xs text-kyv-text truncate mt-1">${safe(item.subtitle)}</span>${item.meta ? `<span class="block text-[11px] text-slate-400 truncate mt-1" title="${safe(item.meta)}">${safe(item.meta)}</span>` : ''}</span>
+                        <i data-lucide="arrow-up-right" class="w-4 h-4 text-kyv-text"></i>
+                    </a>`;
+                }).join('');
+            }
+            if(window.lucide) lucide.createIcons({root: list});
+        }
+
+        function renderStudioPulse(projData, fatData, docsData = [], audioData = []) {
+            const safe = (v) => (window.KYV ? KYV.safeHtml(v || '') : String(v || ''));
+            const fmtDate = (v) => (window.KYV ? KYV.formatDate(v, '-') : (v || '-'));
+            const today = new Date(); today.setHours(0,0,0,0);
+            const days = (value) => { if(!value) return null; const d = new Date(value); if(isNaN(d)) return null; d.setHours(0,0,0,0); return Math.round((d - today) / 86400000); };
+            const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== '';
+            const isDone = (p) => /uscita|pubblicat|completat|chiuso/i.test(String(p.STATO || ''));
+            const upcomingSessions = (projData || []).filter(p => { const n = days(p.Data_Sessione); return n !== null && n >= 0 && n <= 30; }).sort((a,b)=>days(a.Data_Sessione)-days(b.Data_Sessione));
+            const masterTodo = (projData || []).filter(p => !p.Data_Consegna_Master && !isDone(p));
+            const releases = (projData || []).filter(p => { const n = days(p.Data_Pubblicazione); return n !== null && n >= 0 && n <= 90; }).sort((a,b)=>days(a.Data_Pubblicazione)-days(b.Data_Pubblicazione));
+            const missingProtection = (projData || []).filter(p => !p['Contratto link'] || !p.LINK || !p.Codice_ISRC || !p.Ruolo_IMAIE_Kyv || !p.Quota_Musica_Kyv);
+
+            const projectLabel = (p) => [p.ARTISTA || 'Artista non indicato', p.TITOLO || 'Senza titolo'].join(' · ');
+            const docsFor = (p) => docsData.filter(d => String(d.ID_PROGETTO || '') === String(p.ID));
+            const hasContractDoc = (p) => Boolean(p['Contratto link']) || docsFor(p).some(d => /contratto|split|liberatoria|royalt|nda/i.test(String(d.Tipo_Documento || '')));
+            const hasAudio = (p) => audioData.some(a => String(a.ID_PROGETTO || '') === String(p.ID));
+            const activities = [];
+
+            const followupFields = ['Prossimo_Followup', 'Priorita_Followup', 'Ultimo_Sollecito', 'Esito_Ascolto', 'Note_Followup'];
+            const hasFollowup = (p) => followupFields.some(field => hasValue(p[field]));
+            const followupPriority = (p, nextDelta) => {
+                let score = 65;
+                if (nextDelta !== null) {
+                    if (nextDelta < 0) score = 130 + Math.min(Math.abs(nextDelta), 20);
+                    else if (nextDelta === 0) score = 128;
+                    else if (nextDelta <= 3) score = 112;
+                    else if (nextDelta <= 7) score = 100;
+                    else if (nextDelta <= 30) score = 82;
+                    else score = 68;
+                } else {
+                    const daysFromSolicit = days(p.Ultimo_Sollecito);
+                    if (daysFromSolicit !== null && daysFromSolicit <= -10) score = 96 + Math.min(Math.abs(daysFromSolicit) - 10, 14);
+                }
+                const namedPriority = String(p.Priorita_Followup || '').toLowerCase();
+                if (namedPriority.includes('urgente')) score += 25;
+                else if (namedPriority.includes('alta')) score += 12;
+                else if (namedPriority.includes('media')) score += 4;
+                else if (namedPriority.includes('bassa')) score -= 5;
+                if (/in attesa|nessuna risposta|da sollecitare/i.test(String(p.Esito_Ascolto || ''))) score += 8;
+                return score;
+            };
+            const followupBadge = (nextDelta) => {
+                if (nextDelta === null) return 'Da pianificare';
+                if (nextDelta < 0) return `Scaduto da ${Math.abs(nextDelta)}g`;
+                if (nextDelta === 0) return 'Oggi';
+                return `Tra ${nextDelta}g`;
+            };
+
+            (projData || []).forEach(p => {
+                if (hasFollowup(p) && hasValue(p.ID)) {
+                    const nextDelta = days(p.Prossimo_Followup);
+                    const namedPriority = p.Priorita_Followup || 'Non indicata';
+                    const followupMeta = [
+                        hasValue(p.Prossimo_Followup) ? `Prossimo: ${fmtDate(p.Prossimo_Followup)}` : 'Prossimo: da pianificare',
+                        `Priorità: ${namedPriority}`,
+                        hasValue(p.Ultimo_Sollecito) ? `Ultimo sollecito: ${fmtDate(p.Ultimo_Sollecito)}` : null,
+                        hasValue(p.Esito_Ascolto) ? `Esito: ${p.Esito_Ascolto}` : null,
+                        hasValue(p.Note_Followup) ? `Note: ${p.Note_Followup}` : null
+                    ].filter(Boolean).join(' · ');
+                    activities.push({
+                        type: 'followup',
+                        priority: followupPriority(p, nextDelta),
+                        badge: followupBadge(nextDelta),
+                        title: `Follow-up: ${projectLabel(p)}`,
+                        subtitle: hasValue(p.Esito_Ascolto) ? p.Esito_Ascolto : `Priorità ${namedPriority}`,
+                        meta: followupMeta,
+                        href: `scheda_progetto.html?id=${encodeURIComponent(p.ID)}`,
+                        followupDue: nextDelta !== null ? nextDelta <= 0 : /urgente|alta/i.test(String(p.Priorita_Followup || ''))
+                    });
+                }
+
+                const sessionDelta = days(p.Data_Sessione);
+                if (!isDone(p) && sessionDelta !== null && sessionDelta >= -14 && sessionDelta <= 30) {
+                    activities.push({
+                        type: 'sessioni',
+                        priority: sessionDelta < 0 ? 98 : sessionDelta <= 7 ? 92 : 70,
+                        title: sessionDelta < 0 ? 'Aggiorna l’esito della sessione' : `Sessione ${sessionDelta === 0 ? 'oggi' : `tra ${sessionDelta} giorni`}`,
+                        subtitle: `${projectLabel(p)} · ${fmtDate(p.Data_Sessione)}`,
+                        href: 'sessioni.html'
+                    });
+                }
+
+                const missingDocs = [!hasContractDoc(p) ? 'contratto' : null, !p.LINK ? 'cartella Drive' : null].filter(Boolean);
+                if (!isDone(p) && missingDocs.length) {
+                    activities.push({
+                        type: 'documenti',
+                        priority: missingDocs.length === 2 ? 82 : 68,
+                        title: `Completa ${missingDocs.join(' e ')}`,
+                        subtitle: projectLabel(p),
+                        href: 'documenti.html'
+                    });
+                }
+
+                const releaseDelta = days(p.Data_Pubblicazione);
+                const protectionMissing = [!hasValue(p.Codice_ISRC) ? 'ISRC' : null, !hasValue(p.Ruolo_IMAIE_Kyv) ? 'ruolo IMAIE' : null, !hasValue(p.Quota_Musica_Kyv) ? 'quote' : null, !hasAudio(p) && /master|uscit|pubblic/i.test(String(p.STATO || '')) ? 'audio registrato' : null].filter(Boolean);
+                if (protectionMissing.length && (releaseDelta !== null && releaseDelta <= 90 || /master|uscit|pubblic/i.test(String(p.STATO || '')))) {
+                    activities.push({
+                        type: 'protezione',
+                        priority: releaseDelta !== null && releaseDelta <= 30 ? 96 : 84,
+                        title: `Protezione: mancano ${protectionMissing.slice(0, 2).join(' e ')}`,
+                        subtitle: projectLabel(p),
+                        href: 'protezione.html'
+                    });
+                }
+            });
+
+            (fatData || []).filter(f => !(window.KYV ? (KYV.isPaid(f.PAGATA) || KYV.isPaid(f.PAGAMENTO)) : (f.PAGATA && String(f.PAGATA).toUpperCase().includes('SI')))).forEach(f => {
+                const invoiceAge = days(f.Data);
+                const linked = (projData || []).find(p => String(p.ID) === String(f.ID_PROGETTO || ''));
+                activities.push({
+                    type: 'fatture',
+                    priority: invoiceAge !== null && invoiceAge < -30 ? 99 : 86,
+                    title: `Incasso fattura ${f.Numero || 'senza numero'}`,
+                    subtitle: [f.Denominazione, linked ? projectLabel(linked) : null, fmtEuro.format(window.KYV_INVOICE_LINE.amount(f))].filter(Boolean).join(' · '),
+                    href: 'fatture.html'
+                });
+            });
+
+            dashboardActivities = activities.sort((a, b) => b.priority - a.priority || a.title.localeCompare(b.title, 'it'));
+            renderDashboardActivities();
+
+            const toneMap = {
+                cyan: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-100/80 text-cyan-300',
+                amber: 'border-amber-500/20 bg-amber-500/10 text-amber-100/80 text-amber-300',
+                emerald: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-100/80 text-emerald-300',
+                rose: 'border-rose-500/20 bg-rose-500/10 text-rose-100/80 text-rose-300'
+            };
+            const mini = (title, value, subtitle, icon, tone, href, filter = '') => {
+                const parts = (toneMap[tone] || toneMap.cyan).split(' ');
+                const filterAction = filter ? ` onclick="setActivityFilter('${filter}')"` : '';
+                return `
+                <a href="${href}"${filterAction} class="rounded-2xl border ${parts[0]} ${parts[1]} p-4 hover:-translate-y-0.5 transition-transform">
+                    <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider font-black ${parts[2]}">${title}</p><i data-lucide="${icon}" class="w-4 h-4 ${parts[3]}"></i></div>
+                    <h4 class="text-2xl font-black text-white mt-2">${value}</h4>
+                    <p class="text-xs text-kyv-text mt-1">${subtitle}</p>
+                </a>`;
+            };
+            const followupActivities = dashboardActivities.filter(item => item.type === 'followup');
+            const dueFollowups = followupActivities.filter(item => item.followupDue);
+            const firstFollowup = followupActivities[0];
+            const radar = document.getElementById('ops-radar');
+            if (radar) radar.innerHTML = [
+                mini('Follow-up', followupActivities.length, firstFollowup ? `${dueFollowups.length} da fare ora · ${safe(firstFollowup.title.replace(/^Follow-up:\s*/, ''))}` : 'Nessun follow-up pianificato', 'message-square-text', 'rose', '#studio-pulse', 'followup'),
+                mini('Sessioni 30g', upcomingSessions.length, upcomingSessions[0] ? `${safe(upcomingSessions[0].ARTISTA || 'Prossima')} · ${fmtDate(upcomingSessions[0].Data_Sessione)}` : 'Nessuna sessione datata', 'mic-2', 'cyan', 'sessioni.html'),
+                mini('Master aperti', masterTodo.length, masterTodo[0] ? `${safe(masterTodo[0].ARTISTA || '')} · ${safe(masterTodo[0].TITOLO || '')}` : 'Nessuna consegna aperta', 'send', 'amber', 'sessioni.html?filter=master'),
+                mini('Uscite 90g', releases.length, releases[0] ? `${safe(releases[0].ARTISTA || 'Prossima')} · ${fmtDate(releases[0].Data_Pubblicazione)}` : 'Nessuna uscita futura', 'rocket', 'emerald', 'sessioni.html?filter=uscite'),
+                mini('Protezione', missingProtection.length, missingProtection[0] ? `${safe(missingProtection[0].ARTISTA || '')} · ${safe(missingProtection[0].TITOLO || '')}` : 'Archivio e protezioni ok', 'shield-alert', 'amber', 'protezione.html')
+            ].join('');
+            if(window.lucide) lucide.createIcons();
+        }
+
+        function updateDashboardCharts(projects,invoices) {
+            // The v2.50 renderer deliberately replaces the old PAGATA-based artist charts.
+            // Missing renderer must not silently fall back to misleading financial figures.
+            if(!window.KYV_HOME_CHARTS_UI_V250){
+                console.error('[KYV Home] Grafici v2.50 non disponibili: la fonte non è verificata');
+                return;
+            }
+            window.KYV_HOME_CHARTS_UI_V250.update(projects,invoices);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            supabaseClient = KYV.createSupabaseClient();
+            const session = await window.KYV_AUTH?.requireAuth?.();
+            if (!session) return;
+            
+            Chart.defaults.color = '#94a3b8'; Chart.defaults.font.family = 'Inter';
+            function cc(id, type, cfg) { return document.getElementById(id) ? new Chart(document.getElementById(id).getContext('2d'), {type, ...cfg}) : null; }
+            
+            // COLORI VIVIDI PER LE FATTURE (Verde Incassato e Rosso Da Incassare)
+            chartTopArtistiInstance = cc('chartTopArtisti', 'bar', { 
+                data: { 
+                    labels: [], 
+                    datasets: [
+                        { label: 'Numero progetti', data: [], backgroundColor: '#818cf8', borderRadius: 4 }
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: true, position: 'top', labels: { color: '#94a3b8', usePointStyle: true, boxWidth: 8 } } }, 
+                    scales: { y: { stacked: true, grid: { color: '#232838' }, border: { display: false } }, x: { stacked: true, grid: { display: false }, border: { display: false } } } 
+                } 
+            });
+
+            chartStatiInstance = cc('chartStati', 'doughnut', { data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 0, cutout: '75%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true, color: '#f8fafc' } } } } });
+            
+            chartAndamentoInstance = cc('chartAndamento', 'bar', {
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, color: '#94a3b8' } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false }, border: { display: false } },
+                        y: { stacked: true, grid: { color: '#232838' }, border: { display: false } }
+                    }
+                }
+            });
+
+            // Chart.js may measure a closed <details> as zero width.
+            // Resize existing charts when the user opens the panel; never refetch data.
+            const analytics=document.getElementById('home-analytics-details');
+            analytics?.addEventListener('toggle',()=>{
+                if(!analytics.open)return;
+                requestAnimationFrame(()=>{
+                    for(const chart of [chartAndamentoInstance,chartStatiInstance,chartTopArtistiInstance]){
+                        chart?.resize();
+                    }
+                });
+            });
+            fetchDashboardData();
+            if(window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

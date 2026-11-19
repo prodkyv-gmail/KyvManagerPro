@@ -4,14 +4,15 @@
 
 const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
 const primary=[
-  ['index.html','Oggi','layout-dashboard','dashboard'],
+  ['index.html','Home','house','home'],
   ['kyv_calendar.html','Agenda','calendar-days','calendar'],
   ['acquisisci_audio.html','Nuovo','circle-plus','nuovo'],
-  ['progetti.html','Progetti','music-2','progetti'],
-  ['kyv_audio_finder.html','Audio Finder','search-check','audiofinder'],
   ['editor.html','Studio Editor','database','editor']
 ];
 const control=[
+  ['oggi.html','Oggi','layout-dashboard','dashboard'],
+  ['progetti.html','Progetti','music-2','progetti'],
+  ['kyv_audio_finder.html','Audio Finder','search-check','audiofinder'],
   ['kyv_scrivania_creativa.html','Scrivania creativa','calendar-range','creative'],
   ['pipeline.html','Pipeline & opportunità','columns-3','pipeline'],
   ['ascolto.html','Ascolto','headphones','ascolto'],
@@ -70,7 +71,7 @@ function loadProjectsPhase3(){
 }
 function currentKey(){
   const map={
-    'index.html':'dashboard','':'dashboard','kyv_calendar.html':'calendar','acquisisci_audio.html':'nuovo',
+    'index.html':'home','':'home','oggi.html':'dashboard','kyv_calendar.html':'calendar','acquisisci_audio.html':'nuovo',
     'progetti.html':'progetti','scheda_progetto.html':'progetti','kyv_scrivania_creativa.html':'creative','ascolto.html':'ascolto','fatture.html':'fatture',
     'correlazione.html':'fatture','documenti.html':'spese','fisco.html':'fisco','quote.html':'quote','autori.html':'quote',
     'rendiconto.html':'rendiconto','clienti.html':'clienti','editor.html':'editor','archivio_musicale.html':'archivio',
@@ -84,7 +85,8 @@ function item([href,label,icon,key]){
   return `<li><a href="${href}" ${active ? 'aria-current="page"' : ''} class="flex items-center px-3 py-2.5 rounded-xl transition-all text-sm font-bold ${active?'bg-indigo-500/10 text-indigo-200 border border-indigo-500/25':'text-kyv-text hover:text-white hover:bg-kyv-border/50 border border-transparent'}"><i data-lucide="${icon}" class="w-4 h-4 mr-3 ${key==='nuovo'?'text-cyan-300':'text-slate-300'}"></i><span>${label}</span></a></li>`;
 }
 function details(label,icon,entries,open){
-  return `<details class="kyv-nav-group" ${open?'open':''}><summary><i data-lucide="${icon}"></i><span>${label}</span><i data-lucide="chevron-down" class="kyv-chevron w-4 h-4"></i></summary><ul class="space-y-1">${entries.map(item).join('')}</ul></details>`;
+  const id=label==='Amministrazione'?'kyv-nav-admin':'kyv-nav-tools';
+  return `<details id="${id}" class="kyv-nav-group" ${open?'open':''}><summary><i data-lucide="${icon}"></i><span>${label}</span><i data-lucide="chevron-down" class="kyv-chevron w-4 h-4"></i></summary><ul class="space-y-1">${entries.map(item).join('')}</ul></details>`;
 }
 function mountSimpleSidebar(){
   const sidebar=document.getElementById('sidebar');
@@ -99,23 +101,6 @@ function mountSimpleSidebar(){
   document.dispatchEvent(new Event('kyv:producer-nav-ready'));
   return true;
 }
-/* v2.60: the shared menu now renders the correct mobile destinations directly.
-   Only synchronize ARIA state; do not replace or rewrite links a second time. */
-function fixMobileNav(){
-  const nav=document.getElementById('kyv-mobile-bottom-nav');
-  if(!nav)return false;
-  const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
-  nav.querySelectorAll('a[href]').forEach(link=>{
-    const href=link.getAttribute('href')?.split('?')[0];
-    const active=href===path||(path==='scheda_progetto.html'&&href==='progetti.html');
-    link.classList.toggle('is-active',active);
-    if(active)link.setAttribute('aria-current','page');
-    else link.removeAttribute('aria-current');
-  });
-  nav.dataset.producerMode='1';
-  return true;
-}
-
 /* v2.64: mount only when the sidebar exists; stop observing as soon as it is ready.
    Avoid recomputing full navigation after every unrelated DOM mutation for six seconds. */
 function watchNavigation(){
@@ -123,7 +108,6 @@ function watchNavigation(){
     const nav=document.querySelector('#sidebar nav');
     if(!nav)return false;
     mountSimpleSidebar();
-    fixMobileNav();
     return true;
   };
   if(apply())return;
@@ -181,7 +165,7 @@ function collapseOperationalPanels(){
 }
 
 function dashboardProducerMode(){
-  if(page!=='index.html'&&page!=='')return;
+  if(page!=='oggi.html')return;
   const header=document.querySelector('main section > header');
   if(!header||document.getElementById('kyv-producer-start'))return;
   const eyebrow=header.querySelector('.kyv-eyebrow'); if(eyebrow)eyebrow.textContent='Il tuo lavoro creativo';
