@@ -11,7 +11,7 @@ const src = read('kyv-calendar-views.js');
 // Collegamenti
 assert.match(config, /kyv-calendar-views\.js/, 'config.js deve caricare le viste calendario');
 assert.ok(config.indexOf('kyv-agenda-phase5.js') < config.indexOf('kyv-calendar-views.js'), 'le viste vanno caricate dopo la fase 5 dell\'agenda');
-assert.match(page, /dispatchEvent\(new CustomEvent\('kyv:calendar-events'/, 'la pagina deve passare gli eventi alle viste');
+assert.match(read('kyv-agenda-store.js'), /dispatchEvent\(new CustomEvent\('kyv:calendar-events'/, 'la tabella persistente deve passare gli eventi alle viste');
 assert.doesNotMatch(src, /\.(innerHTML|outerHTML)\s*=|insertAdjacentHTML/, 'i titoli arrivano da Google Calendar: vietato innerHTML nelle viste');
 
 // Rimozione OAuth: la UI non deve caricare il connettore né sopprimere Apps Script.
@@ -34,8 +34,8 @@ const packageText=read('package.json');
 assert.doesNotMatch(packageText,/check:google-oauth|test-google-calendar-oauth\.js/);
 
 // Contratto sincronizzazione: successo distinto dall'errore, niente eventi vecchi dopo il fallimento.
-assert.match(page, /success: true, truncated:/, 'la sincronizzazione riuscita deve dichiarare copertura e successo');
-assert.match(page, /events: \[\], success: false/, 'la sincronizzazione fallita deve invalidare la cache');
+assert.match(page,/KYV_AGENDA_STORE\.importGoogle\(events\)/,'La sincronizzazione salva in tabella prima di aggiornare le viste');
+assert.match(page,/Gli eventi già salvati restano invariati/,'L’errore Google non deve cancellare la cronologia');
 assert.match(src, /calendarLoaded = !!\(detail && detail\.success\)/, 'la vista deve distinguere dati aggiornati e non aggiornati');
 assert.match(src, /cachedEvents = calendarLoaded \? normalizeEvents\(detail\.events\) : \[\]/, 'i dati precedenti devono essere cancellati dopo un errore');
 assert.match(src, /Vista parziale:/, 'la vista deve segnalare eventi limitati');
@@ -241,7 +241,7 @@ assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:
  assert.match(page,/today\.getDate\(\)\)/);
  assert.doesNotMatch(page,/today\.getDate\(\)-30/);
  assert.match(page,/today\.getDate\(\)\+15/);
- assert.match(page,/data\.range\?\.startDate === wanted\.startDate/);
+ assert.match(page,/data\.range\?\.startDate===wanted\.startDate/);
  assert.match(page,/data-kyv-calendar-index/);
  assert.match(page,/kyv:calendar-open-event/);
  assert.match(page,/listEventsCache = \[\]/);
@@ -271,15 +271,15 @@ assert.ok(ctx.doGet({parameter:{action:'createEvent',date:'2026-11-06',time:'12:
 assert.match(src,/Storico Google Calendar disattivato/);
 assert.match(src,/new Date\(requested\.endDate\+'T00:00:00'\)<=today/);
 assert.match(src,/pending\.historyDisabled/);
-assert.match(page,/Storico è disattivato|storico è disattivato/i);
+assert.match(page,/Storico mantenuto/,'La cronologia registrata resta accessibile');
 
 
 // v289 - legacy Apps Script: events without range must not trigger a false red "not connected".
-assert.match(page,/const legacyMode = !confirmedRange/);
-assert.match(page,/if\(data\.range && !confirmedRange\)/,'mismatched explicit range still rejected');
-assert.match(page,/Eventi disponibili · intervallo non verificato/);
+assert.match(page,/const verified=data\.range\?\.startDate/);
+assert.match(page,/if\(data\.range&&!verified\)/,'mismatched explicit range still rejected');
+assert.match(page,/Salvato · intervallo non verificato/);
 assert.doesNotMatch(page,/Lo script Google attivo non conferma l’intervallo storico/);
-assert.match(page,/listEventsCache = events/);
+assert.match(page,/listEventsCache=KYV_AGENDA_STORE\.getEvents\(\)/);
 assert.match(src,/eventsInRange\(d\.response\.events,d\.requested\)/);
 assert.match(src,/pending\.legacy=true/);
 assert.match(src,/pending\.nextIndex=pending\.months\.length/);
@@ -301,7 +301,7 @@ const agendaUi=read('kyv-agenda-phase5.js');
 assert.match(agendaUi,/panel=document\.createElement\('details'\)/,'Organization starts closed');
 assert.match(agendaUi,/kyv-agenda-planning-collapse/,'Planning form uses native disclosure');
 assert.match(agendaUi,/layout\.insertAdjacentElement\('afterend',panel\)/,'Organization goes below Calendar');
-assert.match(page,/\.kyv-calendar-main\s*\{\s*order:-1;/,'Calendar stays at top');
+assert.match(read('kyv-agenda-table.css'),/\.kyv-calendar-main[\s\S]*order:0!important/,'Calendar stays above planning');
 assert.match(page,/\.kyv-calendar-layout\s*\{\s*display:flex;\s*flex-direction:column/,'Calendar gets full width');
 assert.doesNotMatch(agendaUi,/details\.open\s*=\s*true/,'Planning and organization start closed');
 
