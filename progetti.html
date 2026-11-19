@@ -15,8 +15,8 @@
 
     <style>
         :root{
-            --bg:#0f111a;--card:#151923;--card2:#12151e;--border:#232838;--text:#f8fafc;
-            --muted:#94a3b8;--indigo:#6366f1;--indigo2:#818cf8;--cyan:#a5f3fc;
+            --bg:#111d22;--card:#26363b;--card2:#1d2d31;--border:#40575a;--text:#edf5f0;
+            --muted:#b1c2c1;--indigo:#779e92;--indigo2:#a8c9ba;--cyan:#a5f3fc;
             --mint:#a7f3d0;--sky:#bae6fd;--rose:#fda4af;--lav:#ddd6fe;
         }
         *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
@@ -85,7 +85,7 @@
         thead{background:#1b2534;color:#c5cddd}
         td{border-top-color:var(--safe-outline)}
         .row:hover{background:rgba(129,140,248,.09)}
-        @media(max-width:820px){body.menu-open{overflow:hidden}body.menu-open .kyv-safe-mobile-nav{visibility:hidden;pointer-events:none}}
+        @media(max-width:820px){body.menu-open{overflow:hidden}}
         .open{min-height:40px;align-items:center;justify-content:center}
         .project-title{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
         .artist{color:#aee5fb}
@@ -205,14 +205,13 @@
         <div class="brand"><strong>KYV Studio</strong><span>Manager Pro</span></div>
         <div class="nav-label">Produttore</div>
         <nav class="nav">
-            <a href="index.html"><i class="dot"></i>Oggi</a>
+            <a href="index.html"><i class="dot"></i>Home</a>
             <a href="kyv_calendar.html"><i class="dot"></i>Agenda</a>
             <a href="acquisisci_audio.html"><i class="dot"></i>Nuovo</a>
-            <a href="progetti.html" class="active" aria-current="page"><i class="dot"></i>Progetti</a>
-            <a href="ascolto.html"><i class="dot"></i>Ascolto</a>
+            <a href="editor.html"><i class="dot"></i>Studio Editor</a>
         </nav>
-        <details class="group"><summary><span>Controllo</span><span>⌄</span></summary><nav class="nav"><a href="fatture.html">Fatture e incassi</a><a href="documenti.html?tab=spese">Spese</a><a href="documenti.html">Documenti</a><a href="fisco.html">Piano fiscale</a><a href="quote.html">Quote / split</a><a href="rendiconto.html">Rendiconto SIAE</a></nav></details>
-        <details class="group"><summary><span>Strumenti</span><span>⌄</span></summary><nav class="nav"><a href="clienti.html">Contatti</a><a href="editor.html">Studio Editor</a><a href="archivio_musicale.html">Archivio musicale</a><a href="assistente.html">Percorso brano</a><a href="pipeline.html">Pipeline</a><a href="integrazioni.html">Tutte le app</a><a href="importexport.html">Import / Export</a><a href="diagnostica.html">Diagnostica</a><a href="data_quality.html">Qualità dati</a><a href="guida.html">Manuale</a></nav></details>
+        <details class="group" open><summary><span>Amministrazione</span><span>⌄</span></summary><nav class="nav"><a href="oggi.html">Oggi</a><a href="progetti.html" class="active" aria-current="page">Progetti</a><a href="kyv_audio_finder.html">Audio Finder</a><a href="ascolto.html">Ascolto</a><a href="pipeline.html">Pipeline</a><a href="fatture.html">Fatture e incassi</a><a href="documenti.html?tab=spese">Spese</a><a href="documenti.html">Documenti</a><a href="fisco.html">Piano fiscale</a><a href="quote.html">Quote / split</a><a href="rendiconto.html">Rendiconto SIAE</a><a href="integrazioni.html">Tutte le app</a></nav></details>
+        <details class="group"><summary><span>Strumenti</span><span>⌄</span></summary><nav class="nav"><a href="clienti.html">Contatti</a><a href="archivio_musicale.html">Archivio musicale</a><a href="assistente.html">Percorso brano</a><a href="importexport.html">Import / Export</a><a href="diagnostica.html">Diagnostica</a><a href="data_quality.html">Qualità dati</a><a href="guida.html">Manuale</a></nav></details>
         <div class="sidebar-bottom"><button id="logout" class="logout" type="button">Esci</button></div>
     </aside>
 
@@ -284,15 +283,13 @@
         const activityLabel=p=>{const t=Math.max(dateValue(p.updated_at),dateValue(p.Data_Sessione),dateValue(p.Data_Pubblicazione),dateValue(p.created_at));if(!t)return '—';const d=Math.max(0,Math.floor((Date.now()-t)/86400000));if(d===0)return'Oggi';if(d===1)return'Ieri';if(d<45)return`${d} gg fa`;return new Date(t).toLocaleDateString('it-IT');};
 
         // v2.71 — Safe Projects has its own isolated sidebar, not the shared menu.js.
-        // Keep keyboard focus, drawer state and the bottom quick nav in sync.
+        // Preserve keyboard focus and the isolated mobile drawer without a fixed bottom bar.
         window.setSafeProjectsMenu=function(open){
             const sidebar=el('sidebar'),trigger=document.querySelector('.mobile-open');
             const shouldOpen=Boolean(open)&&window.matchMedia('(max-width:820px)').matches;
             document.body.classList.toggle('menu-open',shouldOpen);
             trigger?.setAttribute('aria-expanded',String(shouldOpen));
             trigger?.setAttribute('aria-label',shouldOpen?'Chiudi menu':'Apri menu');
-            const quickNav=document.querySelector('.kyv-safe-mobile-nav');
-            if(quickNav)quickNav.inert=shouldOpen;
             if(shouldOpen)sidebar?.querySelector('nav a')?.focus({preventScroll:true});
             else if(open===false&&document.activeElement!==trigger)trigger?.focus({preventScroll:true});
         };
