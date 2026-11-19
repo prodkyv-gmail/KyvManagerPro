@@ -1,10 +1,15 @@
-const CACHE_NAME = 'kyv-studio-v2-82-editor-organize-v286-20261119';
+const CACHE_NAME = 'kyv-studio-v2-82-taccuino-notes-voice-ab-20261119';
 const APP_SHELL = [
     './',
     './index.html',
     './oggi.html',
     './progetti.html',
     './acquisisci_audio.html',
+    './kyv_notes.html',
+    './kyv-notes-core.js',
+    './kyv-notes-voice.js',
+    './kyv-notes-quick.js',
+    './kyv-notes.css',
     './kyv-project-list-v250.js',
     './kyv-home-charts-v250.js',
     './kyv-home-charts-ui-v250.js',
