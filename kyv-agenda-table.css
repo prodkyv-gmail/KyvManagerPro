@@ -151,7 +151,7 @@ body.kyv-v260 .kyv-agenda-table-actions label{
   display:flex;gap:.35rem;align-items:center;
 }
 body.kyv-v260 :is(.kyv-agenda-table-actions select,.kyv-agenda-row-status,.kyv-agenda-row-reminder,.kyv-agenda-row-note,
-.kyv-agenda-inline-form input,.kyv-agenda-inline-form select){
+.kyv-agenda-inline-form input,.kyv-agenda-inline-form select,.kyv-agenda-inline-form textarea){
   color:#e8f6f0;background:#22363b;border:1px solid #56716e;
   border-radius:.55rem;padding:.46rem .55rem;font:inherit;min-height:38px;
 }
@@ -288,3 +288,24 @@ body.kyv-v260 .kyv-cal-edit-actions{display:flex;flex-wrap:wrap;gap:.65rem}
   body.kyv-v260 #kyv-activity-resize input[type=range]{display:none}
   body.kyv-v260 .kyv-cal-detail-dialog{max-width:96vw!important}
 }
+
+
+/* Creation controls match the shared edit popup and adapt to the independent panel width. */
+body.kyv-v260 .kyv-activity-field-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,215px),1fr));gap:.8rem;
+}
+body.kyv-v260 .kyv-activity-field-grid .capture-label{
+  display:block;font-size:11px;text-transform:uppercase;font-weight:750;
+  color:#c6ded4;letter-spacing:.04em;margin-bottom:.4rem;
+}
+body.kyv-v260 .kyv-activity-field-grid .kyv-activity-wide{grid-column:1/-1}
+body.kyv-v260 .kyv-activity-all-day{
+  display:flex;align-items:center;gap:.55rem;min-height:42px;color:#e1eee7;font-size:13px;
+}
+body.kyv-v260 .kyv-activity-all-day input{width:18px;height:18px;accent-color:#78c4a3}
+body.kyv-v260 .kyv-activity-field-grid :disabled{opacity:.5;cursor:not-allowed}
+body.kyv-v260 .kyv-agenda-form-fields .kyv-agenda-form-checkbox{
+  display:flex;align-items:center;flex-direction:row;gap:.55rem;min-height:40px;
+}
+body.kyv-v260 .kyv-agenda-form-checkbox input{width:18px;height:18px;min-height:18px}
+body.kyv-v260 .kyv-agenda-inline-form textarea{resize:vertical;min-height:78px;width:100%}

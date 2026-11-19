@@ -18,7 +18,12 @@ assert.doesNotMatch(sql,/for delete to authenticated/i);
 assert.match(store,/\.upsert\(batch,\{onConflict:'owner_id,source,source_key'\}\)/);
 assert.doesNotMatch(store,/\.delete\(|\.truncate\(/);
 assert.match(html,/store\.importGoogle\(googleEvents\)/);
-assert.match(html,/KYV_AGENDA_STORE\.saveCreated\(input,created\)/);
+assert.match(html,/store\.saveCreated\(input,created\)/);
+assert.match(html,/store\.validateNewEvent\(input\)/);
+for(const field of ['ev-end-date','ev-all-day','ev-status','ev-remind-on','ev-workflow-note'])
+  assert.ok(html.includes('id="'+field+'"'),'Main Nuova Attività includes popup field '+field);
+for(const field of ['endDate','allDay','workflowStatus','remindOn','workflowNote'])
+  assert.match(store,new RegExp('name="'+field+'"'),'Inline table form includes '+field);
 assert.match(html,/created=await calendarRequest\('createEvent'/);
 assert.match(html,/googleError=String/,'Google failure must be distinguishable from database persistence');
 assert.match(html,/activeEvents=window\.KYV_AGENDA_STORE\?\.getEvents\(\)/,'Stored event details must remain clickable on reload');
@@ -146,6 +151,20 @@ async function run(){
  api.reportSync({stage:'salvataggio',googleCount:1,savedCount:null,storedCount:4,error:'Rete indisponibile'});
  assert.equal(api.getState().diagnostics.stage,'salvataggio');
  assert.ok(events.some(e=>e.type==='kyv:calendar-events'),'All views receive the same saved source');
- console.log('OK Agenda archivio: fonte unica, sync idempotente, storico, attività locali, RLS e responsive.');
+ await assert.rejects(api.saveManual({title:'Spostata',date:'2026-12-10',endDate:'2026-12-10',
+   allDay:true,activityType:'session',workflowStatus:'posticipato'}),/indica una data/,
+   'Posticipato requires a reminder date before any write');
+ const full=await api.saveManual({title:'Sessione · Intera giornata',date:'2026-12-24',endDate:'2026-12-26',
+   allDay:true,activityType:'session',location:'Studio A',description:'Autori e partecipanti',
+   workflowStatus:'posticipato',remindOn:'2027-01-03',workflowNote:'Da spostare'});
+ assert.equal(full.all_day,true);
+ assert.equal(full.workflow_status,'posticipato');
+ assert.equal(full.remind_on,'2027-01-03');
+ assert.equal(full.workflow_note,'Da spostare');
+ assert.equal(full.description,'Autori e partecipanti');
+ assert.equal(full.event_date,'2026-12-24');
+ assert.equal(api.toEvent(full).allDay,true);
+ assert.equal(rows.size,5,'New all-day row is persisted once without losing history');
+ console.log('OK Agenda archivio: nuove attività complete, stati, scadenze, storico e viste.');
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});

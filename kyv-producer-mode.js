@@ -6,7 +6,7 @@ const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
 const primary=[
   ['index.html','Home','house','home'],
   ['kyv_calendar.html','Agenda','calendar-days','calendar'],
-  ['acquisisci_audio.html','Nuovo','circle-plus','nuovo'],
+  ['acquisisci_audio.html','ADD Progetto','circle-plus','nuovo'],
   ['editor.html','Studio Editor','database','editor']
 ];
 const control=[
@@ -175,7 +175,7 @@ function dashboardProducerMode(){
   const start=document.createElement('section');
   start.id='kyv-producer-start';
   start.className='kyv-pastel-lavender mb-5 rounded-2xl border border-indigo-500/25 p-5 sm:p-6';
-  start.innerHTML=`<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><p class="text-[10px] font-black uppercase tracking-[.18em] text-cyan-200">Prima registra, poi completa</p><h3 class="text-xl sm:text-2xl font-black text-white mt-1">Hai iniziato qualcosa?</h3><p class="text-xs sm:text-sm text-kyv-text mt-2 max-w-2xl">Basta un titolo provvisorio o un appunto. Artista, file, crediti, fee e tutti gli altri dettagli possono arrivare dopo.</p></div><a href="acquisisci_audio.html" class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black shrink-0"><i data-lucide="circle-plus" class="w-5 h-5 mr-2"></i>Nuovo</a></div>`;
+  start.innerHTML=`<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><p class="text-[10px] font-black uppercase tracking-[.18em] text-cyan-200">Prima registra, poi completa</p><h3 class="text-xl sm:text-2xl font-black text-white mt-1">Hai iniziato qualcosa?</h3><p class="text-xs sm:text-sm text-kyv-text mt-2 max-w-2xl">Basta un titolo provvisorio o un appunto. Artista, file, crediti, fee e tutti gli altri dettagli possono arrivare dopo.</p></div><a href="acquisisci_audio.html" class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black shrink-0"><i data-lucide="circle-plus" class="w-5 h-5 mr-2"></i>ADD Progetto</a></div>`;
   header.insertAdjacentElement('afterend',start);
   collapseNode(start,{
     id:'kyv-dashboard-project-actions',
