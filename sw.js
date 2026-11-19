@@ -1,9 +1,10 @@
-const CACHE_NAME = 'kyv-studio-v2-82-agenda-editor-20261119';
+const CACHE_NAME = 'kyv-studio-v2-82-add-project-full-agenda-20261119';
 const APP_SHELL = [
     './',
     './index.html',
     './oggi.html',
     './progetti.html',
+    './acquisisci_audio.html',
     './kyv-project-list-v250.js',
     './kyv-home-charts-v250.js',
     './kyv-home-charts-ui-v250.js',
