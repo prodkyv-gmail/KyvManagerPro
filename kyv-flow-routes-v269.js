@@ -12,7 +12,8 @@
   'fatture.html':['collegaProgetto','ripartizione_progetto','projectId'],
   'ascolto.html':['projectId','id'],
   'kyv_calendar.html':['projectId','id'],
-  'index.html':['projectId','id']
+  'index.html':['projectId','id'],
+   'oggi.html':['projectId','id']
  });
  function validId(value){
   const id=String(value??'').trim();
