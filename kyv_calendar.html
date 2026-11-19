@@ -120,6 +120,8 @@
                     </div>
             </div>
 
+            <div id="kyv-agenda-sync-report" class="kyv-agenda-sync-report" role="status" aria-live="polite">Stato sincronizzazione: nessun aggiornamento eseguito in questa sessione.</div>
+
             <div class="kyv-calendar-layout w-full min-h-0">
                 <div class="kyv-calendar-sidebar flex flex-col gap-6">
                     <div class="kyv-calendar-card bg-kyv-card border border-emerald-500/20 rounded-2xl p-4 sm:p-6 shadow-xl relative">
@@ -270,39 +272,76 @@
         DOM.btnSync.addEventListener('click', async () => {
             DOM.btnSync.disabled=true;
             DOM.syncIcon.classList.add('animate-spin');
-            DOM.syncText.textContent='Sincronizzazione...';
+            DOM.syncText.textContent='Lettura Google…';
+            let stage='lettura Google Calendar',googleEvents=[],googleCount=0,partial=false;
+            const store=window.KYV_AGENDA_STORE;
+            const today=new Date();
+            const from=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+            const localDay=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+            const endDate=localDay(new Date(from.getFullYear(),from.getMonth(),from.getDate()+90));
             try {
-                const today=new Date();
-                const from=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-                const to=new Date(today.getFullYear(),today.getMonth(),today.getDate()+15);
-                const localDay=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
-                const wanted={startDate:localDay(from),endDate:localDay(to)};
-                const data=await calendarRequest('getEvents',wanted);
-                if(data.error)throw new Error(data.error);
-                if(!Array.isArray(data.events))throw new Error('Google Calendar non ha restituito eventi validi.');
-                const verified=data.range?.startDate===wanted.startDate&&data.range?.endDate===wanted.endDate;
-                if(data.range&&!verified)throw new Error('Google Calendar ha restituito un periodo diverso da quello richiesto.');
-                // Anche uno script legacy puo restituire eventi fuori dal periodo richiesto.
-                const events=data.events.filter(ev=>{
-                    const parsed=/^\d{4}-\d{2}-\d{2}$/.test(String(ev?.date||''))
-                        ?new Date(Number(ev.date.slice(0,4)),Number(ev.date.slice(5,7))-1,Number(ev.date.slice(8,10)))
-                        :new Date(ev?.date);
-                    return !Number.isNaN(parsed.getTime())&&localDay(parsed)>=wanted.startDate&&localDay(parsed)<wanted.endDate;
-                });
-                if(!window.KYV_AGENDA_STORE)throw new Error('Archivio agenda non inizializzato.');
-                const imported=await KYV_AGENDA_STORE.importGoogle(events);
-                const partial=!!data.truncated||data.events.length>=120||!verified||!!imported.skipped;
-                listEventsCache=KYV_AGENDA_STORE.getEvents();
-                DOM.lastSync.textContent=verified?'Salvato '+new Date().toLocaleTimeString('it-IT'):'Salvato · intervallo non verificato';
-                showToast(imported.saved+' eventi Google archiviati. Storico mantenuto.'+(partial?' Dati Google parziali o non verificati.':''),partial);
+                if(!store)throw Error('Archivio Agenda non inizializzato. Aggiorna la pagina.');
+                store.reportSync({stage:'Lettura Google',googleCount:null,savedCount:null,storedCount:store.getState().loaded?store.getState().rows.length:null,
+                    period:localDay(from)+' – '+endDate,warning:'Lettura in corso, nessun dato cancellato.'});
+                // Apps Script accetta intervalli fino a 45 giorni. Leggiamo 90 giorni in tre tranche.
+                // Gli eventi gia importati rimangono nella tabella dopo la scadenza.
+                for(let segment=0;segment<3;segment++){
+                    const segFrom=new Date(from.getFullYear(),from.getMonth(),from.getDate()+segment*30);
+                    const segTo=new Date(from.getFullYear(),from.getMonth(),from.getDate()+(segment+1)*30);
+                    const wanted={startDate:localDay(segFrom),endDate:localDay(segTo)};
+                    DOM.syncText.textContent='Google '+(segment+1)+'/3';
+                    let data;
+                    try{data=await calendarRequest('getEvents',wanted);}
+                    catch(err){
+                        if(segment===0)throw err;
+                        partial=true;
+                        console.warn('[KYV Agenda] Periodo non caricato:',wanted,err);
+                        continue;
+                    }
+                    if(data.error||data.success===false) {
+                        if(segment===0)throw Error(data.error||'Google non ha confermato la lettura.');
+                        partial=true;continue;
+                    }
+                    if(!Array.isArray(data.events))throw Error('Google non ha restituito un elenco eventi valido.');
+                    const confirmed=data.range?.startDate===wanted.startDate&&data.range?.endDate===wanted.endDate;
+                    if(data.range&&!confirmed)throw Error('Google ha restituito un intervallo diverso da quello richiesto.');
+                    const selected=data.events.filter(ev=>{
+                        const d=/^\d{4}-\d{2}-\d{2}$/.test(String(ev?.date||''))
+                          ?new Date(Number(ev.date.slice(0,4)),Number(ev.date.slice(5,7))-1,Number(ev.date.slice(8,10)))
+                          :new Date(ev?.date);
+                        return !Number.isNaN(d.getTime())&&localDay(d)>=wanted.startDate&&localDay(d)<wanted.endDate;
+                    });
+                    googleCount+=selected.length;
+                    googleEvents.push(...selected);
+                    if(data.truncated===true||data.events.length>=120)partial=true;
+                    if(!confirmed){partial=true;break;} // Script legacy: evita richieste inutili.
+                }
+                stage='scrittura in Supabase';
+                DOM.syncText.textContent='Salvataggio…';
+                store.reportSync({stage,googleCount,savedCount:null,storedCount:store.getState().loaded?store.getState().rows.length:null,period:localDay(from)+' – '+endDate});
+                const imported=await store.importGoogle(googleEvents);
+                stage='verifica tabella';
+                const stored=store.getState().rows.length;
+                const notice=partial?'La versione Google o uno dei periodi non ha confermato la copertura.':'';
+                store.reportSync({stage:'Completato',googleCount,savedCount:imported.saved,storedCount:stored,
+                    period:localDay(from)+' – '+endDate,warning:notice+(imported.idless?' '+imported.idless+' eventi senza ID Google salvati con chiave legacy.':'')});
+                listEventsCache=store.getEvents();
+                DOM.lastSync.textContent='Archivio verificato · '+new Date().toLocaleTimeString('it-IT');
+                if(googleCount===0)showToast('Google ha restituito 0 eventi per il periodo interrogato; lo storico salvato rimane nella tabella.',true);
+                else showToast(imported.saved+' eventi Google importati; '+stored+' eventi nell’archivio.'+(partial?' Copertura parziale.':''),partial);
             } catch(err){
-                const message=String(err?.message||'Aggiornamento non riuscito.');
-                DOM.lastSync.textContent='Google/archivio non aggiornati';
-                showToast(message+'. Gli eventi già salvati restano invariati.',true);
-                // Mai svuotare la tabella in caso di errore di rete o di script.
-                if(!window.KYV_AGENDA_STORE?.getState()?.loaded)
-                    DOM.eventsList.innerHTML='<p class="kyv-agenda-table-empty">'+H(message)+'</p>';
-            } finally {
+                const message=String(err?.message||'Sincronizzazione non riuscita.');
+                const previous=store?.getState?.();
+                if(googleEvents.length&&stage!=='lettura Google Calendar'){
+                    store.showPreview(googleEvents,message);
+                }
+                store?.reportSync({stage,googleCount,savedCount:null,storedCount:previous?.loaded?previous.rows.length:null,
+                    period:localDay(from)+' – '+endDate,error:message,
+                    warning:'Gli eventi gia salvati non sono stati cancellati.'});
+                DOM.lastSync.textContent='Errore: '+stage;
+                showToast(stage+': '+message+'. I dati precedenti restano disponibili.',true);
+                console.warn('[KYV Agenda] Sync failed at stage:',stage,message);
+            } finally{
                 DOM.btnSync.disabled=false;
                 DOM.syncIcon.classList.remove('animate-spin');
                 DOM.syncText.textContent='Aggiorna agenda';
