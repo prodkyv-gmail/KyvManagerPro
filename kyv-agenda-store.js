@@ -232,8 +232,7 @@ async function importGoogle(events){
   showStatus(saved+' eventi Google salvati o aggiornati; '+state.rows.length+' righe conservate'+(skipped?'. '+skipped+' senza identificativo non archiviati.':'.'),!!skipped);
   return {saved,skipped,idless,total:state.rows.length};
 }
-async function saveCreated(input,created){
-  // The same validation is used for new entries and edits in the shared calendar popup.
+function validateNewEvent(input){
   const fields=validateDetails(input);
   const workflow_status=String(input.workflowStatus||'da_fare');
   if(!Object.prototype.hasOwnProperty.call(statusLabels,workflow_status))
@@ -243,6 +242,11 @@ async function saveCreated(input,created){
     throw Error('Data promemoria non valida.');
   if(workflow_status==='posticipato'&&!remind_on)
     throw Error('Per posticipare, indica una data.');
+  return {fields,workflow_status,remind_on};
+}
+async function saveCreated(input,created){
+  // Validate before the Google request and apply the same checks when saving to Supabase.
+  const {fields,workflow_status,remind_on}=validateNewEvent(input);
   const userId=await owner(),id=String(created?.eventId||'').trim();
   const day=fields.event_date,remote=!!id;
   const key=remote?id+'#'+day:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2);
@@ -297,7 +301,7 @@ function validateDetails(input){
     throw Error('Indica gli orari validi.');
   const start=asDate(day+'T'+time);
   const endStart=allDay?asDate(endDay+'T00:00'):null;
-  const end=allDay&&endStart?new Date(endStart.getTime()+86400000):allDay?null:asDate(endDay+'T'+endTime);
+  const end=allDay&&endStart?new Date(endStart.getFullYear(),endStart.getMonth(),endStart.getDate()+1):allDay?null:asDate(endDay+'T'+endTime);
   if(!start||!end||Number.isNaN(end.getTime())||end<=start)throw Error('La fine deve seguire l’inizio.');
   return {title,event_date:day,starts_at:start.toISOString(),ends_at:end.toISOString(),all_day:allDay,
     activity_type:input.activityType||'other',description:String(input.description||'').slice(0,5000),
@@ -367,7 +371,7 @@ function reportSync(info){
   el.hidden=false;
 }
 
-const api={updateWorkflow,updateEvent,deleteEvent,saveManual,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
+const api={updateWorkflow,updateEvent,deleteEvent,saveManual,validateNewEvent,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
 root.KYV_AGENDA_STORE=api;
 function wireTableActions(list){
   if(!list||typeof list.addEventListener!=='function')return;
