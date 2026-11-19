@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f111a">
+<title>KYV · Taccuino Note</title>
+<link rel="icon" href="./favicon.ico"><link rel="manifest" href="manifest.json">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+<script src="https://unpkg.com/lucide@0.468.0"></script>
+<script>tailwind.config={theme:{extend:{colors:{kyv:{bg:'#0f111a',card:'#151923',border:'#232838',accent:'#6366f1',text:'#94a3b8'}}}}};</script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
+<script src="kyv-notes-core.js"></script><script src="kyv-notes-voice.js"></script>
+<link rel="stylesheet" href="kyv-responsive.css"><link rel="stylesheet" href="kyv-theme.css"><link rel="stylesheet" href="kyv-notes.css">
+</head>
+<body data-auth-required="true" class="kyv-notes-page flex h-screen overflow-hidden antialiased text-sm">
+<div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
+<main class="kyv-notes-shell min-w-0">
+ <header class="kyv-notes-header">
+  <div class="flex items-center gap-3 min-w-0">
+   <button class="md:hidden text-white p-2" type="button" onclick="toggleMobileMenu()" aria-label="Apri il menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
+   <div><p class="kyv-notes-eyebrow">Il tuo spazio di lavoro</p><h1>Taccuino KYV</h1><p>Scrivi, detta, registra. La tua memoria di idee e avvenimenti.</p></div>
+  </div>
+  <button type="button" id="notes-new" class="kyv-notes-btn kyv-notes-btn-primary"><i data-lucide="plus" class="w-4 h-4"></i> Nuova nota</button>
+ </header>
+ <div class="kyv-notes-main">
+  <aside class="kyv-notes-list-panel" aria-label="Elenco note">
+   <div class="kyv-notes-filters">
+    <div class="kyv-notes-search"><i data-lucide="search" class="w-4 h-4 text-slate-400"></i><input type="search" id="notes-search" placeholder="Cerca in tutte le note…" aria-label="Cerca note per testo, titolo e categoria"></div>
+    <div class="kyv-notes-filter-row"><select id="notes-filter-category" class="kyv-notes-select" aria-label="Filtra per categoria"><option value="">Tutte le categorie</option><option value="idea">Idee</option><option value="info">Informazioni</option><option value="event">È successo</option><option value="todo">Da fare</option></select>
+      <label><input type="checkbox" id="notes-filter-pinned"> Fissate</label>
+    </div>
+    <div class="kyv-notes-filter-row"><label><input type="checkbox" id="notes-filter-archived"> Mostra archiviate</label><span id="notes-count" class="kyv-notes-meta" role="status" aria-live="polite"></span></div>
+   </div>
+   <div id="notes-list" class="kyv-notes-list" aria-live="polite"><p class="kyv-notes-empty">Caricamento delle note…</p></div>
+  </aside>
+  <section class="kyv-notes-editor" aria-label="Scrivi o modifica una nota">
+   <div class="kyv-notes-editor-inner">
+    <div class="kyv-notes-editor-actions">
+     <div class="kyv-notes-toolbar">
+      <button type="button" id="notes-pin" class="kyv-notes-btn" aria-pressed="false"><i data-lucide="pin" class="w-4 h-4"></i> Fissa</button>
+      <button type="button" id="notes-archive" class="kyv-notes-btn"><i data-lucide="archive" class="w-4 h-4"></i> Archivia</button>
+     </div>
+     <div class="kyv-notes-toolbar">
+      <button type="button" id="notes-delete" class="kyv-notes-btn kyv-notes-btn-danger"><i data-lucide="trash-2" class="w-4 h-4"></i> Elimina</button>
+      <button type="button" id="notes-save" class="kyv-notes-btn kyv-notes-btn-primary"><i data-lucide="save" class="w-4 h-4"></i> Salva ora</button>
+     </div>
+    </div>
+    <div id="notes-draft-banner" class="kyv-notes-draft-banner" hidden>Bozza locale da sincronizzare. Il testo è conservato su questo dispositivo finché il salvataggio online non riesce.</div>
+    <div>
+      <label class="kyv-notes-label" for="notes-title">Titolo · facoltativo</label>
+      <input id="notes-title" class="kyv-notes-input" placeholder="Un'idea, un incontro, qualcosa da ricordare…" maxlength="180" autocomplete="off">
+    </div>
+    <div class="kyv-notes-editor-row">
+     <div><label class="kyv-notes-label" for="notes-category">Tipo di nota</label><select id="notes-category" class="kyv-notes-select"><option value="idea">💡 Idea</option><option value="info">📓 Informazione</option><option value="event">🕒 È successo</option><option value="todo">✓ Da fare</option></select></div>
+     <div><label class="kyv-notes-label" for="notes-project">Collega a un progetto · facoltativo</label><select id="notes-project" class="kyv-notes-select"><option value="">Nessun progetto</option></select></div>
+     <div><label class="kyv-notes-label">Cronologia</label><span id="notes-timestamp" class="kyv-notes-meta">Nuova nota · data automatica</span></div>
+    </div>
+    <div>
+      <label class="kyv-notes-label" for="notes-content">Appunti</label>
+      <textarea id="notes-content" class="kyv-notes-textarea" maxlength="30000" placeholder="Puoi scrivere senza titolo: la prima frase identificherà la nota.\n\nIdee, telefonate, incontri, pensieri, versi…"></textarea>
+    </div>
+    <section class="kyv-notes-voice" aria-label="Dettatura e memo vocali">
+     <div class="kyv-notes-voicehead"><div><h2><i data-lucide="mic" class="w-4 h-4 inline mr-2"></i> Voce</h2><p>Dettatura in testo e registrazione audio sono due funzioni separate.</p></div></div>
+     <div class="kyv-notes-toolbar">
+      <button id="notes-dictate" type="button" class="kyv-notes-btn" aria-pressed="false">🎙️ Detta testo</button>
+      <button id="notes-record" type="button" class="kyv-notes-btn kyv-notes-recorder" data-recording="false">● Registra audio</button>
+      <span id="notes-rec-time" class="kyv-notes-meta" aria-live="polite">Max 5 minuti, 20 MB</span>
+     </div>
+     <p id="notes-voice-help">La dettatura dipende dal browser e può usare un servizio esterno di riconoscimento vocale. Le registrazioni vengono conservate in uno spazio privato. Non viene eseguita alcuna trascrizione automatica del file audio.</p>
+     <audio id="notes-audio" controls preload="none" hidden aria-label="Registrazione vocale"></audio>
+     <div class="kyv-notes-toolbar">
+       <button type="button" id="notes-upload-audio" class="kyv-notes-btn kyv-notes-btn-primary" hidden>Salva registrazione</button>
+       <button type="button" id="notes-backup-audio" class="kyv-notes-btn" hidden>Scarica copia audio</button>
+     </div>
+    </section>
+    <p id="notes-status" class="kyv-notes-status" role="status" aria-live="polite">Apri una nota o crea un nuovo appunto.</p>
+   </div>
+  </section>
+ </div>
+</main>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id),core=window.KYV_NOTES_CORE;
+let store=null,session=null,drafts=null,notes=[],current=null,voice=null,audioPending=null,audioDuration=0,audioUrl=null,saveTimer=null,saveChain=Promise.resolve(),busyAudio=false,loading=true;
+const fmt=new Intl.DateTimeFormat('it-IT',{dateStyle:'short',timeStyle:'short'});
+function signal(text,kind=''){const el=$('notes-status');el.textContent=text;el.dataset.kind=kind;}
+function drawIcons(){if(window.lucide)lucide.createIcons({root:document.body});}
+function time(value){try{return value?fmt.format(new Date(value)):'Adesso';}catch(_){return 'Adesso';}}
+function currentDraft(){return current?drafts?.get(current.id):null;}
+function setDraftView(){const draft=currentDraft();$('notes-draft-banner').hidden=!draft;}
+function fresh(){
+ const now=new Date().toISOString();
+ return {id:crypto.randomUUID(),title:'',content:'',category:'info',project_id:null,
+  is_pinned:false,is_archived:false,owner_id:session.user.id,created_at:now,updated_at:now};
+}
+function syncInputs(){
+ if(!current)return;
+ current.title=$('notes-title').value;
+ current.content=$('notes-content').value;
+ current.category=$('notes-category').value;
+ current.project_id=$('notes-project').value||null;
+}
+function makeSnapshot(){
+ syncInputs();
+ return {...current,allowEmptyForAudio:!!audioPending};
+}
+function localDraft(){
+ if(!current)return;
+ syncInputs();
+ const nonempty=!!(current.title.trim()||current.content.trim()||current.audio_path);
+ if(!nonempty)return;
+ const saved=drafts.put({...current,base_updated_at:current.updated_at});
+ if(!saved)signal('Impossibile conservare la bozza sul dispositivo: premi Salva ora.', 'error');
+ else {signal(navigator.onLine?'Modifiche da sincronizzare…':'Offline: bozza salvata su questo dispositivo.');setDraftView();}
+}
+function scheduleSave(){
+ if(!current)return;
+ localDraft();clearTimeout(saveTimer);
+ if(current.title.trim()||current.content.trim())saveTimer=setTimeout(()=>{void saveNow();},850);
+ drawList();
+}
+function enqueueSave(snapshot,pendingAt){
+ const task=async()=>{
+  const saved=await store.save(snapshot);
+  drafts.clear(snapshot.id,pendingAt);
+  const idx=notes.findIndex(row=>row.id===saved.id);
+  if(idx<0)notes.unshift(saved);else notes[idx]={...saved};
+  if(current?.id===saved.id){
+   const pending=drafts.get(saved.id);
+   current.updated_at=saved.updated_at;
+   current.created_at=saved.created_at;
+   current.audio_path=saved.audio_path;
+   current.audio_mime=saved.audio_mime;
+   current.audio_duration_seconds=saved.audio_duration_seconds;
+   if(!pending)signal('Salvata sul cloud · '+time(saved.updated_at),'success');
+  }
+  setDraftView();drawList();return saved;
+ };
+ saveChain=saveChain.catch(()=>{}).then(task);
+ return saveChain;
+}
+function saveNow(forceAudio=false){
+ clearTimeout(saveTimer);
+ if(!current)return Promise.resolve(null);
+ const snapshot=makeSnapshot();
+ if(!snapshot.title.trim()&&!snapshot.content.trim()&&!snapshot.audio_path&&!forceAudio&&!audioPending)
+  return Promise.resolve(null);
+ const pendingAt=drafts.get(snapshot.id)?.pending_at||null;
+ signal('Salvataggio in corso…');
+ return enqueueSave(snapshot,pendingAt).catch(error=>{
+  signal('Salvataggio non riuscito: '+(error.message||'controlla la connessione')+'. La bozza resta sul dispositivo.','error');
+  setDraftView();throw error;
+ });
+}
+function mergeDrafts(rows){
+ const merged=new Map(rows.map(note=>[note.id,note]));
+ for(const draft of drafts.all()){
+  const server=merged.get(draft.id);
+  merged.set(draft.id,{...server,...draft,__localDraft:true,__remote:server||null});
+ }
+ return [...merged.values()];
+}
+function drawList(){
+ const list=$('notes-list');
+ if(loading){list.textContent='Caricamento delle note…';return;}
+ const q=core.normalize($('notes-search').value),category=$('notes-filter-category').value;
+ const pinned=$('notes-filter-pinned').checked,archived=$('notes-filter-archived').checked;
+ const all=mergeDrafts(notes);
+ const filtered=all.filter(note=>(archived?note.is_archived:!note.is_archived)&&
+   (!category||note.category===category)&&(!pinned||note.is_pinned)&&
+   (!q||core.normalize([note.title,note.content,note.category,note.project_id].join(' ')).includes(q)));
+ filtered.sort((a,b)=>Number(!!b.is_pinned)-Number(!!a.is_pinned)||
+   new Date(b.updated_at||0)-new Date(a.updated_at||0));
+ $('notes-count').textContent=filtered.length+' note';
+ list.replaceChildren();
+ if(!filtered.length){const empty=document.createElement('p');empty.className='kyv-notes-empty';empty.textContent='Nessuna nota trovata. Premi Nuova nota per iniziare.';list.append(empty);return;}
+ for(const note of filtered){
+  const btn=document.createElement('button');btn.type='button';btn.className='kyv-notes-item';
+  btn.dataset.selected=String(current?.id===note.id);btn.dataset.id=note.id;
+  const top=document.createElement('div');top.className='kyv-notes-item-top';
+  const title=document.createElement('h3');title.textContent=(note.is_pinned?'📌 ':'')+core.readableTitle(note);
+  const stamp=document.createElement('small');stamp.textContent=time(note.updated_at);
+  top.append(title,stamp);btn.append(top);
+  const preview=document.createElement('p');preview.textContent=(note.__localDraft?'⚠ Bozza locale · ':'')+
+    (note.audio_path?'🎤 ':'')+(note.content||core.CATEGORIES.find(c=>c.id===note.category)?.label||'Nota');
+  btn.append(preview);btn.addEventListener('click',()=>{void openNote(note);});
+  list.append(btn);
+ }
+}
+async function openNote(record){
+ if(voice?.isRecording()||busyAudio||audioPending){signal('Salva la registrazione o scarica una copia prima di cambiare nota.','error');return;}
+ if(current){clearTimeout(saveTimer);void saveNow().catch(()=>{});}
+ let item={...record};
+ if(record.__localDraft&&record.__remote&&
+   new Date(record.__remote.updated_at)>new Date(record.base_updated_at||0)){
+  const restore=confirm('Questa bozza locale è precedente a una modifica più recente sul cloud. OK ripristina la bozza originale; Annulla conserva il cloud e mantiene la bozza come una nota separata, senza cancellarla.');
+  if(!restore){
+   const copy={...record,id:crypto.randomUUID(),title:('Bozza recuperata · '+(record.title||'Senza titolo')).slice(0,180),
+    created_at:new Date().toISOString(),updated_at:new Date().toISOString(),base_updated_at:null};
+   delete copy.__localDraft;delete copy.__remote;
+   drafts.put(copy);
+   drafts.clear(record.id);
+   item={...record.__remote};
+   signal('Bozza recuperata come nota separata, non sincronizzata.','success');
+  }
+ }
+ current=item;audioPending=null;audioDuration=0;releaseAudio();
+ $('notes-title').value=item.title||'';$('notes-content').value=item.content||'';
+ $('notes-category').value=item.category||'info';
+ const id=item.project_id?String(item.project_id):'';
+ if(id&&![...$('notes-project').options].some(opt=>opt.value===id)){
+  $('notes-project').add(new Option('Progetto #'+id,id));
+ }
+ $('notes-project').value=id;
+ $('notes-pin').setAttribute('aria-pressed',String(!!item.is_pinned));
+ $('notes-pin').textContent=item.is_pinned?'📌 Fissata':'📌 Fissa';
+ $('notes-archive').textContent=item.is_archived?'Rimetti nelle note':'Archivia';
+ $('notes-timestamp').textContent='Creata: '+time(item.created_at)+' · Aggiornata: '+time(item.updated_at);
+ $('notes-upload-audio').hidden=true;$('notes-backup-audio').hidden=true;
+ $('notes-audio').hidden=!item.audio_path;
+ if(item.audio_path){
+  $('notes-audio').hidden=false;
+  $('notes-audio').removeAttribute('src');
+  signal('Caricamento audio privato…');
+  try{
+   const voiceBlob=await store.loadVoice(item.audio_path);
+   if(current?.id===item.id){audioUrl=URL.createObjectURL(voiceBlob);$('notes-audio').src=audioUrl;signal('Nota pronta.','success');}
+  }catch(err){signal('Audio non disponibile: '+err.message,'error');}
+ }else signal('Nota pronta. Le modifiche vengono salvate automaticamente.');
+ setDraftView();drawList();
+}
+function releaseAudio(){
+ const audio=$('notes-audio');audio.pause();audio.removeAttribute('src');audio.load();
+ if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl=null;
+}
+function addNew(){
+ if(voice?.isRecording()||busyAudio||audioPending){signal('Salva la registrazione o scarica una copia prima di creare un’altra nota.','error');return;}
+ if(current){clearTimeout(saveTimer);void saveNow().catch(()=>{});}
+ current=fresh();audioPending=null;releaseAudio();audioDuration=0;
+ $('notes-title').value='';$('notes-content').value='';$('notes-category').value='info';
+ const param=new URLSearchParams(location.search).get('project');
+ $('notes-project').value=param&&[...$('notes-project').options].some(x=>x.value===param)?param:'';
+ $('notes-pin').setAttribute('aria-pressed','false');$('notes-pin').textContent='📌 Fissa';
+ $('notes-archive').textContent='Archivia';$('notes-timestamp').textContent='Nuova nota · '+time(current.created_at);
+ $('notes-audio').hidden=true;$('notes-upload-audio').hidden=true;$('notes-backup-audio').hidden=true;
+ setDraftView();drawList();signal('Scrivi o detta: la nota verrà salvata automaticamente quando contiene testo.');
+ $('notes-content').focus();
+}
+async function archiveNote(){
+ if(!current||busyAudio)return;
+ try{const saved=await saveNow();if(!saved)return;
+  const updated=await store.archive(current.id,!current.is_archived);
+  current.is_archived=updated.is_archived;notes=notes.map(n=>n.id===updated.id?updated:n);
+  $('notes-archive').textContent=updated.is_archived?'Rimetti nelle note':'Archivia';
+  signal(updated.is_archived?'Nota archiviata.':'Nota ripristinata.','success');drawList();
+ }catch(err){signal('Archivio non aggiornato: '+err.message,'error');}
+}
+async function deleteNote(){
+ if(!current||busyAudio)return;
+ if(!confirm('Eliminare definitivamente questa nota e la registrazione associata?'))return;
+ const note=current;
+ if(voice?.isRecording())voice.stopRecording();
+ clearTimeout(saveTimer);
+ try{
+  await saveChain.catch(()=>{});
+  const existing=notes.some(n=>n.id===note.id);
+  const result=existing?await store.remove(note):{orphanAudio:false};
+  drafts.clear(note.id);
+  notes=notes.filter(n=>n.id!==note.id);
+  addNew();drawList();
+  signal(result.orphanAudio?'Nota eliminata, ma la rimozione del file audio privato non è riuscita.':'Nota eliminata.','success');
+ }catch(err){signal('Eliminazione non riuscita: '+err.message,'error');}
+}
+async function saveAudio(){
+ if(!audioPending||!current||busyAudio)return;
+ busyAudio=true;$('notes-upload-audio').disabled=true;
+ const pendingBlob=audioPending,pendingSeconds=audioDuration,noteId=current.id;
+ try{
+  signal('Salvataggio nota e caricamento registrazione…');
+  await saveNow(true);
+  const updated=await store.uploadVoice(noteId,pendingBlob,pendingSeconds);
+  if(current?.id===noteId){
+   current.audio_path=updated.audio_path;current.audio_mime=updated.audio_mime;
+   current.audio_duration_seconds=updated.audio_duration_seconds;audioPending=null;
+   $('notes-upload-audio').hidden=true;$('notes-backup-audio').hidden=true;
+  }
+  notes=notes.map(n=>n.id===noteId?updated:n);
+  signal('Registrazione salvata nello spazio privato.','success');drawList();
+ }catch(err){signal('Audio non salvato: '+err.message+'. La copia locale è ancora disponibile: scaricala come sicurezza.','error');
+  $('notes-backup-audio').hidden=false;
+ }finally{busyAudio=false;$('notes-upload-audio').disabled=false;}
+}
+function downloadPending(){
+ if(!audioPending)return;
+ const url=URL.createObjectURL(audioPending),a=document.createElement('a');
+ a.href=url;a.download='kyv-memo-'+new Date().toISOString().replaceAll(':','-')+'.'+core.fileExt(core.audioMime(audioPending.type));
+ document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function loadProjects(){
+ try{
+  const rows=await store.projects();
+  for(const row of rows){if(!row.ID)continue;
+   $('notes-project').add(new Option((row.TITOLO||'Senza titolo')+(row.ARTISTA?' · '+row.ARTISTA:'')+' (#'+row.ID+')',String(row.ID)));}
+  const q=new URLSearchParams(location.search),project=q.get('project');
+  if(project&&[...$('notes-project').options].some(x=>x.value===project))$('notes-project').value=project;
+ }catch(error){console.warn('[KYV Taccuino] Progetti non disponibili:',error);}
+}
+async function boot(){
+ if(typeof loadKyvSidebar==='function')loadKyvSidebar('notes');
+ session=await KYV_AUTH.requireAuth();
+ if(!session)return;
+ try{
+  const db=KYV.createSupabaseClient();store=core.createStore(db,session.user.id);
+  drafts=core.draftStore(session.user.id,window.localStorage);
+  voice=KYV_NOTES_VOICE.create({
+   getText:()=>$('notes-content').value,
+   onText:text=>{$('notes-content').value=text;scheduleSave();},
+   onError:message=>signal(message,'error'),
+   onState:s=>{if(s.kind==='recording'){$('notes-record').textContent='■ Stop audio';$('notes-record').dataset.recording='true';}
+    else if(!voice.isRecording()){$('notes-record').textContent='● Registra audio';$('notes-record').dataset.recording='false';}
+    $('notes-dictate').textContent=voice.isDictating()?'■ Stop dettatura':'🎙️ Detta testo';
+    signal(s.message);
+   },
+   onAudio:({blob,duration})=>{
+    if(blob.size>core.MAX_AUDIO_BYTES){signal('Registrazione superiore a 20 MB: non caricabile.','error');return;}
+    if(!core.audioMime(blob.type)){signal('Formato registrazione non compatibile.','error');return;}
+    audioPending=blob;audioDuration=duration;releaseAudio();
+    audioUrl=URL.createObjectURL(blob);$('notes-audio').src=audioUrl;$('notes-audio').hidden=false;
+    $('notes-upload-audio').hidden=false;$('notes-backup-audio').hidden=false;
+    signal('Registrazione pronta: premi Salva registrazione. Scarica una copia se vuoi conservarla anche offline.');
+   }
+  });
+  $('notes-new').addEventListener('click',addNew);
+  for(const id of ['notes-title','notes-content','notes-category','notes-project']){
+   $(id).addEventListener(id==='notes-category'||id==='notes-project'?'change':'input',scheduleSave);}
+  $('notes-save').addEventListener('click',()=>{void saveNow().catch(()=>{});});
+  $('notes-pin').addEventListener('click',()=>{current.is_pinned=!current.is_pinned;$('notes-pin').setAttribute('aria-pressed',String(current.is_pinned));
+   $('notes-pin').textContent=current.is_pinned?'📌 Fissata':'📌 Fissa';scheduleSave();});
+  $('notes-archive').addEventListener('click',()=>{void archiveNote();});
+  $('notes-delete').addEventListener('click',()=>{void deleteNote();});
+  $('notes-search').addEventListener('input',drawList);
+  ['notes-filter-category','notes-filter-pinned','notes-filter-archived'].forEach(id=>$(id).addEventListener('change',drawList));
+  $('notes-dictate').addEventListener('click',()=>{
+   if(voice.isDictating())voice.stopDictation();else voice.startDictation();
+  });
+  $('notes-record').addEventListener('click',()=>{
+   if(current?.audio_path){signal('Questa nota ha già un memo audio. Per registrarne un altro crea una nuova nota.','error');return;}
+   if(voice.isRecording())voice.stopRecording();else void voice.startRecording();
+  });
+  $('notes-upload-audio').addEventListener('click',()=>{void saveAudio();});
+  $('notes-backup-audio').addEventListener('click',downloadPending);
+  window.addEventListener('online',()=>{
+   if(currentDraft())void saveNow().catch(()=>{});
+   void store.listAll().then(all=>{notes=all;drawList();}).catch(error=>{
+    signal('Riconnessione: archivio cloud non ancora disponibile: '+error.message,'error');
+   });
+  });
+  window.addEventListener('beforeunload',event=>{
+   if(voice.isRecording()||audioPending||busyAudio){event.preventDefault();event.returnValue='';}
+  });
+  await loadProjects();
+  try{notes=await store.listAll();}
+  catch(error){
+   // Fail closed: do not pretend the cloud archive was loaded; display only local drafts.
+   notes=[];
+   signal('Archivio cloud non leggibile: puoi lavorare sulle bozze locali. Ricollegati e ricarica per vedere tutte le note.', 'error');
+  }
+  loading=false;
+  const param=new URLSearchParams(location.search);
+  if(param.get('new')==='1'||param.has('project'))addNew();
+  else if(notes.length||drafts.all().length)await openNote(mergeDrafts(notes).sort((a,b)=>Number(!!b.is_pinned)-Number(!!a.is_pinned)||new Date(b.updated_at)-new Date(a.updated_at))[0]);
+  else addNew();
+  drawList();drawIcons();
+ }catch(error){
+  loading=false;
+  signal('Taccuino non disponibile: '+(error.message||'errore di connessione')+'. Ricarica dopo aver controllato accesso e rete.','error');
+  $('notes-list').textContent='Archivio non caricato: nessun dato parziale mostrato.';
+  console.error('[KYV Taccuino] Caricamento:',error);
+ }
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{void boot();},{once:true});else void boot();
+})();
+</script>
+</body></html>

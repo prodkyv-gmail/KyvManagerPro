@@ -30,7 +30,7 @@
     .kyv-launch-description{font-size:clamp(.95rem,1.6vw,1.075rem);line-height:1.7;color:#b9c8c8;max-width:640px}
     .kyv-launch-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(.75rem,1.8vw,1.2rem)}
     .kyv-launch-item{grid-column:span 2;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:2rem;min-height:195px;padding:clamp(1.25rem,2.5vw,1.8rem);text-align:left;text-decoration:none;cursor:pointer;width:100%;border:1px solid rgba(183,209,199,.16);border-radius:23px;background:linear-gradient(145deg,rgba(49,69,72,.94),rgba(37,53,57,.96));box-shadow:0 12px 30px rgba(3,11,14,.11);color:#edf4ef;transition:transform .18s ease,border-color .18s ease,background .18s ease}
-    .kyv-launch-item:nth-child(4),.kyv-launch-item:nth-child(5){grid-column:span 3;min-height:170px}
+    .kyv-launch-item:nth-child(4),.kyv-launch-item:nth-child(5){grid-column:span 2;min-height:195px}
     .kyv-launch-item:hover{transform:translateY(-3px);border-color:rgba(175,213,196,.54);background:linear-gradient(145deg,rgba(59,81,82,.98),rgba(41,62,62,.98))}
     .kyv-launch-item:focus-visible{outline:3px solid #b7ded1;outline-offset:3px}
     .kyv-launch-icon{display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:16px;background:rgba(177,207,192,.10);color:#b6d7c6;border:1px solid rgba(177,207,192,.12)}
@@ -40,8 +40,8 @@
     .kyv-launch-item small{display:block;margin-top:.4rem;font-size:.78rem;line-height:1.5;color:#b7c9c7;font-weight:500}
     .kyv-launch-arrow{color:#b7d9cb;flex-shrink:0}
     .kyv-launch-footer{margin-top:2rem;color:#94aca9;font-size:.79rem}
-    @media(max-width:800px){.kyv-launch-item{grid-column:span 3!important;min-height:173px}.kyv-launch-item:last-child{grid-column:1/-1!important;min-height:145px}}
-    @media(max-width:530px){.kyv-launch-grid{grid-template-columns:1fr}.kyv-launch-item,.kyv-launch-item:nth-child(4),.kyv-launch-item:nth-child(5),.kyv-launch-item:last-child{grid-column:1/-1!important;min-height:115px;flex-direction:row;align-items:center;gap:1.2rem}.kyv-launch-title-row{flex:1;align-items:center}.kyv-launch-icon{flex:0 0 48px}.kyv-launch-shell{padding-top:1rem}.kyv-launch-head{margin-bottom:1.5rem}.kyv-launch-item small{max-width:235px}}
+    @media(max-width:800px){.kyv-launch-item{grid-column:span 3!important;min-height:173px}}
+    @media(max-width:530px){.kyv-launch-grid{grid-template-columns:1fr}.kyv-launch-item{grid-column:1/-1!important;min-height:115px;flex-direction:row;align-items:center;gap:1.2rem}.kyv-launch-title-row{flex:1;align-items:center}.kyv-launch-icon{flex:0 0 48px}.kyv-launch-shell{padding-top:1rem}.kyv-launch-head{margin-bottom:1.5rem}.kyv-launch-item small{max-width:235px}}
     @media(prefers-reduced-motion:reduce){.kyv-launch-item{transition:none}.kyv-launch-item:hover{transform:none}}
   </style>
 </head>
@@ -57,6 +57,10 @@
           <p class="kyv-launch-description">Apri ciò che ti serve, senza passare da altre schermate. Le attività e i dati rimangono nelle rispettive sezioni.</p>
         </header>
         <nav class="kyv-launch-grid" aria-label="Aree principali">
+          <button class="kyv-launch-item" type="button" onclick="openKyvQuickNote()" aria-label="Aggiungi una nota veloce">
+            <span class="kyv-launch-icon"><i data-lucide="notebook-pen"></i></span>
+            <span class="kyv-launch-title-row"><span><strong>+ Note</strong><small>Idee, appunti e memo vocali in pochi secondi</small></span><i data-lucide="arrow-up-right" class="kyv-launch-arrow"></i></span>
+          </button>
           <a class="kyv-launch-item" href="kyv_calendar.html">
             <span class="kyv-launch-icon"><i data-lucide="calendar-days"></i></span>
             <span class="kyv-launch-title-row"><span><strong>Agenda</strong><small>Appuntamenti e pianificazione</small></span><i data-lucide="arrow-up-right" class="kyv-launch-arrow"></i></span>
@@ -83,6 +87,10 @@
     </section>
   </main>
   <script>
+    function openKyvQuickNote(){
+      if(window.KYV_NOTES_QUICK?.open){void window.KYV_NOTES_QUICK.open();return;}
+      window.location.href='kyv_notes.html?new=1';
+    }
     function openKyvHomeGroup(which){
       const id=which==='admin'?'kyv-nav-admin':'kyv-nav-tools';
       const group=document.getElementById(id);

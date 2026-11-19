@@ -5,6 +5,7 @@
 const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
 const primary=[
   ['index.html','Home','house','home'],
+  ['kyv_notes.html?new=1','+ Note','notebook-pen','notes'],
   ['kyv_calendar.html','Agenda','calendar-days','calendar'],
   ['acquisisci_audio.html','ADD Progetto','circle-plus','nuovo'],
   ['editor.html','Studio Editor','database','editor']
@@ -71,7 +72,7 @@ function loadProjectsPhase3(){
 }
 function currentKey(){
   const map={
-    'index.html':'home','':'home','oggi.html':'dashboard','kyv_calendar.html':'calendar','acquisisci_audio.html':'nuovo',
+    'index.html':'home','':'home','oggi.html':'dashboard','kyv_notes.html':'notes','kyv_calendar.html':'calendar','acquisisci_audio.html':'nuovo',
     'progetti.html':'progetti','scheda_progetto.html':'progetti','kyv_scrivania_creativa.html':'creative','ascolto.html':'ascolto','fatture.html':'fatture',
     'correlazione.html':'fatture','documenti.html':'spese','fisco.html':'fisco','quote.html':'quote','autori.html':'quote',
     'rendiconto.html':'rendiconto','clienti.html':'clienti','editor.html':'editor','archivio_musicale.html':'archivio',
@@ -186,7 +187,7 @@ function dashboardProducerMode(){
 
   const quick=document.querySelector('.kyv-quick-actions');
   if(quick){
-    quick.innerHTML=`<a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a><a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a><a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a><a href="pipeline.html"><i data-lucide="columns-3" class="w-4 h-4 mr-2 text-amber-300"></i>Pipeline</a>`;
+    quick.innerHTML=`<a href="kyv_notes.html?new=1"><i data-lucide="notebook-pen" class="w-4 h-4 mr-2 text-violet-300"></i>+ Note</a><a href="kyv_calendar.html"><i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-blue-300"></i>Agenda</a><a href="progetti.html"><i data-lucide="music-2" class="w-4 h-4 mr-2 text-indigo-300"></i>Progetti</a><a href="ascolto.html"><i data-lucide="headphones" class="w-4 h-4 mr-2 text-violet-300"></i>Ascolto</a><a href="pipeline.html"><i data-lucide="columns-3" class="w-4 h-4 mr-2 text-amber-300"></i>Pipeline</a>`;
   }
 
   if(quick)collapseNode(quick,{
@@ -214,8 +215,17 @@ function dashboardProducerMode(){
   if(window.lucide)lucide.createIcons({root:document.body});
 }
 
+function loadNotesCapture(){
+  if(page==='login.html'||page==='kyv_notes.html'||new URLSearchParams(location.search).get('embeddedProject')==='1')return;
+  for(const src of ['kyv-notes-core.js','kyv-notes-voice.js','kyv-notes-quick.js']){
+    if(document.querySelector('script[src="'+src+'"]'))continue;
+    const script=document.createElement('script');script.src=src;script.async=false;
+    document.head.appendChild(script);
+  }
+}
 function boot(){
   ensurePastelStyles();
+  loadNotesCapture();
   loadActionBridge();
   loadProjectPhase2();
   loadProjectsPhase3();
