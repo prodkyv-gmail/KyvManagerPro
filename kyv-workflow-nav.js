@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
-const supported=new Set(['oggi.html','scheda_progetto.html','ascolto.html','kyv_calendar.html','sessioni.html','kyv_audio_finder.html','fatture.html']);
+const supported=new Set(['oggi.html','scheda_progetto.html','ascolto.html','sessioni.html','kyv_audio_finder.html','fatture.html']);
 if(!supported.has(page))return;
 function text(v){return String(v??'').trim();}
 function params(){return new URLSearchParams(location.search);}

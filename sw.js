@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-calm-launcher-20261119';
+const CACHE_NAME = 'kyv-studio-v2-82-agenda-archive-20261119';
 const APP_SHELL = [
     './',
     './index.html',
@@ -12,6 +12,8 @@ const APP_SHELL = [
     './data_quality.html',
     './ascolto.html',
     './kyv_calendar.html',
+    './kyv-agenda-store.js',
+    './kyv-agenda-table.css',
     './pipeline.html',
     './fatture.html',
     './integrazioni.html',

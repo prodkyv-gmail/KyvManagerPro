@@ -78,6 +78,7 @@
         }
     </style>
     <link rel="stylesheet" href="kyv-theme.css">
+    <link rel="stylesheet" href="kyv-agenda-table.css">
 </head>
 <body class="kyv-v260 flex h-screen overflow-hidden antialiased text-sm">
     <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
@@ -98,8 +99,7 @@
                 </div>
             </header>
 
-            <div class="kyv-calendar-layout w-full min-h-0">
-                <div class="kyv-calendar-sidebar flex flex-col gap-6">
+            <div class="kyv-calendar-connection-banner" id="kyv-calendar-connection-banner">
                     <div class="kyv-calendar-card bg-kyv-card border border-kyv-border rounded-2xl p-4 sm:p-6 shadow-xl relative group">
                         <h3 class="font-bold text-white mb-4 flex items-center text-sm">
                             <i data-lucide="link" class="w-4 h-4 mr-2 text-kyv-text"></i> Connessione Google Apps Script
@@ -118,7 +118,10 @@
                             </button>
                         </div>
                     </div>
+            </div>
 
+            <div class="kyv-calendar-layout w-full min-h-0">
+                <div class="kyv-calendar-sidebar flex flex-col gap-6">
                     <div class="kyv-calendar-card bg-kyv-card border border-emerald-500/20 rounded-2xl p-4 sm:p-6 shadow-xl relative">
                         <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
                         <h3 class="font-bold text-white mb-5 flex items-center text-lg relative z-10">
@@ -164,7 +167,7 @@
                         <h2 class="font-bold text-white flex items-center text-lg min-w-0">
                             <i data-lucide="calendar-days" class="w-5 h-5 mr-3 text-blue-400 shrink-0"></i> Calendario
                         </h2>
-                        <span class="text-[10px] font-mono bg-[#0f111a] border border-kyv-border px-2.5 py-1 rounded-md text-kyv-text self-start sm:self-auto" id="last-sync">Pronto</span>
+                        <div class="kyv-agenda-view-size"><label for="kyv-agenda-width">Larghezza</label><input id="kyv-agenda-width" type="range" min="65" max="100" step="5" value="100" aria-label="Larghezza del calendario"><output id="kyv-agenda-width-value" for="kyv-agenda-width">100%</output><span class="text-[10px] font-mono bg-[#0f111a] border border-kyv-border px-2.5 py-1 rounded-md text-kyv-text" id="last-sync">Pronto</span></div>
                     </div>
 
                     <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar min-w-0" id="events-list">
@@ -184,6 +187,7 @@
         <span id="toast-message" class="font-medium text-sm">Messaggio</span>
     </div>
 
+    <script src="kyv-agenda-store.js"></script>
     <script>
         if(typeof loadKyvSidebar === 'undefined'){ window.toggleMobileMenu=()=>{}; window.loadKyvSidebar=()=>{ document.getElementById('kyv-sidebar-container').innerHTML=`<aside class="w-64 bg-kyv-card border-r h-full p-4"><p class="text-rose-400 text-xs">Fallback Menu</p></aside>`;};}
         loadKyvSidebar('calendar');
@@ -256,140 +260,101 @@
             const button = event.target.closest('[data-kyv-calendar-index]');
             if(!button || !DOM.eventsList.contains(button)) return;
             const index = Number(button.dataset.kyvCalendarIndex);
-            if(!Number.isSafeInteger(index) || index < 0 || index >= listEventsCache.length) return;
+            const activeEvents=window.KYV_AGENDA_STORE?.getEvents()||listEventsCache;
+            if(!Number.isSafeInteger(index) || index < 0 || index >= activeEvents.length) return;
             window.dispatchEvent(new CustomEvent('kyv:calendar-open-event', {
-                detail: { event: listEventsCache[index], opener: button }
+                detail: { event: activeEvents[index], opener: button }
             }));
         });
 
         DOM.btnSync.addEventListener('click', async () => {
-            DOM.btnSync.disabled = true;
+            DOM.btnSync.disabled=true;
             DOM.syncIcon.classList.add('animate-spin');
-            DOM.syncText.innerText = 'Sincronizzazione...';
-            DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-blue-500 text-center p-6"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mb-4"></i><p class="text-sm font-bold tracking-wide">Lettura Agenda in corso...</p></div>`;
-            if(window.lucide) lucide.createIcons({root: DOM.eventsList});
-
+            DOM.syncText.textContent='Sincronizzazione...';
             try {
-                // Solo da oggi in avanti: nessuna lettura dello storico.
-                const today = new Date();
-                const from = new Date(today.getFullYear(),today.getMonth(),today.getDate());
-                const to = new Date(today.getFullYear(),today.getMonth(),today.getDate()+15);
-                const dayString = date => date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
-                const wanted = { startDate: dayString(from), endDate: dayString(to) };
-                const data = await calendarRequest('getEvents', wanted);
-                if(data.error) throw new Error(data.error);
-                if(!Array.isArray(data.events)) throw new Error('Lo script Google non ha restituito un elenco di eventi valido.');
-                const confirmedRange = data.range?.startDate === wanted.startDate &&
-                    data.range?.endDate === wanted.endDate;
-                // Legacy Apps Script returns valid events but does not include "range".
-                // Do not mistake that compatible response for a network/auth error.
-                // An explicitly wrong range is still an error: never pretend it is confirmed.
-                if(data.range && !confirmedRange) {
-                    throw new Error('Google Apps Script ha restituito un periodo differente da quello richiesto. Verifica il deployment.');
-                }
-                const legacyMode = !confirmedRange;
-                const events = data.events.filter(ev => {
-                    const parsed = /^\d{4}-\d{2}-\d{2}$/.test(String(ev?.date||''))
-                        ? new Date(Number(ev.date.slice(0,4)),Number(ev.date.slice(5,7))-1,Number(ev.date.slice(8,10)))
-                        : new Date(ev?.date);
-                    return !Number.isNaN(parsed.getTime()) &&
-                        dayString(parsed) >= wanted.startDate && dayString(parsed) < wanted.endDate;
-                }).slice(0,120);
-                const partial = !!data.truncated || data.events.length>=120 || legacyMode;
-                DOM.lastSync.innerHTML = legacyMode
-                    ? '<span class="text-amber-400">●</span> Eventi disponibili · intervallo non verificato'
-                    : `<span class="text-emerald-400">●</span> ${new Date().toLocaleTimeString('it-IT')}`;
-                listEventsCache = events;
-                window.dispatchEvent(new CustomEvent('kyv:calendar-events', {
-                    detail: { events, success: true, truncated: partial }
-                }));
-                if(events.length === 0) {
-                    DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-kyv-text opacity-70 text-center p-6"><i data-lucide="calendar-check-2" class="w-16 h-16 mb-4 opacity-50"></i><p class="text-lg font-medium">${legacyMode ? 'Nessun appuntamento tra quelli disponibili.' : 'Nessun appuntamento in agenda.'}</p>${legacyMode ? '<p class="text-xs mt-2">Connessione Apps Script funzionante, ma la versione pubblicata non conferma il periodo: vista limitata ai dati restituiti.</p>' : ''}</div>`;
-                } else {
-                    let html = '';
-                    events.forEach((ev, index) => {
-                        const dt = new Date(ev.date);
-                        if(Number.isNaN(dt.getTime())) return;
-                        const dayName = H(dt.toLocaleDateString('it-IT', { weekday: 'short' }));
-                        const monthName = H(dt.toLocaleDateString('it-IT', { month: 'short' }));
-                        const time = H(dt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
-
-                        html += `
-                            <button type="button" data-kyv-calendar-index="${index}" aria-label="Apri dettagli evento: ${H(ev.title || 'Senza titolo')}" class="w-full text-left bg-kyv-bg border border-kyv-border rounded-xl p-3 sm:p-4 flex items-center hover:border-blue-500/40 hover:bg-[#11141f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 transition-all group min-w-0">
-                                <span class="block bg-kyv-card border border-kyv-border/50 rounded-lg p-2 text-center mr-3 sm:mr-4 w-14 sm:w-16 shrink-0 group-hover:bg-blue-900/10 transition-colors">
-                                    <span class="block text-[9px] text-blue-400 font-bold uppercase tracking-wider">${dayName}</span>
-                                    <span class="block text-xl font-black text-white leading-none my-0.5">${dt.getDate()}</span>
-                                    <span class="block text-[9px] text-kyv-text uppercase font-semibold">${monthName}</span>
-                                </span>
-                                <span class="block flex-1 min-w-0">
-                                    <span class="font-bold text-white text-sm mb-1 break-words group-hover:text-blue-300 transition-colors">${H(ev.title || 'Senza titolo')}</span>
-                                    <span class="text-[10px] text-kyv-text flex items-center font-mono uppercase tracking-wider"><i data-lucide="clock" class="w-3 h-3 mr-1.5 opacity-70 shrink-0"></i> Ore ${time}</span>
-                                </span>
-                            </button>`;
-                    });
-                    DOM.eventsList.innerHTML = '<p class="text-xs text-kyv-text pb-1">Eventi di oggi e dei prossimi 14 giorni. Lo storico è disattivato. Seleziona un evento per aprire i dettagli.' +
-                        (legacyMode ? ' Modalità compatibilità: lo script Google non conferma le date. L’elenco potrebbe essere incompleto; aggiorna il deployment Apps Script per leggere gli intervalli esatti.' :
-                        (partial ? ' Attenzione: elenco parziale (massimo 120 eventi).' : '')) + '</p>' + html;
-                }
-                if(window.lucide) lucide.createIcons({root: DOM.eventsList});
-            } catch(err) {
-                listEventsCache = [];
-                window.dispatchEvent(new CustomEvent('kyv:calendar-events', { detail: { events: [], success: false } }));
-                const message = err.message || 'Errore di connessione.';
-                showToast(message, true);
-                DOM.lastSync.innerHTML = '<span class="text-rose-400">●</span> Non connesso';
-                DOM.eventsList.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[280px] text-red-400 text-center p-6"><i data-lucide="alert-triangle" class="w-14 h-14 mb-4 opacity-60"></i><p class="font-medium break-words max-w-3xl">${H(message)}</p><p class="mt-2 text-xs text-kyv-text">Nessun evento è stato modificato.</p></div>`;
-                if(window.lucide) lucide.createIcons({root: DOM.eventsList});
+                const today=new Date();
+                const from=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+                const to=new Date(today.getFullYear(),today.getMonth(),today.getDate()+15);
+                const localDay=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+                const wanted={startDate:localDay(from),endDate:localDay(to)};
+                const data=await calendarRequest('getEvents',wanted);
+                if(data.error)throw new Error(data.error);
+                if(!Array.isArray(data.events))throw new Error('Google Calendar non ha restituito eventi validi.');
+                const verified=data.range?.startDate===wanted.startDate&&data.range?.endDate===wanted.endDate;
+                if(data.range&&!verified)throw new Error('Google Calendar ha restituito un periodo diverso da quello richiesto.');
+                // Anche uno script legacy puo restituire eventi fuori dal periodo richiesto.
+                const events=data.events.filter(ev=>{
+                    const parsed=/^\d{4}-\d{2}-\d{2}$/.test(String(ev?.date||''))
+                        ?new Date(Number(ev.date.slice(0,4)),Number(ev.date.slice(5,7))-1,Number(ev.date.slice(8,10)))
+                        :new Date(ev?.date);
+                    return !Number.isNaN(parsed.getTime())&&localDay(parsed)>=wanted.startDate&&localDay(parsed)<wanted.endDate;
+                });
+                if(!window.KYV_AGENDA_STORE)throw new Error('Archivio agenda non inizializzato.');
+                const imported=await KYV_AGENDA_STORE.importGoogle(events);
+                const partial=!!data.truncated||data.events.length>=120||!verified||!!imported.skipped;
+                listEventsCache=KYV_AGENDA_STORE.getEvents();
+                DOM.lastSync.textContent=verified?'Salvato '+new Date().toLocaleTimeString('it-IT'):'Salvato · intervallo non verificato';
+                showToast(imported.saved+' eventi Google archiviati. Storico mantenuto.'+(partial?' Dati Google parziali o non verificati.':''),partial);
+            } catch(err){
+                const message=String(err?.message||'Aggiornamento non riuscito.');
+                DOM.lastSync.textContent='Google/archivio non aggiornati';
+                showToast(message+'. Gli eventi già salvati restano invariati.',true);
+                // Mai svuotare la tabella in caso di errore di rete o di script.
+                if(!window.KYV_AGENDA_STORE?.getState()?.loaded)
+                    DOM.eventsList.innerHTML='<p class="kyv-agenda-table-empty">'+H(message)+'</p>';
             } finally {
-                DOM.btnSync.disabled = false;
+                DOM.btnSync.disabled=false;
                 DOM.syncIcon.classList.remove('animate-spin');
-                DOM.syncText.innerText = 'Aggiorna agenda';
+                DOM.syncText.textContent='Aggiorna agenda';
             }
         });
 
-        DOM.formNew.addEventListener('submit', async (e) => {
+        DOM.formNew.addEventListener('submit', async e=>{
             e.preventDefault();
-            const title = document.getElementById('ev-title').value;
-            const date = document.getElementById('ev-date').value;
-            const time = document.getElementById('ev-time').value;
-            const endTime = document.getElementById('ev-end-time').value;
-            const description = document.getElementById('ev-description').value.trim();
-            const location = document.getElementById('ev-location').value.trim();
-            if(!endTime || endTime <= time){
-                showToast('L’ora di fine deve essere successiva all’ora di inizio.', true);
-                return;
+            const input={
+                title:document.getElementById('ev-title').value.trim(),
+                date:document.getElementById('ev-date').value,
+                time:document.getElementById('ev-time').value,
+                endTime:document.getElementById('ev-end-time').value,
+                description:document.getElementById('ev-description').value.trim(),
+                location:document.getElementById('ev-location').value.trim(),
+                activityType:document.querySelector('.kyv-agenda-type.active')?.dataset.kind||'other'
+            };
+            if(!input.title||!input.date||!input.time||!input.endTime||input.endTime<=input.time){
+                showToast('Indica titolo, data e orari validi (fine successiva all’inizio).',true);return;
             }
-            const confirmed = window.confirm(`Confermi la creazione su ${calendarAccount.email}?\n\n${title}\n${date} dalle ${time} alle ${endTime}${location ? '\nLuogo: ' + location : ''}`);
-            if(!confirmed) return;
-
-            DOM.btnCreate.disabled = true;
-            DOM.createIcon.setAttribute('data-lucide', 'loader-2');
+            if(!window.confirm('Salvare l’attività nella tabella e tentare la creazione su Google Calendar?\n\n'+
+                input.title+' · '+input.date+' '+input.time+'–'+input.endTime))return;
+            DOM.btnCreate.disabled=true;
             DOM.createIcon.classList.add('animate-spin');
-            if(window.lucide) lucide.createIcons({root: DOM.btnCreate.parentElement});
-
-            try {
-                const data = await calendarRequest('createEvent', {
-                    title,
-                    date,
-                    time,
-                    endTime,
-                    description,
-                    location,
-                    clientRequestId: `calendar-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-                });
-
-                if(data.error) throw new Error(data.error);
-                showToast('Evento inserito in Google Calendar!');
+            let created=null,googleError='';
+            try{
+                try{
+                    created=await calendarRequest('createEvent',{
+                        title:input.title,date:input.date,time:input.time,endTime:input.endTime,
+                        description:input.description,location:input.location,
+                        clientRequestId:'kyv-agenda-'+Date.now()+'-'+Math.random().toString(36).slice(2)
+                    });
+                    if(created?.error||created?.success===false)throw Error(created.error||'Google Calendar non ha confermato la creazione.');
+                }catch(err){
+                    googleError=String(err?.message||err);
+                    created=null;
+                }
+                if(!window.KYV_AGENDA_STORE)throw Error('Archivio permanente non disponibile.');
+                await KYV_AGENDA_STORE.saveCreated(input,created);
+                listEventsCache=KYV_AGENDA_STORE.getEvents();
                 DOM.formNew.reset();
                 window.dispatchEvent(new CustomEvent('kyv:calendar-created'));
-                setTimeout(() => DOM.btnSync.click(), 500);
-            } catch(err) {
-                showToast(err.message || 'Errore durante la creazione.', true);
-            } finally {
-                DOM.btnCreate.disabled = false;
-                DOM.createIcon.setAttribute('data-lucide', 'calendar-plus');
+                showToast(googleError
+                    ?'Attività salvata nella tabella. Google Calendar non aggiornato: '+googleError
+                    :created?.eventId?'Evento salvato in Google Calendar e nella tabella.':'Evento salvato nella tabella; identificativo Google non verificato.',
+                    !!googleError||!created?.eventId);
+            }catch(err){
+                showToast((created?'Evento creato su Google, ma non archiviato: non reinviarlo. ':'')+
+                    String(err?.message||err),true);
+            }finally{
+                DOM.btnCreate.disabled=false;
                 DOM.createIcon.classList.remove('animate-spin');
-                if(window.lucide) lucide.createIcons({root: DOM.btnCreate.parentElement});
             }
         });
 
@@ -400,7 +365,19 @@
             document.getElementById('ev-date').value = localDate;
             document.getElementById('ev-time').value = '11:00';
             document.getElementById('ev-end-time').value = '13:00';
-            if(window.lucide) lucide.createIcons();
+            const width=document.getElementById('kyv-agenda-width');
+            const output=document.getElementById('kyv-agenda-width-value');
+            const panel=document.querySelector('.kyv-calendar-main');
+            const changeWidth=value=>{
+                const v=Math.min(100,Math.max(65,Number(value)||100));
+                if(panel)panel.style.setProperty('--kyv-agenda-width',v+'%');
+                if(output)output.textContent=v+'%';
+            };
+            if(width){
+                width.addEventListener('input',()=>changeWidth(width.value));
+                changeWidth(width.value);
+            }
+            if(window.lucide)lucide.createIcons();
         });
     </script>
 </body>
