@@ -54,6 +54,20 @@ for(const route of ['kyv_calendar.html','acquisisci_audio.html','editor.html'])
  assert.ok(launch.includes('href="'+route+'"'),'Launch route missing '+route);
 assert.ok(launch.includes("openKyvHomeGroup('admin')")&&launch.includes("openKyvHomeGroup('tools')"),'Group buttons must work');
 assert.ok(today.includes('id="home-analytics-details"')&&today.includes('id="activity-list"'),'Historical Oggi remains intact');
+assert.equal((launch.match(/class="kyv-launch-item"/g)||[]).length,5,'Home should have exactly five large action buttons');
+const actionBridge=read('kyv-action-bridge.js'),workflow=read('kyv-workflow-nav.js'),
+ route=read('kyv-flow-routes-v269.js'),polish=read('kyv-layout-polish.js');
+assert.ok(actionBridge.includes("if(page==='oggi.html')"),'Oggi action bridge must run on dedicated page');
+assert.ok(actionBridge.includes("if(page!=='oggi.html')return;"),'Legacy Oggi task filters must keep working');
+assert.ok(workflow.includes('oggi.html?projectId='),'Project context Today link must open Oggi, not landing');
+assert.ok(!workflow.includes('index.html?projectId='),'Do not pollute five-button landing with a project context');
+assert.ok(route.includes("'oggi.html':['projectId','id']"),'Oggi must receive project context');
+assert.ok(polish.includes("if(page!=='oggi.html')return;"),'Old Oggi visual ordering remains isolated');
+assert.ok(read('kyv-today-home-v5.js').includes("if(page!=='oggi.html')return;"),'Cabina operativa runs on Oggi');
+assert.ok(read('config.js').includes("if(page==='oggi.html')"),'Today data widgets are not loaded on launchpad');
+assert.ok(read('sw.js').includes("'./oggi.html'"),'Offline PWA keeps old Oggi');
+assert.ok(!launch.includes('id="home-analytics-details"'),'Five-button landing has no heavy financial dashboard');
+
 assert.ok(control.some(x=>x.href==='oggi.html'),'Old Oggi is accessible inside Administration');
 assert.ok(menu.includes('id="kyv-nav-admin"')&&menu.includes('id="kyv-nav-tools"'),'Fallback group IDs support home buttons');
 assert.ok(producer.includes('id="${id}"'),'Producer Mode group IDs support home buttons');
