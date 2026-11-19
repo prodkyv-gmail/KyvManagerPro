@@ -73,31 +73,6 @@ function closeHelpModal() {
     kyvHelpFocusReturn = null;
 }
 
-function renderKyvMobileBottomNav(activePage = 'dashboard') {
-    const old = document.getElementById('kyv-mobile-bottom-nav');
-    if (old) old.remove();
-
-    const items = [
-        { page: 'dashboard', href: 'index.html', label: 'Home', icon: 'layout-dashboard' },
-        { page: 'calendar', href: 'kyv_calendar.html', label: 'Agenda', icon: 'calendar-days' },
-        { page: 'nuovo', href: 'acquisisci_audio.html', label: 'Nuovo', icon: 'folder-plus' },
-        { page: 'progetti', href: 'progetti.html', label: 'Progetti', icon: 'music' },
-        { page: 'ascolto', href: 'ascolto.html', label: 'Ascolto', icon: 'headphones' },
-    ];
-
-    const nav = document.createElement('nav');
-    nav.id = 'kyv-mobile-bottom-nav';
-    nav.className = 'kyv-mobile-bottom-nav md:hidden';
-    nav.setAttribute('aria-label', 'Navigazione principale mobile');
-    nav.innerHTML = items.map(item => `
-        <a href="${item.href}" class="${activePage === item.page ? 'is-active' : ''}" aria-label="${item.label}" ${activePage === item.page ? 'aria-current="page"' : ''}>
-            <i data-lucide="${item.icon}"></i>
-            <span>${item.label}</span>
-        </a>
-    `).join('');
-    document.body.appendChild(nav);
-}
-
 function getKyvHelpContent(activePage) {
     if (window.KYV_HELP && typeof window.KYV_HELP.getContent === 'function') {
         return window.KYV_HELP.getContent(activePage);
@@ -117,7 +92,8 @@ function getKyvHelpContent(activePage) {
 function inferKyvPageFromPath() {
     const file = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
     const pages = {
-        'index.html': 'dashboard',
+        'index.html': 'home',
+        'oggi.html': 'dashboard',
         'scheda_progetto.html': 'scheda',
         'kyv_dropbox.html': 'dropbox',
         'kyv_drive.html': 'drive',
@@ -177,6 +153,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
     if (!container) return;
 
     const activeAliases = {
+        home: ['home'],
         dashboard: ['dashboard', 'sessioni', 'scheda', 'protezione', 'report'],
         assistente: ['assistente'],
         archivio: ['archivio'],
@@ -237,25 +214,26 @@ function loadKyvSidebar(activePage = 'dashboard') {
                 <div>
                     <p class="px-3 text-[10px] font-black text-kyv-text uppercase tracking-wider mb-2">Produttore</p>
                     <ul class="space-y-1">
-                        ${navItem('dashboard', 'index.html', 'layout-dashboard', 'Oggi')}
+                        ${navItem('home', 'index.html', 'house', 'Home')}
                         ${navItem('calendar', 'kyv_calendar.html', 'calendar-days', 'Agenda', 'text-blue-300')}
                         ${navItem('nuovo', 'acquisisci_audio.html', 'folder-plus', 'Nuovo progetto', 'text-cyan-300')}
                         ${navItem('assistente', 'assistente.html', 'route', 'Percorso brano', 'text-violet-300')}
                         ${navItem('archivio', 'archivio_musicale.html', 'folder-search-2', 'Archivio musicale', 'text-cyan-300')}
-                        ${navItem('progetti', 'progetti.html', 'music-2', 'Progetti', 'text-indigo-300')}
-                        ${navItem('audiofinder', 'kyv_audio_finder.html', 'search-check', 'Audio Finder', 'text-emerald-300')}
                         ${navItem('clienti', 'clienti.html', 'users', 'Contatti', 'text-sky-300')}
                         ${navItem('editor', 'editor.html', 'database', 'Studio Editor')}
                     </ul>
                 </div>
 
-                <details class="kyv-nav-group" ${groupIsOpen(['creative', 'pipeline', 'ascolto', 'integrazioni', 'fatture', 'intelligence', 'analyst', 'returns', 'liquidazioni', 'spese', 'fisco', 'quote', 'rendiconto']) ? 'open' : ''}>
+                <details id="kyv-nav-admin" class="kyv-nav-group" ${groupIsOpen(['dashboard', 'progetti', 'audiofinder', 'creative', 'pipeline', 'ascolto', 'integrazioni', 'fatture', 'intelligence', 'analyst', 'returns', 'liquidazioni', 'spese', 'fisco', 'quote', 'rendiconto']) ? 'open' : ''}>
                     <summary>
                         <i data-lucide="landmark"></i>
                         <span>Amministrazione</span>
                         <i data-lucide="chevron-down" class="kyv-chevron w-4 h-4"></i>
                     </summary>
                     <ul class="space-y-1">
+                        ${navItem('dashboard', 'oggi.html', 'layout-dashboard', 'Oggi', 'text-emerald-300')}
+                        ${navItem('progetti', 'progetti.html', 'music-2', 'Progetti', 'text-indigo-300')}
+                        ${navItem('audiofinder', 'kyv_audio_finder.html', 'search-check', 'Audio Finder', 'text-emerald-300')}
                         ${navItem('creative', 'kyv_scrivania_creativa.html', 'calendar-range', 'Scrivania creativa', 'text-cyan-300')}
                         ${navItem('pipeline', 'pipeline.html', 'columns-3', 'Pipeline & opportunità', 'text-amber-300')}
                         ${navItem('ascolto', 'ascolto.html', 'headphones', 'Ascolto', 'text-violet-300')}
@@ -272,7 +250,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
                     </ul>
                 </details>
 
-                <details class="kyv-nav-group" ${groupIsOpen(['importexport', 'diagnostica', 'dataquality', 'guida']) ? 'open' : ''}>
+                <details id="kyv-nav-tools" class="kyv-nav-group" ${groupIsOpen(['importexport', 'diagnostica', 'dataquality', 'guida']) ? 'open' : ''}>
                     <summary>
                         <i data-lucide="wrench"></i>
                         <span>Strumenti</span>
@@ -300,7 +278,8 @@ function loadKyvSidebar(activePage = 'dashboard') {
     `;
 
     container.innerHTML = sidebarHTML;
-    renderKyvMobileBottomNav(activePage);
+    // Navigazione solo laterale: nessuna dock mobile duplicata.
+    document.getElementById('kyv-mobile-bottom-nav')?.remove();
     if (deferredPrompt) showInstallButton();
 
     window.KYV_ACTIVE_HELP_PAGE = activePage;
