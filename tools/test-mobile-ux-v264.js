@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const read=p=>fs.readFileSync(p,'utf8');
 const producer=read('kyv-producer-mode.js'),order=read('kyv-nav-order.js'),
  menu=read('menu.js'),responsive=read('kyv-responsive.js'),
- theme=read('kyv-theme.css'),home=read('index.html');
+ theme=read('kyv-theme.css'),home=read('oggi.html'),launch=read('index.html');
 for(const f of ['kyv-producer-mode.js','kyv-nav-order.js','menu.js','kyv-responsive.js'])
  new vm.Script(read(f),{filename:f});
 const primary=producer.split('const primary=[')[1].split('];')[0];
@@ -34,21 +34,14 @@ assert.ok(!quick[1].includes('acquisisci_audio.html'),
  'Home producer New CTA should not be duplicated in its quick-action strip');
 assert.ok(producer.includes('href="acquisisci_audio.html"'),
  'New capture CTA must still be directly accessible');
-const mobile=menu.match(/function renderKyvMobileBottomNav\(activePage = 'dashboard'\) \{([\s\S]*?)\n\}/);
-assert.ok(mobile);
-let nav=null;
-vm.runInNewContext('function renderKyvMobileBottomNav(activePage = \'dashboard\'){'+mobile[1]+
- '\n};renderKyvMobileBottomNav(\'ascolto\');',{
- document:{getElementById:()=>null,createElement:()=>({setAttribute(){},innerHTML:''}),
- body:{appendChild:v=>nav=v}}
-});
-assert.ok(nav?.innerHTML.includes('href="ascolto.html"'));
-assert.ok(nav.innerHTML.includes('aria-label="Ascolto" aria-current="page"'));
-assert.equal((nav.innerHTML.match(/aria-current="page"/g)||[]).length,1);
-assert.equal((nav.innerHTML.match(/<a href=/g)||[]).length,5);
+assert.ok(!menu.includes('function renderKyvMobileBottomNav('),'Mobile dock renderer retired');
+assert.ok(!producer.includes('function fixMobileNav('),'Legacy mobile dock focus handler retired');
+assert.ok(menu.includes("getElementById('kyv-mobile-bottom-nav')?.remove()"),'Remove stale dock markup');
+assert.ok(launch.includes('openKyvHomeGroup(\'admin\')')&&launch.includes('openKyvHomeGroup(\'tools\')'),
+ 'Home group controls open the side menu instead of a bottom dock');
 // Open and close the real contextual help functions against a controlled DOM stub.
 const helpSource=menu.slice(menu.indexOf('let kyvHelpFocusReturn = null;'),
- menu.indexOf('function renderKyvMobileBottomNav('));
+ menu.indexOf('function getKyvHelpContent('));
 assert.ok(helpSource.includes('function openHelpModal()'));
 assert.ok(helpSource.includes('function closeHelpModal()'));
 const classes=new Set(['hidden']);let openerFocus=0,closeFocus=0;
@@ -139,7 +132,7 @@ assert.doesNotMatch(responsive,/if \(table\) enhanceTable\(table\);\r?\n        
  'Removed full-table scan on each DOM mutation');
 assert.ok(responsive.includes("window.KYV_RESPONSIVE = { enhanceTables };"));
 for(const token of [
- 'body.kyv-v260 #kyv-mobile-bottom-nav a[aria-current="page"]',
+ '#kyv-mobile-bottom-nav { display: none !important; }',
  'body.kyv-v260 #kyv-help-modal [aria-label="Chiudi guida"]',
  'body.kyv-v260 .kyv-table-hint',
  'body.kyv-v260 #kyv-dashboard-ops-collapses .kyv-collapse-body > .kyv-panel'
