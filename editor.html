@@ -876,7 +876,7 @@
                 showToast(modalHasRecord() ? 'Modifiche salvate.' : 'Record creato.');
                 try { document.dispatchEvent(new CustomEvent('kyv:record-saved', { detail: {table: savedTable, id: savedId} })); }
                 catch (notifyError) { console.warn('[KYV Studio Editor] Notifica salvataggio:', notifyError); }
-                loadEditorTable(currentEditorTable);
+                if(!kyvEmbeddedProject)loadEditorTable(currentEditorTable);
             } catch (error) {
                 console.error('[KYV Studio Editor] Salvataggio', error);
                 showToast('Salvataggio non riuscito: ' + (error.message || 'verifica i dati.'), true);
