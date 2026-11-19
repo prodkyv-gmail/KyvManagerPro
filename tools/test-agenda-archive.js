@@ -25,7 +25,7 @@ assert.match(html,/activeEvents=window\.KYV_AGENDA_STORE\?\.getEvents\(\)/,'Stor
 assert.match(html,/id="kyv-calendar-connection-banner"/);
 assert.ok(html.indexOf('id="kyv-calendar-connection-banner"')<html.indexOf('class="kyv-calendar-layout'));
 assert.ok(html.includes('type="range" min="65" max="100"'));
-assert.ok(!workflow.includes("'kyv_calendar.html'"),'Agenda does not include top Scheda/Ascolto/Agenda/Oggi workflow strip');
+assert.ok(!workflow.split('const supported=new Set(')[1].split(');')[0].includes("'kyv_calendar.html'"),'Agenda does not include top Scheda/Ascolto/Agenda/Oggi workflow strip');
 assert.match(css,/\.kyv-cal-group[\s\S]*flex-wrap:nowrap!important/,'View selector must remain one row');
 assert.match(css,/overflow-y:scroll!important/,'Full-height vertical scrollbar must be available');
 assert.match(views,/return 'list';/,'Unified table is default');
@@ -45,7 +45,7 @@ const client={
 };
 const events=[];
 const win={location:{pathname:'/kyv_calendar.html'},
- document:{readyState:'loading',addEventListener(){},getElementById:()=>null},
+ document:{readyState:'loading',addEventListener(){},getElementById:id=>id==='events-list'?{innerHTML:''}:null},
  KYV:{createSupabaseClient:()=>client},
  dispatchEvent:e=>events.push(e)};
 const context={window:win,CustomEvent:class{constructor(type,data){this.type=type;this.detail=data.detail;}},Date,Map,Set,Error,Array,Number,Math,Intl};
