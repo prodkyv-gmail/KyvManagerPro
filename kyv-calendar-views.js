@@ -4,7 +4,7 @@
 (function (root) {
   'use strict';
 
-  var STORAGE_KEY = 'kyv_calendar_view_v1';
+  var STORAGE_KEY = 'kyv_calendar_view_archive_v2';
   var VIEWS = ['day', 'week', 'month', 'year', 'list'];
   var DAY_MS = 86400000;
   var cachedEvents = [];
