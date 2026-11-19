@@ -369,7 +369,7 @@ function renamePage(){
 
   if(submit){
     submit.innerHTML=
-      '<i data-lucide="calendar-plus" class="w-4 h-4 mr-2" id="create-icon"></i> Aggiungi in Agenda';
+      '<i data-lucide="calendar-plus" class="w-4 h-4 mr-2" id="create-icon"></i> Salva in agenda e Calendar';
   }
 }
 
