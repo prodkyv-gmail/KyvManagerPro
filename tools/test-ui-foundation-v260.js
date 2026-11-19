@@ -54,7 +54,8 @@ for(const route of ['kyv_calendar.html','acquisisci_audio.html','editor.html'])
  assert.ok(launch.includes('href="'+route+'"'),'Launch route missing '+route);
 assert.ok(launch.includes("openKyvHomeGroup('admin')")&&launch.includes("openKyvHomeGroup('tools')"),'Group buttons must work');
 assert.ok(today.includes('id="home-analytics-details"')&&today.includes('id="activity-list"'),'Historical Oggi remains intact');
-assert.equal((launch.match(/class="kyv-launch-item"/g)||[]).length,5,'Home should have exactly five large action buttons');
+assert.equal((launch.match(/class="kyv-launch-item"/g)||[]).length,6,'Home has six large buttons after adding + Note');
+assert.ok(launch.indexOf('<strong>+ Note</strong>')<launch.indexOf('<strong>Agenda</strong>'),'+ Note must appear before Agenda');
 const actionBridge=read('kyv-action-bridge.js'),workflow=read('kyv-workflow-nav.js'),
  route=read('kyv-flow-routes-v269.js'),polish=read('kyv-layout-polish.js');
 assert.ok(actionBridge.includes("if(page==='oggi.html')"),'Oggi action bridge must run on dedicated page');
