@@ -260,9 +260,10 @@
             const button = event.target.closest('[data-kyv-calendar-index]');
             if(!button || !DOM.eventsList.contains(button)) return;
             const index = Number(button.dataset.kyvCalendarIndex);
-            if(!Number.isSafeInteger(index) || index < 0 || index >= listEventsCache.length) return;
+            const activeEvents=window.KYV_AGENDA_STORE?.getEvents()||listEventsCache;
+            if(!Number.isSafeInteger(index) || index < 0 || index >= activeEvents.length) return;
             window.dispatchEvent(new CustomEvent('kyv:calendar-open-event', {
-                detail: { event: listEventsCache[index], opener: button }
+                detail: { event: activeEvents[index], opener: button }
             }));
         });
 
