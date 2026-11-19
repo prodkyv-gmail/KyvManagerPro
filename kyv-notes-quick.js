@@ -146,7 +146,7 @@ function downloadCopy(){
  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function dismiss(force=false){
- if(!open||busy)return;
+ if(!open||(busy&&!force))return;
  if(!force&&(voice?.isRecording()||audioBlob)){
   const ok=confirm('Registrazione non ancora salvata. Vuoi chiudere e perderla? Usa “Scarica una copia” prima di chiudere, se vuoi conservarla.');
   if(!ok)return;
@@ -169,7 +169,7 @@ async function persist(){
   message('Nota salvata nel tuo Taccuino.','success');
   dismiss(true);
  }catch(error){
-  message('Impossibile salvare: '+(error?.message||'controlla rete e accesso')+'. La bozza testuale resta sul dispositivo.','true'===true);
+  message('Impossibile salvare: '+(error?.message||'controlla rete e accesso')+'. La bozza testuale resta sul dispositivo.',true);
   $('kyv-notes-quick-download').hidden=!audioBlob;
  }finally{busy=false;$('kyv-notes-quick-save').disabled=false;}
 }
