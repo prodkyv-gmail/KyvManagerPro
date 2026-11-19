@@ -1,6 +1,8 @@
 /* KYV Studio Editor v2.86 · compact primary tabs, secondary tables and per-table controls. */
 #editor-tabs{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:max-content}
-#editor-tabs>.kyv-editor-primary-tab{white-space:nowrap;flex:0 0 auto;min-height:39px}
+#editor-tabs>.kyv-editor-primary-tab{white-space:nowrap;flex:0 0 auto;min-height:39px;padding:10px 13px;border:1px solid #44506a;background:#1c2536;color:#d4e0ef;border-radius:10px;font-size:12px;font-weight:740;transition:background .15s,color .15s}
+#editor-tabs>.kyv-editor-primary-tab:hover{background:#313d58;color:#fff}
+#editor-tabs .kyv-editor-nav-active{background:#4f46e5!important;color:#fff!important;border-color:#7f7af8!important;box-shadow:0 4px 12px #3e35bd44}
 #editor-extra-tables{position:relative;flex-shrink:0}
 #editor-extra-tables>summary{list-style:none;display:flex;align-items:center;gap:8px;padding:10px 12px;min-height:39px;background:#1c2536;border:1px solid #3b4e69;border-radius:10px;font-size:12px;font-weight:750;color:#e4ebff;cursor:pointer}
 #editor-extra-tables>summary::-webkit-details-marker{display:none}
