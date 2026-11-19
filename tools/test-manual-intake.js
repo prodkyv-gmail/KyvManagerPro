@@ -37,8 +37,38 @@ for(const id of ['quick-date','quick-authors','quick-label','quick-management'])
   assert.ok(html.includes('id="'+id+'"'),'Field exists: '+id);
 for(const key of ['TITOLO','ARTISTA','NOTE','Data_Sessione','AUTORI','Label','MANAGEMENT'])
   assert.match(html,new RegExp(key+':'),'Quick insert writes real PROGETTI column: '+key);
-assert.match(html,/editor\.html\?table=PROGETTI&editId=/,'Open project goes to original Studio Editor popup');
-assert.match(fs.readFileSync(path.join(root,'editor.html'),'utf8'),/window\.openDynamicModal\(data\.ID,'PROGETTI',data\)/,'Editor auto-opens original Modifica (PROGETTI)');
+assert.match(html,/editor\.html\?table=PROGETTI&editId=/,'Original editor deep-link remains as fallback');
+assert.match(html,/openProjectEditorPopup\(p\.ID,link\)/,'Apri progetto opens a popup, not a page redirect');
+assert.match(html,/dialog\.showModal\(\)/,'The ADD Progetto popup must be modal');
+assert.match(html,/url\.searchParams\.set\('embed','1'\)/,'The original editor is embedded');
+assert.match(html,/event\.source!==frame\.contentWindow/,'Embedded editor messages require the exact iframe source');
+const editor=fs.readFileSync(path.join(root,'editor.html'),'utf8');
+assert.match(editor,/window\.openDynamicModal\(data\.ID,'PROGETTI',data\)/,'Original Modifica (PROGETTI) reused');
+assert.match(editor,/if\(!kyvEditorEmbedded\)\{/,'Embedded editor must not load the table view');
+assert.match(editor,/reportEmbeddedEditor\('ready'\)/,'Parent is notified when original modal is ready');
+assert.match(editor,/reportEmbeddedEditor\('closed'\)/,'Parent is notified on original modal close');
+assert.match(editor,/KYV_EDITOR_REQUEST_CLOSE=\(\)=>closeEditorModal\(\)/,'Original unsaved-changes guard is preserved');
+assert.match(html,/loadProjectSuggestions\(\)/,'Existing values are queried for autocomplete');
+assert.match(html,/\.select\('ARTISTA,AUTORI,Label,MANAGEMENT'\)/,'Only the four existing project fields are queried');
+assert.match(html,/\.range\(offset,offset\+step-1\)/,'Project autocomplete is paginated');
+for(const [id,list] of [['quick-artist','quick-artist-options'],['quick-authors','quick-authors-options'],
+  ['quick-label','quick-label-options'],['quick-management','quick-management-options']]){
+  assert.match(html,new RegExp('id="'+id+'" list="'+list+'"'),
+    'Field '+id+' must permit both existing and new values');
+  assert.match(html,new RegExp('<datalist id="'+list+'">'),
+    'Dropdown '+list+' must exist');
+}
+const helper=require('../kyv-project-suggestions.js');
+assert.deepEqual(helper.unique(['  Giorgia','giorgia','GIÓRGIA ',' Giorgia  ','Malika Ayane']),
+  ['Giorgia','Malika Ayane'],'Case, spaces and accents must not duplicate suggestions');
+assert.deepEqual(helper.suggestions([
+  {ARTISTA:'Emma',AUTORI:'Kyv, Marco',Label:'Island',MANAGEMENT:'A&R'},
+  {ARTISTA:'emma',AUTORI:' kyv,  marco ',Label:'ISLAND',MANAGEMENT:'a&r'},
+  {ARTISTA:'Giorgia',AUTORI:'Anna',Label:'Warner',MANAGEMENT:'Arturo'}
+]),{
+  ARTISTA:['Emma','Giorgia'],AUTORI:['Anna','Kyv, Marco'],
+  Label:['Island','Warner'],MANAGEMENT:['A&R','Arturo']
+},'Each source column uses one distinct list without duplicates');
 assert.doesNotMatch(html,/if\(response\.error\)response=await db\.from\('PROGETTI'\)/,'No blind second insert');
 assert.match(html,/id="cloud-flow"/);
 assert.match(config,/kyv-producer-mode\.js/);

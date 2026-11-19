@@ -5,9 +5,28 @@
 <title>KYV · ADD Progetto</title>
 <link rel="icon" href="favicon.ico"><link rel="stylesheet" href="kyv-responsive.css"><link rel="stylesheet" href="kyv-theme.css">
 <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@0.468.0"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
-<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-toast.js"></script><script src="kyv-helpers.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-manual-intake-core.js"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-toast.js"></script><script src="kyv-helpers.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script><script src="kyv-project-suggestions.js"></script><script src="kyv-audio-project.js"></script><script src="kyv-manual-intake-core.js"></script>
 <style>
 body{background:#0f111a;color:#f8fafc;font-family:Inter,system-ui,sans-serif}.capture-card{background:#151923;border:1px solid #303647;border-radius:20px;padding:22px}.capture-field{width:100%;background:#0f111a;color:#fff;border:1px solid #384154;border-radius:12px;padding:13px;outline:none}.capture-field:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}.capture-label{display:block;font-size:10px;letter-spacing:.08em;color:#a5b4c9;font-weight:900;margin-bottom:7px;text-transform:uppercase}.primary{background:#4f46e5;color:#fff;font-weight:900;border-radius:12px;padding:13px 18px}.primary:disabled{opacity:.45}.secondary{border:1px solid #384154;border-radius:12px;padding:11px 14px;display:inline-flex;align-items:center;gap:7px;color:#dbeafe}.hint{font-size:12px;color:#94a3b8;line-height:1.55}details[open] summary .chev{transform:rotate(180deg)}
+
+/* Real original Studio Editor popup hosted directly over ADD Progetto: never navigates away. */
+#quick-project-editor-dialog{
+  position:fixed;margin:auto;border:1px solid #3a4155;border-radius:16px;
+  padding:0;width:min(96vw,1080px);height:min(92dvh,900px);
+  max-width:none;max-height:none;overflow:hidden;
+  background:#0f111a;color:#f8fafc;box-shadow:0 24px 90px rgba(0,0,0,.75);
+}
+#quick-project-editor-dialog::backdrop{background:rgba(4,8,19,.82);backdrop-filter:blur(3px)}
+#quick-editor-frame{width:100%;height:100%;display:block;border:0;background:transparent}
+#quick-editor-frame[hidden]{display:none}
+#quick-editor-loading{display:flex;align-items:center;justify-content:center;height:100%;padding:4rem 2rem;text-align:center;color:#cbd5e1}
+#quick-editor-loading[hidden]{display:none}
+#quick-editor-close{position:absolute;z-index:2;right:.65rem;top:.45rem;border:1px solid #657389;border-radius:.6rem;
+  background:#263143;color:white;padding:.35rem .7rem;font-size:12px;cursor:pointer}
+#quick-editor-close[data-ready="true"]{display:none}
+#quick-editor-fallback{position:absolute;z-index:2;top:55%;left:50%;transform:translate(-50%,-50%);
+  padding:.65rem 1rem;border:1px solid #7c92b7;background:#283954;border-radius:.7rem;color:white}
+@media(max-width:600px){#quick-project-editor-dialog{width:100vw;height:100dvh;border-radius:0}}
 </style>
 </head>
 <body data-auth-required="true" class="flex h-screen overflow-hidden antialiased text-sm">
@@ -21,18 +40,23 @@ body{background:#0f111a;color:#f8fafc;font-family:Inter,system-ui,sans-serif}.ca
     <input id="quick-title" class="capture-field text-base" maxlength="250" required autocomplete="off" placeholder="Es. Ballad piano / titolo provvisorio"></div>
   <div class="grid sm:grid-cols-2 gap-4">
     <div><label class="capture-label" for="quick-artist">Artista · facoltativo</label>
-      <input id="quick-artist" class="capture-field" maxlength="200" placeholder="Artista del progetto"></div>
+      <input id="quick-artist" list="quick-artist-options" autocomplete="off" class="capture-field" maxlength="200" placeholder="Artista del progetto"></div>
     <div><label class="capture-label" for="quick-date">Data sessione · facoltativa</label>
       <input id="quick-date" class="capture-field" type="date" style="color-scheme:dark"></div>
     <div><label class="capture-label" for="quick-authors">Autori · facoltativo</label>
-      <input id="quick-authors" class="capture-field" maxlength="1000" placeholder="Nomi autori / coautori"></div>
+      <input id="quick-authors" list="quick-authors-options" autocomplete="off" class="capture-field" maxlength="1000" placeholder="Nomi autori / coautori"></div>
     <div><label class="capture-label" for="quick-label">Label · facoltativa</label>
-      <input id="quick-label" class="capture-field" maxlength="500" placeholder="Etichetta discografica"></div>
+      <input id="quick-label" list="quick-label-options" autocomplete="off" class="capture-field" maxlength="500" placeholder="Etichetta discografica"></div>
     <div><label class="capture-label" for="quick-management">Management · facoltativo</label>
-      <input id="quick-management" class="capture-field" maxlength="500" placeholder="Management / referente"></div>
+      <input id="quick-management" list="quick-management-options" autocomplete="off" class="capture-field" maxlength="500" placeholder="Management / referente"></div>
     <div><label class="capture-label" for="quick-note">Nota veloce · facoltativa</label>
       <input id="quick-note" class="capture-field" maxlength="500" placeholder="Es. ritornello da riscrivere"></div>
   </div>
+  <datalist id="quick-artist-options"></datalist>
+  <datalist id="quick-authors-options"></datalist>
+  <datalist id="quick-label-options"></datalist>
+  <datalist id="quick-management-options"></datalist>
+  <p id="quick-suggestion-status" class="hint" role="status">Puoi scrivere un nuovo nome o scegliere tra quelli già registrati.</p>
   <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
     <button id="quick-save" class="primary" type="submit"><i data-lucide="check" class="w-4 h-4 inline mr-2"></i>Salva progetto</button>
     <span class="hint">Gli altri campi restano facoltativi. Dopo il salvataggio puoi aprire direttamente Modifica (PROGETTI).</span>
@@ -43,6 +67,12 @@ body{background:#0f111a;color:#f8fafc;font-family:Inter,system-ui,sans-serif}.ca
 <details id="cloud-flow" class="capture-card group"><summary class="cursor-pointer list-none flex items-center justify-between gap-4"><div><p class="text-xs font-black text-white">Hai già un file o un link?</p><p class="hint mt-1">Apri solo se vuoi partire da un audio Drive/Dropbox o collegarlo subito a un progetto.</p></div><i data-lucide="chevron-down" class="chev w-5 h-5 text-slate-400 transition-transform"></i></summary><div class="mt-5 pt-5 border-t border-slate-700/70 space-y-5"><div class="flex flex-wrap gap-2"><a class="secondary" target="_blank" rel="noopener noreferrer" href="https://drive.google.com/drive/my-drive"><i data-lucide="hard-drive" class="w-4 h-4"></i>Apri Drive</a><a class="secondary" target="_blank" rel="noopener noreferrer" href="https://www.dropbox.com/home"><i data-lucide="cloud" class="w-4 h-4"></i>Apri Dropbox</a></div><form id="intake-form" class="space-y-4" novalidate><div><label class="capture-label" for="intake-link">Link Drive o Dropbox *</label><input id="intake-link" class="capture-field" type="url" inputmode="url" required placeholder="https://drive.google.com/file/d/... oppure https://www.dropbox.com/..."></div><div class="grid sm:grid-cols-2 gap-4"><div><label class="capture-label" for="intake-name">Nome file *</label><input id="intake-name" class="capture-field" maxlength="250" required placeholder="Titolo demo v2.mp3"></div><div><label class="capture-label" for="intake-title">Titolo brano</label><input id="intake-title" class="capture-field" maxlength="250"></div><div><label class="capture-label" for="intake-artist">Artista</label><input id="intake-artist" class="capture-field" maxlength="200"></div><div><label class="capture-label" for="intake-type">Tipo</label><select id="intake-type" class="capture-field"><option>Demo</option><option>Produzione</option><option>Mix</option><option>Master</option><option>Versione audio</option><option>Stems</option></select></div><div><label class="capture-label" for="intake-version">Versione</label><input id="intake-version" class="capture-field" maxlength="60" placeholder="v2, rough, final..."></div><div><label class="capture-label" for="intake-date">Data file · se nota</label><input id="intake-date" class="capture-field" type="date"></div></div><label class="flex gap-3 items-center text-sm"><input id="intake-audio-confirm" type="checkbox" class="w-5 h-5 accent-indigo-500"> Confermo che il link identifica un file audio, non una cartella.</label><button id="intake-check" class="primary" type="submit">Controlla duplicati</button></form><section id="intake-review" class="hidden rounded-xl border border-slate-700 p-4" aria-live="polite"><p id="intake-outcome" class="text-sm mb-3"></p><div id="intake-existing" class="hidden"><a id="intake-existing-link" class="secondary" href="#">Apri progetto già collegato</a></div><div id="intake-save-panel" class="hidden space-y-3"><label class="capture-label" for="intake-project">Collega a</label><select id="intake-project" class="capture-field"></select><button id="intake-save" type="button" class="primary" disabled>Conferma</button></div></section></div></details>
 <section id="intake-status" class="text-xs text-slate-500" role="status" aria-live="polite">Pronto per una nuova idea.</section>
 </div></main>
+<dialog id="quick-project-editor-dialog" aria-label="Modifica (PROGETTI)">
+  <button id="quick-editor-close" type="button" aria-label="Chiudi popup progetto">Chiudi ×</button>
+  <div id="quick-editor-loading" role="status" aria-live="polite">Apertura Modifica (PROGETTI)…</div>
+  <iframe id="quick-editor-frame" title="Modifica (PROGETTI) · Studio Editor" hidden></iframe>
+  <a id="quick-editor-fallback" class="secondary" hidden target="_blank" rel="noopener noreferrer">Apri nello Studio Editor</a>
+</dialog>
 <script>
 (function(){
 'use strict';
@@ -79,11 +109,17 @@ async function saveIdea(event){
     message.className='text-sm text-emerald-100';
     message.textContent='Progetto salvato. Apri Modifica (PROGETTI) per vedere e completare tutti i campi.';
     const link=document.createElement('a');
-    // Studio Editor already supports this deep link and opens its ORIGINAL Modifica (PROGETTI) modal.
+    // The actual original editor modal opens in an embedded overlay: no page navigation.
     link.href='editor.html?table=PROGETTI&editId='+encodeURIComponent(p.ID);
     link.className='secondary mt-3';
     link.textContent='Apri progetto · Modifica (PROGETTI) →';
+    link.addEventListener('click',event=>{
+      if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+      event.preventDefault();
+      openProjectEditorPopup(p.ID,link);
+    });
     result.append(message,link);
+    refreshSuggestionAfterSave(payload);
     $('quick-form').reset();
     status('Progetto #'+p.ID+' creato.');
   }catch(error){
@@ -92,13 +128,126 @@ async function saveIdea(event){
     busy=false;$('quick-save').disabled=false;
   }
 }
+function renderProjectSuggestions(grouped){
+  const {fields}=window.KYV_PROJECT_SUGGESTIONS||{};
+  if(!fields)return;
+  for(const [field,id] of Object.entries(fields)){
+    const list=$(id);if(!list)continue;
+    list.replaceChildren();
+    for(const value of grouped?.[field]||[]){
+      const option=document.createElement('option');
+      option.value=value;list.appendChild(option);
+    }
+  }
+}
+function refreshSuggestionAfterSave(payload){
+  const helper=window.KYV_PROJECT_SUGGESTIONS;
+  if(!helper)return;
+  for(const [field,id] of Object.entries(helper.fields)){
+    const list=$(id);
+    if(!list||!payload[field])continue;
+    const merged=helper.unique([...list.options].map(o=>o.value).concat([payload[field]]));
+    list.replaceChildren(...merged.map(value=>{
+      const option=document.createElement('option');option.value=value;return option;
+    }));
+  }
+}
+async function loadProjectSuggestions(){
+  const hint=$('quick-suggestion-status');
+  if(!db||!window.KYV_PROJECT_SUGGESTIONS)return;
+  const collected=[],step=500;let offset=0;
+  try{
+    // Read only four project columns, without scanning audio or unrelated archives.
+    do{
+      const {data,error}=await db.from('PROGETTI').select('ARTISTA,AUTORI,Label,MANAGEMENT')
+        .order('ID',{ascending:true}).range(offset,offset+step-1);
+      if(error)throw error;
+      if(!Array.isArray(data))throw Error('Lettura suggerimenti incompleta.');
+      collected.push(...data);offset+=data.length;
+      if(data.length<step)break;
+    }while(true);
+    renderProjectSuggestions(KYV_PROJECT_SUGGESTIONS.suggestions(collected));
+    if(hint)hint.textContent='Seleziona un valore già utilizzato o scrivine uno nuovo. Suggerimenti senza duplicati.';
+  }catch(error){
+    if(hint)hint.textContent='Suggerimenti non disponibili: puoi comunque inserire liberamente nuovi valori.';
+    console.warn('[KYV ADD Progetto] Caricamento suggerimenti:',error?.message||error);
+  }
+}
+let activeEditorId='',editorOpener=null,editorReady=false;
+function closeEmbeddedProjectPopup(){
+  const dialog=$('quick-project-editor-dialog');
+  if(!dialog.open)return;
+  if(editorReady){
+    try{
+      const frame=$('quick-editor-frame');
+      if(frame.contentWindow?.KYV_EDITOR_REQUEST_CLOSE){
+        frame.contentWindow.KYV_EDITOR_REQUEST_CLOSE();
+        return; // The editor confirms unsaved changes and sends the close event.
+      }
+    }catch(error){console.warn('[KYV ADD Progetto] Impossibile inoltrare la chiusura:',error);}
+    return; // Do not bypass unsaved-change protection.
+  }
+  dialog.close();
+}
+function openProjectEditorPopup(id,opener){
+  if(!Number.isSafeInteger(Number(id))||Number(id)<=0)return;
+  const dialog=$('quick-project-editor-dialog'),frame=$('quick-editor-frame'),fallback=$('quick-editor-fallback');
+  if(dialog.open)return;
+  activeEditorId=String(id);editorOpener=opener||document.activeElement;editorReady=false;
+  $('quick-editor-close').dataset.ready='false';
+  $('quick-editor-loading').hidden=false;
+  $('quick-editor-loading').textContent='Apertura Modifica (PROGETTI)…';
+  frame.hidden=true;
+  const url=new URL('editor.html',window.location.href);
+  url.searchParams.set('table','PROGETTI');
+  url.searchParams.set('editId',activeEditorId);
+  url.searchParams.set('embed','1');
+  const direct=new URL(url.href);direct.searchParams.delete('embed');
+  fallback.href=direct.href;fallback.hidden=true;
+  dialog.showModal();
+  frame.src=url.href;
+}
+$('quick-editor-close').addEventListener('click',closeEmbeddedProjectPopup);
+$('quick-project-editor-dialog').addEventListener('cancel',event=>{
+  event.preventDefault();closeEmbeddedProjectPopup();
+});
+$('quick-project-editor-dialog').addEventListener('close',()=>{
+  const frame=$('quick-editor-frame');
+  frame.hidden=true;frame.removeAttribute('src');activeEditorId='';editorReady=false;
+  if(editorOpener?.isConnected)editorOpener.focus();
+  editorOpener=null;
+});
+window.addEventListener('message',event=>{
+  const frame=$('quick-editor-frame');
+  if(event.origin!==location.origin||event.source!==frame.contentWindow)return;
+  const message=event.data;
+  if(!message||message.type!=='kyv:embedded-project-editor'||String(message.id)!==activeEditorId)return;
+  if(message.status==='ready'){
+    editorReady=true;
+    $('quick-editor-close').dataset.ready='true';
+    $('quick-editor-loading').hidden=true;
+    $('quick-editor-fallback').hidden=true;
+    frame.hidden=false;
+  }else if(message.status==='closed'){
+    $('quick-project-editor-dialog').close();
+  }else if(message.status==='error'){
+    editorReady=false;
+    $('quick-editor-loading').hidden=false;
+    $('quick-editor-loading').textContent=String(message.message||'Impossibile aprire il progetto.');
+    $('quick-editor-fallback').hidden=false;
+  }
+});
 async function loadReferences(){const responses=await Promise.all([db.from('PROGETTI').select('ID,TITOLO,ARTISTA').limit(2500),db.from('AUDIO_VERSIONI').select('ID_PROGETTO,PROVIDER,PROVIDER_ID,LINK_FILE,NOME_FILE').limit(5000),db.from('DROPBOX_AUDIO_FILES').select('ID_PROGETTO,Link_Dropbox').limit(2500),db.from('DOCUMENTI_PROGETTO').select('ID_PROGETTO,Link_Drive').limit(2500)]);if(responses.some(r=>r.error))throw new Error('Archivio non accessibile con questa sessione.');projects=responses[0].data||[];archive=[...(responses[1].data||[]),...(responses[2].data||[]),...(responses[3].data||[])];forcedProject=forcedProjectId?projects.find(p=>String(p.ID)===String(forcedProjectId))||null:null;}
 function itemFromForm(){const parsed=KYV_MANUAL_INTAKE.parseLink($('intake-link').value),name=$('intake-name').value.trim();if(!name)throw new Error('Inserisci il nome del file.');if(!$('intake-audio-confirm').checked)throw new Error('Conferma che sia un file audio.');const title=$('intake-title').value.trim()||forcedProject?.TITOLO||KYV_AUDIO_PROJECT.cleanTitle(name);return{source:parsed.provider,id:parsed.providerId,providerId:parsed.providerId,link:parsed.link,url:parsed.link,webViewLink:parsed.provider==='drive'?parsed.link:undefined,name,fileName:name,title,artist:$('intake-artist').value.trim()||forcedProject?.ARTISTA||'',type:$('intake-type').value,version:$('intake-version').value.trim(),date:$('intake-date').value||null,mimeType:'audio/unknown'};}
 function renderReview(item,result){$('intake-review').classList.remove('hidden');$('intake-existing').classList.add('hidden');$('intake-save-panel').classList.add('hidden');$('intake-outcome').textContent=result.reason;if(result.status==='existing'){if(result.projectId){$('intake-existing-link').href=`scheda_progetto.html?id=${encodeURIComponent(result.projectId)}`;$('intake-existing').classList.remove('hidden');}return;}const select=$('intake-project');select.replaceChildren();select.add(new Option('Scegli progetto…',''));const suggestions=new Set((result.candidates||[]).map(p=>String(p.ID)));[...projects].sort((a,b)=>projectLabel(a).localeCompare(projectLabel(b),'it')).forEach(p=>select.add(new Option(`${suggestions.has(String(p.ID))?'★ ':''}${projectLabel(p)}`,String(p.ID))));select.add(new Option('+ Crea nuovo progetto','new'));$('intake-save-panel').classList.remove('hidden');if(forcedProject&&[...select.options].some(o=>o.value===String(forcedProject.ID))){select.value=String(forcedProject.ID);$('intake-save').disabled=false;}else $('intake-save').disabled=true;}
 async function prepareVersionContext(){if(!forcedProjectId)return;$('cloud-flow').open=true;if(versionMode)$('quick-card').classList.add('hidden');status('Carico il progetto selezionato…');await loadReferences();if(!forcedProject){status('Il progetto indicato non è disponibile con questa sessione.',true);return;}$('intake-title').value=$('intake-title').value||forcedProject.TITOLO||'';$('intake-artist').value=$('intake-artist').value||forcedProject.ARTISTA||'';$('version-context').classList.remove('hidden');$('version-context-title').textContent=`Nuova versione · ${projectLabel(forcedProject)}`;$('version-context-copy').textContent='Titolo e artista sono già impostati. Incolla il link del nuovo audio e conferma: KYV lo collegherà a questo progetto dopo il controllo duplicati.';$('version-context-back').href=`scheda_progetto.html?id=${encodeURIComponent(forcedProject.ID)}`;status(`Pronto ad aggiungere una versione al progetto #${forcedProject.ID}.`);}
 $('quick-form').addEventListener('submit',saveIdea);$('intake-project').addEventListener('change',()=>{$('intake-save').disabled=!reviewed||!$('intake-project').value||busy;});$('intake-form').addEventListener('input',()=>{reviewed=null;$('intake-review').classList.add('hidden');});$('intake-form').addEventListener('submit',async event=>{event.preventDefault();if(busy||!db)return;busy=true;$('intake-check').disabled=true;status('Controllo solo ora i riferimenti già registrati…');try{const item=itemFromForm();await loadReferences();const result=KYV_MANUAL_INTAKE.classify(item,archive,projects);reviewed={item,result};renderReview(item,result);status('Controllo completato. Nessun file cloud è stato scansionato.');}catch(error){status(error.message||'Controllo non riuscito.',true);}finally{busy=false;$('intake-check').disabled=false;}});
 $('intake-save').addEventListener('click',async()=>{if(!reviewed||busy)return;const choice=$('intake-project').value;if(!choice)return;busy=true;$('intake-save').disabled=true;try{const item=itemFromForm();await loadReferences();const latest=KYV_MANUAL_INTAKE.classify(item,archive,projects);if(latest.status==='existing'){reviewed={item,result:latest};renderReview(item,latest);return;}const project=choice==='new'?null:projects.find(p=>String(p.ID)===choice);const saved=project?await KYV_AUDIO_PROJECT.linkToProject(item,project.ID,{db,projects}):await KYV_AUDIO_PROJECT.createFromItem(item,{db,projects});if(saved)location.href=`scheda_progetto.html?id=${encodeURIComponent(saved.ID)}`;}catch(error){status(error.message||'Salvataggio non riuscito.',true);}finally{busy=false;}});
-document.addEventListener('DOMContentLoaded',async()=>{if(typeof loadKyvSidebar==='function')loadKyvSidebar('nuovo');const source=params.get('source');if(source==='drive'||source==='dropbox'||versionMode)$('cloud-flow').open=true;try{const session=await KYV_AUTH.requireAuth();if(!session)return;db=KYV.createSupabaseClient();if(forcedProjectId)await prepareVersionContext();else status('Pronto. Per un appunto non viene caricato nessun archivio audio.');}catch(error){db=null;status(`Accesso non disponibile: ${error.message}.`,true);$('quick-save').disabled=true;$('intake-check').disabled=true;}if(window.lucide)lucide.createIcons();});
+document.addEventListener('DOMContentLoaded',async()=>{if(typeof loadKyvSidebar==='function')loadKyvSidebar('nuovo');const source=params.get('source');if(source==='drive'||source==='dropbox'||versionMode)$('cloud-flow').open=true;try{const session=await KYV_AUTH.requireAuth();if(!session)return;db=KYV.createSupabaseClient();if(forcedProjectId)await prepareVersionContext();
+else{
+  status('Pronto. Per un appunto non viene caricato nessun archivio audio.');
+  loadProjectSuggestions(); // Background fetch of distinct existing PROGETTI values only.
+}}catch(error){db=null;status(`Accesso non disponibile: ${error.message}.`,true);$('quick-save').disabled=true;$('intake-check').disabled=true;}if(window.lucide)lucide.createIcons();});
 })();
 </script>
 </body></html>
