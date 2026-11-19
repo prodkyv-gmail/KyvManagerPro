@@ -793,6 +793,7 @@
                 .filter(el=>el.getClientRects().length);
             if(!focusable.length)return;
             const first=focusable[0],last=focusable[focusable.length-1];
+            if(!projectDetailsOverlay.contains(document.activeElement)){event.preventDefault();first.focus();return;}
             if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
             else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
         },true);
@@ -1064,7 +1065,7 @@
             else if (action === 'project-detail-close')closeProjectDetails();
             else if (action === 'project-detail-edit') {
                 const id=projectDetailId,row=id===null?null:projectRow(id);
-                if(row){closeProjectDetails(false);openDynamicModal(row.ID,'PROGETTI',row);}
+                if(row){closeProjectDetails(true);openDynamicModal(row.ID,'PROGETTI',row);}
             }
             else if (action === 'load-table') loadEditorTable(btn.dataset.table);
             else if (action === 'retry-table') loadEditorTable(currentEditorTable);
