@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
-if(page!=='index.html'&&page!=='')return;
+if(page!=='oggi.html')return;
 
 const FOLLOWUP_DAYS=5;
 let db=null,renderToken=0;
