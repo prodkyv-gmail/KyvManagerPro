@@ -1,7 +1,8 @@
-const CACHE_NAME = 'kyv-studio-v2-82-shared-relations-20261117';
+const CACHE_NAME = 'kyv-studio-ui-calm-launcher-20261119';
 const APP_SHELL = [
     './',
     './index.html',
+    './oggi.html',
     './progetti.html',
     './kyv-project-list-v250.js',
     './kyv-home-charts-v250.js',
