@@ -1386,11 +1386,11 @@ function boot(){
 
   mountTypeSelector();
   collapsePlanningForm();
-  mountOverview();
+  // Pannello «Cosa c’è da organizzare» rimosso dall'Agenda.
 
-  watchEvents();
+  // La tabella è renderizzata dall'archivio: nessun observer aggiuntivo.
 
-  loadProjects();
+  // Nessun caricamento duplicato di azioni Progetto nella vista Agenda.
 
   setTimeout(
     ()=>{
