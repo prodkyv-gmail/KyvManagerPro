@@ -638,9 +638,9 @@
             if (val === null || val === undefined || String(val).trim() === '') return { empty: true, type: 'empty', value: '' };
             if (typeof val === 'number') return { empty: false, type: 'number', value: val };
             const str = String(val).trim();
-            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-                const time = new Date(str).getTime();
-                if (!Number.isNaN(time)) return { empty: false, type: 'number', value: time };
+            if (/^(?:\d{4}-\d{2}-\d{2}|\d{1,2}[\/.]\d{1,2}[\/.]\d{4})/.test(str)) {
+                const time = KYV_EDITOR_ORGANIZE_V286.dateNumber(str);
+                if (time!==null) return { empty: false, type: 'number', value: time };
             }
             const numeric = KYV.parseNumber(str);
             if (/^-?[\d.,\s€]+$/.test(str) && Number.isFinite(numeric)) return { empty: false, type: 'number', value: numeric };
