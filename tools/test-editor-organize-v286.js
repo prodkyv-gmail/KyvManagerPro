@@ -78,11 +78,15 @@ const nav=html.split('id="editor-tabs"')[1].split('<!-- CONTENITORE RICERCA E AZ
 const navOrder=['PROGETTI','FATTURE','ESTRATTO SIAE','ESTRATTO_IMAIE'];
 let prev=-1;
 for(const table of navOrder){const index=nav.indexOf('id="tab-'+table+'"');assert.ok(index>prev,table+' must be in primary order');prev=index;}
-const extra=nav.split('id="editor-extra-tables-menu"')[1];
+const extra=nav.split('id="editor-extra-table-select"')[1];
+assert.ok(extra,'Secondary table selector is always accessible');
 for(const table of ['CLIENTI','CONSEGNE_MASTER','Spese Extra','PIANI_FISCALI','EXPORT SIAE VERTICALE','EXPORT SIAE',
  'AUDIO_VERSIONI','DROPBOX_AUDIO_FILES','INVII_AUDIO','DOCUMENTI_PROGETTO'])
- assert.ok(extra.includes('id="tab-'+table+'"'),table+' remains available in other tables');
-assert.equal((nav.match(/data-action="load-table"/g)||[]).length,14,'No archive navigation lost');
+ assert.ok(extra.includes('<option value="'+table+'">'),table+' remains available in other tables');
+assert.equal((nav.match(/data-action="load-table"/g)||[]).length,4,'Only four priority tabs are visible');
+assert.match(html,/getElementById\('editor-extra-table-select'\)\.addEventListener\('change'/,
+ 'Secondary table selector loads a real archive');
+assert.equal((extra.match(/<option value="[^"]+"/g)||[]).length,10,'All ten secondary archives retained');
 assert.match(html,/currentSortColumn=editorDefaultSort\.column/,'Date sorting applied to verified table data');
 assert.match(html,/currentSortDesc=editorDefaultSort\.descending/,'Newest-first on every table open');
 assert.match(html,/filterRows\(searched/,'Filter/search chain uses entire rows');
