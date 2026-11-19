@@ -131,36 +131,43 @@
                         </h3>
 
                         <form id="form-new-event" class="space-y-4 relative z-10 w-full min-w-0">
-                            <div class="w-full min-w-0">
-                                <label class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Titolo Evento</label>
-                                <input type="text" id="ev-title" required placeholder="Es. Registrazione Voci" class="kyv-input bg-[#0f111a] text-sm">
-                            </div>
-                            <div class="grid grid-cols-1 gap-3 w-full min-w-0">
-                                <div class="min-w-0">
-                                    <label class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Data</label>
-                                    <input type="date" id="ev-date" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme: dark;">
-                                </div>
-                                <div class="min-w-0">
-                                    <label class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Ora inizio</label>
-                                    <input type="time" id="ev-time" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme: dark;">
-                                </div>
-                                <div class="min-w-0">
-                                    <label for="ev-end-time" class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Ora fine</label>
-                                    <input type="time" id="ev-end-time" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme: dark;">
-                                </div>
-                                <div class="min-w-0">
-                                    <label for="ev-description" class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Descrizione (facoltativa)</label>
-                                    <textarea id="ev-description" maxlength="5000" rows="3" placeholder="Dettagli della sessione, partecipanti, note..." class="kyv-input bg-[#0f111a] text-sm"></textarea>
-                                </div>
-                                <div class="min-w-0">
-                                    <label for="ev-location" class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Luogo (facoltativo)</label>
-                                    <input type="text" id="ev-location" maxlength="500" placeholder="Studio / indirizzo" class="kyv-input bg-[#0f111a] text-sm">
-                                </div>
-                            </div>
-                            <button type="submit" id="btn-create" class="w-full min-w-0 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-500 mt-2">
-                                <i data-lucide="calendar-plus" class="w-4 h-4 mr-2 shrink-0" id="create-icon"></i> Crea su Calendar
-                            </button>
-                        </form>
+  <div class="w-full min-w-0">
+    <label for="ev-title" class="block text-[10px] font-bold text-kyv-text uppercase tracking-wider mb-1.5">Titolo *</label>
+    <input type="text" id="ev-title" maxlength="250" required placeholder="Es. Sessione · Registrazione voci" class="kyv-input bg-[#0f111a] text-sm">
+  </div>
+  <div class="kyv-activity-field-grid">
+    <div class="min-w-0"><label for="ev-date" class="capture-label">Data inizio *</label>
+      <input type="date" id="ev-date" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme:dark"></div>
+    <div class="min-w-0"><label for="ev-end-date" class="capture-label">Data fine *</label>
+      <input type="date" id="ev-end-date" required class="kyv-input bg-[#0f111a] text-sm" style="color-scheme:dark"></div>
+    <div class="min-w-0"><label for="ev-time" class="capture-label">Ora inizio</label>
+      <input type="time" id="ev-time" class="kyv-input bg-[#0f111a] text-sm" style="color-scheme:dark"></div>
+    <div class="min-w-0"><label for="ev-end-time" class="capture-label">Ora fine</label>
+      <input type="time" id="ev-end-time" class="kyv-input bg-[#0f111a] text-sm" style="color-scheme:dark"></div>
+    <label class="kyv-activity-all-day"><input type="checkbox" id="ev-all-day"> Tutto il giorno</label>
+    <div class="min-w-0"><label for="ev-location" class="capture-label">Luogo / indirizzo</label>
+      <input type="text" id="ev-location" maxlength="500" placeholder="Studio / indirizzo" class="kyv-input bg-[#0f111a] text-sm"></div>
+    <div class="min-w-0 kyv-activity-wide"><label for="ev-description" class="capture-label">Descrizione / partecipanti / dettagli</label>
+      <textarea id="ev-description" maxlength="5000" rows="3" placeholder="Informazioni aggiuntive" class="kyv-input bg-[#0f111a] text-sm"></textarea></div>
+    <div class="min-w-0"><label for="ev-status" class="capture-label">Stato</label>
+      <select id="ev-status" class="kyv-input bg-[#0f111a] text-sm">
+        <option value="da_fare">Da fare</option>
+        <option value="fatto">Fatto</option>
+        <option value="chiuso">Chiuso</option>
+        <option value="da_rimandare">Da rimandare</option>
+        <option value="da_rivedere">Da rivedere</option>
+        <option value="posticipato">Posticipato a data</option>
+      </select></div>
+    <div class="min-w-0"><label for="ev-remind-on" class="capture-label">Data promemoria o rinvio</label>
+      <input type="date" id="ev-remind-on" class="kyv-input bg-[#0f111a] text-sm" style="color-scheme:dark"></div>
+    <div class="min-w-0 kyv-activity-wide"><label for="ev-workflow-note" class="capture-label">Nota promemoria</label>
+      <textarea id="ev-workflow-note" maxlength="2000" rows="2" class="kyv-input bg-[#0f111a] text-sm" placeholder="Facoltativa"></textarea></div>
+  </div>
+  <p class="text-xs text-kyv-text">Stessi campi del popup evento. Le attività di più giorni o «Tutto il giorno» vengono salvate nell’Agenda KYV senza modificare Google Calendar.</p>
+  <button type="submit" id="btn-create" class="w-full min-w-0 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-500 mt-2">
+    <i data-lucide="calendar-plus" class="w-4 h-4 mr-2 shrink-0" id="create-icon"></i> Salva in agenda e Calendar
+  </button>
+</form>
                     </div>
                 </div>
 
@@ -349,61 +356,90 @@
         });
 
         DOM.formNew.addEventListener('submit', async e=>{
-            e.preventDefault();
-            const input={
-                title:document.getElementById('ev-title').value.trim(),
-                date:document.getElementById('ev-date').value,
-                time:document.getElementById('ev-time').value,
-                endTime:document.getElementById('ev-end-time').value,
-                description:document.getElementById('ev-description').value.trim(),
-                location:document.getElementById('ev-location').value.trim(),
-                activityType:document.querySelector('.kyv-agenda-type.active')?.dataset.kind||'other'
-            };
-            if(!input.title||!input.date||!input.time||!input.endTime||input.endTime<=input.time){
-                showToast('Indica titolo, data e orari validi (fine successiva all’inizio).',true);return;
-            }
-            if(!window.confirm('Salvare l’attività nella tabella e tentare la creazione su Google Calendar?\n\n'+
-                input.title+' · '+input.date+' '+input.time+'–'+input.endTime))return;
-            DOM.btnCreate.disabled=true;
-            DOM.createIcon.classList.add('animate-spin');
-            let created=null,googleError='';
-            try{
-                try{
-                    created=await calendarRequest('createEvent',{
-                        title:input.title,date:input.date,time:input.time,endTime:input.endTime,
-                        description:input.description,location:input.location,
-                        clientRequestId:'kyv-agenda-'+Date.now()+'-'+Math.random().toString(36).slice(2)
-                    });
-                    if(created?.error||created?.success===false)throw Error(created.error||'Google Calendar non ha confermato la creazione.');
-                }catch(err){
-                    googleError=String(err?.message||err);
-                    created=null;
-                }
-                if(!window.KYV_AGENDA_STORE)throw Error('Archivio permanente non disponibile.');
-                await KYV_AGENDA_STORE.saveCreated(input,created);
-                listEventsCache=KYV_AGENDA_STORE.getEvents();
-                DOM.formNew.reset();
-                window.dispatchEvent(new CustomEvent('kyv:calendar-created'));
-                showToast(googleError
-                    ?'Attività salvata nella tabella. Google Calendar non aggiornato: '+googleError
-                    :created?.eventId?'Evento salvato in Google Calendar e nella tabella.':'Evento salvato nella tabella; identificativo Google non verificato.',
-                    !!googleError||!created?.eventId);
-            }catch(err){
-                showToast((created?'Evento creato su Google, ma non archiviato: non reinviarlo. ':'')+
-                    String(err?.message||err),true);
-            }finally{
-                DOM.btnCreate.disabled=false;
-                DOM.createIcon.classList.remove('animate-spin');
-            }
+  e.preventDefault();
+  if(DOM.btnCreate.disabled)return;
+  const value=id=>document.getElementById(id).value.trim();
+  const input={
+    title:value('ev-title'),date:value('ev-date'),endDate:value('ev-end-date'),
+    time:value('ev-time'),endTime:value('ev-end-time'),
+    allDay:document.getElementById('ev-all-day').checked,
+    description:value('ev-description'),location:value('ev-location'),
+    activityType:document.querySelector('.kyv-agenda-type.active')?.dataset.kind||'other',
+    workflowStatus:value('ev-status'),remindOn:value('ev-remind-on'),
+    workflowNote:value('ev-workflow-note')
+  };
+  const store=window.KYV_AGENDA_STORE;
+  if(!store){showToast('Archivio Agenda non disponibile. Aggiorna la pagina.',true);return;}
+  try{store.validateNewEvent(input);}
+  catch(error){showToast(String(error?.message||error),true);return;}
+  const googleCapable=!input.allDay&&input.date===input.endDate;
+  const period=input.allDay?'Tutto il giorno':input.time+'–'+input.endTime;
+  const willSync=googleCapable
+    ?'Si tenterà anche la creazione su Google Calendar.'
+    :'L’attività sarà salvata solo nell’app, senza modificare Google Calendar.';
+  if(!window.confirm('Salvare la nuova attività?\n\n'+input.title+' · '+input.date+
+      (input.endDate!==input.date?' → '+input.endDate:'')+' · '+period+'\n'+willSync))return;
+  DOM.btnCreate.disabled=true;
+  DOM.createIcon.classList.add('animate-spin');
+  let created=null,googleError='';
+  try{
+    if(googleCapable){
+      try{
+        created=await calendarRequest('createEvent',{
+          title:input.title,date:input.date,time:input.time,endTime:input.endTime,
+          description:input.description,location:input.location,
+          clientRequestId:'kyv-agenda-'+Date.now()+'-'+Math.random().toString(36).slice(2)
         });
+        if(created?.error||created?.success===false)
+          throw Error(created.error||'Google Calendar non ha confermato la creazione.');
+      }catch(error){
+        googleError=String(error?.message||error);created=null;
+      }
+    }
+    await store.saveCreated(input,created);
+    listEventsCache=store.getEvents();
+    DOM.formNew.reset();
+    resetNewActivityDefaults();
+    window.dispatchEvent(new CustomEvent('kyv:calendar-created'));
+    if(!googleCapable)showToast('Nuova Attività salvata in KYV con tutti i dettagli. Google Calendar non modificato.');
+    else if(googleError)showToast('Attività salvata in KYV; Google Calendar non aggiornato: '+googleError,true);
+    else if(created?.eventId)showToast('Nuova Attività e dettagli salvati in Agenda e Google Calendar.');
+    else showToast('Attività salvata in KYV; ID Google non verificato.',true);
+  }catch(error){
+    showToast((created?.eventId?'Evento già creato su Google: verifica prima di reinviarlo. ':'')+
+      String(error?.message||error),true);
+  }finally{
+    DOM.btnCreate.disabled=false;
+    DOM.createIcon.classList.remove('animate-spin');
+  }
+});
 
-        // Nessuna sincronizzazione automatica: evita freeze e rende l'apertura dell'Agenda immediata.
+function resetNewActivityDefaults(){
+  const now=new Date();
+  const date=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+  document.getElementById('ev-date').value=date;
+  document.getElementById('ev-end-date').value=date;
+  document.getElementById('ev-time').value='11:00';
+  document.getElementById('ev-end-time').value='13:00';
+  document.getElementById('ev-status').value='da_fare';
+  document.getElementById('ev-all-day').checked=false;
+  document.getElementById('ev-time').disabled=false;
+  document.getElementById('ev-end-time').disabled=false;
+  endDateChanged=false;
+}
+let endDateChanged=false;
+document.getElementById('ev-end-date').addEventListener('change',()=>{endDateChanged=true;});
+document.getElementById('ev-date').addEventListener('change',()=>{
+  if(!endDateChanged)document.getElementById('ev-end-date').value=document.getElementById('ev-date').value;
+});
+document.getElementById('ev-all-day').addEventListener('change',event=>{
+  document.getElementById('ev-time').disabled=event.target.checked;
+  document.getElementById('ev-end-time').disabled=event.target.checked;
+});
+
+// Nessuna sincronizzazione automatica: evita freeze e rende l'apertura dell'Agenda immediata.
         document.addEventListener('DOMContentLoaded', () => {
-            const now = new Date();
-            const localDate = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-            document.getElementById('ev-date').value = localDate;
-            document.getElementById('ev-time').value = '11:00';
-            document.getElementById('ev-end-time').value = '13:00';
+            resetNewActivityDefaults();
             const width=document.getElementById('kyv-agenda-width');
             const output=document.getElementById('kyv-agenda-width-value');
             const panel=document.querySelector('.kyv-calendar-main');
