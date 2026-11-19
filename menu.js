@@ -98,6 +98,7 @@ function inferKyvPageFromPath() {
         'kyv_dropbox.html': 'dropbox',
         'kyv_drive.html': 'drive',
         'kyv_calendar.html': 'calendar',
+        'kyv_notes.html': 'notes',
         'login.html': 'login'
     };
     return pages[file] || file.replace(/\.html$/, '') || 'dashboard';
@@ -169,6 +170,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
         quote: ['quote', 'autori'],
         rendiconto: ['rendiconto'],
         calendar: ['calendar'],
+        notes: ['notes'],
         creative: ['creative'],
         audiofinder: ['audiofinder'],
         nuovo: ['nuovo'],
@@ -215,6 +217,7 @@ function loadKyvSidebar(activePage = 'dashboard') {
                     <p class="px-3 text-[10px] font-black text-kyv-text uppercase tracking-wider mb-2">Produttore</p>
                     <ul class="space-y-1">
                         ${navItem('home', 'index.html', 'house', 'Home')}
+                        ${navItem('notes', 'kyv_notes.html?new=1', 'notebook-pen', '+ Note', 'text-violet-300')}
                         ${navItem('calendar', 'kyv_calendar.html', 'calendar-days', 'Agenda', 'text-blue-300')}
                         ${navItem('nuovo', 'acquisisci_audio.html', 'folder-plus', 'Nuovo progetto', 'text-cyan-300')}
                         ${navItem('assistente', 'assistente.html', 'route', 'Percorso brano', 'text-violet-300')}
