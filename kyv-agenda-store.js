@@ -254,9 +254,60 @@ function reportSync(info){
 
 const api={updateWorkflow,saveManual,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
 root.KYV_AGENDA_STORE=api;
+function wireTableActions(list){
+  if(!list||typeof list.addEventListener!=='function')return;
+  list.addEventListener('change',event=>{
+    if(event.target?.id==='kyv-agenda-filter'){
+      state.filter=event.target.value;render();
+    }
+  });
+  list.addEventListener('click',async event=>{
+    const action=event.target?.closest?.('[data-kyv-agenda-action]');
+    if(action){
+      if(action.dataset.kyvAgendaAction==='new-form')state.formOpen=true;
+      else if(action.dataset.kyvAgendaAction==='close-form')state.formOpen=false;
+      render();return;
+    }
+    const button=event.target?.closest?.('[data-kyv-agenda-id]');
+    if(!button||button.disabled)return;
+    const tr=button.closest('tr');if(!tr)return;
+    const status=tr.querySelector('.kyv-agenda-row-status')?.value;
+    const remind=tr.querySelector('.kyv-agenda-row-reminder')?.value||'';
+    const note=tr.querySelector('.kyv-agenda-row-note')?.value||'';
+    button.disabled=true;button.textContent='Salvo…';
+    try{
+      await updateWorkflow(button.dataset.kyvAgendaId,status,remind,note);
+      showStatus('Stato e promemoria salvati e verificati nella tabella.');
+    }catch(err){
+      showStatus('Impossibile salvare il promemoria: '+String(err?.message||err),true);
+      button.disabled=false;button.textContent='Riprova';
+    }
+  });
+  list.addEventListener('submit',async event=>{
+    if(event.target?.id!=='kyv-agenda-inline-form')return;
+    event.preventDefault();
+    const form=event.target,submit=form.querySelector('button[type="submit"]');
+    if(submit?.disabled)return;
+    const read=name=>String(form.elements.namedItem(name)?.value||'').trim();
+    const input={title:read('title'),date:read('date'),time:read('time'),
+      endTime:read('endTime'),activityType:read('activityType'),
+      location:read('location'),description:read('description')};
+    if(submit){submit.disabled=true;submit.textContent='Salvo…';}
+    try{
+      await saveManual(input);
+      state.formOpen=false;render();
+      showStatus('Nuova attività registrata nella tabella. Non inviata a Google Calendar.');
+    }catch(err){
+      showStatus('Inserimento non riuscito: '+String(err?.message||err),true);
+      if(submit){submit.disabled=false;submit.textContent='Riprova salvataggio';}
+    }
+  });
+}
+
 function init(){
   const list=root.document.getElementById('events-list');
   if(!list)return;
+  wireTableActions(list);
   let status=root.document.getElementById('kyv-agenda-store-status');
   if(!status){status=root.document.createElement('p');status.id='kyv-agenda-store-status';status.setAttribute('role','status');
     status.className='kyv-agenda-store-status';const main=root.document.querySelector('.kyv-calendar-main');
