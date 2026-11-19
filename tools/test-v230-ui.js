@@ -16,7 +16,7 @@ assert.match(producer,/details\('Strumenti'/);assert.match(producer,/editor\.htm
 assert.match(producer,/kyv-project-phase2\.js/,'La scheda progetto progressiva deve essere caricata dal Producer Mode');
 assert.match(producer,/kyv-projects-phase3\.js/,'La nuova lista Progetti deve essere caricata dal Producer Mode');
 assert.match(producer,/kyv-action-bridge\.js/,'Il bridge azioni deve essere caricato dal Producer Mode');
-assert.match(intake,/Cattura prima/);assert.match(intake,/id="quick-form"/);assert.match(intake,/Salva e continua dopo/);assert.match(intake,/db\.from\('PROGETTI'\)\.insert/);assert.match(intake,/id="cloud-flow"/);assert.match(intake,/Controlla duplicati/);assert.doesNotMatch(intake,/await loadReferences\(\);status\('Pronto/,'La cattura rapida non deve precaricare gli archivi audio');
+assert.match(intake,/Cattura prima/);assert.match(intake,/id="quick-form"/);assert.match(intake,/Salva progetto/);assert.match(intake,/db\.from\('PROGETTI'\)\.insert/);assert.match(intake,/id="cloud-flow"/);assert.match(intake,/Controlla duplicati/);assert.doesNotMatch(intake,/await loadReferences\(\);status\('Pronto/,'La cattura rapida non deve precaricare gli archivi audio');
 assert.match(projects,/openNewProjectChoices/);assert.match(projects,/source=drive/);assert.match(projects,/source=dropbox/);
 assert.match(projects,/<span>Manager Pro<\/span>/,'La pagina Progetti riceve la versione dinamica dal config');
 assert.doesNotMatch(archive,/id="drive-scan"/);assert.match(audit,/\.limit\(LIMIT\)/);assert.doesNotMatch(audit,/fetch\(|method:\s*['"]HEAD/);
