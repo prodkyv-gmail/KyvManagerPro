@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-ui-calm-launcher-20261119';
+const CACHE_NAME = 'kyv-studio-v2-82-calm-launcher-20261119';
 const APP_SHELL = [
     './',
     './index.html',
