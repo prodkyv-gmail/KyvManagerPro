@@ -274,6 +274,8 @@ async function deleteNote(){
   const result=existing?await store.remove(note):{orphanAudio:false};
   drafts.clear(note.id);
   notes=notes.filter(n=>n.id!==note.id);
+  // Prevent addNew() from autosaving and resurrecting the deleted record.
+  current=null;
   addNew();drawList();
   signal(result.orphanAudio||result.orphanFiles?'Nota eliminata, ma alcuni file privati non sono stati rimossi dallo Storage.':'Nota eliminata.','success');
  }catch(err){signal('Eliminazione non riuscita: '+err.message,'error');}
