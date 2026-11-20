@@ -2,8 +2,9 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const read=f=>fs.readFileSync(f,'utf8');
 const root={location:{href:'https://kyvmanagerpro.example/acquisisci_audio.html'},crypto:{subtle:globalThis.crypto?.subtle}};
+const documentStub={readyState:'loading',addEventListener:()=>{}};
 vm.runInNewContext(read('kyv-agenda-local.js'),{window:root,Date});
-vm.runInNewContext(read('kyv-local-audio.js'),{window:root,URL});
+vm.runInNewContext(read('kyv-local-audio.js'),{window:root,URL,document:documentStub});
 const agenda=root.KYV_AGENDA_LOCAL,local=root.KYV_LOCAL_AUDIO;
 assert.ok(agenda&&local);
 assert.equal(agenda.MAX_FILE_BYTES,2097152);
