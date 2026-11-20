@@ -1,0 +1,64 @@
+/* Taccuino KYV: un elenco semplice, contenuto leggibile e due azioni per riga. */
+.kyv-notes-simple-page{background:#0f111a;color:#eef2fa;min-width:0}
+.kyv-simple-notebook{display:flex;flex-direction:column;min-height:0;height:100dvh;overflow-y:auto;background:#101723}
+.kyv-simple-header{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:27px clamp(18px,4vw,44px) 23px;border-bottom:1px solid #283748;background:#141d2c}
+.kyv-simple-heading{display:flex;gap:10px;align-items:center;min-width:0}
+.kyv-simple-eyebrow{color:#abaafa;text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:840;margin-bottom:6px}
+.kyv-simple-header h1{font-size:clamp(23px,2.8vw,31px);font-weight:850;letter-spacing:-.03em;line-height:1.15}
+.kyv-simple-subtitle{color:#b2bfd0;font-size:12px;margin-top:7px}
+.kyv-simple-header svg,.kyv-simple-controls svg,.kyv-simple-icon-button svg,.kyv-simple-primary svg{width:17px;height:17px;flex-shrink:0}
+.kyv-simple-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:43px;background:#5b55ce;border:1px solid #827af0;color:#fff;border-radius:11px;padding:10px 17px;font-size:13px;font-weight:790;cursor:pointer;white-space:nowrap}
+.kyv-simple-primary:hover{background:#7169e6}
+.kyv-simple-primary:disabled{opacity:.5;cursor:wait}
+.kyv-simple-content{width:min(100%,1100px);margin:0 auto;padding:25px clamp(16px,4vw,32px) 80px}
+.kyv-simple-controls{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}
+.kyv-simple-search{display:flex;align-items:center;gap:10px;background:#1b2534;border:1px solid #3c4c60;padding:11px 13px;border-radius:12px;flex:1;max-width:530px;min-height:46px;color:#b9c8de}
+.kyv-simple-search input{background:none;border:0;outline:0;width:100%;color:#fff;font-size:14px;min-width:0}
+.kyv-simple-search:focus-within{outline:2px solid #9a91fa;outline-offset:2px}
+.kyv-simple-count{font-size:12px;color:#aebdd0;white-space:nowrap}
+.kyv-simple-status{font-size:12px;color:#aec2d5;line-height:1.55;margin:0 0 12px;min-height:0}
+.kyv-simple-status:empty{display:none}
+.kyv-simple-status[data-error=true]{color:#ffc1c1}
+.kyv-simple-status[data-ok=true]{color:#b4e7ca}
+.kyv-simple-list{display:flex;flex-direction:column;gap:10px}
+.kyv-simple-note{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;background:#1a2535;border:1px solid #314156;border-radius:14px;padding:17px 16px;min-width:0;transition:border-color .12s}
+.kyv-simple-note:hover{border-color:#707ca7}
+.kyv-simple-note-body{min-width:0;flex:1}
+.kyv-simple-note-title{display:block;max-width:100%;background:none;border:0;padding:0;color:#f0f5ff;text-align:left;font-size:15px;font-weight:800;line-height:1.4;cursor:pointer;overflow-wrap:anywhere}
+.kyv-simple-note-title:hover{text-decoration:underline;text-decoration-color:#8f90ff;text-underline-offset:3px}
+.kyv-simple-note-description{font-size:13px;color:#c0cedf;line-height:1.65;white-space:pre-line;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;margin-top:6px}
+.kyv-simple-note-meta{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px;color:#91a7c2;font-size:11px}
+.kyv-simple-note-meta span[data-local=true]{color:#ffdd9c}
+.kyv-simple-note-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.kyv-simple-icon-button{display:inline-flex;align-items:center;justify-content:center;min-width:39px;min-height:39px;background:#29374a;border:1px solid #3e536d;color:#e9f0fb;border-radius:10px;cursor:pointer}
+.kyv-simple-icon-button:hover{background:#3a4e69}
+.kyv-simple-icon-button[data-action=delete]{color:#ffc1c6}
+.kyv-simple-icon-button[data-action=delete]:hover{background:#51313e;border-color:#865067}
+.kyv-simple-icon-button:disabled{opacity:.4;cursor:wait}
+.kyv-simple-empty{padding:50px 16px;border:1px dashed #3d5068;border-radius:13px;text-align:center;color:#aebcd1;font-size:14px;line-height:1.6}
+.kyv-simple-overlay[hidden]{display:none!important}
+.kyv-simple-overlay{position:fixed;inset:0;z-index:200;background:rgba(4,8,16,.82);display:flex;align-items:center;justify-content:center;padding:15px}
+.kyv-simple-modal{width:min(100%,650px);max-height:min(93dvh,910px);overflow-y:auto;background:#1a2534;border:1px solid #566683;border-radius:18px;box-shadow:0 25px 70px #000a;padding:23px}
+.kyv-simple-modal-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.kyv-simple-modal-header h2{font-size:20px;font-weight:850;color:#f3f5ff}
+.kyv-simple-form{display:flex;flex-direction:column;gap:9px;padding-top:13px}
+.kyv-simple-form-help{font-size:12px;line-height:1.6;color:#a4b8cd;margin-bottom:6px}
+.kyv-simple-form label{font-weight:760;font-size:12px;color:#e4ebf7;margin-top:6px}
+.kyv-simple-form input,.kyv-simple-form textarea{display:block;width:100%;min-width:0;border:1px solid #465775;background:#101825;color:#f2f5ff;border-radius:11px;padding:12px 13px;font-size:15px;outline:none}
+.kyv-simple-form input:focus,.kyv-simple-form textarea:focus{border-color:#9d96ee;box-shadow:0 0 0 2px #827af033}
+.kyv-simple-form textarea{resize:vertical;min-height:170px;line-height:1.55}
+.kyv-simple-form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+.kyv-simple-secondary{border:1px solid #53657d;color:#dbe5f4;border-radius:11px;min-height:43px;padding:11px 17px;background:#26374a;font-size:13px;font-weight:750;cursor:pointer}
+.kyv-simple-secondary:hover{background:#3b506b}
+.kyv-simple-dialog-status{font-size:12px;line-height:1.55;color:#aebed1;min-height:1px}
+.kyv-simple-dialog-status[data-error=true]{color:#ffc4c4}
+.kyv-simple-attachments{border:1px solid #3e5270;border-radius:10px;margin-top:10px;color:#c3d2e8;background:#182335}
+.kyv-simple-attachments summary{cursor:pointer;padding:10px 12px;font-size:12px;font-weight:760}
+.kyv-simple-attachments #notes-existing-files{display:flex;flex-direction:column;gap:4px;padding:0 12px 12px}
+.kyv-simple-attachments audio{width:calc(100% - 24px);margin:0 12px 12px}
+.kyv-simple-file-action{background:none;border:0;color:#c7c8ff;text-align:left;text-decoration:underline;cursor:pointer;font-size:12px;padding:6px 0;overflow-wrap:anywhere}
+.kyv-simple-menu{border:1px solid #445471;border-radius:8px;min-height:40px;min-width:40px;display:inline-flex;align-items:center;justify-content:center}
+.kyv-simple-menu svg{height:18px;width:18px}
+.kyv-simple-icon-button:focus-visible,.kyv-simple-primary:focus-visible,.kyv-simple-secondary:focus-visible,.kyv-simple-note-title:focus-visible,.kyv-simple-file-action:focus-visible{outline:2px solid #b2adff;outline-offset:3px}
+@media(max-width:670px){.kyv-simple-header{padding:17px 13px;gap:8px}.kyv-simple-header h1{font-size:21px}.kyv-simple-subtitle{font-size:11px}.kyv-simple-primary{padding:9px 10px;font-size:12px}.kyv-simple-content{padding:18px 12px 70px}.kyv-simple-note{padding:13px 10px;gap:8px}.kyv-simple-note-title{font-size:14px}.kyv-simple-note-description{font-size:12px}.kyv-simple-icon-button{min-width:38px;min-height:38px}.kyv-simple-modal{padding:17px}.kyv-simple-form textarea{min-height:210px}}
+@media(max-width:390px){.kyv-simple-note-actions{gap:4px}.kyv-simple-note-meta{font-size:10px}.kyv-simple-primary span{max-width:87px}}
