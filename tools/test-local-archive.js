@@ -68,7 +68,7 @@ for(const c of [...intake.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/s
 const pkg=JSON.parse(read('package.json'));
 assert.equal(pkg.scripts['check:local-archive'],'node tools/test-local-archive.js');
 (async()=>{
- await assert.rejects(agenda.readFile({name:'x.exe',size:120,text:async()=>''}),/\.ics o \.csv/);
+ await assert.rejects(agenda.readFile({name:'x.exe',size:120,text:async()=>''}),/\.ics.*\.csv/);
  const out=await agenda.readFile({name:'test.csv',size:90,text:async()=>csv});
  assert.equal(out.records.length,2);
  console.log('OK: local Agenda calendar intake; secure local audio into existing project, duplicate checks and private retrieval.');
