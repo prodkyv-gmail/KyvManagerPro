@@ -102,23 +102,44 @@ const fakeDb={
  assert.ok(producer.indexOf("['kyv_notes.html?new=1','+ Note'")<producer.indexOf("['kyv_calendar.html','Agenda'"),'Producer sidebar order');
  assert.ok(menu.indexOf("navItem('notes'")<menu.indexOf("navItem('calendar'"),'Legacy sidebar order');
  assert.ok(producer.includes("['kyv-notes-core.js','kyv-notes-voice.js','kyv-notes-quick.js']"),'Quick script loaded once');
- for(const key of ['notes-title','notes-content','notes-category','notes-project','notes-search','notes-filter-pinned',
-  'notes-filter-archived','notes-upload-audio','notes-dictate','notes-record','notes-status'])
+ const simple=read('kyv-notes-simple.js');
+ assert.match(page,/src="kyv-notes-simple.js"/,'Notebook uses its minimal list controller');
+ assert.match(page,/href="kyv-notes-simple.css"/,'Notebook uses focused simplified styling');
+ for(const key of ['notes-new','notes-title','notes-content','notes-search','notes-list','notes-count',
+  'notes-dialog','notes-dialog-title','notes-dialog-close','notes-form','notes-save','notes-cancel',
+  'notes-dialog-status','notes-status'])
   assert.equal((page.match(new RegExp('id="'+key+'"','g'))||[]).length,1,key);
- assert.match(page,/KYV_AUTH.requireAuth\(\)/,'Notebook requires authenticated session');
- assert.match(page,/core\.draftStore\(session\.user\.id,window\.localStorage\)/,'Offline text draft recovery');
- assert.match(page,/scheduleSave/,'Autosave');
- assert.match(page,/store\.uploadVoice\(/,'Private voice persistence');
- assert.match(page,/store\.loadVoice\(/,'Playback downloads privately with auth');
- assert.match(page,/notes-filter-category/);
- assert.match(page,/if\(voice\?\.isRecording\(\)\|\|busyAudio\|\|audioPending\)/,'Unuploaded voice must not vanish on note switch');
+ for(const omitted of ['notes-filter-category','notes-filter-pinned','notes-filter-archived',
+  'notes-upload-audio','notes-dictate','notes-record','notes-project','notes-pin','notes-archive',
+  'kyv-notes-canvas','kyv-notes-view-timeline','kyv-notes-suggest'])
+  assert.ok(!page.includes('id="'+omitted+'"'),omitted+' is not in simplified UI');
+ assert.ok(!page.includes('kyv-notes-advanced.js'),'Advanced notebook panels are not mounted');
+ assert.match(page,/data-auth-required="true"/,'Notebook is authenticated');
+ assert.match(simple,/KYV_AUTH.requireAuth\(\)/,'Notebook requires authenticated session');
+ assert.match(simple,/core.draftStore\(session.user.id,root.localStorage\)/,'Old and quick-capture drafts are recovered');
+ assert.match(simple,/store.save\(/,'Explicit save reuses original private note store');
+ assert.match(simple,/store.remove\(/,'Delete reuses original owner-only store and file cleanup');
+ assert.match(simple,/core.readableTitle\(note\)/,'Old untitled notes keep a readable title');
+ assert.match(simple,/create\('p','kyv-simple-note-description',displayDescription\(note\)\)/,'Notes show description directly in list');
+ assert.match(simple,/edit.dataset.action='edit'/,'Each note has edit icon action');
+ assert.match(simple,/remove.dataset.action='delete'/,'Each note has delete icon action');
+ assert.match(simple,/showEditor\(note\)/,'Every note can open same fast edit dialog');
+ assert.match(simple,/root.confirm\('Eliminare definitivamente/,'Deletion requires confirmation');
+ assert.match(simple,/store.loadVoice\(/,'Existing voice notes remain playable from edit');
+ assert.match(simple,/filesStore.download\(/,'Existing drawing and attachments remain retrievable');
+ assert.match(simple,/if\(!latest\|\|Date.parse\(latest.updated_at/,'A newer cloud revision is never blindly overwritten');
+ assert.match(simple,/function recoverDraft\(/,'Conflicting local drafts are retained as distinct notes');
+ assert.match(simple,/doc.addEventListener\('visibilitychange'/,'Notebook refreshes when returning to page');
+ assert.doesNotMatch(simple,/storage.from\(.*\).upload\(/,'Simple page never uploads new media');
+ assert.doesNotMatch(simple,/KYV_NOTES_VOICE.create/,'Voice recording stays in the unchanged quick-capture');
  assert.match(quick,/KYV_AUTH.requireAuth\(\)/,'Quick entry requires authentication');
  assert.match(quick,/KYV_NOTES_VOICE.create/,'Voice capture available from quick entry');
  assert.match(quick,/dismiss\(true\)/,'Successful quick entry closes the dialog');
  assert.match(quick,/cacheDraft/,'Quick capture must write local draft');
  assert.match(quick,/kyv-notes-quick-download/,'Quick audio backup is available');
  assert.doesNotMatch(page,/getPublicUrl\(/,'No public audio URLs');
- for(const asset of ['kyv_notes.html','kyv-notes-core.js','kyv-notes-voice.js','kyv-notes-quick.js','kyv-notes.css'])
+ assert.doesNotMatch(simple,/getPublicUrl\(/,'Attachments are never opened via public URLs');
+ for(const asset of ['kyv_notes.html','kyv-notes-core.js','kyv-notes-voice.js','kyv-notes-quick.js','kyv-notes.css','kyv-notes-simple.js','kyv-notes-simple.css'])
   assert.ok(sw.includes("'./"+asset+"'"),'PWA app shell includes '+asset);
  const sql=read('docs/kyv-notes-phase-ab.sql');
  assert.match(sql,/enable row level security/i);
@@ -131,5 +152,5 @@ const fakeDb={
  assert.match(sql,/storage\.foldername\(name\)/,'Every storage policy restricts owner folder');
  const pkg=JSON.parse(read('package.json'));
  assert.equal(pkg.scripts['check:kyv-notes'],'node tools/test-kyv-notes.js');
- console.log('OK Taccuino A+B: secure owner notes, autosave/drafts, quick capture, voice, navigation, storage.');
+ console.log('OK Taccuino: minimal list, fast editor, secure CRUD, draft recovery, and unchanged quick capture.');
 })().catch(err=>{console.error(err);process.exit(1);});
