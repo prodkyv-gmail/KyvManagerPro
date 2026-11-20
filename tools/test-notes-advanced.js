@@ -102,6 +102,7 @@ const db={from:query,storage:{from:bucket=>{
  assert.ok(html.includes('advanced.renderTimeline(filtered,list)'),'Timeline respects existing search and filters');
  assert.ok(html.includes('advanced&&!advanced.canLeave()'),'Unsaved pen strokes are guarded');
  assert.ok(html.includes('advanced?.hasUnsavedDrawing()'),'Beforeunload safeguards unsaved pen strokes');
+ assert.ok(html.includes('current=null;\n  addNew();drawList();'),'Deleting a note cannot resurrect it through autosave');
  assert.ok(html.includes('makeSnapshot(forceAudio)'),'Existing blank notes can hold a drawing');
  for(const id of ['kyv-notes-canvas','kyv-notes-save-drawing','kyv-notes-pen-clear','kyv-notes-undo','kyv-notes-file-input',
   'kyv-notes-camera-input','kyv-notes-files-list','kyv-notes-view-timeline','kyv-notes-agenda','kyv-notes-suggest'])
@@ -112,6 +113,7 @@ const db={from:query,storage:{from:bucket=>{
  assert.match(advanced,/root\.confirm\('Hai un disegno non salvato/,'Do not discard ink silently');
  assert.match(advanced,/files\.upload\(/,'Files persist through private Storage');
  assert.match(advanced,/files\.download\(/,'Private downloads, never public links');
+ assert.ok(advanced.includes("dl.textContent='Scarica'"),'Every image and drawing has explicit private download');
  assert.match(advanced,/S\.suggest\(/,'Deterministic offline suggestions');
  assert.match(advanced,/S\.agendaUrl\(saved\.id\)/,'Agenda note link only after verified note save');
  assert.doesNotMatch(advanced,/getPublicUrl\(|ai\.generate|openai\.com|anthropic\.com/,'No public files or unconsented AI API');
