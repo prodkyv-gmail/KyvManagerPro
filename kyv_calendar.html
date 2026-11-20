@@ -81,7 +81,10 @@
     <link rel="stylesheet" href="kyv-agenda-table.css">
     <script src="kyv-notes-core.js"></script>
     <script src="kyv-agenda-from-note.js"></script>
+    <script src="kyv-agenda-local.js"></script>
+    <script src="kyv-agenda-local-ui.js"></script>
     <link rel="stylesheet" href="kyv-notes-advanced.css">
+    <link rel="stylesheet" href="kyv-agenda-local.css">
 </head>
 <body class="kyv-v260 flex h-screen overflow-hidden antialiased text-sm">
     <div id="kyv-sidebar-container" class="h-full z-50 absolute md:relative shrink-0"></div>
@@ -124,6 +127,23 @@
             </div>
 
             <div id="kyv-agenda-sync-report" class="kyv-agenda-sync-report" role="status" aria-live="polite">Stato sincronizzazione: nessun aggiornamento eseguito in questa sessione.</div>
+            <details id="kyv-agenda-local-import" class="kyv-agenda-local-import">
+              <summary><i data-lucide="folder-open" class="w-5 h-5 inline mr-2"></i> Archivio locale · Importa appuntamenti da un file <span class="kyv-agenda-local-chevron">⌄</span></summary>
+              <div class="kyv-agenda-local-body">
+                <p>Seleziona un file calendario <strong>.ics</strong> oppure <strong>.csv</strong> dal computer, tablet o smartphone. Il file viene letto sul dispositivo, non caricato su Drive o Dropbox. Puoi controllare e selezionare i singoli appuntamenti prima di salvarli nello storico KYV. Google Calendar non viene modificato.</p>
+                <label for="kyv-agenda-local-file">Scegli file dall’archivio locale</label>
+                <input id="kyv-agenda-local-file" class="kyv-input" type="file" accept=".ics,.csv,text/calendar,text/csv" aria-describedby="kyv-agenda-local-hint">
+                <p id="kyv-agenda-local-hint">Massimo 2 MB e 500 appuntamenti per file. CSV: colonne Titolo, Data, facoltativamente Ora, Ora fine, Descrizione e Luogo. Gli orari vengono interpretati secondo il dispositivo; controlla gli appuntamenti provenienti da altri fusi orari.</p>
+                <div class="kyv-agenda-local-toolbar">
+                  <button type="button" id="kyv-agenda-local-all">Seleziona tutti</button>
+                  <button type="button" id="kyv-agenda-local-none">Deseleziona tutti</button>
+                  <output id="kyv-agenda-local-count">Nessun evento selezionato</output>
+                </div>
+                <div id="kyv-agenda-local-preview" class="kyv-agenda-local-preview" role="group" aria-label="Anteprima appuntamenti locali"></div>
+                <button id="kyv-agenda-local-save" type="button" disabled>Importa selezionati nell’Agenda KYV</button>
+                <p id="kyv-agenda-local-status" role="status" aria-live="polite">Nessun file selezionato.</p>
+              </div>
+            </details>
 
             <div class="kyv-calendar-layout w-full min-h-0">
                 <div class="kyv-calendar-sidebar flex flex-col gap-6">
