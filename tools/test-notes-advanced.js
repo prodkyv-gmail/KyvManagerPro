@@ -95,15 +95,16 @@ const db={from:query,storage:{from:bucket=>{
  const html=read('kyv_notes.html'),agenda=read('kyv-agenda-from-note.js'),calendar=read('kyv_calendar.html'),
   advanced=read('kyv-notes-advanced.js'),style=read('kyv-notes-advanced.css'),sw=read('sw.js'),
   sql=read('docs/kyv-notes-phase-cd.sql');
- for(const script of ['kyv-notes-files.js','kyv-notes-smart.js','kyv-notes-advanced.js'])
-  assert.ok(html.includes('src="'+script+'"'),script+' must load in Taccuino');
- assert.ok(html.includes('kyv-notes-advanced.css'));
- assert.ok(html.includes('advanced=KYV_NOTES_ADVANCED.init('),'Advanced panels are wired to authenticated notes');
- assert.ok(html.includes('advanced.renderTimeline(filtered,list)'),'Timeline respects existing search and filters');
- assert.ok(html.includes('advanced&&!advanced.canLeave()'),'Unsaved pen strokes are guarded');
- assert.ok(html.includes('advanced?.hasUnsavedDrawing()'),'Beforeunload safeguards unsaved pen strokes');
- assert.ok(html.includes('current=null;\n  addNew();drawList();'),'Deleting a note cannot resurrect it through autosave');
- assert.ok(html.includes('makeSnapshot(forceAudio)'),'Existing blank notes can hold a drawing');
+ assert.ok(html.includes('src="kyv-notes-files.js"'),'Existing private attachments stay accessible for old notes');
+ assert.ok(!html.includes('src="kyv-notes-advanced.js"'),'Advanced panels are removed from the simple notebook');
+ assert.ok(!html.includes('src="kyv-notes-smart.js"'),'Automatic organization is removed from the simple notebook');
+ assert.ok(!html.includes('kyv-notes-advanced.css'),'Advanced styling is not loaded in the simplified page');
+ assert.ok(html.includes('src="kyv-notes-simple.js"'),'The list-only notebook is mounted');
+ const simple=read('kyv-notes-simple.js');
+ assert.match(simple,/filesStore.list\(/,'Existing attachments remain available through the lightweight editor');
+ assert.match(simple,/function cleanupAudio\(/,'Existing audio preview is revoked when editor closes');
+ assert.match(simple,/root.confirm\('Eliminare definitivamente/,'Notes cannot be deleted accidentally');
+ assert.match(simple,/current===null|active=null/,'Delete closes without automatically recreating deleted records');
  for(const id of ['kyv-notes-canvas','kyv-notes-save-drawing','kyv-notes-pen-clear','kyv-notes-undo','kyv-notes-file-input',
   'kyv-notes-camera-input','kyv-notes-files-list','kyv-notes-view-timeline','kyv-notes-agenda','kyv-notes-suggest'])
   assert.ok(advanced.includes('id="'+id+'"'),id+' exists in panel');

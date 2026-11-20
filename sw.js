@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-local-agenda-audio-20261120';
+const CACHE_NAME = 'kyv-studio-v2-82-notebook-simple-list-20261120';
 const APP_SHELL = [
     './',
     './index.html',
@@ -6,6 +6,8 @@ const APP_SHELL = [
     './progetti.html',
     './acquisisci_audio.html',
     './kyv_notes.html',
+    './kyv-notes-simple.js',
+    './kyv-notes-simple.css',
     './kyv-notes-core.js',
     './kyv-notes-voice.js',
     './kyv-notes-quick.js',
