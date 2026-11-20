@@ -1,3 +1,41 @@
+# Aggiornamento operativo attuale · 20 novembre 2026
+
+> **Priorità delle istruzioni.** Le procedure in questa sezione descrivono l'interfaccia realmente disponibile. I capitoli v2.82 e precedenti riportati sotto sono conservati per riferimento tecnico/storico; se differiscono, valgono queste istruzioni e la guida contestuale **?**. La versione applicativa resta quella dichiarata dal release contract, senza introdurre un numero fittizio per i soli aggiornamenti UI.
+
+## 1. Taccuino KYV, minimale e veloce
+Percorso: Home → **+ Note** apre **Cattura veloce**. Menu → **Taccuino KYV** (`kyv_notes.html`) apre invece l'elenco delle note. Sono funzioni diverse ma condividono lo stesso archivio privato `kyv_notes`.
+
+- **Taccuino:** mostra titolo, descrizione (anteprima testuale), data, icona **matita / Modifica** e icona **cestino / Elimina**. Il campo Cerca filtra per titolo e descrizione. **Nuova nota** e **Modifica** aprono lo stesso piccolo popup con due soli campi: Titolo (facoltativo) e Descrizione. Si salva esplicitamente con **Salva** (oppure Ctrl/⌘+Invio). La prima riga del contenuto funge da titolo leggibile se mancante.
+- **Elimina** richiede conferma: l'operazione è definitiva e tenta di eliminare anche audio e allegati della nota. Non cancella note di altri utenti. Le bozze testuali possono restare nel `localStorage` del dispositivo se il salvataggio cloud fallisce; non cancellare dati browser prima della sincronizzazione.
+- **Cattura veloce** è invariata: nelle principali pagine usa **+ Nota** o in Home **+ Note**; scegli Idea/Informazione/È successo/Da fare, scrivi o usa **Detta testo** se il browser lo supporta, oppure **Registra audio → Stop → Salva nota**. Memo fino a **5 minuti / 20 MB**, privati e senza trascrizione automatica. La dettatura browser potrebbe usare un servizio esterno. Se non riesci a caricare una registrazione, **Scarica una copia** prima di chiudere.
+- Le funzioni avanzate precedentemente mostrate nel Taccuino (canvas/pennino, timeline, filtri complessi, classificazione, conversione in attività) **non compaiono più nella pagina semplice**. I file audio e allegati già conservati rimangono consultabili in **Contenuti già salvati** nel dialogo di modifica, soltanto quando esistono. Gli archivi relativi non sono stati cancellati.
+- Schemi esistenti: `kyv_notes` (RLS owner), `kyv_note_files` (allegati privati) e bucket `kyv-notes-audio` / `kyv-notes-files`. Nessuna migrazione né aggiornamento distruttivo per la semplificazione UI.
+
+## 2. Agenda: archivio Google e importazione locale
+Percorso: `kyv_calendar.html`. Il pulsante **Aggiorna agenda** usa la connessione Google Apps Script configurata. Le attività del modulo **Nuova Attività** hanno Titolo, Data inizio/fine, Ora inizio/fine oppure Tutto il giorno, luogo, descrizione, stato e dati per promemoria/rinvio. Il pulsante **Salva in agenda e Calendar** mostra l'esito; l'app dichiara locali le attività tutto il giorno o su più giorni. Non attribuire un salvataggio Google se non è stato confermato.
+
+**Archivio locale** è una sezione richiudibile separata. **Scegli file dall’archivio locale** accetta file calendario **.ics** o **.csv** da PC, Mac, tablet e smartphone (**2 MB, massimo 500 appuntamenti**). Il CSV richiede Titolo e Data; Ora, Ora fine, Descrizione e Luogo sono facoltativi. Apri **anteprima**, verifica date/fusi orari, seleziona le righe, premi **Importa selezionati nell’Agenda KYV** e conferma. L'importazione è persistita nello storico KYV, verifica duplicati e non scrive automaticamente su Google Calendar. File sorgente letto nel browser, non caricato a Drive/Dropbox. Se c'è un errore, prima verifica lo storico, evitando doppi inserimenti.
+
+## 3. ADD Progetto: file cloud e audio locale
+Percorso: `acquisisci_audio.html` → **Hai già un file o un link?**.
+
+- **Apri Drive** / **Apri Dropbox** conducono ai rispettivi servizi. Per registrare un riferimento al singolo file, inserisci **Link Drive o Dropbox** e procedi con controllo duplicati, progetto e conferma.
+- **Archivio locale** apre il selettore del dispositivo per audio MP3, WAV, M4A, AIFF, FLAC, AAC, OGG o OPUS (**50 MB per file**). Scegli **Progetto di destinazione**, compila se necessario Titolo, Artista, Tipo, Versione, poi **Controlla duplicati** (SHA-256 del contenuto rispetto a `AUDIO_VERSIONI`). Premi **Importa e collega versione** solo dopo la verifica e la conferma.
+- L'audio viene caricato nel bucket privato `kyv-local-audio` con permessi di proprietà per utente, e collegato a `AUDIO_VERSIONI` attraverso il percorso esistente. La pagina `kyv_local_audio.html` consente ascolto e download autenticati. Non si salva un percorso locale `file://`; la scelta del file non avviene in background.
+- **Audio Finder** è un modulo distinto: la scansione guidata locale/cloud indicizza metadati e non carica automaticamente i byte audio. Per stem/sessioni oltre 50 MB preferire i collegamenti cloud.
+
+## 4. Studio Editor: navigazione, date e filtri
+Percorso: `editor.html`. Schede principali, nell'ordine **Progetti → Fatture → Estratto SIAE → IMAIE**; altre 10 tabelle in **Altre tabelle**. All'apertura una tabella ordina **data più recente prima**, con fallback per ID decrescente se manca una data. L'intestazione modifica l'ordinamento.
+
+Per PROGETTI scegli **Essenziale** (campi chiave + dettaglio in sola lettura) o **Completa** (tutte le colonne, con modifiche consentite). **Mostra** espone filtri 30 giorni/12 mesi/senza data quando disponibili, follow-up e campi mancanti per Progetti; da incassare e incasso da verificare per Fatture. **Righe** consente 60/120/240, impostazione ricordata per tabella; **Azzera filtri** ripristina ricerca e filtri senza eliminare record o colonne. **Colonne** modifica solo la vista; ricerca e **Esporta CSV** usano il dataset verificato e completo, non le sole righe visibili. Le etichette sui pagamenti sono segnalazioni gestionali e non provano un accredito bancario.
+
+## 5. Guida e controlli di sicurezza
+Manuale web `guida.html#guida-aggiornamenti-20261120` e popup **?**: Home (`home`), Taccuino (`notes`), Agenda (`calendar`), ADD Progetto (`nuovo`), Studio Editor (`editor`), Audio Finder (`audiofinder`), Drive/Dropbox e schede coinvolte. In caso di discrepanza con i vecchi paragrafi storici, prevale il capitolo corrente. Le modifiche di questo pacchetto sono esclusivamente documentali, senza cambi di tabelle, dati, permessi, OAuth, importi, date, diritti o flussi applicativi. La suite CI non sostituisce la prova manuale da account autenticato su PC e mobile.
+
+---
+
+_Da qui in poi seguono le procedure storiche v2.73–v2.82, conservate per compatibilità._
+
 ## Aggiornamento v2.82 · Lettura completa e sicurezza dei totali
 
 1. Apri Economia → Controllo economico: la sezione mostra un messaggio di caricamento finché le quattro fonti non sono state lette per intero. Un valore zero viene mostrato soltanto se l'archivio è stato verificato; non appare una somma parziale.
