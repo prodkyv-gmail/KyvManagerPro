@@ -1,0 +1,25 @@
+/* Agenda · on-device ICS/CSV import, no changes to Calendar layout. */
+#kyv-agenda-local-import{border:1px solid #40566b;border-radius:13px;background:#1d2c3b;margin:10px 0 18px;overflow:hidden}
+#kyv-agenda-local-import>summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:12px;min-height:47px;padding:13px 16px;color:#e3f1fc;font-size:13px;font-weight:800;list-style:none}
+#kyv-agenda-local-import>summary::-webkit-details-marker{display:none}
+#kyv-agenda-local-import>summary:focus-visible{outline:2px solid #c7e4fc;outline-offset:-2px}
+#kyv-agenda-local-import[open]>summary{border-bottom:1px solid #415670;background:#273e4d}
+.kyv-agenda-local-chevron{font-size:24px;color:#b1cade}
+.kyv-agenda-local-body{padding:15px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.kyv-agenda-local-body p{font-size:12px;line-height:1.65;color:#b8cbe0}
+.kyv-agenda-local-body label{font-size:12px;font-weight:750;color:#e1edfd}
+#kyv-agenda-local-file{padding:9px;font-size:12px}
+.kyv-agenda-local-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kyv-agenda-local-toolbar button{padding:8px 12px;min-height:37px;border:1px solid #5b738e;border-radius:9px;color:#e0eaf8;background:#243a50;font-size:12px;font-weight:700}
+#kyv-agenda-local-count{margin-left:auto;font-size:11px;color:#b8ccdc}
+.kyv-agenda-local-preview{display:flex;flex-direction:column;gap:5px;max-height:340px;overflow:auto;padding:0 1px}
+.kyv-agenda-local-event{display:flex;gap:11px;align-items:flex-start;padding:10px 12px;background:#152535;border:1px solid #344d61;border-radius:9px;cursor:pointer}
+.kyv-agenda-local-event input{width:17px;height:17px;accent-color:#818cf8;flex-shrink:0;margin-top:2px}
+.kyv-agenda-local-event-body{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
+.kyv-agenda-local-event-body strong{font-size:12px;color:#f0f6ff;font-weight:780}
+.kyv-agenda-local-event-body small{font-size:11px;color:#b9cbdb;line-height:1.4}
+#kyv-agenda-local-save{align-self:flex-start;border:1px solid #7380db;background:#4b45bb;border-radius:10px;color:#fff;padding:11px 15px;min-height:41px;font-size:12px;font-weight:800}
+#kyv-agenda-local-save:disabled{opacity:.5;cursor:not-allowed}
+#kyv-agenda-local-status{min-height:20px}
+#kyv-agenda-local-status[data-error="true"]{color:#ffc3c3}
+@media(max-width:700px){.kyv-agenda-local-body{padding:11px}#kyv-agenda-local-count{margin-left:0;width:100%}#kyv-agenda-local-save{width:100%}}
