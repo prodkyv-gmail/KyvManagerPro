@@ -95,14 +95,26 @@ function createStore(db,uid){
  }
  async function remove(note){
   if(!isUuid(note?.id))throw Error('Nota non valida.');
+  // Capture attachment paths before cascading metadata deletion, then remove private blobs.
+  const {data:attachments,error:attachmentsError}=await db.from('kyv_note_files').select('storage_path')
+   .eq('owner_id',uid).eq('note_id',note.id);
+  if(attachmentsError)throw attachmentsError;
   const {error,count}=await db.from(TABLE).delete({count:'exact'}).eq('owner_id',uid).eq('id',note.id);
   if(error)throw error;
   if(count===0)throw Error('Nota non eliminata: verifica i permessi.');
+  let orphanAudio=false,orphanFiles=false;
   if(note.audio_path){
-   const cleanup=await db.storage.from(BUCKET).remove([note.audio_path]);
-   if(cleanup.error)return {orphanAudio:true};
+   try{const cleanup=await db.storage.from(BUCKET).remove([note.audio_path]);orphanAudio=!!cleanup.error;}
+   catch(_){orphanAudio=true;}
   }
-  return {orphanAudio:false};
+  if(attachments?.length){
+   try{
+    const paths=attachments.map(item=>item.storage_path).filter(Boolean);
+    const cleanup=await db.storage.from('kyv-notes-files').remove(paths);
+    orphanFiles=!!cleanup.error;
+   }catch(_){orphanFiles=true;}
+  }
+  return {orphanAudio,orphanFiles};
  }
  async function uploadVoice(noteId,blob,duration){
   if(!isUuid(noteId)||!(blob instanceof Blob)||blob.size===0||blob.size>MAX_AUDIO_BYTES)
