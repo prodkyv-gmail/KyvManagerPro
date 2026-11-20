@@ -114,7 +114,7 @@ function cleanupAudio(){
  if(audioUrl){URL.revokeObjectURL(audioUrl);audioUrl=null;}
 }
 function closeEditor(force=false){
- if(busy)return false;
+ if(busy&&!force)return false;
  if(!force&&dirty&&!root.confirm('Chiudere senza salvare nel cloud? La bozza resterà nell’elenco per recuperarla.'))return false;
  modalToken++;
  cleanupAudio();
