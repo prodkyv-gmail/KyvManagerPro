@@ -1,3 +1,28 @@
+### Aggiornamento guida corrente · 20 novembre 2026
+
+La versione applicativa è quella dichiarata da `VERSION`/`config.js`; gli interventi del 20 novembre a Taccuino, Cattura veloce, Agenda, ADD Progetto e Studio Editor sono un aggiornamento **operativo/documentale**, non un numero di versione inventato.
+
+**Ordine delle informazioni:** `guida.html#guida-aggiornamenti-20261120` contiene le istruzioni correnti, con link a `#v287-notes`, `#guida-cattura-note`, `#guida-agenda-locale`, `#guida-add-progetto-locale` e `#guida-editor-v286`. Le sezioni v2.82 e precedenti sono storiche e non devono contraddire i capitoli prioritari.
+
+**Guide ? coinvolte:** `home`, `notes`, `calendar`, `nuovo`, `editor`, `audiofinder`, `dashboard`, `drive`, `dropbox`, `scheda`, `integrazioni`. I due nuovi entrypoint `home` e `nuovo` **non** devono usare fallback generico. Le guide `notes` e `home` devono distinguere il Taccuino **semplice** dalla Cattura veloce con dettatura/audio. Non reintrodurre comandi rimossi (penna, timeline, filtri avanzati) come azioni disponibili.
+
+**Agenda locale** importa soltanto file calendario `.ics`/`.csv` selezionati dall'utente, max 2 MB / 500 eventi, con anteprima e conferma; niente scritture Google Calendar automatiche. **ADD Progetto** usa Drive/Dropbox come link singoli e Archivio locale per file audio reali fino a 50 MB, hash duplicati SHA-256, scelta progetto e conferma, Storage privato. Non confondere il flusso con la scansione metadati di Audio Finder.
+
+**Editor v2.86:** quattro tabelle principali in ordine Progetti / Fatture / Estratto SIAE / IMAIE, Altre tabelle, ordinamento data decrescente o fallback ID, filtri contestuali e vista per tabella 60/120/240; scelta colonne e CSV non cancellano dati.
+
+**Copertura e QA:** aggiornare `README.md`, `MANUALE_OPERATIVO.md`, `docs/MANUALE_PRATICO_V273.md`, guida web e `kyv-help.js` insieme. Verificare `tools/test-guide-coverage.js` e `docs/QA_GUIDE_SYNC_20261120.md`; controllare CI e deployment senza assumere collaudo browser autenticato.
+
+### Registro pagine aggiunte al perimetro corrente
+| Pagina | Guida contestuale | Capitolo corrente |
+|---|---|---|
+| `index.html` (Home) | `home` | `#guida-cattura-note` |
+| `kyv_notes.html` | `notes` | `#v287-notes` |
+| `kyv_calendar.html` | `calendar` | `#guida-agenda-locale` |
+| `acquisisci_audio.html` | `nuovo` | `#guida-add-progetto-locale` |
+| `editor.html` | `editor` | `#guida-editor-v286` |
+
+---
+
 ### v2.82 — Letture stabili e release contract centralizzato
 La dashboard Economia non può mostrare totali da `limit` silenziosi o dataset parziali. KYV Analyst e Economia usano `kyv-read-guard-v282.js` con count esatto per pagina iniziale, ordinamento per ID univoco per tutte le fonti, controllo ID mancanti o duplicati, limite 30.000 per fonte ed errori espliciti in caso di lettura incompleta. Ritentare soltanto letture su transient 429/503 e simili, mai una scrittura o permessi negati. Risposte stale di Economia non devono sovrascrivere la lettura nuova. Le versioni non devono essere codificate nei test storici: usare il helper `tools/release-contract.js` per risolvere versione/cache corrente mentre ogni test continua a verificare le funzioni della release storica. Nessun accesso a Vercel senza richiesta, nessuna modifica dati/DB/storici o ricostruzione SIAE. Aggiornare guida HTML, ?, manuale, suite e PWA ad ogni release.
 
