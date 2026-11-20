@@ -100,7 +100,7 @@ const db={from:query,storage:{from:bucket=>{
  assert.ok(html.includes('kyv-notes-advanced.css'));
  assert.ok(html.includes('advanced=KYV_NOTES_ADVANCED.init('),'Advanced panels are wired to authenticated notes');
  assert.ok(html.includes('advanced.renderTimeline(filtered,list)'),'Timeline respects existing search and filters');
- assert.ok(html.includes('advanced?.canLeave()'),'Unsaved pen strokes are guarded');
+ assert.ok(html.includes('advanced&&!advanced.canLeave()'),'Unsaved pen strokes are guarded');
  assert.ok(html.includes('advanced?.hasUnsavedDrawing()'),'Beforeunload safeguards unsaved pen strokes');
  assert.ok(html.includes('makeSnapshot(forceAudio)'),'Existing blank notes can hold a drawing');
  for(const id of ['kyv-notes-canvas','kyv-notes-save-drawing','kyv-notes-pen-clear','kyv-notes-undo','kyv-notes-file-input',
