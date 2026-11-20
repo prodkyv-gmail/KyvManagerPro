@@ -286,6 +286,43 @@ async function saveManual(input){
   return saveCreated({...input,activityType:input.activityType||'other'},null);
 }
 
+async function importLocalRecords(records){
+  if(!Array.isArray(records)||records.length===0||records.length>500)
+    throw Error('Seleziona fra 1 e 500 appuntamenti validi.');
+  const parser=root.KYV_AGENDA_LOCAL;
+  if(!parser?.key)throw Error('Modulo archivio locale non disponibile.');
+  const uid=await owner();
+  await load();
+  const existing=new Set([...state.rows].map(row=>row.source+'|'+row.source_key));
+  const hidden=new Set(state.hiddenKeys);
+  const accepted=[],selected=new Set();
+  let skipped=0;
+  for(const source of records){
+    const fields=validateDetails({...source,activityType:source.activityType||'other'});
+    const source_key='file-'+parser.key(source);
+    const identity='manual|'+source_key;
+    if(existing.has(identity)||hidden.has(identity)||selected.has(identity)){skipped++;continue;}
+    selected.add(identity);
+    accepted.push({
+      owner_id:uid,source:'manual',source_key,calendar_id:null,...fields,
+      created_from_app:true,edited_in_app:true,imported_at:new Date().toISOString(),
+      workflow_status:'da_fare',workflow_note:'Importato da archivio locale',remind_on:null
+    });
+  }
+  // No Google Calendar writes; ignore conflicts instead of overwriting any prior manual edits.
+  for(let i=0;i<accepted.length;i+=75){
+    const {error}=await client().from(TABLE).upsert(accepted.slice(i,i+75),{
+      onConflict:'owner_id,source,source_key',ignoreDuplicates:true
+    });
+    if(error)throw error;
+  }
+  await load();
+  const resultKeys=new Set(state.rows.map(row=>row.source+'|'+row.source_key));
+  const unverified=accepted.filter(row=>!resultKeys.has('manual|'+row.source_key));
+  if(unverified.length)throw Error('Salvataggio incompleto: alcuni eventi non sono stati confermati. Non ripetere senza verificare l’archivio.');
+  showStatus(accepted.length+' attività importate da archivio locale · '+skipped+' duplicati/già presenti ignorati.');
+  return {saved:accepted.length,skipped,total:state.rows.length};
+}
 const EDIT_FIELDS=['title','event_date','starts_at','ends_at','all_day','activity_type','description','location'];
 function validateDetails(input){
   const title=String(input?.title||'').trim(),day=String(input?.date||'');
@@ -371,7 +408,7 @@ function reportSync(info){
   el.hidden=false;
 }
 
-const api={updateWorkflow,updateEvent,deleteEvent,saveManual,validateNewEvent,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
+const api={updateWorkflow,updateEvent,deleteEvent,saveManual,importLocalRecords,validateNewEvent,showPreview,reportSync,statusLabels,load,importGoogle,saveCreated,render,toEvent,normalizeGoogle,kindFromText,getEvents:()=>opened.slice(),getState:()=>({...state})};
 root.KYV_AGENDA_STORE=api;
 function wireTableActions(list){
   if(!list||typeof list.addEventListener!=='function')return;
