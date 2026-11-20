@@ -218,26 +218,17 @@ function getKyvHelpContent(activePage) {
     // v2.77 — Inline help for the existing Studio Editor column panel and view cache.
     if(guide.editor)guide.editor.content+='<section class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5"><h5 class="font-black text-white">v2.77 · Cercare e scegliere le colonne</h5><ol class="list-decimal pl-5 text-sm text-kyv-text mt-2 space-y-2"><li>Filtra tabella corrente trova record anche nelle colonne nascoste. Mostra altre 120 righe riutilizza il risultato, senza ricalcolare una nuova ricerca o caricare un sottoinsieme non verificato.</li><li>Apri Colonne: Trova colonna cerca per nome e Solo colonne visibili limita le caselle presenti nel pannello. I record non cambiano.</li><li>Deseleziona una colonna per nasconderla, lasciandone almeno una; Mostra tutte la ripristina. Cambiare tabella applica la preferenza propria di quella tabella.</li><li>Compatta/Larga modifica soltanto l’aspetto. CSV esporta anche le colonne nascoste. Riprova dopo errore di lettura conserva la ricerca della stessa tabella.</li></ol><a class="text-indigo-300 underline" href="guida.html#v277-editor">Procedura completa v2.77</a></section>';
     guide.notes = {
-        title:'Guida contestuale: Taccuino KYV',
-        content:`<div class="space-y-4 text-kyv-text">
-          <h4 class="text-xl font-black text-white">+ Note · Taccuino A+B</h4>
-          <p><b>Inserimento veloce:</b> in Home clicca + Note, oppure usa il pulsante + Nota delle altre schermate. Scrivi, scegli una tipologia e salva. Per consultare tutte le note premi Apri Taccuino.</p>
-          <p><b>Salvataggio:</b> nel Taccuino il testo viene salvato automaticamente dopo una breve pausa; Salva ora forza la sincronizzazione. Se manca rete, una bozza locale recuperabile rimane su questo dispositivo: non cancellare i dati del browser prima del salvataggio cloud.</p>
-          <p><b>Organizzazione:</b> ricerca globale nel testo, filtro per categoria, fissate, archiviate, associazione facoltativa a un progetto. Il titolo non è obbligatorio.</p>
-          <p><b>Detta testo:</b> se il browser supporta il riconoscimento vocale, parla e controlla la trascrizione. In alcuni browser il servizio può elaborare la voce su server esterni; in alternativa usa il microfono della tastiera.</p>
-          <p><b>Registra audio:</b> premi Registra audio, poi Stop, ascolta l’anteprima e premi Salva registrazione. Il memo va nello spazio Supabase privato dell’utente. Se la rete manca, scarica una copia prima di uscire. Durata massima: 5 minuti; dimensione massima: 20 MB. La registrazione non viene trascritta automaticamente.</p>
-          <p><b>Privacy:</b> note e audio sono protetti dai permessi per utente. Le bozze locali non ancora sincronizzate sono in chiaro sul dispositivo: usa un computer di fiducia.</p>
-        </div>`
+      title:'Guida contestuale: Taccuino KYV · Elenco note',
+      content:`<div class="space-y-4 text-kyv-text">
+        <h4 class="text-xl font-black text-white">Taccuino KYV · Semplice e veloce</h4>
+        <p><b>Elenco:</b> ogni nota mostra titolo, descrizione e data. Sono visibili solo due comandi: matita (Modifica) e cestino (Elimina). La ricerca trova testo nel titolo o nella descrizione.</p>
+        <p><b>Nuova nota:</b> premi Nuova nota, scrivi Titolo e Descrizione, poi Salva. Il titolo è facoltativo; se vuoto viene utilizzata la prima riga del testo. Con Ctrl/⌘+Invio puoi salvare direttamente.</p>
+        <p><b>Modifica:</b> premi la matita, aggiorna i due campi e conferma Salva. Il Taccuino conserva una bozza locale mentre scrivi per riprendere il testo se manca la rete. Le modifiche sono effettive sul cloud solo dopo Salva.</p>
+        <p><b>Elimina:</b> premi il cestino e conferma. Anche gli eventuali audio e allegati associati saranno eliminati, quindi controlla prima di procedere.</p>
+        <p><b>Cattura veloce:</b> rimane invariata, con dettatura e registrazione vocale. Le note registrate compaiono automaticamente nello stesso elenco. Solo se una nota contiene già un memo vocale o un allegato, nella finestra Modifica compare la sezione discreta “Contenuti già salvati” per consultarli.</p>
+        <p><b>Privacy:</b> le note sono private per utente autenticato. Le bozze non ancora sincronizzate restano temporaneamente sul dispositivo, quindi non cancellare i dati del browser prima del salvataggio.</p>
+      </div>`
     };
-    if(guide.notes)guide.notes.content += `<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5 space-y-3">
-      <h5 class="font-black text-white">Fasi C+D · Pennino, file, timeline e Agenda</h5>
-      <p><b>Pennino:</b> nel Taccuino apri Scrittura a mano e disegni. Usa Apple Pencil, altro pennino, mouse o touch. Puoi cambiare colore, spessore, usare Gomma, Annulla tratto, Pulisci foglio e Salva disegno. Prima di cambiare nota viene chiesta conferma se il disegno non è stato salvato. Puoi scaricare il PNG come copia.</p>
-      <p><b>Foto e allegati:</b> premi Allega file o Scatta foto. Sono permessi foto, PDF, testo e documenti Office fino a 15 MB l'uno e 30 allegati per nota. I file sono privati: apri/scarica con la tua sessione autenticata. Se l'upload fallisce non uscire senza conservare una copia originale.</p>
-      <p><b>Timeline:</b> passa da Elenco a Timeline per ricostruire gli appunti per giorno di creazione, mantenendo attivi i filtri.</p>
-      <p><b>Suggerimenti:</b> premi Suggerisci organizzazione: categoria, titolo e riepilogo sono calcolati localmente, non da un servizio AI esterno. Applica titolo e Applica categoria solo se condividi la proposta.</p>
-      <p><b>Agenda:</b> premi Prepara attività in Agenda. Devi confermare il passaggio, scegliere la data nella pagina Agenda e premere Salva. L'operazione non crea nulla automaticamente in Google Calendar; per impostazione iniziale è una attività locale tutto il giorno.</p>
-      <p><b>Conservazione:</b> cancellare definitivamente la nota elimina i riferimenti e tenta di cancellare anche i file. Controlla il messaggio di conferma. File e disegni non sono automaticamente disponibili offline, a differenza delle bozze di testo.</p>
-     </div>`;
     const aliases = { spese: 'documenti' };
     activePage = aliases[activePage] || activePage;
     return guide[activePage] || guide.default;
