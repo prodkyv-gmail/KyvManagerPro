@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-taccuino-notes-voice-ab-20261119';
+const CACHE_NAME = 'kyv-studio-v2-82-taccuino-notes-pen-agenda-cd-20261120';
 const APP_SHELL = [
     './',
     './index.html',
@@ -10,6 +10,11 @@ const APP_SHELL = [
     './kyv-notes-voice.js',
     './kyv-notes-quick.js',
     './kyv-notes.css',
+    './kyv-notes-files.js',
+    './kyv-notes-smart.js',
+    './kyv-notes-advanced.js',
+    './kyv-notes-advanced.css',
+    './kyv-agenda-from-note.js',
     './kyv-project-list-v250.js',
     './kyv-home-charts-v250.js',
     './kyv-home-charts-ui-v250.js',
