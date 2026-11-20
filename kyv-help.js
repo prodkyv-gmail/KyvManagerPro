@@ -229,6 +229,56 @@ function getKyvHelpContent(activePage) {
         <p><b>Privacy:</b> le note sono private per utente autenticato. Le bozze non ancora sincronizzate restano temporaneamente sul dispositivo, quindi non cancellare i dati del browser prima del salvataggio.</p>
       </div>`
     };
+    // Aggiornamento documentale 20/11/2026: istruzioni correnti prevalgono sui riferimenti storici.
+    guide.home = {
+      title:'Guida: Home · Il tuo spazio di lavoro e Cattura veloce',
+      content:`<div class="space-y-3 text-kyv-text">
+        <h4 class="text-xl font-black text-white">Home · + Note e Taccuino KYV</h4>
+        <p>Nella Home <b>Il tuo spazio di lavoro</b> usa <b>+ Note</b>, immediatamente prima di Agenda, per aprire <b>Cattura veloce</b> senza uscire dalla pagina.</p>
+        <p>Seleziona la tipologia Idea, Informazione, È successo o Da fare, scrivi oppure usa <b>Detta testo</b> se supportato dal browser. Con <b>Registra audio</b> puoi preparare un memo vocale: interrompi la registrazione, riascolta e premi <b>Salva nota</b> per confermare il salvataggio privato. I memo vocali non vengono trascritti automaticamente; il limite è 5 minuti e 20 MB.</p>
+        <p><b>Apri Taccuino</b> mostra invece un semplice elenco titolo + descrizione, ricerca, matita Modifica e cestino Elimina. La finestra di modifica ha solo due campi e un pulsante Salva. Le note sono nello stesso archivio della Cattura veloce.</p>
+        <p>Se la rete non funziona, una bozza testuale può restare sul dispositivo ma non equivale a un salvataggio cloud confermato. Se un audio non si carica premi Scarica una copia prima di chiudere.</p>
+        <a href="guida.html#guida-cattura-note" class="text-indigo-300 underline">Procedura corrente · Cattura veloce</a>
+      </div>`
+    };
+    guide.nuovo = {
+      title:'Guida: ADD Progetto · Drive, Dropbox e Archivio locale',
+      content:`<div class="space-y-3 text-kyv-text">
+        <h4 class="text-xl font-black text-white">ADD Progetto · Inserimento da tre origini</h4>
+        <p>Per un nuovo brano compila i campi rapidi e premi <b>Salva progetto</b>. Se hai già un audio o un link, apri il pannello <b>Hai già un file o un link?</b>.</p>
+        <ol class="list-decimal pl-5 space-y-2">
+         <li><b>Google Drive / Dropbox:</b> usa Apri Drive o Apri Dropbox per raggiungere il cloud, inserisci il <b>Link Drive o Dropbox</b> di un singolo file, esegui Controlla duplicati, scegli esplicitamente il progetto e conferma. Non equivale al caricamento di un file locale.</li>
+         <li><b>Archivio locale:</b> seleziona un audio dal dispositivo (MP3, WAV, M4A, AIFF, FLAC, AAC, OGG o OPUS, massimo <b>50 MB</b>). Nel pannello Da archivio locale seleziona il <b>Progetto di destinazione</b>, integra titolo/artista/tipo/versione se utili, poi premi <b>Controlla duplicati</b>.</li>
+         <li>Il controllo locale confronta SHA-256 con le versioni già presenti. Se il risultato è corretto, premi <b>Importa e collega versione</b> e conferma. Il file viene salvato in Storage privato e il collegamento alla versione è verificato; potrai ascoltarlo o scaricarlo accedendo con il tuo account.</li>
+        </ol>
+        <p>Il file non viene letto automaticamente dal disco, un percorso locale non è un link condivisibile e nessun progetto viene associato senza tua scelta. Se compare un errore controlla lo storico prima di ripetere la scrittura. <b>Audio Finder</b> è un flusso differente che analizza metadati dei file selezionati, senza upload automatico.</p>
+        <a href="guida.html#guida-add-progetto-locale" class="text-indigo-300 underline">Procedura completa · ADD Progetto</a>
+      </div>`
+    };
+    if(guide.calendar)guide.calendar.content = `<div class="space-y-3 text-kyv-text">
+      <h4 class="text-xl font-black text-white">Agenda KYV · Google Apps Script e file locali</h4>
+      <p><b>Aggiorna agenda</b> legge gli appuntamenti dalla connessione Google Apps Script configurata, aggiornando lo storico; non richiede un nuovo accesso OAuth. Usa la vista giorno, settimana, mese o anno secondo le opzioni presenti.</p>
+      <p>Per una nuova attività compila Titolo, Data inizio, Data fine, eventuali orari o Tutto il giorno, Luogo e Descrizione; puoi indicare Stato (<b>Da fare, Fatto, Chiuso, Da rimandare, Da rivedere, Posticipato a data</b>), Data promemoria o rinvio e Nota promemoria. Premi <b>Salva in agenda e Calendar</b> e controlla l'esito. Gli eventi tutto il giorno o di più giorni rimangono nell'Agenda KYV senza scrivere su Google Calendar.</p>
+      <p><b>Archivio locale:</b> espandi <b>Archivio locale · Importa appuntamenti da un file</b>, premi <b>Scegli file dall’archivio locale</b> e seleziona <code>.ics</code> o <code>.csv</code> (max 2 MB, 500 eventi). Il CSV richiede <b>Titolo</b> e <b>Data</b>; eventuali orari richiedono inizio e fine. Controlla anteprima, fusi e righe valide, usa le caselle o Seleziona tutti/Deseleziona tutti, quindi <b>Importa selezionati nell’Agenda KYV</b> e conferma.</p>
+      <p>I duplicati vengono ignorati senza sovrascrivere gli eventi storici. <b>L’importazione locale non crea eventi Google Calendar</b>. Se il file o la connessione falliscono, verifica lo storico prima di riprovare. Non confondere i .ics/.csv con l'importazione di file audio in ADD Progetto.</p>
+      <a href="guida.html#guida-agenda-locale" class="text-indigo-300 underline">Manuale aggiornato · Agenda e archivio locale</a>
+    </div>`;
+    if(guide.notes)guide.notes.content += `<p class="text-kyv-text mt-4"><a href="guida.html#v287-notes" class="text-indigo-300 underline">Manuale Taccuino</a> · <a href="guida.html#guida-cattura-note" class="text-indigo-300 underline">Cattura veloce separata</a>. La pagina Taccuino non mostra pennino, timeline, filtri avanzati o generazione automatica di attività. Eventuali vecchi allegati restano disponibili solo nella sezione discreta Contenuti già salvati della finestra Modifica.</p>`;
+    if(guide.editor)guide.editor.content += `<section class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5 text-kyv-text">
+      <h4 class="font-black text-white">Comandi attuali Studio Editor v2.85–2.86</h4>
+      <ol class="list-decimal pl-5 mt-2 space-y-2 text-sm">
+       <li>Le quattro schede in evidenza sono <b>Progetti, Fatture, Estratto SIAE, IMAIE</b>; tutte le restanti si trovano in <b>Altre tabelle</b>.</li>
+       <li>All'apertura la tabella viene ordinata per <b>data decrescente</b>, oppure ID discendente se manca la data. Un clic sulla testata cambia l'ordine.</li>
+       <li><b>Progetti:</b> Essenziale espone campi principali e dettaglio in sola lettura, Completa tutte le colonne per le modifiche consentite.</li>
+       <li>Il selettore <b>Mostra</b> include filtri per ultimi 30 giorni/12 mesi/senza data e, dove disponibili, follow-up, dati mancanti, da incassare o incasso da verificare. <b>Righe</b> permette 60, 120 o 240; le preferenze sono distinte per tabella.</li>
+       <li><b>Azzera filtri</b> ripristina ricerca/filtro senza cancellare dati. Le colonne nascoste non riducono ricerca, dati verificati o Esporta CSV. I badge relativi a incassi e follow-up sono segnali di verifica, non prove bancarie.</li>
+      </ol><a href="guida.html#guida-editor-v286" class="text-indigo-300 underline">Manuale corrente · Editor</a>
+    </section>`;
+    if(guide.audiofinder)guide.audiofinder.content += '<section class="mt-4 p-4 border border-indigo-400/30 rounded-xl text-kyv-text"><h4 class="font-black text-white">Differenza rispetto a ADD Progetto · Archivio locale</h4><p>In <b>Audio Finder</b> selezioni file o cartelle per scoprire e classificare <b>metadati</b>, senza caricare automaticamente gli audio. Se vuoi caricare un file audio reale, vai in <b>ADD Progetto → Hai già un file o un link? → Archivio locale</b>, scegli un progetto, verifica i duplicati SHA-256, poi importa dopo conferma (max 50 MB).</p><a href="guida.html#guida-add-progetto-locale" class="text-indigo-300 underline">Apri le istruzioni di importazione</a></section>';
+    for(const section of ['drive','dropbox','scheda','integrazioni']){
+      if(guide[section])guide[section].content += '<p class="mt-3 text-kyv-text"><b>Novità 20/11:</b> ADD Progetto permette anche di scegliere un audio da <b>Archivio locale</b>, collegandolo a un progetto solo dopo controllo duplicati e conferma. Drive e Dropbox restano percorsi distinti. <a href="guida.html#guida-add-progetto-locale" class="text-indigo-300 underline">Guida aggiornata</a>.</p>';
+    }
+    if(guide.dashboard)guide.dashboard.content += '<p class="mt-3 text-kyv-text"><b>+ Note</b> è nella Home, prima di Agenda: apre Cattura veloce per appunti, dettatura e memo vocali. Il <a href="kyv_notes.html" class="text-indigo-300 underline">Taccuino KYV</a> è l’elenco semplice con titolo, descrizione, matita e cestino. <a href="guida.html#guida-cattura-note" class="text-indigo-300 underline">Guida corrente</a>.</p>';
     const aliases = { spese: 'documenti' };
     activePage = aliases[activePage] || activePage;
     return guide[activePage] || guide.default;

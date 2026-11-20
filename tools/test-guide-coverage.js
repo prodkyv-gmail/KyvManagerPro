@@ -18,6 +18,61 @@ const pages=[
  {path:'kyv_drive.html',key:'drive',anchor:'guida-audiofinder',need:['Drive','Audio Finder']},
  {path:'kyv_dropbox.html',key:'dropbox',anchor:'guida-audiofinder',need:['Dropbox','Audio Finder']}
 ];
+// Current 20 November workflows (historical help remains, but current instructions take precedence).
+const currentPages=[
+ {path:'index.html',key:'home',anchor:'guida-cattura-note',need:['+ Note','Taccuino KYV','Detta testo','Salva nota']},
+ {path:'kyv_notes.html',key:'notes',anchor:'v287-notes',need:['Nuova nota','matita','Descrizione','Elimina']},
+ {path:'kyv_calendar.html',key:'calendar',anchor:'guida-agenda-locale',need:['Archivio locale','Importa selezionati','500','Google Calendar','Google Apps Script']},
+ {path:'acquisisci_audio.html',key:'nuovo',anchor:'guida-add-progetto-locale',need:['Archivio locale','50 MB','Controlla duplicati','Drive','Dropbox']},
+ {path:'editor.html',key:'editor',anchor:'guida-editor-v286',need:['Altre tabelle','data decrescente','60','Azzera filtri','IMAIE']}
+];
+for(const entry of currentPages){
+ const content=window.KYV_HELP.getContent(entry.key);
+ assert.ok(content?.title?.startsWith('Guida'),entry.key+' must have its own dedicated guide');
+ for(const phrase of entry.need)
+  assert.ok(content.content.includes(phrase),entry.key+' guide missing current instruction: '+phrase);
+ assert.ok(guide.includes('id="'+entry.anchor+'"'),entry.anchor+' current manual anchor missing');
+ assert.ok(fs.existsSync(entry.path),entry.path+' page missing');
+}
+for(const anchor of ['guida-aggiornamenti-20261120','guida-cattura-note','guida-agenda-locale',
+ 'guida-add-progetto-locale','guida-editor-v286','v287-notes']){
+ assert.ok(guide.includes('href="#'+anchor+'"'),'Current manual index must link '+anchor);
+}
+assert.ok(guide.indexOf('id="guida-aggiornamenti-20261120"')<
+ guide.indexOf('id="v282-stability"'),'20 November instructions must appear before older history');
+const notebook=read('kyv_notes.html'),quick=read('kyv-notes-quick.js'),home=read('index.html');
+assert.ok(home.indexOf('<strong>+ Note</strong>')<home.indexOf('<strong>Agenda</strong>'),'Home + Note before Agenda');
+assert.ok(notebook.includes('src="kyv-notes-simple.js"')&&!notebook.includes('src="kyv-notes-advanced.js"'),
+ 'Notebook current UI must be a simple list, without pen/timeline panels');
+assert.ok(notebook.includes('id="notes-search"')&&notebook.includes('id="notes-list"')&&notebook.includes('id="notes-dialog"'));
+assert.ok(quick.includes('id="kyv-notes-quick-dictate"')&&quick.includes('id="kyv-notes-quick-record"'),
+ 'Unchanged quick capture still supports dictation and recording');
+const calendar=read('kyv_calendar.html');
+for(const id of ['kyv-agenda-local-import','kyv-agenda-local-file','kyv-agenda-local-preview','kyv-agenda-local-save'])
+ assert.ok(calendar.includes('id="'+id+'"'),'Agenda local import control '+id+' missing');
+const intake=read('acquisisci_audio.html');
+for(const id of ['kyv-local-audio-choose','kyv-local-audio-project','kyv-local-audio-check','kyv-local-audio-import'])
+ assert.ok(intake.includes('id="'+id+'"'),'ADD Progetto local audio control '+id+' missing');
+const editor=read('editor.html');
+const ordered=['data-table="PROGETTI"','data-table="FATTURE"','data-table="ESTRATTO SIAE"',
+ 'data-table="ESTRATTO_IMAIE"'];
+for(let i=1;i<ordered.length;i++)
+ assert.ok(editor.indexOf(ordered[i-1])<editor.indexOf(ordered[i]),'Editor main tab order incorrect');
+for(const id of ['editor-extra-table-select','editor-fast-filter','editor-page-size','editor-reset-filters'])
+ assert.ok(editor.includes('id="'+id+'"'),'Editor presentational control missing '+id);
+const manuals=['README.md','MANUALE_OPERATIVO.md','docs/MANUALE_PRATICO_V273.md'];
+for(const path of manuals){
+ const txt=read(path);
+ for(const phrase of ['Aggiornamento operativo attuale · 20 novembre 2026','Cattura veloce',
+  'Archivio locale','Taccuino KYV','Studio Editor','Agenda','50 MB','500 appuntamenti'])
+  assert.ok(txt.includes(phrase),path+' missing current instruction '+phrase);
+}
+const qa=read('docs/QA_GUIDE_SYNC_20261120.md');
+assert.ok(qa.includes('Taccuino')&&qa.includes('Agenda')&&qa.includes('Studio Editor'),
+ 'Guide release needs a manual test checklist');
+const guidePolicy=read('docs/GUIDE_SYNC_POLICY.md');
+for(const key of ['home','notes','calendar','nuovo','editor'])assert.ok(guidePolicy.includes('`'+key+'`'),
+ 'Guide policy must register '+key);
 assert.match(guide,/<title>KYV Studio — Manuale operativo aggiornato<\/title>/);
 assert.ok(guide.includes("id=\"guide-app-version\""),'Manual version must be dynamic');
 assert.ok(guide.includes('id="guide-badge-version"'));

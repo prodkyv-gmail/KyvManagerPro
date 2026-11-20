@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-notebook-simple-list-20261120';
+const CACHE_NAME = 'kyv-studio-v2-82-guides-synced-20261120';
 const APP_SHELL = [
     './',
     './index.html',
