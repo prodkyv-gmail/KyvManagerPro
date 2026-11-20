@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyv-studio-v2-82-taccuino-notes-pen-agenda-cd-20261120';
+const CACHE_NAME = 'kyv-studio-v2-82-local-agenda-audio-20261120';
 const APP_SHELL = [
     './',
     './index.html',
@@ -23,6 +23,11 @@ const APP_SHELL = [
     './data_quality.html',
     './ascolto.html',
     './kyv_calendar.html',
+    './kyv-agenda-local.js',
+    './kyv-agenda-local-ui.js',
+    './kyv-agenda-local.css',
+    './kyv-local-audio.js',
+    './kyv_local_audio.html',
     './kyv-agenda-store.js',
     './kyv-agenda-table.css',
     './pipeline.html',
