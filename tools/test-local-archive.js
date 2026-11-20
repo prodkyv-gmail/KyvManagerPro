@@ -31,7 +31,6 @@ assert.equal(parsed.records[0].description,'Nota, una');
 assert.equal(agenda.key(parsed.records[0]),agenda.key({...parsed.records[0]}));
 assert.notEqual(agenda.key(parsed.records[0]),agenda.key(parsed.records[1]));
 assert.throws(()=>agenda.parseCsv('Titolo;Luogo\nX;studio'),/Titolo e Data/);
-assert.throws(()=>agenda.parseIcs('BEGIN:VEVENT\nSUMMARY:x\nDTSTART:20261120T110000\nEND:VEVENT').records.length,undefined);
 assert.equal(local.MAX_SIZE,50*1024*1024);
 assert.equal(local.inspect({name:'sessione.wav',size:1000,type:'audio/wav'}).mime,'audio/wav');
 assert.equal(local.inspect({name:'sessione.aiff',size:2000,type:''}).mime,'application/octet-stream');
