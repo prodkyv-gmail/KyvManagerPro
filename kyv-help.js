@@ -229,6 +229,15 @@ function getKyvHelpContent(activePage) {
           <p><b>Privacy:</b> note e audio sono protetti dai permessi per utente. Le bozze locali non ancora sincronizzate sono in chiaro sul dispositivo: usa un computer di fiducia.</p>
         </div>`
     };
+    if(guide.notes)guide.notes.content += `<div class="mt-4 p-4 rounded-xl border border-indigo-400/30 bg-indigo-400/5 space-y-3">
+      <h5 class="font-black text-white">Fasi C+D · Pennino, file, timeline e Agenda</h5>
+      <p><b>Pennino:</b> nel Taccuino apri Scrittura a mano e disegni. Usa Apple Pencil, altro pennino, mouse o touch. Puoi cambiare colore, spessore, usare Gomma, Annulla tratto, Pulisci foglio e Salva disegno. Prima di cambiare nota viene chiesta conferma se il disegno non è stato salvato. Puoi scaricare il PNG come copia.</p>
+      <p><b>Foto e allegati:</b> premi Allega file o Scatta foto. Sono permessi foto, PDF, testo e documenti Office fino a 15 MB l'uno e 30 allegati per nota. I file sono privati: apri/scarica con la tua sessione autenticata. Se l'upload fallisce non uscire senza conservare una copia originale.</p>
+      <p><b>Timeline:</b> passa da Elenco a Timeline per ricostruire gli appunti per giorno di creazione, mantenendo attivi i filtri.</p>
+      <p><b>Suggerimenti:</b> premi Suggerisci organizzazione: categoria, titolo e riepilogo sono calcolati localmente, non da un servizio AI esterno. Applica titolo e Applica categoria solo se condividi la proposta.</p>
+      <p><b>Agenda:</b> premi Prepara attività in Agenda. Devi confermare il passaggio, scegliere la data nella pagina Agenda e premere Salva. L'operazione non crea nulla automaticamente in Google Calendar; per impostazione iniziale è una attività locale tutto il giorno.</p>
+      <p><b>Conservazione:</b> cancellare definitivamente la nota elimina i riferimenti e tenta di cancellare anche i file. Controlla il messaggio di conferma. File e disegni non sono automaticamente disponibili offline, a differenza delle bozze di testo.</p>
+     </div>`;
     const aliases = { spese: 'documenti' };
     activePage = aliases[activePage] || activePage;
     return guide[activePage] || guide.default;
