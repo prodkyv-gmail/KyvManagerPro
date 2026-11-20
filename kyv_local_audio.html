@@ -1,0 +1,62 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101522"><title>KYV · File audio privato</title><link rel="icon" href="favicon.ico">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+<script src="config.js"></script><script src="kyv-core.js"></script><script src="kyv-auth.js"></script><script src="menu.js"></script>
+<link rel="stylesheet" href="kyv-responsive.css"><link rel="stylesheet" href="kyv-theme.css">
+<style>
+body{background:#0f111a;color:#edf2ff;font-family:Inter,system-ui,sans-serif;margin:0;display:flex;min-height:100dvh}
+#kyv-sidebar-container{flex-shrink:0}main{flex:1;padding:30px 18px;min-width:0}
+.kyv-private-audio-card{max-width:760px;margin:40px auto;background:#182236;border:1px solid #42516e;border-radius:20px;padding:26px}
+.kyv-private-audio-card h1{font-size:26px;line-height:1.2;font-weight:850;margin:10px 0 6px;overflow-wrap:anywhere}
+.kyv-private-audio-card p{font-size:13px;line-height:1.6;color:#bccadd;margin:12px 0}
+.kyv-private-audio-card audio{display:block;width:100%;margin:16px 0}
+.kyv-private-audio-card a,.kyv-private-audio-card button{display:inline-block;padding:12px 16px;border:1px solid #7774e1;border-radius:12px;background:#504ac5;color:white;font-size:13px;font-weight:750;text-decoration:none;cursor:pointer;margin:4px 8px 4px 0}
+.kyv-private-audio-card a:focus-visible,.kyv-private-audio-card button:focus-visible{outline:2px solid #d2d2ff;outline-offset:2px}
+#kyv-local-audio-preview[hidden],#kyv-local-audio-download[hidden],#kyv-local-audio-back[hidden]{display:none}
+@media(max-width:700px){main{padding:12px}.kyv-private-audio-card{padding:17px;margin:20px auto}}
+</style></head>
+<body data-auth-required="true"><div id="kyv-sidebar-container"></div>
+<main><article class="kyv-private-audio-card"><p>KYVManager Pro · Archivio audio privato</p>
+<h1 id="kyv-local-audio-title">Caricamento file…</h1>
+<p id="kyv-local-audio-status" role="status" aria-live="polite">Verifica dell'accesso e del collegamento al progetto.</p>
+<a href="progetti.html" id="kyv-local-audio-back" hidden>Torna ai progetti</a>
+<audio id="kyv-local-audio-preview" controls preload="metadata" hidden aria-label="Ascolta file audio privato"></audio>
+<button type="button" id="kyv-local-audio-download" hidden>Scarica file originale</button>
+<p>Il file non è pubblico: è necessario accedere con l'account proprietario. L'audio viene trasferito in modo autenticato solo quando apri la pagina.</p></article></main>
+<script>
+(function(){
+'use strict';
+let localUrl=null;const $=id=>document.getElementById(id);
+function status(text,bad=false){$('kyv-local-audio-status').textContent=text;$('kyv-local-audio-status').style.color=bad?'#ffb8c0':'#b2e9ce';}
+async function init(){
+ if(typeof loadKyvSidebar==='function')loadKyvSidebar();
+ const file=new URLSearchParams(location.search).get('file')||'';
+ try{
+  const session=await KYV_AUTH.requireAuth();if(!session?.user?.id)return;
+  if(!file.startsWith(session.user.id+'/')||!/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(mp3|wav|aif|aiff|flac|m4a|aac|ogg|opus)$/i.test(file))
+   throw Error('Identificativo del file non valido per l’utente autenticato.');
+  const db=KYV.createSupabaseClient();
+  const {data,error}=await db.from('AUDIO_VERSIONI').select('ID_VERSIONE,ID_PROGETTO,NOME_FILE,PROVIDER_ID,PROVIDER')
+   .eq('PROVIDER','local').eq('PROVIDER_ID',file).limit(1);
+  if(error)throw error;
+  if(!Array.isArray(data)||data.length!==1)throw Error('File non collegato a una versione audio accessibile con questo account.');
+  const record=data[0];
+  $('kyv-local-audio-title').textContent=record.NOME_FILE||'File audio privato';
+  $('kyv-local-audio-back').href='scheda_progetto.html?id='+encodeURIComponent(record.ID_PROGETTO);
+  $('kyv-local-audio-back').hidden=false;
+  const result=await db.storage.from('kyv-local-audio').download(file);
+  if(result.error)throw result.error;
+  localUrl=URL.createObjectURL(result.data);
+  $('kyv-local-audio-preview').src=localUrl;$('kyv-local-audio-preview').hidden=false;
+  $('kyv-local-audio-download').hidden=false;
+  $('kyv-local-audio-download').addEventListener('click',()=>{
+   const a=document.createElement('a');a.href=localUrl;
+   a.download=record.NOME_FILE||file.split('/').pop();document.body.append(a);a.click();a.remove();
+  });
+  status('File verificato e disponibile nel tuo archivio privato.');
+ }catch(error){status('Audio non disponibile: '+String(error?.message||error),true);}
+}
+window.addEventListener('pagehide',()=>{if(localUrl)URL.revokeObjectURL(localUrl);});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{void init();},{once:true});else void init();
+})();
+</script></body></html>
