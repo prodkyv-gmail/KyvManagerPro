@@ -1,0 +1,45 @@
+/* Taccuino C+D · pen canvas, attachments, chronological timeline and suggestions */
+.kyv-notes-advanced{display:flex;flex-direction:column;gap:13px}
+.kyv-notes-advanced-section{border:1px solid #344763;border-radius:15px;background:#192335;overflow:hidden}
+.kyv-notes-advanced-section>summary{display:flex;align-items:center;justify-content:space-between;gap:9px;
+ padding:16px;cursor:pointer;list-style:none;color:#ecf3ff;font-size:14px;font-weight:800;line-height:1.35}
+.kyv-notes-advanced-section>summary::-webkit-details-marker{display:none}
+.kyv-notes-advanced-section>summary small{font-size:11px;font-weight:500;color:#b0bfd8;text-align:right}
+.kyv-notes-advanced-section>summary:focus-visible{outline:2px solid #a5b4fc;outline-offset:-2px}
+.kyv-notes-advanced-section[open]>summary{border-bottom:1px solid #344763;background:#202c40}
+.kyv-notes-advanced-body{display:flex;flex-direction:column;gap:13px;padding:16px}
+.kyv-notes-advanced-body>p{font-size:12px;color:#bed0e3;line-height:1.65}
+.kyv-notes-advanced-body label{color:#e4ebf7;font-size:12px;font-weight:600}
+.kyv-notes-advanced-body input[type="color"]{height:36px;width:50px;cursor:pointer;border:1px solid #65728d;border-radius:7px;background:transparent;padding:2px}
+.kyv-notes-advanced-body input[type="range"]{width:min(120px,25vw);accent-color:#9795ff;min-height:32px}
+.kyv-notes-canvas-wrap{position:relative;overflow:hidden;background:#fff;border:2px solid #7988a9;border-radius:12px;box-shadow:0 4px 18px #0005}
+#kyv-notes-canvas{width:100%;height:auto;display:block;aspect-ratio:5/2;touch-action:none;cursor:crosshair;background:#fff}
+.kyv-notes-file-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;background:#121d2d;border:1px solid #34445a;border-radius:11px;min-width:0}
+.kyv-notes-file-info{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.kyv-notes-file-info strong{font-size:12px;font-weight:700;color:#edf4fc;white-space:normal;overflow-wrap:anywhere}
+.kyv-notes-file-info small{font-size:11px;color:#a3b5cc}
+.kyv-notes-files-list{display:flex;flex-direction:column;gap:8px;font-size:12px;color:#bdcde1}
+.kyv-notes-file-row .kyv-notes-toolbar{flex-shrink:0}
+.kyv-notes-file-row .kyv-notes-btn{min-height:37px;padding:7px 9px;font-size:11px}
+.kyv-notes-file-preview{border:1px solid #42536d;border-radius:10px;padding:12px;background:#101725}
+.kyv-notes-file-preview[hidden],.kyv-notes-suggest-output[hidden]{display:none!important}
+.kyv-notes-file-preview img{max-width:100%;max-height:450px;object-fit:contain;display:block;margin:auto;border-radius:5px}
+.kyv-notes-suggest-output{border:1px solid #535885;background:#25294b;border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:12px;font-size:12px;line-height:1.7;color:#e3e6ff}
+.kyv-notes-view-toggle{display:flex;gap:5px;padding:3px;background:#151b29;border:1px solid #384866;border-radius:10px}
+.kyv-notes-view-toggle button{flex:1;min-height:37px;padding:8px 11px;border-radius:7px;font-weight:760;font-size:12px;color:#aebfd6}
+.kyv-notes-view-toggle button[aria-pressed="true"]{background:#514ac6;color:white}
+.kyv-notes-timeline-date{font-size:12px;font-weight:820;color:#c2ccfc;padding:13px 6px 4px;text-transform:capitalize}
+.kyv-notes-timeline-item{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.kyv-notes-timeline-item strong{font-size:13px;color:#eff3fd;font-weight:800;overflow-wrap:anywhere}
+.kyv-notes-timeline-item small{font-size:11px;line-height:1.5;color:#b6c6d9;overflow-wrap:anywhere}
+.kyv-agenda-from-note{padding:13px 15px;background:#263249;border:1px solid #7375b9;border-radius:12px;color:#dce3ff;font-size:12px;line-height:1.6;margin-bottom:12px}
+.kyv-agenda-from-note strong{color:#fff}
+.kyv-agenda-from-note a{color:#c5caff;text-decoration:underline}
+@media(max-width:700px){
+ .kyv-notes-advanced-body{padding:11px}
+ .kyv-notes-advanced-section>summary{padding:12px;flex-direction:column;align-items:flex-start}
+ .kyv-notes-advanced-section>summary small{text-align:left}
+ .kyv-notes-file-row{align-items:flex-start;flex-direction:column}
+ .kyv-notes-file-row .kyv-notes-toolbar{width:100%;flex-wrap:wrap}
+ #kyv-notes-canvas{touch-action:none;min-height:180px}
+}
