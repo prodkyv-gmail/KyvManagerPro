@@ -206,9 +206,14 @@ function init({db,uid,getCurrent,getNotes,saveCurrent,redraw,openNote,notify}){
    const actions=doc.createElement('div');actions.className='kyv-notes-toolbar';
    const open=doc.createElement('button');open.type='button';open.className='kyv-notes-btn';open.textContent='Apri / scarica';
    open.addEventListener('click',()=>{void openFile(file);});
+   const dl=doc.createElement('button');dl.type='button';dl.className='kyv-notes-btn';dl.textContent='Scarica';
+   dl.addEventListener('click',async()=>{
+    try{notify('Download privato in corso…');saveBlob(await files.download(file),file.file_name);notify('File scaricato.','success');}
+    catch(error){notify('Download non riuscito: '+error.message,'error');}
+   });
    const del=doc.createElement('button');del.type='button';del.className='kyv-notes-btn kyv-notes-btn-danger';del.textContent='Elimina';
    del.addEventListener('click',()=>{void removeFile(file);});
-   actions.append(open,del);row.append(actions);panel.append(row);
+   actions.append(open,dl,del);row.append(actions);panel.append(row);
   }
  }
  async function loadFiles(noteId){
